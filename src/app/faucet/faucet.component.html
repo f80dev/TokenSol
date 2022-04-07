@@ -1,0 +1,10 @@
+Votre solde est a {{balance | async}} SOL
+<br>
+<button
+  type="button"
+  aria-label="Toggle sidenav"
+  mat-raised-button
+  *ngIf="!network.isMain()"
+  (click)="reload()">
+  Rechargement
+</button>
