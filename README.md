@@ -29,3 +29,5 @@ To get more help on the Angular CLI use `ng help` or go check out the [Angular C
 ## Références
 https://medium.com/@jorge.londono_31005/understanding-solanas-mint-account-and-token-accounts-546c0590e8e
 https://medium.com/metaplex/metaplex-metadata-standard-45af3d04b541
+https://medium.com/coinmonks/solana-programs-part-1-understanding-spl-token-mint-fabd13323219
+

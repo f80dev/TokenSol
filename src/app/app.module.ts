@@ -7,6 +7,7 @@ import {SolWalletsModule} from "angular-sol-wallets";
 import {HttpClientModule} from "@angular/common/http";
 import { AppRoutingModule } from './app-routing.module';
 
+
 import {MatIconModule} from "@angular/material/icon";
 import {MatToolbarModule} from "@angular/material/toolbar";
 
@@ -22,6 +23,15 @@ import { NftsComponent } from './nfts/nfts.component';
 import { MywalletComponent } from './mywallet/mywallet.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
+import {MatTabsModule} from "@angular/material/tabs";
+import { PromptComponent } from './prompt/prompt.component';
+import {MAT_DIALOG_DATA, MatDialogModule} from "@angular/material/dialog";
+import {MatFormFieldModule} from "@angular/material/form-field";
+import {MatSelectModule} from "@angular/material/select";
+import {FormsModule} from "@angular/forms";
+import { SafePipe } from './safe.pipe';
+import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
+import {NgxJsonViewerModule} from "ngx-json-viewer";
 
 @NgModule({
   declarations: [
@@ -32,6 +42,8 @@ import { environment } from '../environments/environment';
     FaucetComponent,
     NftsComponent,
     MywalletComponent,
+    PromptComponent,
+    SafePipe,
 
   ],
   imports: [
@@ -39,6 +51,8 @@ import { environment } from '../environments/environment';
     BrowserAnimationsModule,
     SolWalletsModule,
     HttpClientModule,
+    MatDialogModule,
+    NgxJsonViewerModule,
     AppRoutingModule,
     MatIconModule,
     MatToolbarModule,
@@ -51,9 +65,14 @@ import { environment } from '../environments/environment';
       // Register the ServiceWorker as soon as the application is stable
       // or after 30 seconds (whichever comes first).
       registrationStrategy: 'registerWhenStable:30000'
-    })
+    }),
+    MatTabsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    FormsModule,
+    MatProgressSpinnerModule
   ],
-  providers: [],
+  providers: [{provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

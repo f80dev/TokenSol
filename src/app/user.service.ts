@@ -1,22 +1,16 @@
 import { Injectable } from '@angular/core';
 import {PERMS} from "../definitions";
 import {SolWalletsService, Wallet} from "angular-sol-wallets";
-import {PhantomWallet} from "angular-sol-wallets/lib/wallets/phantom.wallet";
-import {clusterApiUrl, Connection} from "@solana/web3.js";
-import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
-import {BreakpointObserver} from "@angular/cdk/layout";
 import {HttpClient} from "@angular/common/http";
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-
   addr: string | undefined;
   perms: string[]=[];
   private _wallet: Wallet | undefined;
   amount: number=0;
-
 
   constructor(
     private solWalletS : SolWalletsService,
@@ -72,6 +66,7 @@ export class UserService {
     })
   }
 
+
   disconnect(){
     this.solWalletS.disconnect().then(()=>{
       this.logout();
@@ -86,6 +81,7 @@ export class UserService {
     })
   }
 
+
   makeATransfer( myCompanyPublicKey : string, solAmmount : number){
     this.solWalletS.signAndSendTransfer(myCompanyPublicKey, solAmmount ).then( signature => {
       console.log('Transfer successfully opered:', signature);
@@ -93,6 +89,7 @@ export class UserService {
       console.log('Error transaction', err );
     });
   }
+
 
   sendTransferToServer( myCompanyPublicKey : string, solAmmount : number) {
     this.solWalletS.signTransfer(myCompanyPublicKey, solAmmount).then(buffer => {
@@ -103,9 +100,5 @@ export class UserService {
       console.log('Error transaction', err);
     });
   }
-
-
-
-
 
 }

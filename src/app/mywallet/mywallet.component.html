@@ -1,2 +1,13 @@
-<app-nfts [pubkey]="user.wallet?.publicKey!">
-</app-nfts>
+<mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)">
+  <mat-tab label="Light">
+    <app-nfts [nfts]="nfts" format="obj" (refresh)="refresh()">
+    </app-nfts>
+  </mat-tab>
+
+  <mat-tab label="Detail">
+    <app-nfts [nfts]="nfts" format="json">
+    </app-nfts>
+  </mat-tab>
+
+</mat-tab-group>
+

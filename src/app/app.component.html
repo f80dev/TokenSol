@@ -31,6 +31,12 @@
         <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
       </button>
       <span>TokenSol</span>
+      &nbsp;
+      <div *ngIf="network.waiting.length>0" style="display: inline-block;color:white;">
+        <mat-spinner style="display: inline-block;" color="warn" diameter="20"></mat-spinner>&nbsp;{{network.waiting}}
+      </div>
+
+      <span class="example-spacer"></span>
 
       <button type="button"
               *ngIf="!user.connected()"
