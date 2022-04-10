@@ -4,7 +4,7 @@ import {SolWalletsService, Wallet} from "angular-sol-wallets";
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {Key} from "readline";
-import {PrivateKey} from "../tools";
+import {$$, PrivateKey} from "../tools";
 
 
 @Injectable({
@@ -38,7 +38,9 @@ export class UserService {
   }
 
   add_key(key:PrivateKey){
-    this.httpClient.post("/api/keys",key).subscribe(()=>{});
+    this.httpClient.post("/api/keys/",key).subscribe(()=>{
+      $$("mise a jour");
+    });
   }
 
   connected() {
