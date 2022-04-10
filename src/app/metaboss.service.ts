@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {NetworkService} from "./network.service";
 
+
 @Injectable({
   providedIn: 'root'
 })
@@ -13,6 +14,8 @@ export class MetabossService {
     private httpClient : HttpClient,
     private network:NetworkService
   ) { }
+
+
 
   init(){
 
@@ -28,6 +31,16 @@ export class MetabossService {
       }
     });
   }
+
+  update_obj(nft_addr:string,data:any) {
+    return new Promise((resolve, reject) => {
+      this.httpClient.post(this.server+"/api/update_obj/? account="+nft_addr,data).subscribe((r:any)=>{
+        resolve(true);
+      })
+    });
+  }
+
+
 
   burn(nft_addr:string) {
     return new Promise((resolve, reject) => {

@@ -1,5 +1,9 @@
 import {environment} from "./environments/environment";
 
+export interface PrivateKey {
+  name: string
+  key: string
+}
 
 export function toStringify(obj:any) {
   return JSON.stringify(obj, (key, value) =>

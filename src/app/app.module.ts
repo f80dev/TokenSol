@@ -32,6 +32,8 @@ import {FormsModule} from "@angular/forms";
 import { SafePipe } from './safe.pipe';
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {NgxJsonViewerModule} from "ngx-json-viewer";
+import { KeysComponent } from './keys/keys.component';
+import {MatInputModule} from "@angular/material/input";
 
 @NgModule({
   declarations: [
@@ -44,34 +46,36 @@ import {NgxJsonViewerModule} from "ngx-json-viewer";
     MywalletComponent,
     PromptComponent,
     SafePipe,
+    KeysComponent,
 
   ],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    SolWalletsModule,
-    HttpClientModule,
-    MatDialogModule,
-    NgxJsonViewerModule,
-    AppRoutingModule,
-    MatIconModule,
-    MatToolbarModule,
-    LayoutModule,
-    MatButtonModule,
-    MatSidenavModule,
-    MatListModule,
-    ServiceWorkerModule.register('ngsw-worker.js', {
-      enabled: environment.production,
-      // Register the ServiceWorker as soon as the application is stable
-      // or after 30 seconds (whichever comes first).
-      registrationStrategy: 'registerWhenStable:30000'
-    }),
-    MatTabsModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    FormsModule,
-    MatProgressSpinnerModule
-  ],
+    imports: [
+        BrowserModule,
+        BrowserAnimationsModule,
+        SolWalletsModule,
+        HttpClientModule,
+        MatDialogModule,
+        NgxJsonViewerModule,
+        AppRoutingModule,
+        MatIconModule,
+        MatToolbarModule,
+        LayoutModule,
+        MatButtonModule,
+        MatSidenavModule,
+        MatListModule,
+        ServiceWorkerModule.register('ngsw-worker.js', {
+            enabled: environment.production,
+            // Register the ServiceWorker as soon as the application is stable
+            // or after 30 seconds (whichever comes first).
+            registrationStrategy: 'registerWhenStable:30000'
+        }),
+        MatTabsModule,
+        MatFormFieldModule,
+        MatSelectModule,
+        FormsModule,
+        MatProgressSpinnerModule,
+        MatInputModule
+    ],
   providers: [{provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}}],
   bootstrap: [AppComponent]
 })

@@ -1,3 +1,4 @@
+import os
 import platform
 import ssl
 import subprocess
@@ -6,6 +7,7 @@ import sys
 from flask import Response, request, jsonify, send_file, Flask
 from flask_cors import CORS
 
+from Metaboss.ipfs import IPFS
 
 app = Flask(__name__)
 
@@ -30,7 +32,28 @@ def exec(command:str,param:str="",account:str=""):
 def update():
   url=request.args.get("url")
   account=request.args.get("account")
-  return exec("update","uri --new-uri "+url)
+  return exec("update","uri --new-uri "+url,account=account)
+
+@app.route('/api/keys/',methods=["POST","GET"])
+#https://metaboss.rs/set.html
+def keys():
+  if request.method=="GET":
+    return jsonify({"files":os.listdir("./*.json")})
+  else:
+    obj=request.json()
+    f = open(obj["name"], "w")
+    f.write(obj.key)
+    f.close()
+    return jsonify({"message":"ok"})
+
+
+@app.route('/api/update_obj/',methods=["POST"])
+def update_obj():
+  ipfs=IPFS("/ip4/161.97.75.165/tcp/5001/http",5001)
+  url=ipfs.get_link(ipfs.add(request.json))
+  account=request.args.get("account")
+  return exec("update","uri --new-uri "+url,account=account)
+
 
 
 #voir https://metaboss.rs/burn.html

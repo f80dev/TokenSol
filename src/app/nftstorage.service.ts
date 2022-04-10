@@ -19,6 +19,7 @@ export class NftstorageService {
       return this.client.store(data).then((r)=>{
         resolve(r.url);
       }).catch((err)=>{
+        debugger
         reject(err);
       });
     });

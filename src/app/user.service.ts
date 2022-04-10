@@ -2,6 +2,10 @@ import { Injectable } from '@angular/core';
 import {PERMS} from "../definitions";
 import {SolWalletsService, Wallet} from "angular-sol-wallets";
 import {HttpClient} from "@angular/common/http";
+import {Observable} from "rxjs";
+import {Key} from "readline";
+import {PrivateKey} from "../tools";
+
 
 @Injectable({
   providedIn: 'root'
@@ -29,12 +33,19 @@ export class UserService {
     }
   }
 
+  keys() : Observable<string> {
+    return this.httpClient.get<string>("/api/keys");
+  }
 
+  add_key(key:PrivateKey){
+    this.httpClient.post("/api/keys",key).subscribe(()=>{});
+  }
 
   connected() {
     return this.addr && this.addr.length>0;
     this.perms=PERMS['connected'];
   }
+
 
   logout() {
     this.addr="";

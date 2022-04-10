@@ -7,7 +7,7 @@ import {
   RpcResponseAndContext, SignatureResult,
   TransactionSignature
 } from "@solana/web3.js";
-import {AccountLayout, TOKEN_PROGRAM_ID} from "@solana/spl-token";
+import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient} from "@angular/common/http";

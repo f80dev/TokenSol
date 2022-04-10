@@ -108,13 +108,10 @@ export class NftsComponent implements OnChanges {
         }
       }
       $$("Demande de stockage pour ",nft.offchain);
-      this.nftstorage.store(nft.offchain).then(url=>{
-        $$("NFT storage retourne l'url "+url);
-        this.metaboss.update(nft.mint,url).then(success=>{
+        this.metaboss.update_obj(nft.mint,nft.offchain).then(success=>{
           $$("Mise a jour")
           debugger
         })
       })
-    })
   }
 }
