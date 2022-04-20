@@ -5,10 +5,12 @@ import subprocess
 from datetime import datetime
 from os import listdir
 from time import sleep
+from solana.rpc.api import Client
 
 import base58
 import requests
 from solana.keypair import Keypair
+from solana.rpc.commitment import Confirmed
 
 from Tools import log
 
@@ -17,8 +19,9 @@ METABOSS_DIR="./Server"
 
 class Solana:
 	def __init__(self,network="devnet"):
-		self.network=network
+		self.network=network.replace("solana-","").replace("solana_","")
 		self.api="https://api.mainnet-beta.solana.com" if network=="mainnet" else "https://api.devnet.solana.com"
+		self.client=Client(self.api,Confirmed)
 
 
 	def exec(self,command:str,param:str="",account:str="",keyfile="admin.json",data=None,sign=False):
@@ -32,6 +35,7 @@ class Solana:
 			f.writelines(json.dumps(data,indent=4, sort_keys=True))
 			f.close()
 
+		mes=None
 		progname="metaboss-ubuntu-latest" if platform.system()!="Windows" else "metaboss.exe"
 		if progname in os.listdir():
 			cmd=progname+" "+command+" "+param+" --keypair "+keyfile+" --log-level info -r "+self.api
@@ -40,26 +44,25 @@ class Solana:
 
 			log(cmd)
 			mes=subprocess.run(cmd,capture_output=True,timeout=10000,shell=True)
-			sleep(2.0)
+			sleep(1.0)
 		else:
 			log(progname+" non installé")
 
-		rc_error=""
-		rc=""
-		try:
-			if len(mes.stderr)>0:
-				rc_error="Execution de "+cmd+" retourne "+str(mes.stderr,"ansi")
-			else:
-				rc="Ok"
-				os.remove(file_to_mint)
-		except:
-			rc_error="Probléme d'execution"
+		if len(mes.stderr)==0: os.remove(file_to_mint)
 
 		os.chdir("..")
-		log("error="+rc_error)
-		log("result="+rc)
 
-		return {"error":rc_error,"result":rc,"command":cmd}
+		if len(mes.stderr)==0:
+			rc=str(mes.stdout,"ansi").split("account: ")[1].split("\nTx")[0]
+		else:
+			rc="error"
+
+		return {
+			"error":str(mes.stderr,"ansi"),
+			"result":rc,
+			"link":"https://solscan.io/token/"+rc,
+			"out":str(mes.stdout,"ansi"),
+			"command":cmd}
 
 
 
@@ -69,16 +72,10 @@ class Solana:
 		:param user:
 		:return:
 		"""
-		addr=self.find_address_from_json(user)
-		payload={
-			"method":"getBalance",
-			"params":[addr],
-			"jsonrpc": "2.0",
-			"id":0
-		}
-
-		rc=requests.post(self.api+":8899",payload,headers={"Content-Type":"application/json"}).json()
-		return rc
+		addr=self.find_address_from_json(user,'')
+		rc=self.client.get_balance(addr["pubkey"],Confirmed)
+		balance=rc["result"]["value"]/1e9
+		return balance
 
 
 	def toKeypair(self,txt):
@@ -114,5 +111,8 @@ class Solana:
 	def find_address_from_json(self,name:str,field="pubkey"):
 		for k in self.get_keys():
 			if k["name"]==name:
-				return k[field]
+				if len(field)>0:
+					return k[field]
+				else:
+					return k
 		return None

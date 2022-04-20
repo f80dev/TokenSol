@@ -173,7 +173,7 @@ def mint():
                    visual=_data["image"]
                    )
     infos=elrond.get_account(wallet_name)
-    rc={"error":"","result":hex_to_str(collection_id)+"-"+nonce,"balance":int(infos["balance"])/1e18}
+    rc={"command":"ESDTCreate","error":"","result":hex_to_str(collection_id)+"-"+nonce,"balance":int(infos["balance"])/1e18}
   else:
     if not "category" in _data["properties"]:
       _data["properties"]["category"]="image"
@@ -201,12 +201,10 @@ def mint():
     for k in ["properties","collection","image","attributes"]:
       if k in _data:del _data[k]
 
-
     rc=Solana(network).exec("mint one",keyfile=keyfile,data=_data,sign=(request.args.get("sign","False")=="True"))
     rc["balance"]=Solana(network).balance(keyfile)
 
-
-  return jsonify({"error":rc["error"],"message":rc["result"],"balance":rc["balance"]})
+  return jsonify(rc)
 
 
 
