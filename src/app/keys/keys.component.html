@@ -1,26 +1,33 @@
-<mat-form-field appearance="fill" style="max-width: 320px">
-  <mat-label>Coller ici votre clé privée</mat-label>
-  <input matInput type="text" maxlength="200" [(ngModel)]="privateKey" >
-  <mat-hint>Plusieurs formats sont acceptés</mat-hint>
-</mat-form-field>
+<div class="mainform">
+  <mat-form-field appearance="fill" style="max-width: 320px">
+    <mat-label>Coller ici votre clé privée</mat-label>
+    <input matInput type="text" maxlength="200" [(ngModel)]="privateKey" >
+    <mat-hint>Plusieurs formats sont acceptés</mat-hint>
+  </mat-form-field>
 
-&nbsp;
+  &nbsp;
 
-<mat-form-field appearance="fill" style="max-width: 320px">
-  <mat-label>Donner un nom</mat-label>
-  <input matInput type="text" maxlength="200" [(ngModel)]="name" >
-  <mat-hint>Plusieurs formats sont acceptés</mat-hint>
-</mat-form-field>
+  <mat-form-field appearance="fill" style="max-width: 320px">
+    <mat-label>Donner un nom</mat-label>
+    <input matInput type="text" maxlength="200" [(ngModel)]="name" >
+    <mat-hint>Plusieurs formats sont acceptés</mat-hint>
+  </mat-form-field>
 
-&nbsp;
+  &nbsp;
 
-<button
-  type="button" aria-label="Ajouter" mat-raised-button
-  (click)="add_key()">
-  Ajouter
-</button>
+  <button
+    type="button" aria-label="Ajouter" mat-raised-button
+    (click)="add_key()">
+    Ajouter
+  </button>
 
-<div *ngFor="let key of user.keys() | async">
-  {{key}}
+  <br><br>
+  <h2>Liste des clés disponibles</h2>
+
+  <ul>
+    <li *ngFor="let key of keys" (click)="sel_key(key.name)" style="cursor: pointer">
+      {{key.name}}
+    </li>
+  </ul>
+
 </div>
-

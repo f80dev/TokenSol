@@ -1,0 +1,98 @@
+<div class="mainform">
+  <div style="width: 300px;display: inline-block;">
+    <input type="file" (change)="onFileSelected($event)" webkitdirectory multiple/><br>
+  </div>
+
+  <mat-form-field style="fontsize:small">
+    <mat-label>Plateforme de stockage</mat-label>
+    <mat-select [(value)]="sel_platform">
+      <mat-option *ngFor="let platform of platforms" [value]="platform.value">
+        {{platform.label}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <br><br>
+
+  <table style="padding: 5px;width:100%;text-align: center;">
+    <tr>
+      <th>Titre</th><th>Collection</th><th>Symbole</th>
+      <th>Visuel</th><th>Fichiers</th><th>Creator</th><th>Commandes</th>
+      <th>Validité</th>
+    </tr>
+    <tr *ngFor="let token of tokens" style="margin: 5px;">
+      <td style="cursor: pointer" (click)="change_name(token)">{{token.name}}</td>
+      <td>{{token.collection.name}} / {{token.collection.family}}</td>
+      <td>{{token.symbol}}</td>
+      <td>
+        <app-link [content]="token.image">
+          <mat-icon>photo</mat-icon>
+        </app-link>
+      </td>
+      <td>
+        <app-link *ngFor="let file of token.properties?.files" [content]="file.uri">
+          <mat-icon>link</mat-icon>
+        </app-link>
+      </td>
+      <td>
+        <app-link *ngFor="let creator of token.properties?.creators"
+                  [content]="'https://solscan.io/account/'+creator.address+'?cluster=devnet'">
+          {{find_name(creator)}}&nbsp;({{creator.share}}%)
+          <br>
+        </app-link>
+      </td>
+
+      <td>
+        <mat-icon style="cursor: pointer" (click)="upload_token(token)">upload</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="miner(token)">build</mat-icon>
+        <mat-icon style="cursor: pointer" [title]="to_string(token)">visibility</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
+        <mat-icon style="cursor: pointer" >content_copy</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="download(token)">download</mat-icon>
+      </td>
+
+      <td>
+        <mat-icon *ngIf="isValide(token)==''">checkmark</mat-icon>
+        <mat-icon [title]="isValide(token)" *ngIf="isValide(token)!=''">cancel</mat-icon>
+      </td>
+
+    </tr>
+  </table>
+
+
+  <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>
+
+  <br>
+  <br>
+
+
+  <button type="button"
+          mat-raised-button mat-button
+          (click)="upload_all_tokens()">
+    Mise en ligne
+  </button>
+
+  <button type="button"
+          mat-raised-button mat-button
+          (click)="mint()">
+    Tout miner
+  </button>
+
+  <button type="button"
+          mat-raised-button mat-button
+          (click)="add_creator()">
+    <mat-icon>add_circle</mat-icon>&nbsp;Créateur
+  </button>
+
+  <button type="button"
+          mat-raised-button mat-button
+          (click)="download_all()">
+    Enregistrer
+  </button>
+
+  <button type="button"
+          mat-raised-button mat-button
+          (click)="clear()">
+    Effacer
+  </button>
+</div>

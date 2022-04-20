@@ -32,8 +32,18 @@ import {FormsModule} from "@angular/forms";
 import { SafePipe } from './safe.pipe';
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {NgxJsonViewerModule} from "ngx-json-viewer";
-import { KeysComponent } from './keys/keys.component';
 import {MatInputModule} from "@angular/material/input";
+import {KeysComponent} from "./keys/keys.component";
+import { MintComponent } from './mint/mint.component';
+import {MatProgressBarModule} from "@angular/material/progress-bar";
+import { SelectkeyComponent } from './selectkey/selectkey.component';
+import {MatButtonToggleModule} from "@angular/material/button-toggle";
+import {MatCheckboxModule} from "@angular/material/checkbox";
+import {MatSnackBarModule} from "@angular/material/snack-bar";
+import { ManageComponent } from './manage/manage.component';
+import { LinkComponent } from './link/link.component';
+import {ClipboardModule} from "@angular/cdk/clipboard";
+import { FilterPipe } from './filter.pipe';
 
 @NgModule({
   declarations: [
@@ -47,6 +57,11 @@ import {MatInputModule} from "@angular/material/input";
     PromptComponent,
     SafePipe,
     KeysComponent,
+    MintComponent,
+    SelectkeyComponent,
+    ManageComponent,
+    LinkComponent,
+    FilterPipe,
 
   ],
     imports: [
@@ -74,9 +89,17 @@ import {MatInputModule} from "@angular/material/input";
         MatSelectModule,
         FormsModule,
         MatProgressSpinnerModule,
-        MatInputModule
+        MatInputModule,
+        MatSnackBarModule,
+        MatProgressBarModule,
+        MatButtonToggleModule,
+        MatCheckboxModule,
+        ClipboardModule
     ],
-  providers: [{provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}}],
+  providers: [
+    FilterPipe,
+    {provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}}
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

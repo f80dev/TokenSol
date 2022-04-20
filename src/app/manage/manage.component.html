@@ -1,0 +1,41 @@
+<div class="mainform">
+
+  <mat-icon (click)="refresh()">refresh</mat-icon>
+
+  &nbsp;
+  <mat-form-field appearance="fill" style="width: 375px">
+    <mat-label>Propriétaire des NFT</mat-label>
+    <input matInput type="text" maxlength="64" [(ngModel)]="pubkey" (ngModelChange)="change_view()" >
+    <mat-hint>L'adresse correspond à la clé publique</mat-hint>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" style="width:150px">
+    <mat-label>Dans la collection</mat-label>
+    <input matInput type="text" maxlength="64" [(ngModel)]="search_collection"  >
+  </mat-form-field>
+
+  <mat-form-field appearance="fill" style="width:150px">
+    <mat-label>Dans les métadonnées</mat-label>
+    <input matInput type="text" maxlength="64" [(ngModel)]="search_metadata" >
+  </mat-form-field>
+
+
+
+  &nbsp;
+  <button type="button" mat-raised-button mat-button
+          (click)="refresh()">
+    Rechercher
+  </button>
+
+  <button type="button" mat-raised-button mat-button
+          [disabled]="nfts?.length==0"
+          (click)="burn_all()">
+    Reset
+  </button>
+
+  <app-nfts [nfts]="nfts | filter: ['search_collection',search_collection] | filter: ['search_metadata',search_metadata]" format="obj"
+            (refresh)="refresh()"
+            [user]="metaboss.admin_key?.pubkey">
+  </app-nfts>
+
+</div>

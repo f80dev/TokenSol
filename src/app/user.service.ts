@@ -2,9 +2,7 @@ import { Injectable } from '@angular/core';
 import {PERMS} from "../definitions";
 import {SolWalletsService, Wallet} from "angular-sol-wallets";
 import {HttpClient} from "@angular/common/http";
-import {Observable} from "rxjs";
-import {Key} from "readline";
-import {$$, PrivateKey} from "../tools";
+
 
 
 @Injectable({
@@ -12,7 +10,7 @@ import {$$, PrivateKey} from "../tools";
 })
 export class UserService {
   addr: string | undefined;
-  perms: string[]=[];
+  perms: string[]=PERMS["anonymous"];
   private _wallet: Wallet | undefined;
   amount: number=0;
 
@@ -33,15 +31,7 @@ export class UserService {
     }
   }
 
-  keys() : Observable<string> {
-    return this.httpClient.get<string>("/api/keys");
-  }
 
-  add_key(key:PrivateKey){
-    this.httpClient.post("/api/keys/",key).subscribe(()=>{
-      $$("mise a jour");
-    });
-  }
 
   connected() {
     return this.addr && this.addr.length>0;

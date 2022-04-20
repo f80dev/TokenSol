@@ -1,0 +1,4 @@
+<div *ngIf="!content.startsWith('http')">{{content}}</div>
+<a *ngIf="content.startsWith('http')" target="_blank" [href]="content">
+  <ng-content></ng-content>
+</a>

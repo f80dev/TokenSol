@@ -6,3 +6,26 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .example-spacer {
   flex: 1 1 auto;
 }
+
+.mainform {
+  padding: 1%;
+}
+
+.app-prompt {
+  padding: 0px;
+  margin: 0px;
+  position: relative;
+  color: black !important;
+}
+
+
+button {
+  width: 120px;
+  margin: 5px;
+  font-size: small;
+}
+
+mat-form-field {
+  margin: 10px
+}
+

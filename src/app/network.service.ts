@@ -3,7 +3,7 @@ import {
   clusterApiUrl,
   Connection,
   LAMPORTS_PER_SOL,
-  PublicKey, AccountInfo,
+  PublicKey,
   RpcResponseAndContext, SignatureResult,
   TransactionSignature
 } from "@solana/web3.js";
@@ -11,6 +11,9 @@ import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient} from "@angular/common/http";
+import {MetabossKey, showError, showMessage, words} from "../tools";
+import {environment} from "../environments/environment";
+import {NETWORKS} from "../definitions";
 
 @Injectable({
   providedIn: 'root'
@@ -20,10 +23,13 @@ export class NetworkService {
   private _network:string="devnet";
   private _connection: Connection=new Connection(clusterApiUrl("devnet"), 'confirmed');
   waiting: string="";
+  keys:MetabossKey[]=[];
 
   constructor(
     private httpClient : HttpClient
-  ) { }
+  ) {
+
+  }
 
   get_tokens(pubkey: PublicKey,f:Function) {
     return new Promise((resolve, reject) => {
@@ -47,7 +53,9 @@ export class NetworkService {
     this._network = value;
     if(this._network){
       // @ts-ignore
-      this._connection=new Connection(clusterApiUrl(this._network), 'confirmed');
+      let network_name=(value=="devnet") ? "devnet" : "mainnet-beta";
+      // @ts-ignore
+      this._connection=new Connection(clusterApiUrl(network_name), 'confirmed');
     }
 
   }
@@ -68,12 +76,26 @@ export class NetworkService {
 
   airdrop(publicKey: PublicKey) : Promise<RpcResponseAndContext<SignatureResult>> {
     this.waiting="Airdrop en cours";
-    return this.connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL).then(
-      (airdropSignature: TransactionSignature) => {
-        this.waiting="";
-        return this.connection.confirmTransaction(airdropSignature);
+
+      return this.connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL).then(
+          (airdropSignature: TransactionSignature) => {
+            this.waiting="";
+            return this.connection.confirmTransaction(airdropSignature);
+          }
+      );
+
+
+  }
+
+  add_solscan(token:any) : any{
+    for(let k in token){
+      let value=token[k];
+      if(value && typeof value==="object" && value.constructor.name === "PublicKey"){
+        value='https://solscan.io/address/'+value.toBase58()+'?cluster='+this._network;
+        token[k+"_explorer"]=value;
       }
-    );
+    }
+    return token;
   }
 
   complete_token(r:any[]) : Promise<any[]> {
@@ -84,20 +106,43 @@ export class NetworkService {
         const accountInfo: any = SPLToken.AccountLayout.decode(e.account.data);
         accountInfo["pubkey"] = e.pubkey;
         const layoutInfo = SPLToken.MintLayout.decode(e.account.data);
-        this.httpClient.get("https://api-devnet.solscan.io/account?address=" + accountInfo.mint.toBase58()).subscribe((dt: any) => {
-          this.httpClient.get(dt.data.metadata.data.uri).subscribe((data_sup: any) => {
-            let tokenInfo = {accountInfo:accountInfo, layoutInfo:layoutInfo, solscan:dt.data, offchain:data_sup};
-            rc.push(tokenInfo);
+        let explorer_domain=this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io"
+        this.httpClient.get(explorer_domain+"/account?address=" + accountInfo.mint.toBase58()).subscribe((dt: any) => {
+          this.httpClient.get(dt.data?.metadata?.data.uri).subscribe((data_sup: any) => {
+            let token = {
+              accountInfo:this.add_solscan(accountInfo),
+              layoutInfo:this.add_solscan(layoutInfo),
+              solscan:this.add_solscan(dt.data),
+              offchain:data_sup,
+              search_collection:words(data_sup.collection),
+              search_metadata:words(Object.values(data_sup.attributes))
+            }
+
+            for(let creator of token.solscan.metadata?.data?.creators){
+              for(let k of this.keys){
+                if(creator.address==k.pubkey)creator.name=k.name;
+              }
+            }
+
+            rc.push(token);
             if (rc.length == r.length) resolve(rc);
           }, (err) => {
-            let tokenInfo = {...accountInfo, ...layoutInfo, ...dt.data};
-            rc.push(tokenInfo);
+            let token = {
+              accountInfo:accountInfo,
+              layoutInfo:layoutInfo,
+              solscan:dt.data,
+              offchain:{}
+            };
+            rc.push(token);
             if (rc.length == r.length) resolve(rc);
           })
         })
       }
     });
   }
+
+
+
 
 
   isMain() {
@@ -116,13 +161,45 @@ export class NetworkService {
   }
 
 
-  get_tokens_from_owner(owner:PublicKey) : Promise<any[]> {
+
+
+  get_tokens_from_owner(owner:string,function_name="by_owner") : Promise<any[]> {
     return new Promise((resolve,reject) => {
-      this.connection.getTokenAccountsByOwner(owner,{programId: TOKEN_PROGRAM_ID},"confirmed").then((r:any)=> {
-        this.complete_token(r.value).then(r => {
-          resolve(r);
-        })
-      });
+      if(!owner){
+        reject();
+      } else {
+
+        if(this.network.indexOf("elrond")==-1){
+          let publicKey=new PublicKey(owner);
+
+          if(function_name=="by_owner"){
+            this.connection.getTokenAccountsByOwner(publicKey,{programId: TOKEN_PROGRAM_ID},"confirmed").then((r:any)=> {
+              this.complete_token(r.value).then(r => {
+                resolve(r);
+              })
+            }).catch(err=>{
+              showError(this,err);
+            });
+          }
+        } else {
+          this.httpClient.get(environment.server+"/api/nfts/?limit=25&account="+owner+"&network="+this.network).subscribe((r:any)=>{
+            resolve(r);
+          })
+        }
+
+
+
+        if(function_name=="by_delegate"){
+          //TODO function en chantier
+          this.httpClient.post("",{}).subscribe((r:any)=> {
+            this.complete_token(r.value).then(r => {
+              resolve(r);
+            })
+          });
+        }
+
+
+      }
     });
   }
 
@@ -132,5 +209,18 @@ export class NetworkService {
         this.complete_token(r.value).then(r=>{resolve(r);})
       })
     });
+  }
+
+  wait(message: string) {
+    this.waiting=message;
+    setTimeout(()=>{this.waiting=""},10000);
+  }
+
+  isElrond() {
+    return this.network.indexOf("elrond")>-1;
+  }
+
+  isSolana() {
+    return this.network=="devnet" || this.network=="mainnet";
   }
 }

@@ -3,6 +3,7 @@ import {clusterApiUrl, Connection, LAMPORTS_PER_SOL, PublicKey, TransactionSigna
 import {UserService} from "../user.service";
 import {Observable, Observer} from "rxjs";
 import {NetworkService} from "../network.service";
+import {ActivatedRoute} from "@angular/router";
 
 // @ts-ignore
 // @ts-ignore
@@ -15,10 +16,13 @@ export class FaucetComponent implements OnInit {
 
   public balance: Promise<number> | undefined;
 
-  constructor(public user:UserService,public network:NetworkService) { }
+  constructor(public user:UserService,
+              public routes:ActivatedRoute,
+              public network:NetworkService) { }
 
   ngOnInit(): void {
-    this.user.connect(()=>{this.refresh();});
+    if(this.network.isSolana())
+      this.user.connect(()=>{this.refresh();});
   }
 
   refresh(){
@@ -26,7 +30,10 @@ export class FaucetComponent implements OnInit {
   }
 
   reload() {
-    this.network.airdrop(this.user.wallet.publicKey!);
+    if(this.network.isElrond())
+      open("https://r3d4.fr/elrond/devnet/index.php","_blank")
+    else
+      this.network.airdrop(this.user.wallet.publicKey!);
   }
 
 

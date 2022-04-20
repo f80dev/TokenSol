@@ -6,7 +6,8 @@
 /out-tsc
 /bazel-out
 
-/Metaboss/admin.json
+/Metaboss/Keys
+/Metaboss/settings.py
 
 # Node
 /node_modules

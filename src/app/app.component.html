@@ -7,12 +7,15 @@
       <span style="font-size: xx-small" *ngIf="user.connected()">
         {{user.addr}}
       </span>
-      <span *ngIf="!user.connected()">MENU</span>
+      <span *ngIf="!user.connected()">{{title}}</span>
     </mat-toolbar>
     <mat-nav-list>
       <a mat-list-item [routerLink]="'validate'" *ngIf="user.hasPerm('validate')">Contrôle d'acces</a>
       <a mat-list-item [routerLink]="'buy'" *ngIf="user.hasPerm('buy')">Achat de NFT</a>
-      <a mat-list-item [routerLink]="'reload'" *ngIf="user.hasPerm('reload')">Rechargement</a>
+      <a mat-list-item [routerLink]="'reload'" *ngIf="user.hasPerm('reload') || network_service.network.indexOf('devnet')>-1">Rechargement</a>
+      <a mat-list-item [routerLink]="'keys'" *ngIf="user.hasPerm('keys')">Gestion des clés</a>
+      <a mat-list-item [routerLink]="'mint'" *ngIf="user.hasPerm('mint')">Miner</a>
+      <a mat-list-item [routerLink]="'manage'" *ngIf="user.hasPerm('manage')">Gestion des NFTs</a>
       <a mat-list-item [routerLink]="'wallet'" *ngIf="user.hasPerm('wallet')">Mes NFTs</a>
       <a mat-list-item (click)="login()" *ngIf="!user.connected()">Login</a>
       <a mat-list-item (click)="logout()" *ngIf="user.connected()">Logout</a>
@@ -24,34 +27,45 @@
     <mat-toolbar color="primary">
       <button
         type="button"
-        aria-label="Toggle sidenav"
         mat-icon-button
         (click)="drawer.toggle()"
         *ngIf="isHandset$ | async">
-        <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+        <mat-icon>menu</mat-icon>
       </button>
-      <span>TokenSol</span>
       &nbsp;
-      <div *ngIf="network.waiting.length>0" style="display: inline-block;color:white;">
-        <mat-spinner style="display: inline-block;" color="warn" diameter="20"></mat-spinner>&nbsp;{{network.waiting}}
+      <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;">
+        <mat-spinner style="display: inline-block;" color="warn" diameter="20"></mat-spinner>&nbsp;{{network_service.waiting}}
       </div>
 
       <span class="example-spacer"></span>
 
-      <button type="button"
+      <mat-form-field>
+        <mat-select  [(value)]="network_service.network" >
+          <mat-option *ngFor="let network of networks" [value]="network">
+            {{network}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      &nbsp;&nbsp;
+
+      <app-selectkey fontsize="10px" (refresh)="this.refresh()">
+        Signature
+      </app-selectkey>&nbsp;&nbsp;
+
+      <button mat-button
               *ngIf="!user.connected()"
-              aria-label="Connexion"
               mat-icon-button
               (click)="login()">
-        <mat-icon aria-label="Side nav toggle icon">login</mat-icon>
+        <mat-icon>login</mat-icon>
       </button>
+
 
       <button type="button"
               *ngIf="user.connected()"
               aria-label="Connexion"
               mat-icon-button
               (click)="logout()">
-        <mat-icon aria-label="Side nav toggle icon">logout</mat-icon>
+        <mat-icon>logout</mat-icon>
       </button>
 
     </mat-toolbar>
