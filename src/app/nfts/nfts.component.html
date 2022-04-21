@@ -3,12 +3,12 @@
     <div *ngIf="format=='obj'" style="display: block;width: 450px;height:650px;padding:10px;" class="mat-elevation-z4">
       <strong>{{nft.solscan?.tokenInfo?.name}}</strong><br>
       <small>Collection: {{nft.offchain?.collection?.name}}</small><br>
-      <small>NFT address: {{nft.accountInfo?.mint?.toBase58()}}</small>
+      <small>NFT address: {{nft.accountInfo?.mint}}</small>
       <br><br>
 
 
       <table style="font-size: xx-small;width:100%;line-height: 85%;">
-        <tr *ngFor="let attr of nft.offchain?.attributes" (click)="update_field(attr,nft)">
+        <tr *ngFor="let attr of nft.attributes" (click)="update_field(attr,nft)">
           <td>{{attr.trait_type}}</td>
           <td>{{attr.value}}</td>
         </tr>

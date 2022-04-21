@@ -1,5 +1,5 @@
 import base64
-from urllib import request
+from os import listdir
 
 import requests
 
@@ -9,10 +9,12 @@ from erdpy import config
 from erdpy.proxy import ElrondProxy
 from erdpy.transactions import Transaction
 from erdpy.accounts import Account
+from erdpy.wallet import keyfile
 
 RESULT_SECTION="smartContractResults"
 LIMIT_GAS=200000000
 PRICE_FOR_STANDARD_NFT=50000000000000000
+ELROND_KEY_DIR="./elrond/PEM/"
 
 NETWORKS={
     "testnet":{
@@ -143,13 +145,15 @@ class Elrond:
             return None
 
         if RESULT_SECTION in t and len(t[RESULT_SECTION][0]["data"].split("@")) > 1:
-            token_id = t[RESULT_SECTION][0]["data"].split("@")[2]
+            collection_id = t[RESULT_SECTION][0]["data"].split("@")[2]
 
-            data = "setSpecialRole@" + token_id + "@" + owner.address.hex() \
-                   + "@" + str_to_hex("ESDTRoleNFTCreate",False) \
-                   + "@" + str_to_hex("ESDTRoleNFTBurn", False) \
+            data = "setSpecialRole@" + collection_id + "@" + owner.address.hex() \
+                   + "@" + str_to_hex("ESDTRoleNFTCreate",False)  \
                    + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
 
+            #TODO pour l'instant ne fonctionne pas
+            data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False) \
+ \
             if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
 
             #Exemple d'usage de setSpecialRole sur la collection présente
@@ -159,7 +163,7 @@ class Elrond:
                                       Account(address="erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u"),
                                       owner, 0, data)
 
-            return token_id
+            return collection_id
 
         return None
 
@@ -180,15 +184,19 @@ class Elrond:
                     uri_attributes=str(base64.b64decode(nft["attributes"]),"utf8")
                     nft["tags"]=uri_attributes.split("tags:")[1].split(";")[0]
                     cid=uri_attributes.split("metadata:")[1].split("/")[0]
-                    nft["attributes"]=requests.get("https://ipfs.io/ipfs/"+cid).json()["attributes"]
-                    nft["accountInfo"]={
-                        "mint":_user.address.bech32()
-                    }
+
+                    attr=requests.get("https://ipfs.io/ipfs/"+cid).json()["attributes"]
+                    nft["attributes"]=attr
+                    nft["id"]=nft["tokenIdentifier"]
+                    nft["accountInfo"]={"mint":_user.address.bech32()}
+                    nft["creators"]={} if not "creators" in attr else attr["creators"]
+                    nft["collections"]={} if not "collections" in attr else attr["collections"]
+
                     rc.append(nft)
                     if len(rc)>limit:break
         return rc
 
-    def burn(self,_user,token_id):
+    def freeze(self,_user,token_id):
         """
         https://docs.elrond.com/developers/nft-tokens/
         :param _user:
@@ -200,7 +208,21 @@ class Elrond:
         data = "freezeSingleNFT@" + str_to_hex(collection_id) \
                + "@" + int_to_hex(nonce,4) \
                + "@" + str_to_hex(_user.address.hex(), False)
-        t = self.send_transaction(_user, _user, _user, 0, data)
+        t = self.send_transaction(_user, Account(address=NETWORKS[self.network_name]["nft"]), _user, 0, data)
+        return t
+
+
+    def burn(self,_user,token_id):
+        """
+        https://docs.elrond.com/developers/nft-tokens/
+        :param _user:
+        :param token_id:
+        :return:
+        """
+        _user=self.toAccount(_user)
+        collection_id,nonce=self.extract_from_tokenid(token_id)
+        data = "ESDTLocalBurn@" + str_to_hex(token_id,False) + "@" + int_to_hex(1,4)
+        t = self.send_transaction(_user,_user , _user, 0, data)
         return t
 
 
@@ -212,7 +234,7 @@ class Elrond:
         data = "ESDTNFTUpdateAttributes@" + collection_id \
                + "@" + int_to_hex(nonce,4) \
                + "@" + str_to_hex(s, False)
-        t = self.send_transaction(_user, _user, _user, 0, data)
+        t = self.send_transaction(_user, Account(address=NETWORKS[self.network_name]["nft"]), _user, 0, data)
         return t
 
 
@@ -248,6 +270,7 @@ class Elrond:
         #Création de billet
         #Exemple : issueSemiFungible@546f757245696666656c@544f555245494646454c@63616e467265657a65@74727565@63616e57697065@74727565@63616e5472616e736665724e4654437265617465526f6c65@74727565
         #Transaction hash 3f002652038ba8aed2876809a9e019451770c740749c1047a5b4d354f5fb217a
+
 
         cid_metadata=ipfs.add(properties)
         nonce="02"
@@ -304,3 +327,12 @@ class Elrond:
         collection_id=token_id.split("-")[0]+"-"+token_id.split("-")[1],
         nonce=token_id.split("-")[2]
         return collection_id,nonce
+
+    def get_keys(self):
+        rc=[]
+        for f in listdir(ELROND_KEY_DIR):
+            if f.endswith(".pem"):
+                _a=Account(pem_file=ELROND_KEY_DIR+f)
+                rc.append({"name":f.replace(".pem",""),"pubkey":str(_a.address.bech32(),"utf8")})
+        return rc
+

@@ -58,18 +58,18 @@ def update():
 #test http://127.0.0.1:9999/api/keys/
 #test https://server.f80lab.com:4242/api/keys/
 def keys():
+  network=request.args.get("network","devnet").lower()
   if request.method=="GET":
-    return jsonify(Solana().get_keys())
+    if "elrond" in network:
+      return jsonify(Elrond().get_keys())
+    else:
+      return jsonify(Solana().get_keys())
   else:
     obj=request.json
     filename=(SOLANA_KEY_DIR+obj["name"]+".json").replace(".json.json",".json")
     f = open(filename, "w")
     key=obj["key"]
     rc=[]
-    # if not "," in key:
-    #   for c in base64.b64decode(key):
-    #     rc.append(str(c))
-    #   key="["+",".join(rc)+"]"
 
     f.write(key)
     f.close()
@@ -115,7 +115,6 @@ def upload_on_platform(data,platform="ipfs"):
 
 
 @app.route('/api/nfts/',methods=["GET"])
-#https://metaboss.rs/mint.html
 def nfts():
   network=request.args.get("network","elrond-devnet")
   account=request.args.get("account","paul").lower()
@@ -161,7 +160,8 @@ def mint():
     offchain={
       "attributes":_data["attributes"],
       "description":_data["description"],
-      "collection":_data["collection"]["name"]
+      "collection":_data["collection"]["name"],
+      "creators":_data["properties"]["creators"]
     }
     nonce=elrond.mint(wallet_name,
                    title=_data["name"],
@@ -173,7 +173,14 @@ def mint():
                    visual=_data["image"]
                    )
     infos=elrond.get_account(wallet_name)
-    rc={"command":"ESDTCreate","error":"","result":hex_to_str(collection_id)+"-"+nonce,"balance":int(infos["balance"])/1e18}
+    token_id=hex_to_str(collection_id)+"-"+nonce
+    rc={"command":"ESDTCreate",
+        "error":"",
+        "link":elrond.getExplorer(token_id,"nfts"),
+        "out":"",
+        "result":token_id,
+        "balance":int(infos["balance"])/1e18
+        }
   else:
     if not "category" in _data["properties"]:
       _data["properties"]["category"]="image"
@@ -354,8 +361,13 @@ def export():
 def burn():
   account=request.args.get("account")
   keyfile=request.args.get("keyfile")
+  network=request.args.get("network","devnet")
 
-  rc=exec("burn one",account=account,keyfile=keyfile)
+  if "elrond" in network:
+    rc=Elrond(network).burn(keyfile,account)
+  else:
+    rc=exec("burn one",account=account,keyfile=keyfile)
+
   return jsonify(rc)
 
 

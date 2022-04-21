@@ -25,8 +25,8 @@ export class MetabossService {
 
 
   //http://localhost:4200/keys
-  keys(): Observable<MetabossKey[]> {
-    return this.httpClient.get<MetabossKey[]>(environment.server+"/api/keys/");
+  keys(network="devnet"): Observable<MetabossKey[]> {
+    return this.httpClient.get<MetabossKey[]>(environment.server+"/api/keys/?network="+network);
   }
 
 

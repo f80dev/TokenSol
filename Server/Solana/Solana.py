@@ -60,7 +60,7 @@ class Solana:
 		return {
 			"error":str(mes.stderr,"ansi"),
 			"result":rc,
-			"link":"https://solscan.io/token/"+rc,
+			"link":"https://solscan.io/token/"+rc+"?cluster="+self.network,
 			"out":str(mes.stdout,"ansi"),
 			"command":cmd}
 

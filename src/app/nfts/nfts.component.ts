@@ -90,7 +90,7 @@ export class NftsComponent implements OnInit {
 
 
   burn(nft:any) {
-    this.metaboss.burn(nft.accountInfo.mint,this.network.network).then(success=>{
+    this.metaboss.burn(nft.id,this.network.network).then(success=>{
       if(success)this.onrefresh.emit();
     }).catch(err => {showError(this,err)})
 

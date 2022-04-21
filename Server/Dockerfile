@@ -31,6 +31,7 @@ FROM python:3.9.0-buster
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV APP_HOME .
 
 RUN pip3 -v install Flask
 RUN pip3 -v install Flask-Cors

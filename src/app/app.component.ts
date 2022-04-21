@@ -7,6 +7,7 @@ import {UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
+import {MetabossService} from "./metaboss.service";
 
 @Component({
   selector: 'app-root',
@@ -28,7 +29,8 @@ export class AppComponent implements OnInit {
     public user:UserService,
     public network_service:NetworkService,
     public routes:ActivatedRoute,
-    public router:Router
+    public router:Router,
+    public metaboss:MetabossService
   ) {}
 
   ngOnInit(): void {
@@ -54,4 +56,7 @@ export class AppComponent implements OnInit {
   }
 
 
+    update_network() {
+        this.metaboss.keys(this.network_service.network).subscribe((keys)=>{this.network_service.keys=keys;});
+    }
 }

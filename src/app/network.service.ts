@@ -110,10 +110,11 @@ export class NetworkService {
         this.httpClient.get(explorer_domain+"/account?address=" + accountInfo.mint.toBase58()).subscribe((dt: any) => {
           this.httpClient.get(dt.data?.metadata?.data.uri).subscribe((data_sup: any) => {
             let token = {
+              id: accountInfo.mint,
               accountInfo:this.add_solscan(accountInfo),
               layoutInfo:this.add_solscan(layoutInfo),
+              ...data_sup,
               solscan:this.add_solscan(dt.data),
-              offchain:data_sup,
               search_collection:words(data_sup.collection),
               search_metadata:words(Object.values(data_sup.attributes))
             }
@@ -182,7 +183,7 @@ export class NetworkService {
             });
           }
         } else {
-          this.httpClient.get(environment.server+"/api/nfts/?limit=25&account="+owner+"&network="+this.network).subscribe((r:any)=>{
+          this.httpClient.get(environment.server+"/api/nfts/?limit=40&account="+owner+"&network="+this.network).subscribe((r:any)=>{
             resolve(r);
           })
         }

@@ -41,7 +41,7 @@
 
       <mat-form-field>
         <mat-select  [(value)]="network_service.network" >
-          <mat-option *ngFor="let network of networks" [value]="network">
+          <mat-option *ngFor="let network of networks" [value]="network" (selectionchange)="update_network()">
             {{network}}
           </mat-option>
         </mat-select>
