@@ -1,12 +1,79 @@
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {PublicKey} from "@solana/web3.js";
 import {$$, showError, showMessage, toStringify} from "../../tools";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MetabossService} from "../metaboss.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 
+export interface Creator {
+  address:string
+  verified:number
+  share:number
+}
+export interface SplTokenInfo {
+  mint:string
+  owner:string
+  amount: string
+  state:number
+  address:string
+  isFrozen:boolean
+}
+export interface SplMintInfo {
+  mintAuthority:string
+  supply:string
+  decimal:number
+}
+export interface Attribute {
+  trait_type:string
+  value:string
+}
+export interface MetadataExternal {
+  name:string
+  description:string
+  external_url:string
+  image: string
+  seller_fee_basis_points: number
+  attributes:Attribute[]
+  collection: {
+    name:string
+  }
+  properties:{
+    files:{uri:string,type:string}[]
+    caterogy:string
+    creators:Creator[]
+  }
+  issuer:string
+}
+export interface MetadataOnChain {
+  key:number | undefined
+  updateAuthority:string
+  mint:string,
+  data:{
+    name:string
+    symbol:string
+    uri:string
+    sellerFeeBasisPoints:number
+    creators:Creator[]
+  }
+  primarySaleHappened:number
+  isMutable:number
+  type:string
+}
+export interface Search {
+  collection:string
+  metadata:string
+}
+export interface Token {
+  mint:string,
+  address: string,
+  splTokenInfo : SplTokenInfo
+  splMintInfo : SplMintInfo,
+  metadataPDA:any,
+  metadataOnchain:MetadataOnChain,
+  metadataOffchain:MetadataExternal,
+  search:Search
+}
 
 @Component({
   selector: 'app-nfts',
@@ -15,7 +82,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 })
 export class NftsComponent implements OnInit {
 
-  @Input("nfts") nfts: any;
+  @Input("nfts") nfts: Token[]=[];
   @Input("user") user: string | undefined;
   @Input("format") format: string="str";
   @Output('refresh') onrefresh: EventEmitter<any>=new EventEmitter();
@@ -89,28 +156,36 @@ export class NftsComponent implements OnInit {
   }
 
 
-  burn(nft:any) {
-    this.metaboss.burn(nft.id,this.network.network).then(success=>{
+  burn(nft:Token) {
+    this.metaboss.burn(nft.address,this.network.network).then(success=>{
       if(success)this.onrefresh.emit();
-    }).catch(err => {showError(this,err)})
-
-
+    }).catch(err => {
+      showError(this,err)
+    })
   }
 
 
 
-  update_field(attr: any, nft: any) {
-    this.ask_for_attribute(attr.value,attr.trait_type).then(new_value=>{
-      for(let i=0;i<nft.offchain.attributes.length;i++){
-        if(nft.offchain.attributes[i]==attr){
-          nft.offchain.attributes[i].value=new_value;
+  update_field(attr: any, nft: Token) {
+
+    if(nft.metadataOnchain?.updateAuthority!=this.metaboss.admin_key?.pubkey){
+      showMessage(this,"Cette signature ne permet pas la mise a jour du NFT");
+      return;
+    }
+
+    this.ask_for_attribute(attr.value,attr.trait_type).then((new_value:any)=>{
+      for(let i=0;i<nft.metadataOffchain?.attributes.length;i++){
+        if(nft.metadataOffchain?.attributes[i]==attr){
+          nft.metadataOffchain.attributes[i].value=new_value;
           break;
         }
       }
         this.network.wait("Modification en cours");
-        this.metaboss.update_obj(nft.accountInfo.mint,nft.offchain,this.network.network).then(success=>{
+        this.metaboss.update_obj(nft.mint,nft.metadataOffchain,this.network.network).then(success=>{
           this.network.wait("");
           showMessage(this,"Modification effectuée, un délai peut être nécéssaire avant validation par la blockchain");
+        }).catch((err)=>{
+          showMessage(this,err);
         })
       })
   }
@@ -120,10 +195,10 @@ export class NftsComponent implements OnInit {
   }
 
 
-  sign_token(nft: any, creator: any) {
+  sign_token(nft: Token, creator: Creator) {
     this.network.wait("Signature en cours");
-    this.metaboss.sign(nft.accountInfo.mint.toBase58(),creator.address,this.network.network).then(()=>{
-      showMessage(this,nft.offchain.name+" signé. Mise a jour de la blockchain en cours");
+    this.metaboss.sign(nft.address,creator.address,this.network.network).then(()=>{
+      showMessage(this,nft.metadataOnchain.data.name+" signé. Mise a jour de la blockchain en cours");
       this.network.wait("");
       setTimeout(()=>{this.onrefresh.emit();},4000);
     });
@@ -135,5 +210,10 @@ export class NftsComponent implements OnInit {
     this.metaboss.keys().subscribe((keys)=>{
       this.network.keys=keys;
     })
+  }
+
+
+  getExplorer(addr: string | undefined) {
+    return "https://solscan.io/account/"+addr;
   }
 }

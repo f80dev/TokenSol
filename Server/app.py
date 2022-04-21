@@ -19,9 +19,10 @@ from werkzeug.datastructures import FileStorage
 
 from Elrond.Elrond import Elrond
 from Solana.Solana import SOLANA_KEY_DIR, Solana
-from Tools import str_to_hex, hex_to_str
+from Tools import str_to_hex, hex_to_str, log
 from ipfs import IPFS
 from nftstorage import NFTStorage
+from settings import GITHUB
 
 app = Flask(__name__)
 
@@ -93,9 +94,10 @@ def sign():
   keyfile=request.args.get("keyfile","paul")
   network=request.args.get("network","devnet")
   account=request.args.get("account","")
+  log("Demande de signature pour "+keyfile)
   rc={}
   if len(account)>0:
-    rc=exec("sign one",account=account,keyfile=Solana().find_json_from_address(keyfile),network=network)
+    rc=Solana(network).exec("sign one",account=account,keyfile=keyfile)
   return jsonify(rc)
 
 
@@ -111,16 +113,24 @@ def upload_on_platform(data,platform="ipfs"):
     else:
       rc=NFTStorage().add(data)
 
+  # if platform=="github":
+  #   github_client=GitHubStorage(GITHUB)
+  #
+
   return rc
 
 
+#https://server.f80lab.com:4242/api/nfts/
 @app.route('/api/nfts/',methods=["GET"])
 def nfts():
-  network=request.args.get("network","elrond-devnet")
+  network=request.args.get("network","devnet")
   account=request.args.get("account","paul").lower()
   limit=request.args.get("limit","30")
   rc=[]
-  rc=rc+Elrond(network).get_nfts(account,IPFS(IPFS_SERVER,IPFS_PORT),int(limit))
+  if "elrond" in network:
+    rc=rc+Elrond(network).get_nfts(account,IPFS(IPFS_SERVER,IPFS_PORT),int(limit))
+  else:
+    rc=rc+Solana(network).get_nfts(account)
   return jsonify(rc)
 
 @app.route('/api/upload/',methods=["POST"])
@@ -132,10 +142,8 @@ def upload():
 
 
 @app.route('/api/mint/',methods=["POST"])
-#https://metaboss.rs/mint.html
 def mint():
   keyfile=request.args.get("keyfile","paul").lower()
-  timeout=request.args.get("timeout",60000)
   network=request.args.get("network","devnet")
   _data=request.json
 
@@ -326,7 +334,7 @@ def update_obj():
     return rc
   else:
     url=ipfs.get_link(ipfs.add(request.json))
-    return exec("update","uri --new-uri "+url,account=account,keyfile=keyfile,network=network)
+    return Solana(network).exec("update","uri --new-uri "+url,account=account,keyfile=keyfile)
 
 
 @app.route('/api/export/',methods=["POST"])
@@ -361,12 +369,13 @@ def export():
 def burn():
   account=request.args.get("account")
   keyfile=request.args.get("keyfile")
+  delay=request.args.get("delay","1.0")
   network=request.args.get("network","devnet")
 
   if "elrond" in network:
     rc=Elrond(network).burn(keyfile,account)
   else:
-    rc=exec("burn one",account=account,keyfile=keyfile)
+    rc=Solana(network).exec("burn one",account=account,keyfile=keyfile,delay=int(delay))
 
   return jsonify(rc)
 

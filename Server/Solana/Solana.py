@@ -1,16 +1,22 @@
+import base64
 import json
 import os
 import platform
 import subprocess
 from datetime import datetime
 from os import listdir
+from os.path import exists
 from time import sleep
+
+from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
 import base58
 import requests
 from solana.keypair import Keypair
 from solana.rpc.commitment import Confirmed
+from solana.rpc.types import TokenAccountOpts
+from spl.token.constants import TOKEN_PROGRAM_ID
 
 from Tools import log
 
@@ -24,44 +30,52 @@ class Solana:
 		self.client=Client(self.api,Confirmed)
 
 
-	def exec(self,command:str,param:str="",account:str="",keyfile="admin.json",data=None,sign=False):
+	def exec(self,command:str,param:str="",account:str="",keyfile="admin.json",data=None,sign=False,delay=2.0):
+		if "Solana" in os.listdir(): os.chdir("./Solana")
 		keyfile=keyfile +".json" if not keyfile.endswith(".json") else keyfile
+		if not keyfile in os.listdir("./Keys/"):
+			return {"error":keyfile+" introuvable"}
+
 		keyfile="./Keys/"+keyfile if not keyfile.startswith("./Keys") else keyfile
 
-		os.chdir("./Solana")
-
-		file_to_mint="./Temp/to_mint_"+str(datetime.now().timestamp())+".json"
-		with open(file_to_mint, 'w') as f:
-			f.writelines(json.dumps(data,indent=4, sort_keys=True))
-			f.close()
+		if data:
+			file_to_mint="./Temp/to_mint_"+str(datetime.now().timestamp())+".json"
+			with open(file_to_mint, 'w') as f:
+				f.writelines(json.dumps(data,indent=4, sort_keys=True))
+				f.close()
 
 		mes=None
 		progname="metaboss-ubuntu-latest" if platform.system()!="Windows" else "metaboss.exe"
+		encoder="ANSI" if platform.system()=="Windows" else "utf8"
+
 		if progname in os.listdir():
 			cmd=progname+" "+command+" "+param+" --keypair "+keyfile+" --log-level info -r "+self.api
 			if len(account)>0:cmd=cmd+" --account "+account
-			cmd=cmd+" --nft-data-file "+file_to_mint+(" --sign" if sign else "")
+			if data: cmd=cmd+" --nft-data-file "+file_to_mint+(" --sign" if sign else "")
 
 			log(cmd)
 			mes=subprocess.run(cmd,capture_output=True,timeout=10000,shell=True)
-			sleep(1.0)
+			sleep(delay)
 		else:
 			log(progname+" non installé")
 
-		if len(mes.stderr)==0: os.remove(file_to_mint)
+		if len(mes.stderr)==0 and data:
+			if exists(file_to_mint):os.remove(file_to_mint)
 
-		os.chdir("..")
+		if progname in os.listdir(): os.chdir("..")
 
 		if len(mes.stderr)==0:
-			rc=str(mes.stdout,"ansi").split("account: ")[1].split("\nTx")[0]
+			rc=str(mes.stdout,encoder)
+			if "account: " in rc:rc=rc.split("account: ")[1].split("\nTx")[0]
+			log(str(mes.stdout,encoder))
 		else:
 			rc="error"
 
 		return {
-			"error":str(mes.stderr,"ansi"),
+			"error":str(mes.stderr,encoder),
 			"result":rc,
 			"link":"https://solscan.io/token/"+rc+"?cluster="+self.network,
-			"out":str(mes.stdout,"ansi"),
+			"out":str(mes.stdout,encoder),
 			"command":cmd}
 
 
@@ -116,3 +130,12 @@ class Solana:
 				else:
 					return k
 		return None
+
+	#http://127.0.0.1:4242/api/nfts/
+	def get_nfts(self, name):
+		pubkey=self.find_address_from_json(name)
+		token_account_opts=TokenAccountOpts(mint=None,program_id=TOKEN_PROGRAM_ID)
+		rc=self.client.get_token_accounts_by_owner(PublicKey(pubkey),token_account_opts,Confirmed)
+		# for item in rc["result"]["value"]:
+		# 	item["content"]=base64.b64decode(item["account"]["data"][0])
+		return rc["result"]["value"]

@@ -14,6 +14,7 @@ import {HttpClient} from "@angular/common/http";
 import {MetabossKey, showError, showMessage, words} from "../tools";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
+import {Token} from "./nfts/nfts.component";
 
 @Injectable({
   providedIn: 'root'
@@ -109,24 +110,31 @@ export class NetworkService {
         let explorer_domain=this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io"
         this.httpClient.get(explorer_domain+"/account?address=" + accountInfo.mint.toBase58()).subscribe((dt: any) => {
           this.httpClient.get(dt.data?.metadata?.data.uri).subscribe((data_sup: any) => {
-            let token = {
-              id: accountInfo.mint,
-              accountInfo:this.add_solscan(accountInfo),
-              layoutInfo:this.add_solscan(layoutInfo),
-              ...data_sup,
-              solscan:this.add_solscan(dt.data),
-              search_collection:words(data_sup.collection),
-              search_metadata:words(Object.values(data_sup.attributes))
+            let token:Token = {
+              address: dt.data.account,
+              metadataPDA: {},
+              mint: layoutInfo.mintAuthority.toBase58(),
+              splMintInfo: this.add_solscan(layoutInfo),
+              splTokenInfo:this.add_solscan(dt.data.tokenInfo),
+              metadataOffchain: data_sup,
+              metadataOnchain:this.add_solscan(dt.data.metadata),
+              search:{
+                collection:words(data_sup.collection),
+                metadata:words(Object.values(data_sup.attributes))
+              }
+
             }
 
-            for(let creator of token.solscan.metadata?.data?.creators){
+            for(let creator of token.metadataOnchain?.data?.creators){
               for(let k of this.keys){
-                if(creator.address==k.pubkey)creator.name=k.name;
+                if(creator.address==k.pubkey)creator.address=k.name;
               }
             }
 
             rc.push(token);
-            if (rc.length == r.length) resolve(rc);
+            if (rc.length == r.length) {
+              resolve(rc);
+            }
           }, (err) => {
             let token = {
               accountInfo:accountInfo,
@@ -179,7 +187,7 @@ export class NetworkService {
                 resolve(r);
               })
             }).catch(err=>{
-              showError(this,err);
+              reject(err);
             });
           }
         } else {

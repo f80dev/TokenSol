@@ -44,6 +44,8 @@ import { ManageComponent } from './manage/manage.component';
 import { LinkComponent } from './link/link.component';
 import {ClipboardModule} from "@angular/cdk/clipboard";
 import { FilterPipe } from './filter.pipe';
+import { AliasPipe } from './alias.pipe';
+
 
 @NgModule({
   declarations: [
@@ -62,6 +64,7 @@ import { FilterPipe } from './filter.pipe';
     ManageComponent,
     LinkComponent,
     FilterPipe,
+    AliasPipe
 
   ],
     imports: [

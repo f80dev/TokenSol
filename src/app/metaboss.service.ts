@@ -71,22 +71,28 @@ export class MetabossService {
   }
 
 
-  update_obj(nft_addr:PublicKey,data:any,network="devnet") {
+  update_obj(nft_addr:string,data:any,network="devnet") {
     return new Promise((resolve, reject) => {
-      this.httpClient.post(environment.server+"/api/update_obj/?account="+nft_addr.toBase58()+"&keyfile="+this.admin_key?.name+"&network="+network,data).subscribe((r:any)=>{
-        resolve(true);
+      this.httpClient.post(environment.server+"/api/update_obj/?account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network,data).subscribe((r:any)=>{
+        if(r.result=="error")
+          reject(r.error);
+        else
+          resolve(r.out);
       })
     });
   }
 
 
 
-  burn(nft_addr:string,network="devnet") {
+  burn(nft_addr:string,network="devnet",delay=1) {
     return new Promise((resolve, reject) => {
       this.network.wait("En cours de destruction");
-      this.httpClient.get(environment.server+"/api/burn?&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
+      this.httpClient.get(environment.server+"/api/burn?&delay="+delay+"&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
         this.network.wait("");
-        resolve(true);
+        if(r.result=="error")
+          reject(r.error);
+        else
+          resolve(r.out);
       })
     });
   }
@@ -97,13 +103,15 @@ export class MetabossService {
   sel_key(account: string) {
     return new Promise((resolve, reject) => {
       this.keys().subscribe((r) => {
+        let bc=false;
         for (let k of r) {
           if (k.name == account) {
             this.admin_key = k;
+            bc=true;
             resolve(k);
           }
         }
-        reject(new Error(account + " not found"));
+        if(!bc)reject(new Error(account + " not found"));
       })
     });
   }

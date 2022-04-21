@@ -34,7 +34,7 @@
   </button>
 
   <br>
-  <div *ngIf="nfts.length>0">{{nfts.length}} trouvés<br></div>
+  <div *ngIf="nfts?.length>0">{{nfts.length}} trouvés<br></div>
   <app-nfts [nfts]="nfts | filter: ['search_collection',search_collection] | filter: ['search_metadata',search_metadata]" format="obj"
             (refresh)="refresh()"
             [user]="metaboss.admin_key?.pubkey">

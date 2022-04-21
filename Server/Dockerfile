@@ -22,7 +22,9 @@
 #Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp
 #démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py 4242 ssl
 
-#demarage sur windows : docker run --restart=always -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest python3 app.py 4242
+#demarage sur windows :
+# du main docker run --restart=always -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest python3 app.py 4242
+# analyse de l'image docker run --restart=always -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest bash
 #test en mode batch : docker run --restart=always -v /root/certs:/certs -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest bash
 #à tester avec la commande ./metaboss-ubuntu-latest update name --account GwCtQjSZj3CSNRbHVVJ7MqJHcMBGJJ9eHSyxL9X1yAXy --keypair admin.json --new-name dudule
 
@@ -48,6 +50,7 @@ WORKDIR /
 RUN mkdir Solana
 RUN mkdir Elrond
 RUN mkdir ./Solana/Temp
+RUN mkdir ./Solana/PEM
 RUN mkdir ./Solana/Keys
 VOLUME /certs
 
@@ -55,11 +58,12 @@ EXPOSE 4242
 
 COPY *.py $APP_HOME/
 COPY ./Elrond/*.py $APP_HOME/Elrond/
+COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
 COPY ./Solana/*.py $APP_HOME/Solana/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
 
 WORKDIR $APP_HOME/
-RUN chmod +x metaboss-ubuntu-latest
+RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 CMD ["python3", "app.py","4242","ssl"]

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {UserService} from "../user.service";
 import {NetworkService} from "../network.service";
-import {removeBigInt} from "../../tools";
+import {removeBigInt, showError} from "../../tools";
 
 @Component({
   selector: 'app-mywallet',
@@ -39,6 +39,6 @@ export class MywalletComponent implements OnInit {
           this.nfts.push(removeBigInt(t));
         }
       }
-    })
+    }).catch(err=>{showError(this,err)});
   }
 }

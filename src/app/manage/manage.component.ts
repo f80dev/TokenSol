@@ -5,6 +5,7 @@ import {ActivatedRoute} from "@angular/router";
 import {Location} from "@angular/common"
 import {showError, showMessage} from "../../tools";
 import {FilterPipe} from "../filter.pipe";
+import {Token} from "../nfts/nfts.component";
 
 @Component({
   selector: 'app-manage',
@@ -47,7 +48,7 @@ export class ManageComponent implements OnInit {
       this.network.get_tokens_from_owner(this.pubkey).then((r:any[])=>{
         this.network.wait("")
         this.nfts=r;
-      });
+      }).catch(err=>{showError(this,err)});
 
     }
   }
@@ -64,12 +65,18 @@ export class ManageComponent implements OnInit {
 
 
   burn_all() {
-    let nfts=this.filterPipe.transform(this.nfts,['search_collection',this.search_collection]);
+    let nfts:Token[]=this.filterPipe.transform(this.nfts,['search_collection',this.search_collection]);
     nfts=this.filterPipe.transform(nfts,['search_metadata',this.search_metadata]);
+
+    let i=0;
     for(let nft of nfts){
-      this.metaboss.burn(nft.accountInfo.mint,this.network.network).then(success=>{
-        showMessage(this,"détruit");
-      }).catch(err => {showError(this,err)})
+      i=i+1;
+      setTimeout(()=>{
+        this.metaboss.burn(nft.address,this.network.network,5).then(success=>{
+          if(i==nfts.length)showMessage(this,"détruit");
+        }).catch(err => {showError(this,err)})
+      },i*2000)
+
     }
 
   }

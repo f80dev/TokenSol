@@ -152,8 +152,8 @@ class Elrond:
                    + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
 
             #TODO pour l'instant ne fonctionne pas
-            data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False) \
- \
+            #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
+
             if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
 
             #Exemple d'usage de setSpecialRole sur la collection présente

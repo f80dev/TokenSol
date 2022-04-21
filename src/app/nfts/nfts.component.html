@@ -1,20 +1,20 @@
 <div class="mainform">
   <div *ngFor="let nft of nfts" style="display: inline-flex;margin:10px;">
     <div *ngIf="format=='obj'" style="display: block;width: 450px;height:650px;padding:10px;" class="mat-elevation-z4">
-      <strong>{{nft.solscan?.tokenInfo?.name}}</strong><br>
-      <small>Collection: {{nft.offchain?.collection?.name}}</small><br>
-      <small>NFT address: {{nft.accountInfo?.mint}}</small>
+      <strong>{{nft.metadataOnchain?.data?.name}}</strong><br>
+      <small>Collection: {{nft.metadataOffchain?.collection?.name}}</small><br>
+      <small>NFT address: <a [href]="'https://solscan.io/token/'+nft.address+'?cluster='+network.network" target="_blank">{{nft.address}}</a> </small>
       <br><br>
 
 
       <table style="font-size: xx-small;width:100%;line-height: 85%;">
-        <tr *ngFor="let attr of nft.attributes" (click)="update_field(attr,nft)">
+        <tr *ngFor="let attr of nft.metadataOffchain?.attributes" (click)="update_field(attr,nft)">
           <td>{{attr.trait_type}}</td>
           <td>{{attr.value}}</td>
         </tr>
         <tr>
           <td></td>
-          <td><a [href]="nft.solscan?.metadata?.data.uri" target="_blank">Fichier attaché</a></td>
+          <td><a [href]="nft.metadataOnchain?.data?.uri" target="_blank">Fichier attaché</a></td>
         </tr>
         <tr>
 
@@ -22,18 +22,18 @@
 
         <tr></tr>
         <tr><td><h4>Fichiers</h4></td></tr>
-        <tr *ngFor="let file of nft.offchain?.properties?.files">
+        <tr *ngFor="let file of nft.metadataOffchain?.properties?.files">
           <td>{{file.type}}</td>
-          <td><a [href]="file.uri" target="_blank"><mat-icon   style="font-size: medium;">link</mat-icon></a></td>
+          <td><a [href]="file?.uri" target="_blank"><mat-icon   style="font-size: medium;">link</mat-icon></a></td>
         </tr>
 
         <tr><td><br><h4>Créateurs</h4></td></tr>
         <tr><th>Adresse</th><th>Vérifié</th><th>Royalties</th></tr>
-        <tr *ngFor="let creator of nft.solscan?.metadata?.data?.creators" style="text-align: center;">
+        <tr *ngFor="let creator of nft.metadataOnchain?.data?.creators" style="text-align: center;">
           <td style="padding:0px;width:60%;height:20px;vertical-align:text-top !important;text-align: left;">
             <a [href]="get_explorer(creator.address)" target="_blank"><mat-icon>person</mat-icon></a>
-            <div style="display: inline-block;" *ngIf="!creator.name">{{creator.address}}</div>
-            <div style="display: inline-block;" *ngIf="creator.name">{{creator.name}}</div>
+            <div style="display: inline-block;" *ngIf="!creator.address">{{creator.address}}</div>
+            <div style="display: inline-block;" *ngIf="creator.address">{{creator.address}}</div>
           </td>
           <td>
             <mat-icon *ngIf="creator.verified==1">checkmark</mat-icon>
@@ -41,16 +41,23 @@
           </td>
           <td>{{creator.share}}%</td>
         </tr>
+      </table>
 
-
+      <br>
+      <h3>OnChain</h3>
+      <table style="font-size: small" *ngIf="nft.metadataOnchain">
+        <tr><td>Update authority</td><td><a [href]="getExplorer(nft.metadataOnchain.updateAuthority)" target="_blank">{{nft.metadataOnchain?.updateAuthority | alias}}</a></td>
+        <tr><td>Mint authority</td><td><a [href]="getExplorer(nft.splMintInfo?.mintAuthority)" target="_blank">{{nft.splMintInfo?.mintAuthority | alias}}</a></td>
+        <tr><td>Owner</td><td><a [href]="getExplorer(nft.splTokenInfo?.owner)" target="_blank">{{nft.splTokenInfo?.owner | alias}}</a></td>
+        </tr>
       </table>
 
       <button
-        type="button" mat-icon-button
-        title="Supprimer le NFT"
-        (click)="burn(nft)"
-        *ngIf="format=='obj' && (nft.solscan?.metadata?.updateAuthority==user || network.isElrond())">
-        <mat-icon aria-label="Side nav toggle icon">delete</mat-icon>
+              type="button" mat-icon-button
+              title="Supprimer le NFT"
+              (click)="burn(nft)"
+              *ngIf="format=='obj' && (nft.metadataOnchain?.updateAuthority==user || network.isElrond())">
+        <mat-icon>delete</mat-icon>
       </button>
 
 
@@ -59,7 +66,7 @@
     <span *ngIf="format=='str'">{{nft}}</span>
 
     <div *ngIf="format=='json'" class="mat-elevation-z4" style="padding: 10px;">
-      {{nft.offchain?.name}}<br>
+      {{nft.metadataOffchain?.name}}<br>
       <ngx-json-viewer [json]="nft" [expanded]="false"></ngx-json-viewer>
     </div>
 
