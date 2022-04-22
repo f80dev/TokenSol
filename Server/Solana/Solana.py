@@ -49,7 +49,7 @@ class Solana:
 		encoder="ANSI" if platform.system()=="Windows" else "utf8"
 
 		if progname in os.listdir():
-			cmd=progname+" "+command+" "+param+" --keypair "+keyfile+" -r "+self.api
+			cmd="./"+progname+" "+command+" "+param+" --keypair "+keyfile+" -r "+self.api
 			if len(account)>0:cmd=cmd+" --account "+account
 			if data: cmd=cmd+" --nft-data-file "+file_to_mint+(" --sign" if sign else "")
 
