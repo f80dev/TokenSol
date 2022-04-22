@@ -100,7 +100,7 @@ import { AliasPipe } from './alias.pipe';
         ClipboardModule
     ],
   providers: [
-    FilterPipe,
+    FilterPipe,AliasPipe,
     {provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}}
   ],
   bootstrap: [AppComponent]

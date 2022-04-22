@@ -1,3 +1,4 @@
+import base64
 import datetime
 import json
 import os
@@ -85,12 +86,21 @@ def refill():
 
 
 
-
+@app.route('/api/use/',methods=["GET"])
+#https://metaboss.rs/mint.html
+def use():
+  keyfile=request.args.get("keyfile","paul")
+  network=request.args.get("network","devnet")
+  owner=request.args.get("owner")
+  account=request.args.get("account","")
+  rc=Solana(network).exec("use utilize",param="-h "+owner,account=account,keyfile=keyfile)
+  return jsonify(rc)
 
 
 @app.route('/api/sign/',methods=["GET"])
 #https://metaboss.rs/mint.html
 def sign():
+  creator=request.args.get("creator","")
   keyfile=request.args.get("keyfile","paul")
   network=request.args.get("network","devnet")
   account=request.args.get("account","")
@@ -146,6 +156,8 @@ def mint():
   keyfile=request.args.get("keyfile","paul").lower()
   network=request.args.get("network","devnet")
   _data=request.json
+  if _data is None:
+    _data=json.loads(str(request.data,"ansi"))
 
   if _data is None:
     s=str(request.data,"utf8")

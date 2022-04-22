@@ -5,6 +5,7 @@ import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MetabossService} from "../metaboss.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {PublicKey} from "@solana/web3.js";
 
 export interface Creator {
   address:string
@@ -181,7 +182,7 @@ export class NftsComponent implements OnInit {
         }
       }
         this.network.wait("Modification en cours");
-        this.metaboss.update_obj(nft.mint,nft.metadataOffchain,this.network.network).then(success=>{
+        this.metaboss.update_obj(nft.address,nft.metadataOffchain,this.network.network).then(success=>{
           this.network.wait("");
           showMessage(this,"Modification effectuée, un délai peut être nécéssaire avant validation par la blockchain");
         }).catch((err)=>{
@@ -195,7 +196,15 @@ export class NftsComponent implements OnInit {
   }
 
 
-  sign_token(nft: Token, creator: Creator) {
+  use_token(nft:Token){
+    this.network.wait("Utilisation en cours");
+    this.metaboss.use(nft.address,this.network.network).then(()=>{
+      showMessage(this,nft.metadataOnchain.data.name+" utilisé. Mise a jour de la blockchain en cours");
+      this.network.wait("");
+    });
+  }
+
+  sign_token(nft: Token,creator:Creator) {
     this.network.wait("Signature en cours");
     this.metaboss.sign(nft.address,creator.address,this.network.network).then(()=>{
       showMessage(this,nft.metadataOnchain.data.name+" signé. Mise a jour de la blockchain en cours");

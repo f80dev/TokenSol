@@ -99,7 +99,7 @@ export class NetworkService {
     return token;
   }
 
-  complete_token(r:any[]) : Promise<any[]> {
+  complete_token(owner:string,r:any[]) : Promise<any[]> {
     return new Promise((resolve, reject) => {
       let rc: any[] = [];
       if(!r)reject(new Error("Empty list"))
@@ -122,15 +122,8 @@ export class NetworkService {
                 collection:words(data_sup.collection),
                 metadata:words(Object.values(data_sup.attributes))
               }
-
             }
-
-            for(let creator of token.metadataOnchain?.data?.creators){
-              for(let k of this.keys){
-                if(creator.address==k.pubkey)creator.address=k.name;
-              }
-            }
-
+            token.splTokenInfo.owner=owner;
             rc.push(token);
             if (rc.length == r.length) {
               resolve(rc);
@@ -177,13 +170,11 @@ export class NetworkService {
       if(!owner){
         reject();
       } else {
-
         if(this.network.indexOf("elrond")==-1){
           let publicKey=new PublicKey(owner);
-
           if(function_name=="by_owner"){
             this.connection.getTokenAccountsByOwner(publicKey,{programId: TOKEN_PROGRAM_ID},"confirmed").then((r:any)=> {
-              this.complete_token(r.value).then(r => {
+              this.complete_token(owner,r.value).then(r => {
                 resolve(r);
               })
             }).catch(err=>{
@@ -201,7 +192,7 @@ export class NetworkService {
         if(function_name=="by_delegate"){
           //TODO function en chantier
           this.httpClient.post("",{}).subscribe((r:any)=> {
-            this.complete_token(r.value).then(r => {
+            this.complete_token(owner,r.value).then(r => {
               resolve(r);
             })
           });
@@ -215,7 +206,7 @@ export class NetworkService {
   get_nfts_from_miner(miner:PublicKey) : Promise<any[]> {
     return new Promise((resolve,reject) => {
       this.connection.getProgramAccounts(miner,"confirmed").then((r:any)=>{
-        this.complete_token(r.value).then(r=>{resolve(r);})
+        this.complete_token(miner.toBase58(),r.value).then(r=>{resolve(r);})
       })
     });
   }

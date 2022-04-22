@@ -12,9 +12,14 @@ export class AliasPipe implements PipeTransform {
       public network:NetworkService
   ){}
 
-  transform(value: string | undefined, ...args: unknown[]): unknown {
+  transform(value: string | undefined, ...args: unknown[]): string {
+    if(!value)return "";
     for(let k of this.network.keys){
-      if(k.pubkey==value)return k.name;
+      if(args.length>0 && args[0]=="pubkey"){
+        if(k.name==value)return k.pubkey;
+      }else{
+        if(k.pubkey==value)return k.name;
+      }
     }
     return value;
   }

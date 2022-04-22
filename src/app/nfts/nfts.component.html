@@ -1,7 +1,7 @@
 <div class="mainform">
   <div *ngFor="let nft of nfts" style="display: inline-flex;margin:10px;">
     <div *ngIf="format=='obj'" style="display: block;width: 450px;height:650px;padding:10px;" class="mat-elevation-z4">
-      <strong>{{nft.metadataOnchain?.data?.name}}</strong><br>
+      <strong>{{nft.metadataOnchain?.data?.name}}</strong>&nbsp;({{nft.metadataOnchain.data.symbol}})<br>
       <small>Collection: {{nft.metadataOffchain?.collection?.name}}</small><br>
       <small>NFT address: <a [href]="'https://solscan.io/token/'+nft.address+'?cluster='+network.network" target="_blank">{{nft.address}}</a> </small>
       <br><br>
@@ -32,8 +32,7 @@
         <tr *ngFor="let creator of nft.metadataOnchain?.data?.creators" style="text-align: center;">
           <td style="padding:0px;width:60%;height:20px;vertical-align:text-top !important;text-align: left;">
             <a [href]="get_explorer(creator.address)" target="_blank"><mat-icon>person</mat-icon></a>
-            <div style="display: inline-block;" *ngIf="!creator.address">{{creator.address}}</div>
-            <div style="display: inline-block;" *ngIf="creator.address">{{creator.address}}</div>
+            <div style="display: inline-block;">{{creator.address | alias}}</div>
           </td>
           <td>
             <mat-icon *ngIf="creator.verified==1">checkmark</mat-icon>
@@ -58,6 +57,14 @@
               (click)="burn(nft)"
               *ngIf="format=='obj' && (nft.metadataOnchain?.updateAuthority==user || network.isElrond())">
         <mat-icon>delete</mat-icon>
+      </button>
+
+      <button
+              type="button" mat-icon-button
+              title="Utiliser le NFT"
+              (click)="use_token(nft)"
+              *ngIf="format=='obj' && (!network.isElrond())">
+        <mat-icon>build</mat-icon>
       </button>
 
 

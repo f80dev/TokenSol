@@ -5,7 +5,7 @@
   &nbsp;
   <mat-form-field appearance="fill" style="width: 375px">
     <mat-label>Propriétaire des NFT</mat-label>
-    <input matInput type="text" maxlength="64" [(ngModel)]="pubkey" (ngModelChange)="change_view()" >
+    <input matInput type="text" maxlength="64" [(ngModel)]="pubkey" (keypress)="onkeypress($event)" >
     <mat-hint>L'adresse correspond à la clé publique</mat-hint>
   </mat-form-field>
 
@@ -18,8 +18,6 @@
     <mat-label>Dans les métadonnées</mat-label>
     <input matInput type="text" maxlength="64" [(ngModel)]="search_metadata" >
   </mat-form-field>
-
-
 
   &nbsp;
   <button type="button" mat-raised-button mat-button
@@ -35,7 +33,7 @@
 
   <br>
   <div *ngIf="nfts?.length>0">{{nfts.length}} trouvés<br></div>
-  <app-nfts [nfts]="nfts | filter: ['search_collection',search_collection] | filter: ['search_metadata',search_metadata]" format="obj"
+  <app-nfts [nfts]="nfts | filter: ['collection',search_collection] | filter: ['metadata',search_metadata]" format="obj"
             (refresh)="refresh()"
             [user]="metaboss.admin_key?.pubkey">
   </app-nfts>

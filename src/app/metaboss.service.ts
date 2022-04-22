@@ -131,9 +131,9 @@ export class MetabossService {
 
 
 
-  sign(nft_addr:string, address:string,network="devnet") {
+  sign(nft_addr:string,creator_addr:string,network="devnet") {
     return new Promise((resolve, reject) => {
-      this.httpClient.get(environment.server+"/api/sign?account="+nft_addr+"&keyfile="+address+"&network="+network).subscribe((r:any)=>{
+      this.httpClient.get(environment.server+"/api/sign?creator="+creator_addr+"&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
         resolve(r);
       },(err)=>{
         reject(err);
@@ -147,5 +147,15 @@ export class MetabossService {
       this.network.airdrop(this.admin_key?.pubkey).then(()=>{});
     }
 
+  }
+
+  use(address: string, network: string) {
+    return new Promise((resolve, reject) => {
+      this.httpClient.get(environment.server+"/api/use?account="+address+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
+        resolve(r);
+      },(err)=>{
+        reject(err);
+      });
+    });
   }
 }

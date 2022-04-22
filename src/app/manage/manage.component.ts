@@ -6,6 +6,7 @@ import {Location} from "@angular/common"
 import {showError, showMessage} from "../../tools";
 import {FilterPipe} from "../filter.pipe";
 import {Token} from "../nfts/nfts.component";
+import {AliasPipe} from "../alias.pipe";
 
 @Component({
   selector: 'app-manage',
@@ -23,7 +24,8 @@ export class ManageComponent implements OnInit {
     public metaboss:MetabossService,
     public routes:ActivatedRoute,
     public _location:Location,
-    private filterPipe:FilterPipe
+    private filterPipe:FilterPipe,
+    private alias_pipe:AliasPipe
   ) {}
 
 
@@ -41,11 +43,12 @@ export class ManageComponent implements OnInit {
 
 
   refresh() {
-    if(this.metaboss.admin_key && (this.pubkey.length>40 || this.network.network.indexOf("elrond")>-1)){
+    if(this.metaboss.admin_key){
       this.network.wait("Récupération des NFT");
       this._location.replaceState("./manage/?account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network);
       this.nfts=[];
-      this.network.get_tokens_from_owner(this.pubkey).then((r:any[])=>{
+      let pubkey=this.alias_pipe.transform(this.pubkey,"pubkey");
+      this.network.get_tokens_from_owner(pubkey).then((r:any[])=>{
         this.network.wait("")
         this.nfts=r;
       }).catch(err=>{showError(this,err)});
@@ -55,12 +58,6 @@ export class ManageComponent implements OnInit {
 
 
 
-  change_view() {
-    if(this.pubkey.length==43){
-      localStorage.setItem("view",this.pubkey);
-      this.refresh();
-    }
-  }
 
 
 
@@ -79,5 +76,12 @@ export class ManageComponent implements OnInit {
 
     }
 
+  }
+
+  onkeypress($event: KeyboardEvent) {
+    if($event.keyCode==13){
+      localStorage.setItem("view",this.pubkey);
+      this.refresh();
+    }
   }
 }

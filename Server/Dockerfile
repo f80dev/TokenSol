@@ -45,6 +45,7 @@ RUN pip3 -v install solana
 RUN pip3 -v install base58
 RUN pip3 -v install ipfshttpclient
 RUN pip3 -v install erdpy
+RUN pip3 -v install ansi
 
 WORKDIR /
 RUN mkdir Solana
