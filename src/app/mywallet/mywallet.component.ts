@@ -22,7 +22,7 @@ export class MywalletComponent implements OnInit {
 
   refresh(index:number=0) {
     this.network.wait("Chargement de vos NFTs");
-    this.network.get_tokens_from_owner(this.user.wallet.publicKey!.toBase58(),"by_owner").then((r:any[])=>{
+    this.network.get_tokens_from("owner",this.user.wallet.publicKey!.toBase58()).then((r:any[])=>{
       this.network.wait("");
       this.nfts=[];
       for(let t of r){

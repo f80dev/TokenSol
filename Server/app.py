@@ -1,29 +1,24 @@
-import base64
 import datetime
 import json
 import os
-import platform
 import ssl
-import subprocess
 import sys
 
 from zipfile import ZipFile
 
-import base58
 from erdpy.accounts import Account
 
 from flask import Response, request, jsonify, send_file, Flask
 from flask_cors import CORS
 
-from solana.keypair import Keypair
 from werkzeug.datastructures import FileStorage
 
 from Elrond.Elrond import Elrond
+from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
 from Tools import str_to_hex, hex_to_str, log
 from ipfs import IPFS
 from nftstorage import NFTStorage
-from settings import GITHUB
 
 app = Flask(__name__)
 
@@ -31,11 +26,6 @@ app = Flask(__name__)
 
 IPFS_PORT=5001
 IPFS_SERVER="/ip4/161.97.75.165/tcp/"+str(IPFS_PORT)+"/http"
-
-
-
-
-
 
 
 #http://127.0.0.1:9999/api/update/?account=GwCtQjSZj3CSNRbHVVJ7MqJHcMBGJJ9eHSyxL9X1yAXy&url=
@@ -49,9 +39,26 @@ def update():
 
 
 
+@app.route('/api/ftx/tokens/',methods=["GET"])
+@app.route('/api/ftx/nfts/',methods=["GET"])
+#test http://127.0.0.1:4242/api/ftx/tokens/?key=solMintAddress&value=!none&out=solMintAddress,description,id
+#test https://server.f80lab.com:4242/api/ftx/tokens/?key=solMintAddress&value=!none&out=solMintAddress,description,id
+def ftx_tokens():
+  key=request.args.get("key","solMintAddress")
+  value=request.args.get("value","!none")
+  out=request.args.get("out","")
+  rc=FTX().nfts("fills",key,value,out,timeout=int(request.args.get("timeout","0")))
+  log(str(len(rc))+" NFTs trouvés")
+  return jsonify(rc)
 
 
-
+@app.route('/api/ftx/collections/',methods=["GET"])
+#test http://127.0.0.1:4242/api/ftx/collections/
+#test https://server.f80lab.com:4242/api/ftx_tokens/
+def ftx_collections():
+  filter=request.args.get("filter","")
+  rc=FTX().collections(filter)
+  return jsonify(rc)
 
 
 

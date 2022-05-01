@@ -46,6 +46,7 @@ RUN pip3 -v install base58
 RUN pip3 -v install ipfshttpclient
 RUN pip3 -v install erdpy
 RUN pip3 -v install ansi
+RUN pip3 -v install -U secret-sdk
 
 WORKDIR /
 RUN mkdir Solana
@@ -57,10 +58,11 @@ VOLUME /certs
 
 EXPOSE 4242
 
-COPY *.py $APP_HOME/
+COPY *.py $APP_HOME
+COPY ./Solana/*.py $APP_HOME/Solana/
+
 COPY ./Elrond/*.py $APP_HOME/Elrond/
 COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
-COPY ./Solana/*.py $APP_HOME/Solana/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
 

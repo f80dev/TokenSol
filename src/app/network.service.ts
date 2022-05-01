@@ -11,10 +11,15 @@ import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient} from "@angular/common/http";
-import {MetabossKey, showError, showMessage, words} from "../tools";
+import {$$, MetabossKey, showError, showMessage, words} from "../tools";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
 import {Token} from "./nfts/nfts.component";
+
+export enum type_addr {
+  "owner",
+  "miner"
+}
 
 @Injectable({
   providedIn: 'root'
@@ -31,6 +36,8 @@ export class NetworkService {
   ) {
 
   }
+
+
 
   get_tokens(pubkey: PublicKey,f:Function) {
     return new Promise((resolve, reject) => {
@@ -100,45 +107,60 @@ export class NetworkService {
   }
 
   complete_token(owner:string,r:any[]) : Promise<any[]> {
+    $$("Completion des tokens");
     return new Promise((resolve, reject) => {
       let rc: any[] = [];
       if(!r)reject(new Error("Empty list"))
+
       for (let e of r) {
-        const accountInfo: any = SPLToken.AccountLayout.decode(e.account.data);
-        accountInfo["pubkey"] = e.pubkey;
-        const layoutInfo = SPLToken.MintLayout.decode(e.account.data);
+        let mintAddress=e.solMintAddress;
+        let mintAuthority="";
+        let layoutInfo:any={};
+        let accountInfo: any={};
+        if(e.account && e.account.data){
+          accountInfo = SPLToken.AccountLayout.decode(e.account.data);
+          accountInfo["pubkey"] = e.pubkey;
+          layoutInfo = SPLToken.MintLayout.decode(e.account.data);
+          mintAddress=accountInfo.mint.toBase58();
+          mintAuthority=layoutInfo.mintAuthority.toBase58();
+        }
         let explorer_domain=this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io"
-        this.httpClient.get(explorer_domain+"/account?address=" + accountInfo.mint.toBase58()).subscribe((dt: any) => {
-          this.httpClient.get(dt.data?.metadata?.data.uri).subscribe((data_sup: any) => {
-            let token:Token = {
-              address: dt.data.account,
-              metadataPDA: {},
-              mint: layoutInfo.mintAuthority.toBase58(),
-              splMintInfo: this.add_solscan(layoutInfo),
-              splTokenInfo:this.add_solscan(dt.data.tokenInfo),
-              metadataOffchain: data_sup,
-              metadataOnchain:this.add_solscan(dt.data.metadata),
-              search:{
-                collection:words(data_sup.collection),
-                metadata:words(Object.values(data_sup.attributes))
-              }
+        if(mintAddress){
+          this.httpClient.get(explorer_domain+"/account?address=" + mintAddress).subscribe((dt: any) => {
+            let url_metadata=dt.data?.metadata?.data.uri;
+            if(url_metadata){
+              this.httpClient.get(url_metadata).subscribe((data_sup: any) => {
+                let token:Token = {
+                  address: dt.data.account,
+                  metadataPDA: {},
+                  mint: mintAuthority,
+                  splMintInfo: this.add_solscan(layoutInfo),
+                  splTokenInfo:this.add_solscan(dt.data.tokenInfo),
+                  metadataOffchain: data_sup,
+                  metadataOnchain:this.add_solscan(dt.data.metadata),
+                  search:{
+                    collection:words(data_sup.collection),
+                    metadata:words(Object.values(data_sup.attributes))
+                  }
+                }
+                token.splTokenInfo.owner=owner;
+                rc.push(token);
+                if (rc.length == r.length) {
+                  resolve(rc);
+                }
+              }, (err) => {
+                let token = {
+                  accountInfo:accountInfo,
+                  layoutInfo:layoutInfo,
+                  solscan:dt.data,
+                  offchain:{}
+                };
+                rc.push(token);
+                if (rc.length == r.length) resolve(rc);
+              })
             }
-            token.splTokenInfo.owner=owner;
-            rc.push(token);
-            if (rc.length == r.length) {
-              resolve(rc);
-            }
-          }, (err) => {
-            let token = {
-              accountInfo:accountInfo,
-              layoutInfo:layoutInfo,
-              solscan:dt.data,
-              offchain:{}
-            };
-            rc.push(token);
-            if (rc.length == r.length) resolve(rc);
           })
-        })
+        }
       }
     });
   }
@@ -164,35 +186,49 @@ export class NetworkService {
 
 
 
-
-  get_tokens_from_owner(owner:string,function_name="by_owner") : Promise<any[]> {
+  get_tokens_from(type_addr:string,addr:string) : Promise<any[]> {
+    $$("Recherche de token par "+type_addr)
     return new Promise((resolve,reject) => {
-      if(!owner){
+      if(addr==null){
         reject();
       } else {
         if(this.network.indexOf("elrond")==-1){
-          let publicKey=new PublicKey(owner);
-          if(function_name=="by_owner"){
-            this.connection.getTokenAccountsByOwner(publicKey,{programId: TOKEN_PROGRAM_ID},"confirmed").then((r:any)=> {
-              this.complete_token(owner,r.value).then(r => {
-                resolve(r);
-              })
-            }).catch(err=>{
+          let func:any=null;
+          if(type_addr=="miner")func=this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed");
+          if(type_addr=="token")func=this.connection.getTokenSupply(new PublicKey(addr),"confirmed")
+          if(type_addr=="FTX_account")func=this.get_tokens_from_ftx(addr);
+
+          func.then((result:any)=> {
+
+            let value=result.value;
+            if(!value)value=result;
+            if(!Array.isArray(value))value=[value];
+
+            $$(value.length+" nfts trouvés");
+
+            this.complete_token(addr,value).then(r => {
+              resolve(r);
+            }).catch((err)=>{
+              $$("erreur ",err);
               reject(err);
-            });
-          }
+            })
+          }).catch((err:any)=>{
+            $$("erreur ",err);
+            reject(err);
+          });
+
         } else {
-          this.httpClient.get(environment.server+"/api/nfts/?limit=40&account="+owner+"&network="+this.network).subscribe((r:any)=>{
+          this.httpClient.get(environment.server+"/api/nfts/?limit=40&account="+addr+"&network="+this.network).subscribe((r:any)=>{
             resolve(r);
           })
         }
 
 
 
-        if(function_name=="by_delegate"){
+        if(type_addr=="miner"){
           //TODO function en chantier
           this.httpClient.post("",{}).subscribe((r:any)=> {
-            this.complete_token(owner,r.value).then(r => {
+            this.complete_token(addr,r.value).then(r => {
               resolve(r);
             })
           });
@@ -222,5 +258,30 @@ export class NetworkService {
 
   isSolana() {
     return this.network=="devnet" || this.network=="mainnet";
+  }
+
+  private get_tokens_from_ftx(filter: string) {
+    return new Promise((resolve,reject) => {
+
+      let key="solMintAddress";
+      let value="!none";
+      if(filter.length<40 || filter.length>50){
+        key="collection";
+        value=filter;
+      }
+      let url=environment.server+"/api/ftx/tokens/";
+      $$("recherche sur "+url);
+      this.httpClient.get(url).subscribe(((r:any)=>{
+        let rc:any[]=[];
+        $$(r.length+" NFTs identifié, croisement avec "+filter+" sur la collection");
+        for(let token of r){
+          if(filter.length==0 || token.collection.indexOf(filter)>-1)
+            rc.push(token);
+        }
+        resolve(rc);
+      }),(err)=>{
+        reject(err);
+      });
+    });
   }
 }

@@ -7,3 +7,6 @@ GITHUB={
 	"branch":"storage",
 	"repository":"TokenSol"
 }
+
+FTX_API_KEY="YUPYadlWDT8X4-_UzpGqHxN6gKCVbqwmCh1F9ZGH"
+FTX_API_SECRET="didGh8C8laA3TVZBPioeggn6r4YNuphzlRIu4_YF"
