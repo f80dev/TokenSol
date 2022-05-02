@@ -68,8 +68,8 @@ export interface Search {
 export interface Token {
   mint:string,
   address: string,
-  splTokenInfo : SplTokenInfo
-  splMintInfo : SplMintInfo,
+  splTokenInfo : SplTokenInfo | undefined
+  splMintInfo : SplMintInfo | undefined,
   metadataPDA:any,
   metadataOnchain:MetadataOnChain,
   metadataOffchain:MetadataExternal,

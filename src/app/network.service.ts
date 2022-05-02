@@ -11,9 +11,9 @@ import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient} from "@angular/common/http";
-import {$$, MetabossKey, showError, showMessage, words} from "../tools";
+import {$$,MetabossKey,words} from "../tools";
 import {environment} from "../environments/environment";
-import {NETWORKS} from "../definitions";
+
 import {Token} from "./nfts/nfts.component";
 
 export enum type_addr {
@@ -85,12 +85,12 @@ export class NetworkService {
   airdrop(publicKey: PublicKey) : Promise<RpcResponseAndContext<SignatureResult>> {
     this.waiting="Airdrop en cours";
 
-      return this.connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL).then(
-          (airdropSignature: TransactionSignature) => {
-            this.waiting="";
-            return this.connection.confirmTransaction(airdropSignature);
-          }
-      );
+    return this.connection.requestAirdrop(publicKey, LAMPORTS_PER_SOL).then(
+      (airdropSignature: TransactionSignature) => {
+        this.waiting="";
+        return this.connection.confirmTransaction(airdropSignature);
+      }
+    );
 
 
   }
@@ -105,6 +105,41 @@ export class NetworkService {
     }
     return token;
   }
+
+
+  create_token(offchain:any,mintAuthority:string,data_sup:any,layoutInfo:any,owner:string) {
+    let token = {
+      address: data_sup.metadata.mint,
+      metadataPDA: {},
+      mint: data_sup.metadata.mint,
+      splMintInfo: layoutInfo,
+      splTokenInfo:{address: "", amount: "", isFrozen: false, mint: "", state: 0, owner:owner},
+      metadataOffchain: offchain,
+      metadataOnchain:data_sup.metadata,
+      search:{
+        collection:words(data_sup.collection),
+        metadata:words(Object.values(offchain.attributes))
+      }
+    }
+
+    return token;
+  }
+
+
+  solscan_info(mintAddress:string){
+    let explorer_domain=this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io"
+    return new Promise((resolve, reject) => {
+      if(mintAddress){
+        this.httpClient.get(explorer_domain+"/account?address=" + mintAddress).subscribe((dt: any) => {
+          resolve(dt);
+        },(err:any)=>{
+          $$("erreur ",err);
+          reject(err);
+        })
+      }
+    });
+  }
+
 
   complete_token(owner:string,r:any[]) : Promise<any[]> {
     $$("Completion des tokens");
@@ -123,43 +158,15 @@ export class NetworkService {
           layoutInfo = SPLToken.MintLayout.decode(e.account.data);
           mintAddress=accountInfo.mint.toBase58();
           mintAuthority=layoutInfo.mintAuthority.toBase58();
-        }
-        let explorer_domain=this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io"
-        if(mintAddress){
-          this.httpClient.get(explorer_domain+"/account?address=" + mintAddress).subscribe((dt: any) => {
+
+          this.solscan_info(mintAddress).then((dt:any)=>{
             let url_metadata=dt.data?.metadata?.data.uri;
-            if(url_metadata){
-              this.httpClient.get(url_metadata).subscribe((data_sup: any) => {
-                let token:Token = {
-                  address: dt.data.account,
-                  metadataPDA: {},
-                  mint: mintAuthority,
-                  splMintInfo: this.add_solscan(layoutInfo),
-                  splTokenInfo:this.add_solscan(dt.data.tokenInfo),
-                  metadataOffchain: data_sup,
-                  metadataOnchain:this.add_solscan(dt.data.metadata),
-                  search:{
-                    collection:words(data_sup.collection),
-                    metadata:words(Object.values(data_sup.attributes))
-                  }
-                }
-                token.splTokenInfo.owner=owner;
-                rc.push(token);
-                if (rc.length == r.length) {
-                  resolve(rc);
-                }
-              }, (err) => {
-                let token = {
-                  accountInfo:accountInfo,
-                  layoutInfo:layoutInfo,
-                  solscan:dt.data,
-                  offchain:{}
-                };
-                rc.push(token);
-                if (rc.length == r.length) resolve(rc);
-              })
-            }
+            this.httpClient.get(url_metadata).subscribe((offchain:any)=>{
+              rc.push(this.create_token(offchain,mintAuthority,dt.data,layoutInfo,owner));
+              if(rc.length==r.length)resolve(rc);
+            })
           })
+
         }
       }
     });
@@ -173,6 +180,7 @@ export class NetworkService {
     return this._network=="mainnet";
   }
 
+
   all_nfts() : Promise<any[]> {
     return new Promise((resolve,reject) => {
       new TokenListProvider().resolve().then((tokens) => {
@@ -185,6 +193,53 @@ export class NetworkService {
   }
 
 
+  build_token_from_ftx(t:any) : Token {
+    let l_attributes=t.attributesList;
+    l_attributes.push({trait_type:"redeemable",value:t.redeemable});
+    l_attributes.push({trait_type:"redeemed",value:t.redeemed});
+    let token:Token={
+      splMintInfo: undefined,
+      splTokenInfo: undefined,
+      mint:t.solMintAddress,
+      address:t.solMintAddress,
+      metadataPDA:{},
+      metadataOffchain: {
+        seller_fee_basis_points: t.royaltyFeeRate*100,
+        issuer:t.issuer,
+        attributes:l_attributes,
+        collection: {name: t.collection},
+        name: t.name,
+        description: t.description,
+        image: t.imageUrl,
+        external_url: "",
+        properties: {
+          files:[
+            {uri:t.imageUrl,type:""},{uri:t.animationUrl,type:""}
+          ],
+          caterogy:"",
+          creators:[]
+        },
+      },
+      metadataOnchain:{
+        type:"nft",
+        updateAuthority:"",
+        mint:t.solMintAddress,
+        key:t.id,
+        data:{
+          symbol:"",
+          name:t.name,
+          uri:"",
+          sellerFeeBasisPoints:t.royaltyFeeRate*100,
+          creators:[]
+        },
+        isMutable:0,
+        primarySaleHappened:0
+      },
+      search:{collection:t.collection,metadata:""}
+    }
+    return token;
+  }
+
 
   get_tokens_from(type_addr:string,addr:string) : Promise<any[]> {
     $$("Recherche de token par "+type_addr)
@@ -194,28 +249,51 @@ export class NetworkService {
       } else {
         if(this.network.indexOf("elrond")==-1){
           let func:any=null;
-          if(type_addr=="miner")func=this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed");
+
+          if(type_addr=="FTX_account"){
+            this.get_tokens_from_ftx(addr).then((tokens:any)=>{
+              let rc:Token[]=[];
+              for(let t of tokens){
+                let token:Token=this.build_token_from_ftx(t);
+                if(tokens.length<10){
+                  this.solscan_info(t.solMintAddress).then((dt:any)=>{
+                    token.metadataOnchain=dt.data.metadata
+                    rc.push(token);
+                    if(rc.length==tokens.length)resolve(rc);
+                  })
+                } else {
+                  rc.push(token);
+                }
+              }
+              if(tokens.length>10)resolve(rc);
+            });
+          }
+
+          if(type_addr=="owner")func=this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed");
           if(type_addr=="token")func=this.connection.getTokenSupply(new PublicKey(addr),"confirmed")
-          if(type_addr=="FTX_account")func=this.get_tokens_from_ftx(addr);
 
-          func.then((result:any)=> {
 
-            let value=result.value;
-            if(!value)value=result;
-            if(!Array.isArray(value))value=[value];
+          if(func){
+            func.then((result:any)=> {
 
-            $$(value.length+" nfts trouvés");
+              let values=result.value;
+              if(!values)values=result;
+              if(!Array.isArray(values))values=[values];
 
-            this.complete_token(addr,value).then(r => {
-              resolve(r);
-            }).catch((err)=>{
+              $$(values.length+" nfts trouvés");
+
+              this.complete_token(addr,values).then(r => {
+                resolve(r);
+              }).catch((err)=>{
+                $$("erreur ",err);
+                reject(err);
+              })
+            }).catch((err:any)=>{
               $$("erreur ",err);
               reject(err);
-            })
-          }).catch((err:any)=>{
-            $$("erreur ",err);
-            reject(err);
-          });
+            });
+          }
+
 
         } else {
           this.httpClient.get(environment.server+"/api/nfts/?limit=40&account="+addr+"&network="+this.network).subscribe((r:any)=>{
@@ -273,8 +351,8 @@ export class NetworkService {
       $$("recherche sur "+url);
       this.httpClient.get(url).subscribe(((r:any)=>{
         let rc:any[]=[];
-        $$(r.length+" NFTs identifié, croisement avec "+filter+" sur la collection");
-        for(let token of r){
+        $$(r.results.length+" NFTs identifié, croisement avec "+filter+" sur la collection");
+        for(let token of r.results){
           if(filter.length==0 || token.collection.indexOf(filter)>-1)
             rc.push(token);
         }

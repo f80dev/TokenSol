@@ -19,7 +19,7 @@ export class ManageComponent implements OnInit {
   pubkey: string="";
   search_metadata: string = "";
   search_collection:string="";
-  type_addr="FTX_account";
+  type_addr="owner";
 
   constructor(
     public network:NetworkService,
@@ -34,8 +34,8 @@ export class ManageComponent implements OnInit {
   ngOnInit(): void {
     this.refresh();
     let account=this.routes.snapshot.queryParamMap.get("account") || "";
-    this.type_addr=this.routes.snapshot.queryParamMap.get("search") || "FTX_account";
-    this.pubkey=this.routes.snapshot.queryParamMap.get("view") || account || localStorage.getItem("view") || "";
+    this.type_addr=this.routes.snapshot.queryParamMap.get("search") || "owner";
+    this.pubkey=this.routes.snapshot.queryParamMap.get("view") || "";
     setTimeout(()=>{
       this.metaboss.sel_key(account).then(()=>{
         this.refresh();
@@ -46,15 +46,16 @@ export class ManageComponent implements OnInit {
 
   clear_pubkey(){
     this.pubkey="";
+    this.refresh();
   }
 
   refresh() {
     if(this.metaboss.admin_key && this.type_addr!=""){
       this.network.wait("Récupération des NFT");
-      this._location.replaceState("./manage/?account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network);
+      this._location.replaceState("./manage/?search="+this.type_addr+"&account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network);
       this.nfts=[];
       let pubkey=this.alias_pipe.transform(this.pubkey,"pubkey");
-      this.network.get_tokens_from(this.type_addr, pubkey).then((r:any[])=>{
+      this.network.get_tokens_from(this.type_addr, pubkey).then((r:any)=>{
         showMessage(this,r.length+" NFTs récupérés");
         this.network.wait("")
         this.nfts=r;

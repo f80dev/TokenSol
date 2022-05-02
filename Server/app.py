@@ -1,3 +1,4 @@
+import base64
 import datetime
 import json
 import os
@@ -17,10 +18,12 @@ from Elrond.Elrond import Elrond
 from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
 from Tools import str_to_hex, hex_to_str, log
+from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
 
 app = Flask(__name__)
+ftx=FTX()
 
 #voir la documentation de metaboss:
 
@@ -47,8 +50,10 @@ def ftx_tokens():
   key=request.args.get("key","solMintAddress")
   value=request.args.get("value","!none")
   out=request.args.get("out","")
-  rc=FTX().nfts("fills",key,value,out,timeout=int(request.args.get("timeout","0")))
-  log(str(len(rc))+" NFTs trouvés")
+  rc=ftx.nfts("nfts",key,value,out,timeout=int(request.args.get("timeout","0")))
+  if rc["status_code"]==200:
+    log(str(len(rc))+" NFTs trouvés")
+
   return jsonify(rc)
 
 
@@ -57,7 +62,14 @@ def ftx_tokens():
 #test https://server.f80lab.com:4242/api/ftx_tokens/
 def ftx_collections():
   filter=request.args.get("filter","")
-  rc=FTX().collections(filter)
+  rc=ftx.collections(filter)
+  return jsonify(rc)
+
+
+@app.route('/api/ftx/account/',methods=["GET"])
+#test http://127.0.0.1:4242/api/ftx/account/
+def ftx_account():
+  rc=ftx.account()
   return jsonify(rc)
 
 
@@ -118,10 +130,16 @@ def sign():
   return jsonify(rc)
 
 
+
 def upload_on_platform(data,platform="ipfs"):
   if platform=="ipfs":
     ipfs=IPFS("/ip4/161.97.75.165/tcp/5001/http",5001)
     cid=ipfs.add(data,removeFile=True)
+    rc={"cid":cid["Hash"],"url":ipfs.get_link(cid["Hash"])+("?"+cid["Name"] if "Name" in cid else "")}
+
+  if platform=="infura":
+    infura=Infura()
+    cid=infura.add(data)
     rc={"cid":cid,"url":ipfs.get_link(cid)}
 
   if platform=="nftstorage":
@@ -154,7 +172,11 @@ def nfts():
 #https://metaboss.rs/mint.html
 def upload():
   platform=request.args.get("platform","ipfs")
-  rc=upload(request.json,platform)
+  body={
+    "filename":request.args.get("filename","temp"),
+    "content":";base64,"+str(request.data,"utf8")
+  }
+  rc=upload_on_platform(body,platform)
   return jsonify(rc)
 
 
@@ -164,7 +186,7 @@ def mint():
   network=request.args.get("network","devnet")
   _data=request.json
   if _data is None:
-    _data=json.loads(str(request.data,"ansi"))
+    _data=json.loads(str(request.data,"utf8").replace('\x00',''))
 
   if _data is None:
     s=str(request.data,"utf8")
@@ -239,6 +261,7 @@ def mint():
     rc["balance"]=Solana(network).balance(keyfile)
 
   return jsonify(rc)
+
 
 
 
