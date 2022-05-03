@@ -107,12 +107,12 @@ export class NetworkService {
   }
 
 
-  create_token(offchain:any,mintAuthority:string,data_sup:any,layoutInfo:any,owner:string) {
+  create_token(offchain:any,mintAuthority:string,mintAddress:string,data_sup:any,splMintInfo:any,owner:string) {
     let token = {
-      address: data_sup.metadata.mint,
+      address: mintAddress,
       metadataPDA: {},
       mint: data_sup.metadata.mint,
-      splMintInfo: layoutInfo,
+      splMintInfo: splMintInfo,
       splTokenInfo:{address: "", amount: "", isFrozen: false, mint: "", state: 0, owner:owner},
       metadataOffchain: offchain,
       metadataOnchain:data_sup.metadata,
@@ -141,6 +141,21 @@ export class NetworkService {
   }
 
 
+  build_token_from_solscan(mintAddress:string):Promise<Token> {
+    return new Promise((resolve, reject) => {
+      this.solscan_info(mintAddress).then((dt:any)=>{
+        let url_metadata=dt.data?.metadata?.data.uri;
+        let owner="";
+        let mintAuthority=dt;
+        if(dt.data.metadata.primarySaleHappened==0)owner=dt.data.metadata.updateAuthority;
+        this.httpClient.get(url_metadata).subscribe((offchain:any)=>{
+          resolve(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,dt.data.tokenInfo,owner));
+        })
+      })
+    });
+  }
+
+
   complete_token(owner:string,r:any[]) : Promise<any[]> {
     $$("Completion des tokens");
     return new Promise((resolve, reject) => {
@@ -162,7 +177,7 @@ export class NetworkService {
           this.solscan_info(mintAddress).then((dt:any)=>{
             let url_metadata=dt.data?.metadata?.data.uri;
             this.httpClient.get(url_metadata).subscribe((offchain:any)=>{
-              rc.push(this.create_token(offchain,mintAuthority,dt.data,layoutInfo,owner));
+              rc.push(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,layoutInfo,owner));
               if(rc.length==r.length)resolve(rc);
             })
           })
@@ -270,7 +285,13 @@ export class NetworkService {
           }
 
           if(type_addr=="owner")func=this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed");
-          if(type_addr=="token")func=this.connection.getTokenSupply(new PublicKey(addr),"confirmed")
+          if(type_addr=="token"){
+            this.build_token_from_solscan(addr).then((token:Token)=>{
+              resolve([token]);
+            });
+            return;
+          }
+
 
 
           if(func){

@@ -44,11 +44,12 @@
 
       <br>
       <h3>OnChain</h3>
-      <table style="font-size: small" *ngIf="nft.metadataOnchain">
+      <table style="font-size: small;line-height: 90%;" *ngIf="nft.metadataOnchain">
         <tr><td>Update authority</td><td><a [href]="getExplorer(nft.metadataOnchain.updateAuthority)" target="_blank">{{nft.metadataOnchain?.updateAuthority | alias}}</a></td>
+        <tr><td>Primaray sale</td><td>{{nft.metadataOnchain?.primarySaleHappened}}</td>
+        <tr><td>Mutable</td><td>{{nft.metadataOnchain?.isMutable}}</td>
         <tr><td>Mint authority</td><td><a [href]="getExplorer(nft.splMintInfo?.mintAuthority)" target="_blank">{{nft.splMintInfo?.mintAuthority | alias}}</a></td>
-        <tr><td>Owner</td><td><a [href]="getExplorer(nft.splTokenInfo?.owner)" target="_blank">{{nft.splTokenInfo?.owner | alias}}</a></td>
-        </tr>
+        <tr><td>Owner</td><td><a [href]="getExplorer(nft.splTokenInfo?.owner)" target="_blank">{{nft.splTokenInfo?.owner | alias}}</a></td></tr>
       </table>
 
       <button

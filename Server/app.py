@@ -375,7 +375,8 @@ def update_obj():
     )
     return rc
   else:
-    url=ipfs.get_link(ipfs.add(request.json))
+    cid=ipfs.add(request.json)
+    url=ipfs.get_link(cid["Hash"])
     return Solana(network).exec("update","uri --new-uri "+url,account=account,keyfile=keyfile)
 
 

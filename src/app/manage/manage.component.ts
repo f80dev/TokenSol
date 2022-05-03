@@ -52,7 +52,8 @@ export class ManageComponent implements OnInit {
   refresh() {
     if(this.metaboss.admin_key && this.type_addr!=""){
       this.network.wait("Récupération des NFT");
-      this._location.replaceState("./manage/?search="+this.type_addr+"&account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network);
+      let new_url="./manage/?search="+this.type_addr+"&account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network;
+      this._location.replaceState(new_url);
       this.nfts=[];
       let pubkey=this.alias_pipe.transform(this.pubkey,"pubkey");
       this.network.get_tokens_from(this.type_addr, pubkey).then((r:any)=>{

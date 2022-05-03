@@ -77,12 +77,11 @@ class Solana:
     return {
       "error":str(mes.stderr,encoder),
       "result":rc,
-      "link":"https://solscan.io/token/"+rc["mint"]+"?cluster="+self.network,
-      "link_transaction":"https://solscan.io/tx/"+rc["transaction"]+"?cluster="+self.network,
+      "link_mint":("https://solscan.io/token/"+rc["mint"]+"?cluster="+self.network) if "mint" in rc else "",
+      "link_transaction":("https://solscan.io/tx/"+rc["transaction"]+"?cluster="+self.network) if "transaction" in rc else "",
       "out":str(mes.stdout,encoder),
       "command":cmd
     }
-
 
 
   def balance(self,user):
