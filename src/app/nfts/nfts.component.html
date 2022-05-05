@@ -1,33 +1,38 @@
 <div class="mainform">
   <div *ngFor="let nft of nfts" style="display: inline-flex;margin:10px;">
     <div *ngIf="format=='obj'" style="display: block;width: 450px;height:650px;padding:10px;" class="mat-elevation-z4">
-      <strong>{{nft.metadataOnchain?.data?.name}}</strong>&nbsp;({{nft.metadataOnchain.data.symbol}})<br>
+      <strong>{{nft.metadataOnchain?.data?.name}}</strong>&nbsp;({{nft.metadataOnchain?.data?.symbol}})<br>
       <small>Collection: {{nft.metadataOffchain?.collection?.name}}</small><br>
       <small>NFT address: <a [href]="'https://solscan.io/token/'+nft.address+'?cluster='+network.network" target="_blank">{{nft.address}}</a> </small>
       <br><br>
 
-
       <table style="font-size: xx-small;width:100%;line-height: 85%;">
         <tr *ngFor="let attr of nft.metadataOffchain?.attributes" (click)="update_field(attr,nft)">
-          <td>{{attr.trait_type}}</td>
+          <td><strong>{{attr.trait_type}}</strong></td>
           <td>{{attr.value}}</td>
         </tr>
+
         <tr>
           <td></td>
           <td><a [href]="nft.metadataOnchain?.data?.uri" target="_blank">Fichier attaché</a></td>
         </tr>
-        <tr>
 
-        </tr>
+      </table>
 
-        <tr></tr>
-        <tr><td><h4>Fichiers</h4></td></tr>
-        <tr *ngFor="let file of nft.metadataOffchain?.properties?.files">
-          <td>{{file.type}}</td>
-          <td><a [href]="file?.uri" target="_blank"><mat-icon   style="font-size: medium;">link</mat-icon></a></td>
-        </tr>
+      <div style="width: 100%;height: fit-content;">
+        <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;">
+          <img style="object-fit: contain;width: 100%;" [src]="nft.metadataOffchain?.image">
+        </div>
+        <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;" *ngFor="let file of nft.metadataOffchain?.properties?.files">
+          <a [href]="file?.uri" target="_blank">
+            <img style="object-fit: contain;width: 100%;" [src]="file?.uri" *ngIf="file.type.indexOf('image')>-1">
+            <mat-icon *ngIf="file.type.indexOf('image')==-1" style="font-size: xx-large;">link</mat-icon>
+          </a>
+        </div>
+      </div>
 
-        <tr><td><br><h4>Créateurs</h4></td></tr>
+      <table style="font-size: xx-small;width:100%;line-height: 85%;">
+        <tr><td><h4>Créateurs</h4></td></tr>
         <tr><th>Adresse</th><th>Vérifié</th><th>Royalties</th></tr>
         <tr *ngFor="let creator of nft.metadataOnchain?.data?.creators" style="text-align: center;">
           <td style="padding:0px;width:60%;height:20px;vertical-align:text-top !important;text-align: left;">
@@ -56,7 +61,7 @@
               type="button" mat-icon-button
               title="Supprimer le NFT"
               (click)="burn(nft)"
-              *ngIf="format=='obj' && (nft.metadataOnchain?.updateAuthority==user || network.isElrond())">
+              *ngIf="format=='obj' && ((nft.metadataOnchain?.isMutable==1 && nft.metadataOnchain?.updateAuthority==user) || network.isElrond())">
         <mat-icon>delete</mat-icon>
       </button>
 

@@ -47,20 +47,24 @@ RUN pip3 -v install ipfshttpclient
 RUN pip3 -v install erdpy
 RUN pip3 -v install ansi
 RUN pip3 -v install -U secret-sdk
+RUN pip3 -v install qrcode
+RUN pip3 -v install pillow
 
 WORKDIR /
 RUN mkdir Solana
+RUN mkdir Secret
 RUN mkdir Elrond
 RUN mkdir ./Solana/Temp
 RUN mkdir ./Solana/PEM
 RUN mkdir ./Solana/Keys
+RUN mkdir ./Secret/Keys
 VOLUME /certs
 
 EXPOSE 4242
 
 COPY *.py $APP_HOME
 COPY ./Solana/*.py $APP_HOME/Solana/
-
+COPY ./Secret/*.py $APP_HOME/Secret/
 COPY ./Elrond/*.py $APP_HOME/Elrond/
 COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/

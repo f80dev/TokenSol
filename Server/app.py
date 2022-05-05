@@ -1,4 +1,3 @@
-import base64
 import datetime
 import json
 import os
@@ -14,6 +13,7 @@ from flask_cors import CORS
 
 from werkzeug.datastructures import FileStorage
 
+from ArtEngine import ArtEngine, Layer, Sticker
 from Elrond.Elrond import Elrond
 from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
@@ -39,6 +39,41 @@ def update():
   url=request.args.get("url")
   account=request.args.get("account")
   return exec("update","uri --new-uri "+url,account=account)
+
+
+@app.route('/api/test/')
+#test http://127.0.0.1:4242/api/test/
+def test():
+  nft=ArtEngine()
+  palette=dict()
+  for file in ["eye","triangle","circle"]:
+    layer=Layer(file,sticker=Sticker(file,image="C:/Users/hhoar/Pictures/temp/GenArt/"+file+".png",dimension=(500,500)))
+    palette[file]=layer.stickers[0].analyse(5)
+    layer.clone_image(old_color=(255, 192, 0, 255),new_colors=[(100,100,100,0),(200,0,200,0),(250,0,250,0)])
+    layer.clone_image(old_color=(255, 102, 204, 255),new_colors=[(100,100,100,0),(200,0,200,0),(250,0,250,0)])
+    nft.add(layer)
+
+  s=Sticker("reference",dimension=(500,500))
+  s.write("#12345",color=(0,0,0,255))
+  nft.add(Layer("text",s))
+
+  nft.generate("C:/Users/hhoar/Pictures/temp/GenArt/output",10)
+  return jsonify(palette)
+
+
+
+
+@app.route('/api/infos/')
+#test http://127.0.0.1:4242/api/infos/
+#test https://server.f80lab.com:4242/api/infos/
+def infos():
+  rc={"Solana":
+        {"keys":len(Solana().get_keys())},
+      "Elrond":{},
+      "Secret":{}
+      }
+  return jsonify(rc)
+
 
 
 
@@ -104,6 +139,21 @@ def refill():
   addr=request.args.get("addr","")
 
 
+@app.route('/api/explorer/',methods=["GET"])
+@app.route('/api/scan/',methods=["GET"])
+#https://metaboss.rs/mint.html
+def explorer():
+  token=request.args.get("token","")
+  network=request.args.get("network","devnet")
+  format=request.args.get("format","json")
+  rc=Solana().scan(token,network)
+  if format=="json":
+    return jsonify(rc)
+  else:
+    return str(rc)
+
+
+
 
 @app.route('/api/use/',methods=["GET"])
 #https://metaboss.rs/mint.html
@@ -144,7 +194,7 @@ def upload_on_platform(data,platform="ipfs"):
 
   if platform=="nftstorage":
     if "content" in data:
-      rc=NFTStorage().add(data["content"])
+      rc=NFTStorage().add(data["content"],data["type"],data["filename"])
     else:
       rc=NFTStorage().add(data)
 
@@ -174,10 +224,39 @@ def upload():
   platform=request.args.get("platform","ipfs")
   body={
     "filename":request.args.get("filename","temp"),
-    "content":";base64,"+str(request.data,"utf8")
+    "content":";base64,"+str(request.data,"utf8"),
+    "type":request.args.get("type","")
   }
+
+  if body["type"]=="":
+    if body["filename"].endswith(".mp4") or body["filename"].endswith(".avi") or body["filename"].endswith(".webm"):
+      body["type"]="video/"+body["filename"]
+    else:
+      body["type"]="image/"+body["filename"]
+
+
   rc=upload_on_platform(body,platform)
   return jsonify(rc)
+
+
+#
+# @app.route('/api/upload_list/',methods=["POST"])
+# def upload_list():
+#   mints=request.data
+#   with open("account_list.txt", 'w') as f:
+#     f.writelines(mints)
+#     f.close()
+#
+#
+# @app.route('/api/get_list/',methods=["GET"])
+# def get_list():
+#   s=""
+#   with open("account_list.txt", 'r') as f:
+#     s=f.readlines()
+#     f.close()
+#   return s
+#
+
 
 
 @app.route('/api/mint/',methods=["POST"])

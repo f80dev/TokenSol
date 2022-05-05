@@ -1,4 +1,4 @@
-cd Metaboss
+cd Server
 docker build -t f80hub/tokensol .
 docker push f80hub/tokensol:latest
 cd ..

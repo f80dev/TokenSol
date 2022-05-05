@@ -7,11 +7,34 @@
       <mat-option value="miner">Mineur</mat-option>
       <mat-option value="owner">Propriétaire</mat-option>
       <mat-option value="token">Token</mat-option>
+      <mat-option value="token_list">Liste</mat-option>
       <mat-option value="id">Identifiant</mat-option>
     </mat-select>
   </mat-form-field>
 
-  <mat-form-field appearance="fill" style="width: 375px">
+  <div *ngIf="type_addr=='token_list' && addrs.length==0" style="width:200px;display: inline-block;" class="mat-elevation-z4">
+  <textarea (paste)="paste_list($event)" rows="2"
+            style="display: inline;"
+            placeholder="Coller vos adresses ici"
+            matInput
+            cdkTextareaAutosize
+            #autosize="cdkTextareaAutosize"
+            cdkAutosizeMinRows="1"
+            cdkAutosizeMaxRows="5">
+  </textarea>
+
+  </div>
+
+
+  <button type="button" mat-raised-button mat-button
+          *ngIf="type_addr=='token_list' && addrs.length>0"
+          (click)="addrs=[]">
+    Change List
+  </button>
+
+
+
+  <mat-form-field appearance="fill" style="width: 375px" *ngIf="type_addr!='token_list'">
     <mat-label>Addresse ou pseudo</mat-label>
     <input matInput type="text" maxlength="64" [(ngModel)]="pubkey" (keypress)="onkeypress($event)" >
     <mat-icon *ngIf="pubkey!=''" matSuffix style="cursor: pointer" (click)="clear_pubkey()">cancel</mat-icon>
@@ -41,7 +64,7 @@
   </button>
 
   <br>
-  <div *ngIf="nfts?.length>0">{{nfts.length}} trouvés<br></div>
+  <div *ngIf="nfts?.length>0">{{nfts.length}} NFT trouvé(s)<br></div>
   <app-nfts [nfts]="nfts | filter: ['collection',search_collection] | filter: ['metadata',search_metadata]" format="obj"
             (refresh)="refresh()"
             [user]="metaboss.admin_key?.pubkey">

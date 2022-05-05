@@ -158,6 +158,10 @@ export class NftsComponent implements OnInit {
 
 
   burn(nft:Token) {
+    if(nft.metadataOnchain.isMutable==0){
+      showMessage(this,"Ce NFT n'est plus modifiable");
+      return;
+    }
     this.metaboss.burn(nft.address,this.network.network).then(success=>{
       if(success)this.onrefresh.emit();
     }).catch(err => {
@@ -168,6 +172,11 @@ export class NftsComponent implements OnInit {
 
 
   update_field(attr: any, nft: Token) {
+
+    if(nft.metadataOnchain?.isMutable==0){
+      showMessage(this,"Ce NFT n'est plus modifiable");
+      return;
+    }
 
     if(nft.metadataOnchain?.updateAuthority!=this.metaboss.admin_key?.pubkey){
       showMessage(this,"Cette signature ne permet pas la mise a jour du NFT");

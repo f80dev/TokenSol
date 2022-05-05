@@ -127,15 +127,16 @@ export class NetworkService {
 
 
   solscan_info(mintAddress:string){
-    let explorer_domain=this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io"
+    let explorer_domain=(this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io")
     return new Promise((resolve, reject) => {
       if(mintAddress){
         this.httpClient.get(explorer_domain+"/account?address=" + mintAddress).subscribe((dt: any) => {
-          resolve(dt);
-        },(err:any)=>{
-          $$("erreur ",err);
-          reject(err);
-        })
+          this.connection.getAccountInfo(new PublicKey(dt.data.tokenInfo.tokenAuthority), "confirmed").then((resp: any) => {
+            let owner = resp.owner.toBase58();
+            dt.owner=owner;
+            resolve(dt);
+          },(err:any)=>{$$("erreur ",err);reject(err);})
+        });
       }
     });
   }
@@ -144,13 +145,17 @@ export class NetworkService {
   build_token_from_solscan(mintAddress:string):Promise<Token> {
     return new Promise((resolve, reject) => {
       this.solscan_info(mintAddress).then((dt:any)=>{
-        let url_metadata=dt.data?.metadata?.data.uri;
-        let owner="";
-        let mintAuthority=dt;
-        if(dt.data.metadata.primarySaleHappened==0)owner=dt.data.metadata.updateAuthority;
-        this.httpClient.get(url_metadata).subscribe((offchain:any)=>{
-          resolve(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,dt.data.tokenInfo,owner));
-        })
+        if(!dt.data?.hasOwnProperty("metadata")){
+          reject("NFT introuvable");
+        } else {
+          let url_metadata=dt.data?.metadata?.data.uri;
+          let owner="";
+          let mintAuthority=dt;
+          if(dt.data.metadata.primarySaleHappened==0)owner=dt.data.metadata.updateAuthority;
+          this.httpClient.get(url_metadata).subscribe((offchain:any)=>{
+            resolve(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,dt.data.tokenInfo,owner));
+          })
+        }
       })
     });
   }
@@ -163,16 +168,12 @@ export class NetworkService {
       if(!r)reject(new Error("Empty list"))
 
       for (let e of r) {
-        let mintAddress=e.solMintAddress;
-        let mintAuthority="";
-        let layoutInfo:any={};
-        let accountInfo: any={};
         if(e.account && e.account.data){
-          accountInfo = SPLToken.AccountLayout.decode(e.account.data);
+          let accountInfo:any = SPLToken.AccountLayout.decode(e.account.data);
           accountInfo["pubkey"] = e.pubkey;
-          layoutInfo = SPLToken.MintLayout.decode(e.account.data);
-          mintAddress=accountInfo.mint.toBase58();
-          mintAuthority=layoutInfo.mintAuthority.toBase58();
+          let layoutInfo = SPLToken.MintLayout.decode(e.account.data);
+          let mintAddress=accountInfo.mint.toBase58();
+          let mintAuthority=layoutInfo.mintAuthority.toBase58();
 
           this.solscan_info(mintAddress).then((dt:any)=>{
             let url_metadata=dt.data?.metadata?.data.uri;
@@ -284,23 +285,9 @@ export class NetworkService {
             });
           }
 
-          if(type_addr=="owner")func=this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed");
-          if(type_addr=="token"){
-            this.build_token_from_solscan(addr).then((token:Token)=>{
-              resolve([token]);
-            });
-            return;
-          }
-
-
-
-          if(func){
-            func.then((result:any)=> {
-
+          if(type_addr=="owner"){
+            this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed").then((result:any)=> {
               let values=result.value;
-              if(!values)values=result;
-              if(!Array.isArray(values))values=[values];
-
               $$(values.length+" nfts trouvés");
 
               this.complete_token(addr,values).then(r => {
@@ -315,8 +302,19 @@ export class NetworkService {
             });
           }
 
+          if(type_addr=="token"){
+            this.build_token_from_solscan(addr).then((token:Token)=>{
+              resolve([token]);
+            }).catch((err)=>{
+              reject(err);
+            });
+            return;
+          }
+
+
 
         } else {
+          //Listing elrond
           this.httpClient.get(environment.server+"/api/nfts/?limit=40&account="+addr+"&network="+this.network).subscribe((r:any)=>{
             resolve(r);
           })
@@ -382,5 +380,9 @@ export class NetworkService {
         reject(err);
       });
     });
+  }
+
+  get_list_tokens() {
+    return this.httpClient.get(environment.server+"/api/get_list");
   }
 }

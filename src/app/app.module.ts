@@ -45,6 +45,7 @@ import { LinkComponent } from './link/link.component';
 import {ClipboardModule} from "@angular/cdk/clipboard";
 import { FilterPipe } from './filter.pipe';
 import { AliasPipe } from './alias.pipe';
+import { UploadFileComponent } from './upload-file/upload-file.component';
 
 
 @NgModule({
@@ -64,7 +65,8 @@ import { AliasPipe } from './alias.pipe';
     ManageComponent,
     LinkComponent,
     FilterPipe,
-    AliasPipe
+    AliasPipe,
+    UploadFileComponent
 
   ],
     imports: [

@@ -7,6 +7,7 @@ from os import listdir
 from os.path import exists
 from time import sleep
 
+import requests
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
@@ -143,3 +144,13 @@ class Solana:
     # for item in rc["result"]["value"]:
     # 	item["content"]=base64.b64decode(item["account"]["data"][0])
     return rc["result"]["value"]
+
+  def scan(self,addr,network="devnet"):
+    url="https://api-devnet.solscan.io" if network=="devnet" else "https://api.solscan.io"
+    url=url+"/account?address="+addr
+    rc=requests.get(url,headers={
+      "Content-Type":"application/json; charset=UTF-8",
+      "User-Agent":"Mozilla/5.0 (iPad; U; CPU OS 3_2_1 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405"
+    })
+    return rc.json()["data"]
+
