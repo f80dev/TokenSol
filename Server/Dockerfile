@@ -60,7 +60,7 @@ RUN mkdir temp
 RUN mkdir Configs
 RUN mkdir Fonts
 RUN mkdir ./Solana/Temp
-RUN mkdir ./Solana/PEM
+RUN mkdir ./Elrond/PEM
 RUN mkdir ./Solana/Keys
 RUN mkdir ./Secret/Keys
 VOLUME /certs

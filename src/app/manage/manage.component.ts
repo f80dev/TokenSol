@@ -70,15 +70,12 @@ export class ManageComponent implements OnInit {
         let new_url="./manage/?search="+this.type_addr+"&account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network;
         this._location.replaceState(new_url);
         this.nfts=[];
-        let pubkey=this.pubkey;
-        if(this.network.network.indexOf("elrond")==1)
-          pubkey=this.alias_pipe.transform(this.pubkey,"pubkey");
+        let pubkey=this.alias_pipe.transform(this.pubkey,"pubkey");
 
         if(this.type_addr=="token" && pubkey.length<40)return;
         if(pubkey.length==0)return;
 
         this.network.wait("Récupération des NFT par "+this.type_addr+" pour "+pubkey);
-
 
         this.network.get_tokens_from(this.type_addr, pubkey).then((r:any)=>{
           showMessage(this,r.length+" NFTs récupérés");
