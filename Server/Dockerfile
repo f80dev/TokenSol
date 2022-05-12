@@ -44,16 +44,21 @@ RUN pip3 install pyopenssl
 RUN pip3 -v install solana
 RUN pip3 -v install base58
 RUN pip3 -v install ipfshttpclient
-RUN pip3 -v install erdpy
+RUN pip3 -v install erdpy==1.4.0
 RUN pip3 -v install ansi
 RUN pip3 -v install -U secret-sdk
 RUN pip3 -v install qrcode
 RUN pip3 -v install pillow
+RUN pip3 -v install py7zr
+RUN pip3 -v install ffmpeg-python
 
 WORKDIR /
 RUN mkdir Solana
 RUN mkdir Secret
 RUN mkdir Elrond
+RUN mkdir temp
+RUN mkdir Configs
+RUN mkdir Fonts
 RUN mkdir ./Solana/Temp
 RUN mkdir ./Solana/PEM
 RUN mkdir ./Solana/Keys
@@ -62,6 +67,7 @@ VOLUME /certs
 
 EXPOSE 4242
 
+COPY ./Fonts/*.ttf $APP_HOME/Fonts
 COPY *.py $APP_HOME
 COPY ./Solana/*.py $APP_HOME/Solana/
 COPY ./Secret/*.py $APP_HOME/Secret/
@@ -69,8 +75,9 @@ COPY ./Elrond/*.py $APP_HOME/Elrond/
 COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
+RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 WORKDIR $APP_HOME/
-RUN chmod +x ./Solana/metaboss-ubuntu-latest
+
 
 CMD ["python3", "app.py","4242","ssl"]

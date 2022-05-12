@@ -9,6 +9,8 @@ import {MywalletComponent} from "./mywallet/mywallet.component";
 import {KeysComponent} from "./keys/keys.component";
 import {MintComponent} from "./mint/mint.component";
 import {ManageComponent} from "./manage/manage.component";
+import {CreatorComponent} from "./creator/creator.component";
+import {ValidateComponent} from "./validate/validate.component";
 
 
 const routes: Routes = [
@@ -17,7 +19,9 @@ const routes: Routes = [
   { path: 'reload', component: FaucetComponent },
   { path: 'mint', component: MintComponent },
   { path: 'keys', component: KeysComponent },
+  { path: 'creator', component: CreatorComponent },
   { path: 'manage', component: ManageComponent },
+  { path: 'validate', component: ValidateComponent },
   { path: 'wallet', component: MywalletComponent },
   { path: 'buy', component: BuyComponent },
 ];

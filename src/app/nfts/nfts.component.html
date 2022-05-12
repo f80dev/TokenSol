@@ -21,7 +21,7 @@
 
       <div style="width: 100%;height: fit-content;">
         <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;">
-          <img style="object-fit: contain;width: 100%;" [src]="nft.metadataOffchain?.image">
+          <a [href]="nft.metadataOffchain?.image" target="visual"><img style="object-fit: contain;width: 100%;" [src]="nft.metadataOffchain?.image"></a>
         </div>
         <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;" *ngFor="let file of nft.metadataOffchain?.properties?.files">
           <a [href]="file?.uri" target="_blank">
@@ -51,8 +51,8 @@
       <h3>OnChain</h3>
       <table style="font-size: small;line-height: 90%;" *ngIf="nft.metadataOnchain">
         <tr><td>Update authority</td><td><a [href]="getExplorer(nft.metadataOnchain.updateAuthority)" target="_blank">{{nft.metadataOnchain?.updateAuthority | alias}}</a></td>
-        <tr><td>Primaray sale</td><td>{{nft.metadataOnchain?.primarySaleHappened}}</td>
-        <tr><td>Mutable</td><td>{{nft.metadataOnchain?.isMutable}}</td>
+        <tr *ngIf="network.isSolana()"><td>Primaray sale</td><td>{{nft.metadataOnchain?.primarySaleHappened}}</td>
+        <tr *ngIf="network.isSolana()"><td>Mutable</td><td>{{nft.metadataOnchain?.isMutable}}</td>
         <tr><td>Mint authority</td><td><a [href]="getExplorer(nft.splMintInfo?.mintAuthority)" target="_blank">{{nft.splMintInfo?.mintAuthority | alias}}</a></td>
         <tr><td>Owner</td><td><a [href]="getExplorer(nft.splTokenInfo?.owner)" target="_blank">{{nft.splTokenInfo?.owner | alias}}</a></td></tr>
       </table>

@@ -3,9 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {NetworkService} from "./network.service";
 import {Observable} from "rxjs";
 import {environment} from "../environments/environment";
-import {$$, MetabossKey} from "../tools";
-import {PublicKey} from "@solana/web3.js";
-
+import {MetabossKey} from "../tools";
 
 @Injectable({
   providedIn: 'root'
@@ -18,9 +16,9 @@ export class MetabossService {
     private httpClient : HttpClient,
     private network:NetworkService
   ) {
-    this.keys().subscribe((r)=>{
-      this.admin_key=r[0];
-    })
+    // this.keys(this.network.network).subscribe((r)=>{
+    //   this.admin_key=r[0];
+    // })
   }
 
 

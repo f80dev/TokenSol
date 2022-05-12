@@ -8,6 +8,7 @@ import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
 import {MetabossService} from "./metaboss.service";
+import {MetabossKey} from "../tools";
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ import {MetabossService} from "./metaboss.service";
 })
 export class AppComponent implements OnInit {
   title = environment.appname;
+  version=environment.version;
 
   isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
     .pipe(
@@ -23,6 +25,7 @@ export class AppComponent implements OnInit {
       shareReplay()
     );
   networks=NETWORKS;
+
 
   constructor(
     private breakpointObserver: BreakpointObserver,
@@ -56,7 +59,9 @@ export class AppComponent implements OnInit {
   }
 
 
-    update_network() {
-        this.metaboss.keys(this.network_service.network).subscribe((keys)=>{this.network_service.keys=keys;});
-    }
+  update_network() {
+      this.metaboss.keys(this.network_service.network).subscribe((keys)=>{
+        this.network_service.keys=keys;
+      });
+  }
 }

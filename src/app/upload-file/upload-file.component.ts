@@ -13,14 +13,13 @@ export class UploadFileComponent implements OnInit {
   filename:string="";
   @Input("filter") filter:any={};
   @Input("send_file") send_file:boolean=false;
-  @Input("label") label:string="Sélectionner un fichier";
   @Input("comment") comment:string="";
   @Input("encode") encode=true;
   @Input("maxsize") maxsize:number=10000000000000;
   @Input("show_cancel") show_cancel:boolean=false;
   @Output("uploaded") onupload:EventEmitter<any>=new EventEmitter();
   @Output("canceled") oncancel:EventEmitter<any>=new EventEmitter();
-  @Input("extensions") extensions:string="*";
+  @Input("extensions") extensions:string="*"; //format: accept=".doc,.docx"  ou "accept="audio/*"
 
 
   constructor(
@@ -36,27 +35,30 @@ export class UploadFileComponent implements OnInit {
   }
 
   import(fileInputEvent: any) {
-    var reader: any = new FileReader();
-    if (fileInputEvent.target.files[0].size < this.maxsize) {
-      this.filename = fileInputEvent.target.files[0].name;
-      reader.onload = () => {
-        let file = JSON.stringify(reader.result);
-        this.message = "";
-        if(!this.encode)file=atob(file);
-        this.onupload.emit({filename:this.filename,file:file})
-      }
 
-      if(this.send_file){
-        this.onupload.emit({filename:fileInputEvent.target.files[0].name,file:fileInputEvent.target.files[0]})
+    for(let file of fileInputEvent.target.files){
+      file.reader = new FileReader();
+      if (file.size < this.maxsize) {
+        this.filename = file.name;
+        file.reader.onload = () => {
+          let content = file.reader.result;
+          this.message = "";
+          if(!this.encode)content=atob(content);
+          this.onupload.emit({filename:this.filename,file:content})
+        }
+
+        if(this.send_file){
+          this.onupload.emit({filename:file.name,file:file})
+        } else {
+          this.message = "Chargement du fichier";
+          file.reader.readAsDataURL(file);
+        }
+
       } else {
-        this.message = "Chargement du fichier";
-        reader.readAsDataURL(fileInputEvent.target.files[0]);
+        showMessage(this, "La taille limite des fichier est de " + Math.round(this.maxsize / 1024) + " ko");
+        this.message = "";
+        this.oncancel.emit();
       }
-
-    } else {
-      showMessage(this, "La taille limite des fichier est de " + Math.round(this.maxsize / 1024) + " ko");
-      this.message = "";
-      this.oncancel.emit();
     }
   }
 }

@@ -20,7 +20,7 @@ from spl.token.constants import TOKEN_PROGRAM_ID
 from Tools import log
 
 SOLANA_KEY_DIR="./Solana/Keys/"
-METABOSS_DIR="./Server"
+METABOSS_DIR="./Solana/"
 
 class Solana:
   def __init__(self,network="devnet"):
@@ -29,10 +29,13 @@ class Solana:
     self.client=Client(self.api,Confirmed)
 
 
-  def exec(self,command:str,param:str="",account:str="",keyfile="admin.json",data=None,sign=False,delay=2.0):
+  def exec(self,command:str,param:str="",account:str="",keyfile="admin.json",data=None,sign=False,delay=1.0,owner=""):
+    if len(owner)>0:owner=self.find_address_from_json(owner)
+
     if "Solana" in os.listdir(): os.chdir("./Solana")
     keyfile=keyfile +".json" if not keyfile.endswith(".json") else keyfile
     if not keyfile in os.listdir("./Keys/"):
+      log("Clé introuvable")
       return {"error":keyfile+" introuvable"}
 
     keyfile="./Keys/"+keyfile if not keyfile.startswith("./Keys") else keyfile
@@ -44,12 +47,13 @@ class Solana:
         f.close()
 
     mes=None
-    progname="metaboss-ubuntu-latest" if platform.system()!="Windows" else "metaboss.exe"
+    progname="./metaboss-ubuntu-latest" if platform.system()!="Windows" else "metaboss.exe"
     encoder="ANSI" if platform.system()=="Windows" else "utf8"
 
     if progname.replace("./","") in os.listdir():
       cmd=progname+" "+command+" "+param+" --keypair "+keyfile+" -r "+self.api
       if len(account)>0:cmd=cmd+" --account "+account
+      if len(owner)>0:cmd=cmd+" --receiver "+owner
       if data: cmd=cmd+" --nft-data-file "+file_to_mint+(" --sign" if sign else "")
 
       log(cmd)
@@ -61,7 +65,7 @@ class Solana:
     if len(mes.stderr)==0 and data:
       if exists(file_to_mint):os.remove(file_to_mint)
 
-    if progname in os.listdir():
+    if progname.replace("./","") in os.listdir():
       os.chdir("..")
 
     if len(mes.stderr)==0:
@@ -109,9 +113,9 @@ class Solana:
 
 
 
-  def get_keys(self):
+  def get_keys(self,dir=SOLANA_KEY_DIR):
     rc=[]
-    for f in listdir(SOLANA_KEY_DIR):
+    for f in listdir(dir):
       if f.endswith(".json"):
         txt=open(SOLANA_KEY_DIR+f,"r").readlines()
         keypair=self.toKeypair(txt[0])
@@ -127,8 +131,9 @@ class Solana:
     return addr
 
 
-  def find_address_from_json(self,name:str,field="pubkey"):
-    for k in self.get_keys():
+  def find_address_from_json(self,name:str,field="pubkey",dir=SOLANA_KEY_DIR):
+    if len(name)>40:return name
+    for k in self.get_keys(dir=dir):
       if k["name"]==name:
         if len(field)>0:
           return k[field]

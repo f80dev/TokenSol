@@ -27,6 +27,7 @@
     "@solana/web3.js": "^1.39.1",
     "angular-sol-wallets": "^0.0.22",
     "ipfs-core": "^0.14.2",
+    "ngx-color-picker":"12.0.1",
     "nft.storage": "^6.1.0",
     "ngx-json-viewer": "^3.0.2",
     "rxjs": "~7.5.0",

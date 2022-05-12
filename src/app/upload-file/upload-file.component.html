@@ -1,16 +1,15 @@
-<ng-content></ng-content>
+<input #csvInput [hidden]="true"
+       type="file" onclick="this.value=null"
+       [multiple]="true"
+       (change)="import($event)"
+       [accept]="extensions"/>
 
-  <input #csvInput [hidden]="true"
-         type="file" onclick="this.value=null"
-         (change)="import($event)"
-         [accept]="extensions"/>
-
-  <button mat-raised-button
-          mat-button class="app-button"
-          [title]="comment"
-          (click)="csvInput.click()">
-    {{label}}
-  </button>
+<button mat-raised-button
+        mat-button style="width: fit-content;display: inline-block;"
+        [title]="comment"
+        (click)="csvInput.click()">
+  <ng-content></ng-content>
+</button>
 
 <button mat-raised-button
         *ngIf="show_cancel"
@@ -18,7 +17,3 @@
         (click)="cancel()">
   Annuler
 </button>
-
-{{filename}}
-
-

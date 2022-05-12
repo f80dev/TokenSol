@@ -1,3 +1,4 @@
+import base64
 import datetime
 import json
 import os
@@ -6,24 +7,27 @@ import sys
 
 from zipfile import ZipFile
 
+import py7zr
 from erdpy.accounts import Account
 
 from flask import Response, request, jsonify, send_file, Flask
 from flask_cors import CORS
 
 from werkzeug.datastructures import FileStorage
+from yaml import dump, load
 
-from ArtEngine import ArtEngine, Layer, Sticker
+from ArtEngine import ArtEngine, Layer, Sticker, TextElement
 from Elrond.Elrond import Elrond
 from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
-from Tools import str_to_hex, hex_to_str, log
+from Tools import str_to_hex, hex_to_str, log, filetype
 from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
 
 app = Flask(__name__)
 ftx=FTX()
+nft=ArtEngine()
 
 #voir la documentation de metaboss:
 
@@ -44,21 +48,106 @@ def update():
 @app.route('/api/test/')
 #test http://127.0.0.1:4242/api/test/
 def test():
-  nft=ArtEngine()
-  palette=dict()
-  for file in ["eye","triangle","circle"]:
-    layer=Layer(file,sticker=Sticker(file,image="C:/Users/hhoar/Pictures/temp/GenArt/"+file+".png",dimension=(500,500)))
-    palette[file]=layer.stickers[0].analyse(5)
-    layer.clone_image(old_color=(255, 192, 0, 255),new_colors=[(100,100,100,0),(200,0,200,0),(250,0,250,0)])
-    layer.clone_image(old_color=(255, 102, 204, 255),new_colors=[(100,100,100,0),(200,0,200,0),(250,0,250,0)])
-    nft.add(layer)
+  engine=ArtEngine("collage")
+  for k in range(4):
+    layer=Layer("layer"+str(k))
+    for i in range(5):
+      layer.add(TextElement("elt_"+str(k)+str(i),"L"+str(k)+"E"+str(i)))
 
-  s=Sticker("reference",dimension=(500,500))
-  s.write("#12345",color=(0,0,0,255))
-  nft.add(Layer("text",s))
+    engine.add(layer)
 
-  nft.generate("C:/Users/hhoar/Pictures/temp/GenArt/output",10)
-  return jsonify(palette)
+  rc=engine.generate(TextElement(),limit=10)
+  print(rc)
+  pass
+
+
+@app.route('/api/reset_collection/',methods=["GET"])
+#test http://127.0.0.1:4242/api/test/
+def reset_collection():
+  nft.reset()
+  return jsonify({"status":200})
+
+
+@app.route('/api/fonts/',methods=["GET"])
+#test http://127.0.0.1:4242/api/test/
+def get_fonts():
+  return jsonify({"fonts":os.listdir("./Fonts")})
+
+
+
+@app.route('/api/layers/',methods=["POST"])
+#test http://127.0.0.1:4242/api/test/
+def layers():
+  name=request.json["name"]
+  nft.delete(name)
+  position=request.json["position"] if "position" in request.json else 0
+  layer=Layer(name,
+              position=position,
+              unique=(request.json["unique"] if "unique" in request.json else False),
+              indexed=(request.json["indexed"] if "indexed" in request.json else True)
+  )
+  s=None
+  if "files" in request.json:
+    for f in request.json["files"]:
+      if filetype(f)=="image": s=Sticker("",image=f,dimension=(request.json["width"],request.json["height"]))
+      if filetype(f)=="text":s=TextElement(request.json["text"])
+      layer.add(s)
+  else:
+    if "text" in request.json and len(request.json["text"])>0:
+      for txt in request.json["text"].split("|"):
+        if len(txt)>0:
+          s=Sticker(name=txt,text=txt,x=request.json["x"],y=request.json["y"],
+                    dimension=(request.json["width"],request.json["height"]),
+                    fontstyle=request.json["fontstyle"])
+          layer.add(s)
+
+  nft.add(layer)
+  if s:
+    return jsonify({"status":200,"images":[s.toBase64() for s in layer.elements]})
+  else:
+    return jsonify({"status":200})
+
+
+@app.route('/api/collection/')
+#test http://127.0.0.1:4242/api/test/
+def get_collection():
+  limit=int(request.args.get("limit",10))
+  format=request.args.get("format","zip")
+  nft.name=request.args.get("name","mycollection").replace(".png","")
+  collage=Sticker("collage",dimension=(500,500))
+  files=nft.generate(collage,"./temp/",limit)
+
+  if format=="zip":
+    archive_file="./temp/Collection.7z"
+    with py7zr.SevenZipFile(archive_file, 'w') as archive:
+      for f in files:
+        archive.write(f)
+
+    for f in files:
+      os.remove(f)
+
+    return send_file(archive_file,attachment_filename="Collection.7z")
+
+  if format=="upload":
+    platform=request.args.get("platform","ipfs")
+    for f in files:
+      upload_on_platform(f,platform)
+
+  if format=="preview":
+    rc=[]
+    index=0
+    for filename in files:
+      f=open(filename,"rb")
+      only_filename=filename[filename.rindex("/")+1:]
+      rc.append({"src":"data:image/jpeg;base64,"+str(base64.b64encode(f.read()),"utf8"),"filename":only_filename})
+      f.close()
+      os.remove(filename)
+    return jsonify(rc)
+
+
+
+
+
 
 
 
@@ -73,6 +162,48 @@ def infos():
       "Secret":{}
       }
   return jsonify(rc)
+
+
+@app.route('/api/save_config/<name>/',methods=["POST"])
+#test http://127.0.0.1:4242/api/infos/
+#test https://server.f80lab.com:4242/api/infos/
+def save_config(name:str):
+  if request.json is None:
+    rc=request.data
+  else:
+    rc=dump(request.json,encoding="utf8")
+
+  filename="./Configs/"+name+".yaml"
+  f=open(filename,"w")
+  f.writelines(str(rc,"utf8"))
+  f.close()
+  return jsonify({"error":""})
+
+
+
+
+@app.route('/api/configs/<name>/')
+@app.route('/api/configs/')
+#test http://127.0.0.1:4242/api/infos/
+#test https://server.f80lab.com:4242/api/infos/
+def configs(name:str=""):
+  if len(name)==0:
+    return jsonify({"files":os.listdir("./Configs")})
+  else:
+    format=request.args.get("format","json")
+    filename="./Configs/"+name+".yaml"
+    if format=="json":
+      f=open(filename,"r")
+      s="\n".join(f.readlines())
+      rc=load(s.replace("\n\n","\n"))
+      f.close()
+      return jsonify(rc)
+    else:
+      return send_file(path_or_file=filename,mimetype="plain/text",as_attachment=True,download_name=name+".yaml")
+
+
+
+
 
 
 
@@ -117,7 +248,7 @@ def keys():
   network=request.args.get("network","devnet").lower()
   if request.method=="GET":
     if "elrond" in network:
-      return jsonify(Elrond().get_keys())
+      return jsonify(Elrond(network).get_keys())
     else:
       return jsonify(Solana().get_keys())
   else:
@@ -265,12 +396,15 @@ def mint():
   network=request.args.get("network","devnet")
   _data=request.json
   if _data is None:
-    _data=json.loads(str(request.data,"utf8").replace('\x00',''))
+    text=str(request.data,"utf8").replace('\x00','')
+    _data=json.loads(text)
 
   if _data is None:
     s=str(request.data,"utf8")
     for i in range(200): s=s.replace("\r\n","")
     _data=json.loads(s)
+
+  log("Minage avec les metadata "+str(_data))
 
   if "elrond" in network:
     elrond=Elrond(network)
@@ -285,31 +419,47 @@ def mint():
     if collection_id=="":
       collection_id=elrond.add_collection(wallet_name,_data["collection"]["name"],type="NonFungible")
 
-    offchain={
-      "attributes":_data["attributes"],
-      "description":_data["description"],
-      "collection":_data["collection"]["name"],
-      "creators":_data["properties"]["creators"]
-    }
-    nonce=elrond.mint(wallet_name,
-                   title=_data["name"],
-                   collection=collection_id,
-                   properties=offchain,
-                   ipfs=IPFS(IPFS_SERVER,IPFS_PORT),
-                   quantity=1,
-                   royalties=20,
-                   visual=_data["image"]
-                   )
-    infos=elrond.get_account(wallet_name)
-    token_id=hex_to_str(collection_id)+"-"+nonce
-    rc={"command":"ESDTCreate",
-        "error":"",
-        "link":elrond.getExplorer(token_id,"nfts"),
-        "out":"",
-        "result":token_id,
-        "balance":int(infos["balance"])/1e18
-        }
+    if collection_id:
+      offchain={
+        "attributes":_data["attributes"],
+        "description":_data["description"],
+        "collection":_data["collection"]["name"],
+        "creators":_data["properties"]["creators"]
+      }
+
+      nonce=elrond.mint(wallet_name,
+                     title=_data["name"],
+                     collection=collection_id,
+                     properties=offchain,
+                     ipfs=IPFS(IPFS_SERVER,IPFS_PORT),
+                     quantity=1,
+                     royalties=20,
+                     visual=_data["image"]
+                     )
+      if nonce is None:
+        rc={"error":"Probleme de création"}
+      else:
+        infos=elrond.get_account(wallet_name)
+        token_id=hex_to_str(collection_id)+"-"+nonce
+        rc={"command":"ESDTCreate",
+            "error":"",
+            "link":elrond.getExplorer(token_id,"nfts"),
+            "out":"",
+            "result":{
+              "transaction":token_id,
+              "mint":token_id
+            },
+            "unity":"EGLD",
+            "link_transaction":elrond.getExplorer(token_id,"nfts"),
+            "link_mint":elrond.getExplorer(token_id,"nfts"),
+            "balance":int(infos["balance"])/1e18
+            }
+    else:
+      log("Impossible de créé la collection du NFT")
+      rc={"error":"Impossible de créé le NFT"}
+
   else:
+    #****************************************************SOLANA
     if not "category" in _data["properties"]:
       _data["properties"]["category"]="image"
 
@@ -336,8 +486,9 @@ def mint():
     for k in ["properties","collection","image","attributes"]:
       if k in _data:del _data[k]
 
-    rc=Solana(network).exec("mint one",keyfile=keyfile,data=_data,sign=(request.args.get("sign","False")=="True"))
+    rc=Solana(network).exec("mint one",keyfile=keyfile,data=_data,sign=(request.args.get("sign","False")=="True"),owner=request.args.get("owner",""))
     rc["balance"]=Solana(network).balance(keyfile)
+    rc["unity"]="SOL"
 
   return jsonify(rc)
 
@@ -447,7 +598,7 @@ def update_obj():
 
   if "elrond" in network:
     rc=Elrond(network).update(
-      _user=Account(pem_file="./Elrond/PEM/"+keyfile+".pem"),
+      user=keyfile,
       token_id=account,
       properties=request.json,
       ipfs=ipfs

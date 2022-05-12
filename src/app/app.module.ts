@@ -46,6 +46,12 @@ import {ClipboardModule} from "@angular/cdk/clipboard";
 import { FilterPipe } from './filter.pipe';
 import { AliasPipe } from './alias.pipe';
 import { UploadFileComponent } from './upload-file/upload-file.component';
+import { CreatorComponent } from './creator/creator.component';
+import { OrderPipe } from './order.pipe';
+import {MatSliderModule} from "@angular/material/slider";
+import {ColorPickerModule} from "ngx-color-picker";
+import {MatExpansionModule} from "@angular/material/expansion";
+import { ValidateComponent } from './validate/validate.component';
 
 
 @NgModule({
@@ -66,13 +72,17 @@ import { UploadFileComponent } from './upload-file/upload-file.component';
     LinkComponent,
     FilterPipe,
     AliasPipe,
-    UploadFileComponent
+    UploadFileComponent,
+    CreatorComponent,
+    OrderPipe,
+    ValidateComponent
 
   ],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
         SolWalletsModule,
+        ColorPickerModule,
         HttpClientModule,
         MatDialogModule,
         NgxJsonViewerModule,
@@ -99,10 +109,12 @@ import { UploadFileComponent } from './upload-file/upload-file.component';
         MatProgressBarModule,
         MatButtonToggleModule,
         MatCheckboxModule,
-        ClipboardModule
+        ClipboardModule,
+        MatSliderModule,
+        MatExpansionModule
     ],
   providers: [
-    FilterPipe,AliasPipe,
+    FilterPipe,AliasPipe,SafePipe,OrderPipe,
     {provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}}
   ],
   bootstrap: [AppComponent]

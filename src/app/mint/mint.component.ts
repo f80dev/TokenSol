@@ -4,7 +4,7 @@ import {$$, MetabossKey, showError, showMessage, syntaxHighlight} from "../../to
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
-import {QUOTA} from "../../definitions";
+import {PLATFORMS, QUOTA} from "../../definitions";
 
 @Component({
   selector: 'app-mint',
@@ -19,11 +19,7 @@ export class MintComponent implements OnInit {
   sign: boolean=false;
   tokens: any[]=[];
   keys: MetabossKey[]=[];
-  platforms=[
-    {label:"NFT storage",value:"nftstorage"},
-    {label:"IPFS",value:"ipfs"},
-    {label:"Infura (IPFS)",value:"infura"}
-  ]
+  platforms=PLATFORMS;
   sel_platform: string=this.platforms[0].value;
 
 

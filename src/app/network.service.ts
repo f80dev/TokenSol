@@ -15,6 +15,7 @@ import {$$,MetabossKey,words} from "../tools";
 import {environment} from "../environments/environment";
 
 import {Token} from "./nfts/nfts.component";
+import {Layer} from "./creator/creator.component";
 
 export enum type_addr {
   "owner",
@@ -357,6 +358,10 @@ export class NetworkService {
     return this.network=="devnet" || this.network=="mainnet";
   }
 
+  get_nfts_balance_from_ftx(){
+    return this.httpClient.get("https://ftx.us/api/nft/balances")
+  }
+
   private get_tokens_from_ftx(filter: string) {
     return new Promise((resolve,reject) => {
 
@@ -384,5 +389,44 @@ export class NetworkService {
 
   get_list_tokens() {
     return this.httpClient.get(environment.server+"/api/get_list");
+  }
+
+  add_layer(l: any) {
+    return this.httpClient.post(environment.server+"/api/layers/",l);
+  }
+
+  get_collection(limit: number,file_format:string) {
+    return this.httpClient.get(environment.server+"/api/collection/?name="+file_format+"&format=preview&limit="+limit);
+  }
+
+  create_text_layer(x: number, y: number, text_to_add: string,l:Layer) {
+    return this.httpClient.post(environment.server+"/api/layers/",
+      {x:x,y:y,
+        text:text_to_add,
+        name:l.name,
+        unique:l.unique,
+        indexed:l.indexed,
+        width:l.width,height:l.height,
+        fontstyle:l.fontstyle});
+  }
+
+  reset_collection() {
+    return this.httpClient.get(environment.server+"/api/reset_collection/");
+  }
+
+  save_config(name:string,body:any) {
+    return this.httpClient.post(environment.server+"/api/save_config/"+name+"/",body);
+  }
+
+  load_config(name:string) {
+    return this.httpClient.get(environment.server+"/api/configs/"+name+"/?format=json");
+  }
+
+  list_config() {
+    return this.httpClient.get(environment.server+"/api/configs/");
+  }
+
+  list_installed_fonts() {
+    return this.httpClient.get(environment.server+"/api/fonts/");
   }
 }

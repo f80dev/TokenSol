@@ -1,0 +1,26 @@
+{
+    "Issuer": "paul",
+    "creators": [
+        {
+            "address": "LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr",
+            "share": 10,
+            "verified": false
+        },
+        {
+            "address": "799C3Tr6gxdwspPoDEBvFGgLCyzMrSrFjd3CkVW6ukar",
+            "share": 60,
+            "verified": false
+        },
+        {
+            "address": "DcMWLNyDgfGvguKWzrvUzhm5B4rsbxwiQtotz6Xg4sWG",
+            "share": 30,
+            "verified": false
+        }
+    ],
+    "description": "description1",
+    "external_url": "",
+    "name": "MyRealTest1",
+    "seller_fee_basis_points": 5000,
+    "symbol": "symbol1",
+    "uri": "https://ipfs.io/ipfs/QmaNPFxJxy1iZiNec5jdWzTgyVwigkDrasD3c8wsLMGQvz"
+}

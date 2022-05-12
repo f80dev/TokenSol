@@ -5,7 +5,6 @@ import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MetabossService} from "../metaboss.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {PublicKey} from "@solana/web3.js";
 
 export interface Creator {
   address:string
@@ -46,6 +45,7 @@ export interface MetadataExternal {
   }
   issuer:string
 }
+
 export interface MetadataOnChain {
   key:number | undefined
   updateAuthority:string
@@ -225,9 +225,11 @@ export class NftsComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.metaboss.keys().subscribe((keys)=>{
-      this.network.keys=keys;
-    })
+    if(this.network.keys.length==0){
+      this.metaboss.keys(this.network.network).subscribe((keys)=>{
+        this.network.keys=keys;
+      })
+    }
   }
 
 

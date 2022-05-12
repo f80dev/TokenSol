@@ -1496,6 +1496,9 @@ PERFORMANCE OF THIS SOFTWARE.
 minimalistic-crypto-utils
 MIT
 
+ngx-color-picker
+MIT
+
 ngx-json-viewer
 MIT
 MIT License

@@ -14,6 +14,12 @@ def int_to_hex(number,nbChar=2,zerox=True):
   return rc
 
 
+def filetype(filename=""):
+  if filename.endswith(".jpg") or filename.endswith(".png") or filename.startswith("data:image"):return "image"
+  if filename.endswith(".json"):return "json"
+  if filename.endswith(".txt"):return "text"
+  return filename[filename.rindex(".")+1:]
+
 def api(url,alternate_domain=""):
   log("Appel de "+url)
   data=requests.api.get(url)
@@ -44,6 +50,14 @@ def hex_to_str(number):
   for i in range(0,len(number),2):
     rc=rc+chr(int(number[i:i+2],16))
   return rc
+
+
+#
+# def int_to_hex(number,digits=2,zerox=False):
+#   s=hex(number)
+#   if not zerox:s=s.replace("0x","")
+#   while len(s)<digits: s="0"+s
+#   return s
 
 
 

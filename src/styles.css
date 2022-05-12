@@ -20,9 +20,11 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
 
 button {
-  width: 120px;
-  margin: 5px;
+  min-width: 120px;
+  width: fit-content;
+  margin: 15px;
   font-size: small;
+
 }
 
 mat-form-field {
