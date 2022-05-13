@@ -1,13 +1,17 @@
 import base64
+import csv
 import datetime
 import json
 import os
 import ssl
 import sys
+from io import BytesIO
 
 from zipfile import ZipFile
 
 import py7zr
+import qrcode
+import yaml
 from erdpy.accounts import Account
 
 from flask import Response, request, jsonify, send_file, Flask
@@ -349,6 +353,39 @@ def nfts():
     rc=rc+Solana(network).get_nfts(account)
   return jsonify(rc)
 
+
+@app.route('/api/validate/',methods=["GET"])
+#http://127.0.0.1:4242/api/validate/?q=symbol1&ope=calvi2022&network=devnet
+def validate():
+  rc=dict()
+
+  query=request.args.get("q","")
+  operation=request.args.get("ope","").lower()
+  network=request.args.get("network","devnet").lower()
+
+  with open("./Operations/"+operation+".yaml","r") as file:
+    _ope=yaml.load(file,Loader=yaml.FullLoader)
+
+    with open("./Operations/"+_ope["data"]) as csvFile:
+      data=csv.DictReader(csvFile,delimiter=";")
+      for l in list(data):
+        if l[_ope["find"]["field"]]==query:
+          nft=Solana().get_token(l["address"],network)
+          if nft[_ope["to_check"]] in _ope["values"]:rc={"validity":"ok"}
+
+  return jsonify(rc)
+
+
+@app.route('/api/token_by_delegate/',methods=["GET"])
+#http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
+def get_token_by_delegate():
+  network=request.args.get("network","devnet")
+  account=request.args.get("account","")
+  rc=Solana().get_token_by_miner(account)
+  return jsonify(rc)
+
+
+
 @app.route('/api/upload/',methods=["POST"])
 #https://metaboss.rs/mint.html
 def upload():
@@ -360,11 +397,29 @@ def upload():
   }
 
   if body["type"]=="":
-    if body["filename"].endswith(".mp4") or body["filename"].endswith(".avi") or body["filename"].endswith(".webm"):
-      body["type"]="video/"+body["filename"]
-    else:
-      body["type"]="image/"+body["filename"]
+    if body["filename"].startswith("qrcode:"):
+      body["type"]="image/png"
 
+      qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+      )
+      qr.add_data(body["filename"].split("qrcode:")[1])
+      qr.make(fit=True)
+      img = qr.make_image(fill_color="black", back_color="white")
+
+      buffered = BytesIO()
+      img.save(buffered, format="PNG")
+      body["content"]=";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
+      body["filename"]="qrcode.png"
+
+    else:
+      if body["filename"].endswith(".mp4") or body["filename"].endswith(".avi") or body["filename"].endswith(".webm"):
+        body["type"]="video/"+body["filename"]
+      else:
+        body["type"]="image/"+body["filename"]
 
   rc=upload_on_platform(body,platform)
   return jsonify(rc)

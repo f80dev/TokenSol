@@ -1,1 +1,10 @@
-<p>validate works!</p>
+<div class="mainform" cdkTrapFocus>
+  <h2>{{operation}}</h2>
+  <mat-form-field appearance="fill" style="min-width: 300px;font-size: large;">
+    <mat-label>Veuillez saisir</mat-label>
+    <input matInput type="text" [(ngModel)]="query" cdkFocusInitial (ngModelChange)="update_model()">
+    <mat-icon matSuffix (click)="query=''">cancel</mat-icon>
+  </mat-form-field>
+
+
+</div>

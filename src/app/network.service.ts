@@ -325,7 +325,7 @@ export class NetworkService {
 
         if(type_addr=="miner"){
           //TODO function en chantier
-          this.httpClient.post("",{}).subscribe((r:any)=> {
+          this.httpClient.get(environment.server+"/api/token_by_delegate/?account="+addr+"&network="+this.network).subscribe((r:any)=> {
             this.complete_token(addr,r.value).then(r => {
               resolve(r);
             })
@@ -428,5 +428,9 @@ export class NetworkService {
 
   list_installed_fonts() {
     return this.httpClient.get(environment.server+"/api/fonts/");
+  }
+
+  isValideToken(operation: string, query: string) {
+    return this.httpClient.get(environment.server+"/api/validate/?ope="+operation+"&q="+query);
   }
 }

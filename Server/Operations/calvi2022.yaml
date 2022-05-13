@@ -1,0 +1,6 @@
+title: "Calvi 2022"
+description: ""
+data: "calvi2022.csv"
+find:
+  field: "symbol"
+

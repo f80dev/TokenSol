@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import platform
@@ -27,6 +28,16 @@ class Solana:
     self.network=network.replace("solana-","").replace("solana_","")
     self.api="https://api.mainnet-beta.solana.com" if network=="mainnet" else "https://api.devnet.solana.com"
     self.client=Client(self.api,Confirmed)
+
+
+  def get_token(self,addr:str,network="devnet"):
+    token={}
+    rc=self.client.get_account_info(PublicKey(addr),Confirmed,encoding="jsonParsed")
+    token["accountInfo"]=rc["result"]["value"]["data"]
+    rc=self.scan(addr,network)
+    token["metadataOnchain"]=rc
+    return token
+
 
 
   def exec(self,command:str,param:str="",account:str="",keyfile="admin.json",data=None,sign=False,delay=1.0,owner=""):
@@ -158,4 +169,13 @@ class Solana:
       "User-Agent":"Mozilla/5.0 (iPad; U; CPU OS 3_2_1 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405"
     })
     return rc.json()["data"]
+
+  def get_token_by_miner(self, account):
+    """
+    https://docs.solana.com/developing/clients/jsonrpc-api#gettokenaccountsbydelegate
+    :param account:
+    :return:
+    """
+    rc=self.client.get_token_accounts_by_delegate(PublicKey(account),{"programId":PublicKey(TOKEN_PROGRAM_ID)},Confirmed)
+    return rc
 
