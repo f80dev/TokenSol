@@ -12,7 +12,6 @@ from zipfile import ZipFile
 import py7zr
 import qrcode
 import yaml
-from erdpy.accounts import Account
 
 from flask import Response, request, jsonify, send_file, Flask
 from flask_cors import CORS
