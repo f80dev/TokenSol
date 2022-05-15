@@ -52,6 +52,8 @@ import {MatSliderModule} from "@angular/material/slider";
 import {ColorPickerModule} from "ngx-color-picker";
 import {MatExpansionModule} from "@angular/material/expansion";
 import { ValidateComponent } from './validate/validate.component';
+import { DealermachineComponent } from './dealermachine/dealermachine.component';
+import { ContestComponent } from './contest/contest.component';
 
 
 @NgModule({
@@ -75,7 +77,9 @@ import { ValidateComponent } from './validate/validate.component';
     UploadFileComponent,
     CreatorComponent,
     OrderPipe,
-    ValidateComponent
+    ValidateComponent,
+    DealermachineComponent,
+    ContestComponent
 
   ],
     imports: [

@@ -433,4 +433,8 @@ export class NetworkService {
   isValideToken(operation: string, query: string) {
     return this.httpClient.get(environment.server+"/api/validate/?ope="+operation+"&q="+query);
   }
+
+  send_confirmation(address: string) {
+    this.httpClient.post(environment.server+"/api/send_conf",{address:address});
+  }
 }
