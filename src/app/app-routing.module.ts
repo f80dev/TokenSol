@@ -11,6 +11,9 @@ import {MintComponent} from "./mint/mint.component";
 import {ManageComponent} from "./manage/manage.component";
 import {CreatorComponent} from "./creator/creator.component";
 import {ValidateComponent} from "./validate/validate.component";
+import {DealermachineComponent} from "./dealermachine/dealermachine.component";
+import {ContestComponent} from "./contest/contest.component";
+import {BuildOpeComponent} from "./build-ope/build-ope.component";
 
 
 const routes: Routes = [
@@ -19,8 +22,11 @@ const routes: Routes = [
   { path: 'reload', component: FaucetComponent },
   { path: 'mint', component: MintComponent },
   { path: 'keys', component: KeysComponent },
+  { path: 'contest', component: ContestComponent },
   { path: 'creator', component: CreatorComponent },
   { path: 'manage', component: ManageComponent },
+  { path: 'dealermachine', component:DealermachineComponent },
+  { path: 'build', component:BuildOpeComponent },
   { path: 'validate', component: ValidateComponent },
   { path: 'wallet', component: MywalletComponent },
   { path: 'buy', component: BuyComponent },

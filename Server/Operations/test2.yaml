@@ -1,6 +1,6 @@
-title: "Calvi 2022"
+title: "Test"
 description: ""
-data: "calvi2022.csv"
+data: ""
 find:
   field: "symbol"
 
@@ -8,12 +8,10 @@ admin: paul
 
 dealer_machine:
   - name: operation1
-    showVisual: True
     dtStart: now
     duration: 1
     collections:
       - "AirVCollection"
-      - "LesGratuits"
 
 
 

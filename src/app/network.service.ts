@@ -410,11 +410,17 @@ export class NetworkService {
         fontstyle:l.fontstyle});
   }
 
+  //recoit un objet aux propriétés filename & content
+  upload(file: any ,platform="nftstorage"){
+      this.wait("Chargement du fichier");
+      return this.httpClient.post(environment.server+"/api/upload/?platform="+platform,file);
+  }
+
   reset_collection() {
     return this.httpClient.get(environment.server+"/api/reset_collection/");
   }
 
-  save_config(name:string,body:any) {
+  save_config_on_server(name:string,body:any) {
     return this.httpClient.post(environment.server+"/api/save_config/"+name+"/",body);
   }
 
@@ -434,7 +440,22 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/validate/?ope="+operation+"&q="+query);
   }
 
-  send_confirmation(address: string) {
-    this.httpClient.post(environment.server+"/api/send_conf",{address:address});
+  send_confirmation(address: string,tokenid:string) {
+    return this.httpClient.post(environment.server+"/api/send_conf",{address:address,tokenid:tokenid});
+  }
+
+  get_new_token(ope: string,url:string) {
+    return this.httpClient.get(environment.server+"/api/get_new_code/"+ope+"/"+encodeURIComponent(url));
+  }
+
+  mint_for_contest(address: string,tokenid:string,ope:string){
+    let body:any={account:address,tokenid:tokenid,ope:ope};
+    body.type_network=this.network.indexOf("devnet")>-1 ? "devnet" : "mainnet";
+    return this.httpClient.post(environment.server+"/api/mint_for_contest/",body);
+  }
+
+
+  get_operations() {
+    return this.httpClient.get(environment.server+"/api/operations/");
   }
 }

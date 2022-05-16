@@ -17,6 +17,7 @@
       <a mat-list-item [routerLink]="'keys'" *ngIf="user.hasPerm('keys')">Gestion des clés</a>
       <a mat-list-item [routerLink]="'mint'" *ngIf="user.hasPerm('mint')">Miner</a>
       <a mat-list-item [routerLink]="'validate'" >Validate</a>
+      <a mat-list-item [routerLink]="'build'" >Gestion des opérations</a>
       <a mat-list-item [routerLink]="'manage'" *ngIf="user.hasPerm('manage')">Gestion des NFTs</a>
       <a mat-list-item [routerLink]="'wallet'" *ngIf="user.hasPerm('wallet')">Mes NFTs</a>
       <a mat-list-item (click)="login()" *ngIf="!user.connected()">Login</a>

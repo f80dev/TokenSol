@@ -5,6 +5,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {PLATFORMS, QUOTA} from "../../definitions";
+import {NetworkService} from "../network.service";
 
 @Component({
   selector: 'app-mint',
@@ -25,6 +26,7 @@ export class MintComponent implements OnInit {
 
   constructor(
     public toast:MatSnackBar,
+    public network:NetworkService,
     public dialog:MatDialog,
     public metaboss:MetabossService
   ) { }
@@ -88,12 +90,12 @@ export class MintComponent implements OnInit {
           filename: file.uri,
           content: localStorage.getItem("attach_file_" + file.uri)
         }
-        this.metaboss.upload(obj,this.sel_platform).then((r: any) => {
+        this.network.upload(obj,this.sel_platform).subscribe((r: any) => {
           localStorage.removeItem("attach_file_" + file.uri);
           resolve(r.url)
           showMessage(this, "upload ok");
           this.local_save();
-        }).catch((err) => {
+        },(err) => {
           showError(err);
           reject(err);
         })

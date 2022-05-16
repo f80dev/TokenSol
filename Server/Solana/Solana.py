@@ -24,7 +24,7 @@ SOLANA_KEY_DIR="./Solana/Keys/"
 METABOSS_DIR="./Solana/"
 
 class Solana:
-  def __init__(self,network="devnet"):
+  def __init__(self,network="solana_devnet"):
     self.network=network.replace("solana-","").replace("solana_","")
     self.api="https://api.mainnet-beta.solana.com" if network=="mainnet" else "https://api.devnet.solana.com"
     self.client=Client(self.api,Confirmed)
@@ -161,8 +161,8 @@ class Solana:
     # 	item["content"]=base64.b64decode(item["account"]["data"][0])
     return rc["result"]["value"]
 
-  def scan(self,addr,network="devnet"):
-    url="https://api-devnet.solscan.io" if network=="devnet" else "https://api.solscan.io"
+  def scan(self,addr,network="solana_devnet"):
+    url="https://api-devnet.solscan.io" if network=="solana_devnet" else "https://api.solscan.io"
     url=url+"/account?address="+addr
     rc=requests.get(url,headers={
       "Content-Type":"application/json; charset=UTF-8",
@@ -178,4 +178,35 @@ class Solana:
     """
     rc=self.client.get_token_accounts_by_delegate(PublicKey(account),{"programId":PublicKey(TOKEN_PROGRAM_ID)},Confirmed)
     return rc
+
+  def prepare_offchain_data(self,_data):
+    if not "category" in _data["properties"]:
+      _data["properties"]["category"]="image"
+
+    return {
+      "attributes":_data["attributes"],
+      "properties":_data["properties"],
+      "description":_data["description"],
+      "name":_data["name"],
+      "image":_data["image"],
+      "symbol":_data["symbol"],
+      "external_url":"" if not "exernal_url" in _data else _data["external_url"]
+    }
+
+
+
+  def mint(self, _data,miner,sign=True,owner=""):
+
+    if "properties" in _data: _data["creators"]=_data["properties"]["creators"]
+    for c in _data["creators"]:
+      if len(c["address"])<20: c["address"]=Solana().find_address_from_json(c["address"])
+      c["verified"]=False
+
+    for k in ["properties","collection","image","attributes"]:
+      if k in _data:del _data[k]
+
+    rc=self.exec("mint one",keyfile=miner,data=_data,sign=sign,owner=owner)
+    rc["balance"]=self.balance(miner)
+    rc["unity"]="SOL"
+
 

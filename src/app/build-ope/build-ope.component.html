@@ -1,0 +1,17 @@
+<div class="mainform">
+  <table><tr>
+    <td>
+      <mat-form-field appearance="fill">
+        <mat-select  [(value)]="selected_ope" (selectionChange)="refresh($event)" >
+          <mat-option *ngFor="let ope of opes" [value]="ope">
+            {{ope.title}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </td>
+    <td>
+      <a [href]="url" target="_blank">{{url}}</a>
+    </td>
+  </tr></table>
+
+</div>

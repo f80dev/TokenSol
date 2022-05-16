@@ -47,10 +47,12 @@ RUN pip3 -v install ipfshttpclient
 RUN pip3 -v install erdpy==1.4.0
 RUN pip3 -v install ansi
 RUN pip3 -v install -U secret-sdk
-RUN pip3 -v install qrcode
+RUN pip3 -v install pyqrcode
 RUN pip3 -v install pillow
 RUN pip3 -v install py7zr
 RUN pip3 -v install ffmpeg-python
+RUN pip3 -v install pypng
+RUN pip3 -v install pymongo
 
 WORKDIR /
 RUN mkdir Solana
@@ -75,9 +77,9 @@ COPY ./Elrond/*.py $APP_HOME/Elrond/
 COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
+COPY ./Configs/*.yaml $APP_HOME/Configs/
 RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 WORKDIR $APP_HOME/
-
 
 CMD ["python3", "app.py","4242","ssl"]

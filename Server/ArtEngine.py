@@ -7,6 +7,7 @@ from random import random,seed
 import ffmpeg
 import requests
 from PIL import Image
+from PIL.Image import BICUBIC
 from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
 
@@ -29,6 +30,8 @@ class Element():
     pass
 
 
+
+
 class Sticker(Element):
   image:Image
 
@@ -45,9 +48,12 @@ class Sticker(Element):
           else:
             self.image=Image.open(image).convert("RGBA")
         else:
-          self.image=Image.open(BytesIO(requests.get(image).content))
+          self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
 
         if dimension:self.image=self.image.resize(dimension)
+
+
+
       else:
         self.image=image.image.copy()
 
@@ -93,7 +99,9 @@ class Sticker(Element):
     return "data:image/"+format.lower()+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
 
   def fusion(self,to_concat):
-    self.image.alpha_composite(to_concat.image)
+    log("Fusion de "+self.name+" avec "+to_concat.name)
+    src:Image=to_concat.image.resize(size=self.image.size,resample=BICUBIC)
+    self.image.alpha_composite(src)
 
   def save(self,filename):
     self.image.save(filename)
@@ -188,7 +196,8 @@ class Layer:
     return True
 
 
-  def add(self,elt:Element):
+  def add(self,elt:Element,autoName=True):
+    elt.name=self.name+"-"+str(len(self.elements))
     self.elements.append(elt)
     return self
 
@@ -253,7 +262,6 @@ class ArtEngine:
       self.layers[pos]=layer
 
 
-
   def add_image_to_layer(self,name,image):
     layer=self.get_layer(name)
     layer.add(Sticker("",image))
@@ -282,6 +290,7 @@ class ArtEngine:
 
       name=[]
       for layer in self.layers:
+        log("Ajout d'un élément du calque "+layer.name)
         elt=layer.random() if not layer.unique else layer.elements[0]
         if elt is None:
           log("il n'y a plus assez de NFT pour respecter l'unicité")

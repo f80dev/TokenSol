@@ -43,7 +43,7 @@ NETWORKS={
 
 
 class Elrond:
-    def __init__(self,network="devnet"):
+    def __init__(self,network="elrond_devnet"):
         self.network_name=network.replace("elrond_","").replace("elrond-","")
         self._proxy=ElrondProxy(NETWORKS[self.network_name]["proxy"])
 
@@ -115,6 +115,28 @@ class Elrond:
         return rc
 
 
+    def format_offchain(self,_data):
+      return {
+        "attributes":_data["attributes"],
+        "description":_data["description"],
+        "collection":_data["collection"]["name"],
+        "creators":_data["properties"]["creators"]
+      }
+
+
+    def transfer(self,collection_id,nonce,_from:Account,_to:Account):
+      _from=self.toAccount(_from)
+      _to=self.toAccount(_to)
+      data = "ESDTNFTTransfer@" + str_to_hex(collection_id) \
+             + "@" + nonce \
+             + "@" + int_to_hex(1,4) \
+             + "@" + str_to_hex(_to.address.hex(), False)
+      t = self.send_transaction(_from, _from, _from, 0, data)
+      return t
+
+
+
+
     def add_collection(self, owner:Account, collection,collection_id=None,type="SemiFungible"):
         """
         gestion des collections sur Elrond
@@ -131,52 +153,59 @@ class Elrond:
           log("La collection en doit pas commencer par Elrond")
           return None
 
-        collection_id=collection[:8].upper() if collection_id is None else collection_id
-        #Exemple de requete : issueNonFungible@4d61436f6c6c656374696f6e456c726f6e64@4d41434f4c4c4543@63616e467265657a65@74727565
-        #Résultat : https://devnet-explorer.elrond.com/transactions/1e7ac5f911cffce2b846c3f98b8abad636b2958a32df6bebde0ee0b83f087a94
-        data = "issue"+type \
-               + "@" + str_to_hex(collection, False) \
-               + "@" + str_to_hex(collection_id, False) \
-               + "@" + str_to_hex("canFreeze", False)+"@"+str_to_hex("true",False)
-               # + "@" + str_to_hex("canChangeOwner", False)+"@"+str_to_hex("true",False) \
-               # + "@" + str_to_hex("canUpgrade", False)+"@"+str_to_hex("true",False) \
-               # + "@" + str_to_hex("canWipe", False)+"@"+str_to_hex("true",False) \
-               # + "@" + str_to_hex("canAddSpecialRoles", False)+"@"+str_to_hex("true",False)
+        collection_id=None
+        for col in self.get_collections(owner):
+          if col["name"]==collection:
+            collection_id=str_to_hex(col["collection"],False)
+            break
 
-        t = self.send_transaction(owner,
-                                  Account(address=NETWORKS[self.network_name]["nft"]),
-                                  owner,
-                                  PRICE_FOR_STANDARD_NFT,
-                                  data)
+        if collection_id is None:
+          collection_id=collection[:8].upper() if collection_id is None else collection_id
+          #Exemple de requete : issueNonFungible@4d61436f6c6c656374696f6e456c726f6e64@4d41434f4c4c4543@63616e467265657a65@74727565
+          #Résultat : https://devnet-explorer.elrond.com/transactions/1e7ac5f911cffce2b846c3f98b8abad636b2958a32df6bebde0ee0b83f087a94
+          data = "issue"+type \
+                 + "@" + str_to_hex(collection, False) \
+                 + "@" + str_to_hex(collection_id, False) \
+                 + "@" + str_to_hex("canFreeze", False)+"@"+str_to_hex("true",False)
+                 # + "@" + str_to_hex("canChangeOwner", False)+"@"+str_to_hex("true",False) \
+                 # + "@" + str_to_hex("canUpgrade", False)+"@"+str_to_hex("true",False) \
+                 # + "@" + str_to_hex("canWipe", False)+"@"+str_to_hex("true",False) \
+                 # + "@" + str_to_hex("canAddSpecialRoles", False)+"@"+str_to_hex("true",False)
 
-        if t is None:
-            log("BUG: consulter "+self.getExplorer(owner.address.bech32(),"address"))
-            return None
+          t = self.send_transaction(owner,
+                                    Account(address=NETWORKS[self.network_name]["nft"]),
+                                    owner,
+                                    PRICE_FOR_STANDARD_NFT,
+                                    data)
 
-        if RESULT_SECTION in t and len(t[RESULT_SECTION][0]["data"].split("@")) > 2:
-            collection_id = t[RESULT_SECTION][0]["data"].split("@")[2]
+          if t is None:
+              log("BUG: consulter "+self.getExplorer(owner.address.bech32(),"address"))
+              return None
 
-            data = "setSpecialRole@" + collection_id + "@" + owner.address.hex() \
-                   + "@" + str_to_hex("ESDTRoleNFTCreate",False)  \
-                   + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
+          if RESULT_SECTION in t and len(t[RESULT_SECTION][0]["data"].split("@")) > 2:
+              collection_id = t[RESULT_SECTION][0]["data"].split("@")[2]
 
-            #TODO pour l'instant ne fonctionne pas
-            #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
+              data = "setSpecialRole@" + collection_id + "@" + owner.address.hex() \
+                     + "@" + str_to_hex("ESDTRoleNFTCreate",False)  \
+                     + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
 
-            if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
+              #TODO pour l'instant ne fonctionne pas
+              #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
 
-            #Exemple d'usage de setSpecialRole sur la collection présente
-            #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
+              if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
 
-            t = self.send_transaction(owner,
-                                      Account(address=NETWORKS[self.network_name]["nft"]),
-                                      owner, 0, data)
+              #Exemple d'usage de setSpecialRole sur la collection présente
+              #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
 
-            return collection_id
-        else:
-          log("Erreur de création de la collection. Consulter "+self.getExplorer(owner.address.bech32(),"address"))
+              t = self.send_transaction(owner,
+                                        Account(address=NETWORKS[self.network_name]["nft"]),
+                                        owner, 0, data)
 
-        return None
+          else:
+            log("Erreur de création de la collection. Consulter "+self.getExplorer(owner.address.bech32(),"address"))
+            collection_id=None
+
+        return collection_id
 
 
     def get_account(self,_user):
@@ -278,6 +307,7 @@ class Elrond:
         :return:
         """
 
+        if collection is None:return None
         miner=self.toAccount(miner)
 
         #hash = hex(int(now() * 1000)).upper().replace("0X", "")

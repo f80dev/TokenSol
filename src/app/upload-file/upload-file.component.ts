@@ -12,8 +12,8 @@ export class UploadFileComponent implements OnInit {
   message:string="";
   filename:string="";
   @Input("filter") filter:any={};
+  @Input("title") title:string="";
   @Input("send_file") send_file:boolean=false;
-  @Input("comment") comment:string="";
   @Input("encode") encode=true;
   @Input("maxsize") maxsize:number=10000000000000;
   @Input("show_cancel") show_cancel:boolean=false;
@@ -35,7 +35,6 @@ export class UploadFileComponent implements OnInit {
   }
 
   import(fileInputEvent: any) {
-
     for(let file of fileInputEvent.target.files){
       file.reader = new FileReader();
       if (file.size < this.maxsize) {
@@ -44,7 +43,11 @@ export class UploadFileComponent implements OnInit {
           let content = file.reader.result;
           this.message = "";
           if(!this.encode)content=atob(content);
-          this.onupload.emit({filename:this.filename,file:content})
+          this.onupload.emit({
+            filename:this.filename,
+            file:content,
+            type:content.split("data:")[1].split(";")[0]
+          })
         }
 
         if(this.send_file){

@@ -45,17 +45,7 @@ export class MetabossService {
     });
   }
 
-  //recoit un objet aux propriétés filename & content
-  upload(file: any ,platform="nftstorage"){
-    return new Promise((resolve, reject) => {
-      this.network.wait("Chargement du fichier");
-      this.httpClient.post(environment.server+"/api/upload/?platform="+platform,file).subscribe((r)=>{
-        resolve(r);
-      },(err)=>{
-        reject(err);
-      })
-    });
-  }
+
 
 
   update(nft_addr:string,new_value:string,field="uri",network="devnet") {

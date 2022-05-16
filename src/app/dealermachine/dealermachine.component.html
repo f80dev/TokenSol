@@ -1,6 +1,15 @@
 <div class="mainform">
-  <mat-form-field appearance="fill" style="max-width: 300px">
-    <mat-label>Adresse de votre wallet ou email si vous n'en avez pas</mat-label>
-    <input matInput type="text" [(ngModel)]="address" (ngModelChange)="valide($event)">
-  </mat-form-field>
+  <app-hourglass [message]="message"></app-hourglass>
+  <div *ngIf="message.length==0">
+    <mat-form-field appearance="fill" style="width: 300px">
+      <mat-label>Adresse de votre wallet ou email si vous n'en avez pas</mat-label>
+      <input matInput type="text" [(ngModel)]="address">
+    </mat-form-field>
+
+    <button type="button" mat-raised-button mat-button
+            (click)="valide()">
+      Demander
+    </button>
+  </div>
+
 </div>

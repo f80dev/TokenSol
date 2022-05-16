@@ -54,6 +54,8 @@ import {MatExpansionModule} from "@angular/material/expansion";
 import { ValidateComponent } from './validate/validate.component';
 import { DealermachineComponent } from './dealermachine/dealermachine.component';
 import { ContestComponent } from './contest/contest.component';
+import { BuildOpeComponent } from './build-ope/build-ope.component';
+import { HourglassComponent } from './hourglass/hourglass.component';
 
 
 @NgModule({
@@ -79,7 +81,9 @@ import { ContestComponent } from './contest/contest.component';
     OrderPipe,
     ValidateComponent,
     DealermachineComponent,
-    ContestComponent
+    ContestComponent,
+    BuildOpeComponent,
+    HourglassComponent
 
   ],
     imports: [

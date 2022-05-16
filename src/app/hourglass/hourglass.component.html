@@ -1,0 +1,38 @@
+<div *ngIf="message && message.length>0" [ngStyle]="{maxwidth:maxwidth,marginTop:marginTop,display:'inline-block',marginBottom:'5px'}">
+  <table style="width:100%;display: inline-block;height: min-content;">
+    <tr>
+      <td *ngIf="diameter>0">
+        <mat-spinner [diameter]="diameter"></mat-spinner>
+      </td>
+
+      <td [ngStyle]="{'text-align': 'left','font-size':fontsize}">
+        {{message}}
+      </td>
+
+      <td *ngIf="canCancel" style="text-align: right;cursor: pointer;">
+        <mat-icon (click)="oncancel.emit()">cancel</mat-icon>
+      </td>
+
+
+    </tr>
+  </table>
+
+  <div *ngIf="src.length>0">
+    <img [src]="src" style="width: 150px">
+    <br>
+  </div>
+
+  <mat-progress-bar
+                    style="max-width:300px;width: 90%;margin:0px;margin-left: 5%;"
+                    mode="determinate"
+                    [value]="current" *ngIf="step>0">
+  </mat-progress-bar>
+
+  <div *ngIf="showMessage && showMessage.length>0" style="font-size: small;display: inline-block;width:90%;">
+    {{showMessage}}
+  </div>
+
+
+</div>
+<br *ngIf="_br">
+

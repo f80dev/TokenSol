@@ -7,6 +7,8 @@ import {environment} from "../../environments/environment";
 import {showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PLATFORMS} from "../../definitions";
+import {ActivatedRoute, Router} from "@angular/router";
+import {Location} from "@angular/common";
 
 export interface Layer {
   unique: boolean
@@ -40,18 +42,22 @@ export class CreatorComponent implements OnInit {
   fontsize: number=100;
   color: any="#000000";
   fontname: string="corbel.ttf"
-  sel_platform: any="ipfs";
+  sel_platform: any="nftstorage";
   sel_config: any="";
   fontfiles: any;
   position_text: { x: any; y: any }={x:10,y:10};
   filename_format: string ="visual__idx__.png";
   show_collection: boolean=false;
+  message="";
 
   constructor(
     public network:NetworkService,
     public dialog:MatDialog,
+    public router:Router,
+    public routes:ActivatedRoute,
     public toast:MatSnackBar,
-    public safe:SafePipe
+    public safe:SafePipe,
+    public _location:Location
   ) {}
 
 
@@ -60,6 +66,8 @@ export class CreatorComponent implements OnInit {
     this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
     this.network.list_config().subscribe((r:any)=>{
       this.configs=r.files;
+      this.sel_config=this.routes.snapshot.queryParamMap.get("config") || this.configs[0];
+      this.load_config(this.sel_config);
     })
     this.network.list_installed_fonts().subscribe((r:any)=>{
       this.fontfiles=r.fonts;
@@ -74,7 +82,15 @@ export class CreatorComponent implements OnInit {
   }
 
   on_upload(evt: any,layer:Layer) {
-    layer.files.push(evt.file);
+    let body={
+      filename:evt.filename,
+      "content":evt.file,
+      "type":evt.type
+    }
+
+    this.network.upload(body,this.sel_platform).subscribe((r:any)=>{
+      layer.files.push(r.url);
+    })
   }
 
   add_layer() {
@@ -107,6 +123,8 @@ export class CreatorComponent implements OnInit {
     });
     }
 
+
+
   generate_collection(format="zip") {
     let i=0;
     this.show_collection=false;
@@ -116,12 +134,14 @@ export class CreatorComponent implements OnInit {
           i=i+1;
           if(i==this.layers.length){
             if(format=="zip")
-              open(environment.server+"/api/collection/?name="+this.filename_format+"&format=zip&limit="+this.limit,"_blank")
+              open(environment.server+"/api/collection/?size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit,"_blank")
 
             if(format=="preview"){
+              this.message="Fabrication de la collection en cours ...";
               this.network.get_collection(this.limit,this.filename_format).subscribe((r:any)=>{
+                this.message="";
                 this.previews=r;
-              })
+              },(err)=>{showError(this,err);})
             }
 
             if(format=="upload"){
@@ -225,15 +245,17 @@ export class CreatorComponent implements OnInit {
 
 
   load_config(name="config") {
-    this.network.load_config(name).subscribe((r:any)=>{
-      this.layers=r.layers;
-      this.col_width=r.width;
-      this.col_height=r.height;
-      this.filename_format=r.filename_format;
-      this.limit=r.limit;
-      this.sel_platform=r.platform;
-      this.show_collection=true;
-    },(err=>{showError(this,err)}));
+    if(name){
+      this.network.load_config(name).subscribe((r:any)=>{
+        this.layers=r.layers;
+        this.col_width=r.width;
+        this.col_height=r.height;
+        this.filename_format=r.filename_format;
+        this.limit=r.limit;
+        this.sel_platform=r.platform;
+        this.show_collection=true;
+      },(err=>{showError(this,err)}));
+    }
   }
 
 
@@ -251,16 +273,21 @@ export class CreatorComponent implements OnInit {
         f="\""+f+"\""
     }
     let name="config";
-    this.network.save_config(name,body).subscribe(()=>{
+    this.network.save_config_on_server(name,body).subscribe(()=>{
       open(environment.server+"/api/configs/"+name+"/?format=file","config");
     })
   }
 
 
   on_upload_config($event: any) {
+    this.message="Chargement du fichier de configuration";
     let txt=atob($event.file.split("base64,")[1]);
-    this.network.save_config("temp",txt).subscribe(()=>{
-      this.load_config("temp");
+    this.network.save_config_on_server($event.filename,txt).subscribe(()=>{
+      this.message="";
+      this._location.replaceState("./creator?config="+$event.filename);
+      this.load_config($event.filename);
+    },(err)=>{
+      showError(this);
     })
   }
 
@@ -299,5 +326,14 @@ export class CreatorComponent implements OnInit {
 
   clear_layer(layer: Layer) {
     layer.files=[];
+  }
+
+  upload_on_storage_platform() {
+
+  }
+
+
+  open_file(file: any) {
+    open(file,"preview");
   }
 }
