@@ -1,4 +1,3 @@
-import base64
 import json
 import os
 import platform
@@ -24,7 +23,7 @@ SOLANA_KEY_DIR="./Solana/Keys/"
 METABOSS_DIR="./Solana/"
 
 class Solana:
-  def __init__(self,network="solana_devnet"):
+  def __init__(self,network="solana-devnet"):
     self.network=network.replace("solana-","").replace("solana_","")
     self.api="https://api.mainnet-beta.solana.com" if network=="mainnet" else "https://api.devnet.solana.com"
     self.client=Client(self.api,Confirmed)
@@ -161,8 +160,8 @@ class Solana:
     # 	item["content"]=base64.b64decode(item["account"]["data"][0])
     return rc["result"]["value"]
 
-  def scan(self,addr,network="solana_devnet"):
-    url="https://api-devnet.solscan.io" if network=="solana_devnet" else "https://api.solscan.io"
+  def scan(self,addr,network="solana-devnet"):
+    url="https://api-devnet.solscan.io" if network=="solana-devnet" else "https://api.solscan.io"
     url=url+"/account?address="+addr
     rc=requests.get(url,headers={
       "Content-Type":"application/json; charset=UTF-8",
@@ -208,5 +207,6 @@ class Solana:
     rc=self.exec("mint one",keyfile=miner,data=_data,sign=sign,owner=owner)
     rc["balance"]=self.balance(miner)
     rc["unity"]="SOL"
-
+    rc["uri"]=_data["uri"]
+    return rc
 

@@ -8,7 +8,6 @@ import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
 import {MetabossService} from "./metaboss.service";
-import {MetabossKey} from "../tools";
 
 @Component({
   selector: 'app-root',
@@ -39,7 +38,8 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.user.disconnect();
     setTimeout(()=>{
-      this.network_service.network=this.routes.snapshot.queryParamMap.get("network") || "devnet";
+      this.network_service.network=this.routes.snapshot.queryParamMap.get("network") || "solana-devnet";
+      this.update_network();
     },500);
   }
 

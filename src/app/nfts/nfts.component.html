@@ -1,6 +1,6 @@
 <div class="mainform">
   <div *ngFor="let nft of nfts" style="display: inline-flex;margin:10px;">
-    <div *ngIf="format=='obj'" style="display: block;width: 450px;height:650px;padding:10px;" class="mat-elevation-z4">
+    <div *ngIf="format=='obj'" style="display: block;width: 450px;height:750px;padding:10px;" class="mat-elevation-z4">
       <strong>{{nft.metadataOnchain?.data?.name}}</strong>&nbsp;({{nft.metadataOnchain?.data?.symbol}})<br>
       <small>Collection: {{nft.metadataOffchain?.collection?.name}}</small><br>
       <small>NFT address: <a [href]="'https://solscan.io/token/'+nft.address+'?cluster='+network.network" target="_blank">{{nft.address}}</a> </small>
@@ -9,7 +9,7 @@
       <table style="font-size: xx-small;width:100%;line-height: 85%;">
         <tr *ngFor="let attr of nft.metadataOffchain?.attributes" (click)="update_field(attr,nft)">
           <td><strong>{{attr.trait_type}}</strong></td>
-          <td>{{attr.value}}</td>
+          <td>{{trunc_string(attr.value)}}</td>
         </tr>
 
         <tr>
@@ -32,7 +32,7 @@
       </div>
 
       <table style="font-size: xx-small;width:100%;line-height: 85%;">
-        <tr><td><h4>Créateurs</h4></td></tr>
+        <tr><td><strong>Créateurs</strong></td></tr>
         <tr><th>Adresse</th><th>Vérifié</th><th>Royalties</th></tr>
         <tr *ngFor="let creator of nft.metadataOnchain?.data?.creators" style="text-align: center;">
           <td style="padding:0px;width:60%;height:20px;vertical-align:text-top !important;text-align: left;">
@@ -48,8 +48,8 @@
       </table>
 
       <br>
-      <h3>OnChain</h3>
-      <table style="font-size: small;line-height: 90%;" *ngIf="nft.metadataOnchain">
+      <strong>OnChain</strong>
+      <table style="font-size: x-small;line-height: 90%;" *ngIf="nft.metadataOnchain">
         <tr><td>Update authority</td><td><a [href]="getExplorer(nft.metadataOnchain.updateAuthority)" target="_blank">{{nft.metadataOnchain?.updateAuthority | alias}}</a></td>
         <tr *ngIf="network.isSolana()"><td>Primaray sale</td><td>{{nft.metadataOnchain?.primarySaleHappened}}</td>
         <tr *ngIf="network.isSolana()"><td>Mutable</td><td>{{nft.metadataOnchain?.isMutable}}</td>

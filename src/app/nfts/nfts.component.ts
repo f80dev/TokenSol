@@ -1,6 +1,6 @@
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {Component, EventEmitter, Input,  OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, showError, showMessage, toStringify} from "../../tools";
+import {showError, showMessage} from "../../tools";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MetabossService} from "../metaboss.service";
@@ -119,6 +119,7 @@ export class NftsComponent implements OnInit {
   // }
 
 
+
   // ngOnChanges(changes: SimpleChanges): void {
   //   if(changes["nfts"]["currentValue"] && changes["user"]["currentValue"]){
   //     let sep="\n";
@@ -235,5 +236,11 @@ export class NftsComponent implements OnInit {
 
   getExplorer(addr: string | undefined) {
     return "https://solscan.io/account/"+addr;
+  }
+
+  trunc_string(value: string,size=60) {
+    if(!value)return(value);
+    value=value.toString();
+    return value.substring(0,Math.min(size,value.length));
   }
 }

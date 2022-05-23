@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  version: "0.0.5",
+  version: "0.1.0",
   server:"http://127.0.0.1:4242",
   appname:"TokenSol Lab",
   appli:"http://127.0.0.1:4200"

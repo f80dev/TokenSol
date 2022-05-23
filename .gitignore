@@ -6,8 +6,10 @@
 /out-tsc
 /bazel-out
 
-/Metaboss/Keys
-/Metaboss/settings.py
+./Server/Metaboss/Keys
+./Server/Metaboss/settings.py
+./Server/secret.py
+
 
 # Node
 /node_modules
@@ -43,3 +45,4 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+

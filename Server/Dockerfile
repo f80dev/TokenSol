@@ -52,7 +52,11 @@ RUN pip3 -v install pillow
 RUN pip3 -v install py7zr
 RUN pip3 -v install ffmpeg-python
 RUN pip3 -v install pypng
+RUN pip3 -v install dnspython==2.0.0
 RUN pip3 -v install pymongo
+RUN pip3 -v install google-cloud-storage
+RUN pip3 -v install PyGithub
+RUN pip3 -v install fonttools
 
 WORKDIR /
 RUN mkdir Solana
@@ -61,6 +65,7 @@ RUN mkdir Elrond
 RUN mkdir temp
 RUN mkdir Configs
 RUN mkdir Fonts
+RUN mkdir Operations
 RUN mkdir ./Solana/Temp
 RUN mkdir ./Elrond/PEM
 RUN mkdir ./Solana/Keys
@@ -78,8 +83,9 @@ COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
 COPY ./Configs/*.yaml $APP_HOME/Configs/
+COPY ./Operations/*.yaml $APP_HOME/Operations/
 RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 WORKDIR $APP_HOME/
 
-CMD ["python3", "app.py","4242","ssl"]
+CMD ["python3", "app.py","4242","https://server.f80lab.com","ssl"]

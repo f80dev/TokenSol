@@ -3,13 +3,15 @@ from os import listdir
 
 import requests
 
+import textwrap
 from Tools import int_to_hex, str_to_hex, log, api, hex_to_str
 from ipfs import IPFS
 from erdpy import config
 from erdpy.proxy import ElrondProxy
 from erdpy.transactions import Transaction
-from erdpy.accounts import Account
-from erdpy.wallet import keyfile
+from erdpy.accounts import Account,Address
+from erdpy.wallet import derive_keys, generate_pair
+
 
 RESULT_SECTION="smartContractResults"
 LIMIT_GAS=200000000
@@ -212,6 +214,53 @@ class Elrond:
         _user=self.toAccount(_user)
         return self._proxy.get_account(_user.address)
 
+    def get_pem(self,secret_key: bytes, pubkey: bytes):
+      name = pubkey.hex()
+
+      header = f"-----BEGIN PRIVATE KEY for {name}-----"
+      footer = f"-----END PRIVATE KEY for {name}-----"
+
+      secret_key_hex = secret_key.hex()
+      pubkey_hex = pubkey.hex()
+      combined = secret_key_hex + pubkey_hex
+      combined_bytes = combined.encode()
+      key_base64 = base64.b64encode(combined_bytes).decode()
+
+      payload_lines = textwrap.wrap(key_base64, 64)
+      payload = "\n".join(payload_lines)
+      content = "\n".join([header, payload, footer])
+      return content
+
+
+
+    def create_account(self,email,seed=""):
+      """
+      :param fund:
+      :param name:
+      :param seed_phrase:
+      :return:
+      """
+      log("Création d'un nouveau compte")
+
+      if len(seed) == 0:
+        secret_key, pubkey = generate_pair()
+        address = Address(pubkey).bech32()
+        _u=Account(address=address)
+        _u.secret_key=secret_key.hex()
+      else:
+        secret_key, pubkey = derive_keys(seed)
+        address = Address(pubkey).bech32()
+        _u = Account(address=address)
+        _u.secret_key=secret_key.hex()
+
+      if not email is None:
+        log("Enregistrement des infos le concernant")
+
+
+      return _u, self.get_pem(secret_key,pubkey)
+
+
+
 
     def get_nfts(self,_user:Account,ipfs,limit=20):
         _user=self.toAccount(_user)
@@ -235,11 +284,12 @@ class Elrond:
                     nft["id"]=nft["tokenIdentifier"]
                     nft["address"]=nft["tokenIdentifier"]
                     nft["accountInfo"]={"mint":_user.address.bech32()}
+                    nft["splTokenInfo"]={"owner":_user.address.bech32()}
 
                     nft["metadataOnchain"]={
                       "updateAuthority":[],
                       "data":{
-                        "creators":[{"address":nft["creator"]}] if not "creators" in attr else attr["creators"],
+                        "creators":[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in attr else attr["creators"],
                         "name":nft["name"],
                         "symbol":nft["tokenIdentifier"].split("-")[1]
                       }
@@ -333,7 +383,7 @@ class Elrond:
 
         cid_metadata=ipfs.add(properties)
         nonce="02"
-        s="tags:"+("" if len(tags)==0 else " ".join(tags))+";metadata:"+cid_metadata["Hash"]+"/props.json"
+        s="metadata:"+cid_metadata["Hash"]+"/props.json;tags:"+("" if len(tags)==0 else " ".join(tags))
 
         data = "ESDTNFTCreate@" + collection \
                + "@" + int_to_hex(quantity,2) \
@@ -341,7 +391,8 @@ class Elrond:
                + "@" + int_to_hex(royalties*100,4) \
                + "@" + hash \
                + "@" + str_to_hex(s,False) \
-               + "@" + str_to_hex(visual,False)
+               + "@" + str_to_hex(visual,False) \
+               + "@" + str_to_hex(cid_metadata["url"],False)
 
         #Exemple de minage: ESDTNFTCreate@544f5552454946462d323864383938@0a@4c6120746f75722071756920636c69676e6f7465@09c4@516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b@746167733a3b6d657461646174613a516d54713845666d36416634616a35383847694d716b4d44524c475658794133773439315052464e413471546165@68747470733a2f2f697066732e696f2f697066732f516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b
 

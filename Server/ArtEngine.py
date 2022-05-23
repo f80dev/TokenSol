@@ -240,7 +240,7 @@ class ArtEngine:
   Moteur de génération
   """
   layers=[]
-  filenames=[]
+  #filenames=[]
 
   def __init__(self,name="collage"):
     self.name=name
@@ -249,10 +249,10 @@ class ArtEngine:
     self.layers.clear()
 
   def add(self,layer):
-    if layer.unique and len(self.filenames)==0:
-      for e in layer.elements:
-        if "name" in e.image.info:
-          self.filenames.append(e.image.info["name"])
+    # if layer.unique and len(self.filenames)==0:
+    #   for e in layer.elements:
+    #     if "name" in e.image.info:
+    #       self.filenames.append(e.image.info["name"])
 
     l=self.get_layer(layer.name)
     if l is None:
@@ -281,7 +281,8 @@ class ArtEngine:
     for layer in self.layers:
       width=max(width,layer.width)
       height=max(height,layer.height)
-      max_item=max_item*len(layer.elements)
+      if layer.indexed:
+        max_item=max_item*len(layer.elements)
 
     histo=[]
     index=0
@@ -305,10 +306,10 @@ class ArtEngine:
         if layer.unique: layer.remove(elt)
         histo.append(name)
         if len(dir)>0:
-          if index<len(self.filenames):
-            filename=dir+self.filenames[index]+"."+collage.ext
-          else:
-            filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "__idx__" in self.name else dir+self.name.replace("__idx__",str(index))+"."+collage.ext
+          # if index<len(self.filenames):
+          #   filename=dir+self.filenames[index]+"."+collage.ext
+          # else:
+          filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "__idx__" in self.name else dir+self.name.replace("__idx__",str(index))+"."+collage.ext
           rc.append(filename)
           collage.save(filename)
         else:

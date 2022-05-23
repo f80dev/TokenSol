@@ -10,12 +10,13 @@ import {
 import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
-import {HttpClient} from "@angular/common/http";
+import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {$$,MetabossKey,words} from "../tools";
 import {environment} from "../environments/environment";
 
 import {Token} from "./nfts/nfts.component";
 import {Layer} from "./creator/creator.component";
+import {delay, retry} from "rxjs";
 
 export enum type_addr {
   "owner",
@@ -27,7 +28,7 @@ export enum type_addr {
 })
 export class NetworkService {
 
-  private _network:string="devnet";
+  private _network:string="solana-devnet";
   private _connection: Connection=new Connection(clusterApiUrl("devnet"), 'confirmed');
   waiting: string="";
   keys:MetabossKey[]=[];
@@ -62,7 +63,7 @@ export class NetworkService {
     this._network = value;
     if(this._network){
       // @ts-ignore
-      let network_name=(value=="devnet") ? "devnet" : "mainnet-beta";
+      let network_name=(value=="solana-devnet") ? "devnet" : "mainnet-beta";
       // @ts-ignore
       this._connection=new Connection(clusterApiUrl(network_name), 'confirmed');
     }
@@ -128,7 +129,7 @@ export class NetworkService {
 
 
   solscan_info(mintAddress:string){
-    let explorer_domain=(this.network=="devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io")
+    let explorer_domain=(this.network=="solana-devnet" ? "https://api-devnet.solscan.io" : "https://api.solscan.io")
     return new Promise((resolve, reject) => {
       if(mintAddress){
         this.httpClient.get(explorer_domain+"/account?address=" + mintAddress).subscribe((dt: any) => {
@@ -167,6 +168,7 @@ export class NetworkService {
     return new Promise((resolve, reject) => {
       let rc: any[] = [];
       if(!r)reject(new Error("Empty list"))
+      let nRequete=0;
 
       for (let e of r) {
         if(e.account && e.account.data){
@@ -175,16 +177,20 @@ export class NetworkService {
           let layoutInfo = SPLToken.MintLayout.decode(e.account.data);
           let mintAddress=accountInfo.mint.toBase58();
           let mintAuthority=layoutInfo.mintAuthority.toBase58();
+          nRequete=nRequete+1;
+          setTimeout(()=>{
+            $$("Analyse de "+mintAddress);
+            this.solscan_info(mintAddress).then((dt:any)=>{
+              let url_metadata=dt.data?.metadata?.data.uri;
 
-          this.solscan_info(mintAddress).then((dt:any)=>{
-            let url_metadata=dt.data?.metadata?.data.uri;
-            this.httpClient.get(url_metadata).subscribe((offchain:any)=>{
-              rc.push(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,layoutInfo,owner));
-              if(rc.length==r.length)resolve(rc);
+              this.httpClient.get(url_metadata).pipe(retry(3)).subscribe((offchain:any)=>{
+                rc.push(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,layoutInfo,owner));
+                if(rc.length==r.length)resolve(rc);
+              },(err:any)=>{
+                $$("Anomalie ",err);
+              })
             })
-          })
-
-        }
+          },nRequete*500);}
       }
     });
   }
@@ -258,13 +264,13 @@ export class NetworkService {
   }
 
 
-  get_tokens_from(type_addr:string,addr:string) : Promise<any[]> {
+  get_tokens_from(type_addr:string,addr:string,limit=100) : Promise<any[]> {
     $$("Recherche de token par "+type_addr)
     return new Promise((resolve,reject) => {
       if(addr==null){
         reject();
       } else {
-        if(this.network.indexOf("elrond")==-1){
+        if(this.network.indexOf("solana")>-1){
           let func:any=null;
 
           if(type_addr=="FTX_account"){
@@ -290,6 +296,7 @@ export class NetworkService {
             this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed").then((result:any)=> {
               let values=result.value;
               $$(values.length+" nfts trouvés");
+              values=values.slice(0,limit);
 
               this.complete_token(addr,values).then(r => {
                 resolve(r);
@@ -312,10 +319,9 @@ export class NetworkService {
             return;
           }
 
+        }
 
-
-        } else {
-          //Listing elrond
+        if(this.network.indexOf("elrond")>-1){
           this.httpClient.get(environment.server+"/api/nfts/?limit=40&account="+addr+"&network="+this.network).subscribe((r:any)=>{
             resolve(r);
           })
@@ -355,7 +361,7 @@ export class NetworkService {
   }
 
   isSolana() {
-    return this.network=="devnet" || this.network=="mainnet";
+    return this.network.indexOf("solana")>-1;
   }
 
   get_nfts_balance_from_ftx(){
@@ -396,7 +402,10 @@ export class NetworkService {
   }
 
   get_collection(limit: number,file_format:string) {
-    return this.httpClient.get(environment.server+"/api/collection/?name="+file_format+"&format=preview&limit="+limit);
+    return this.httpClient.get(
+      environment.server+"/api/collection/?name="+file_format+"&format=preview&limit="+limit,
+      { headers: new HttpHeaders({ timeout: `${200000}` }) }
+      );
   }
 
   create_text_layer(x: number, y: number, text_to_add: string,l:Layer) {
@@ -445,11 +454,12 @@ export class NetworkService {
   }
 
   get_new_token(ope: string,url:string) {
-    return this.httpClient.get(environment.server+"/api/get_new_code/"+ope+"/"+encodeURIComponent(url));
+    let url_api=environment.server+"/api/get_new_code/"+ope+"/"+btoa(url);
+    return this.httpClient.get(url_api);
   }
 
-  mint_for_contest(address: string,tokenid:string,ope:string){
-    let body:any={account:address,tokenid:tokenid,ope:ope};
+  mint_for_contest(address: string,tokenid:string){
+    let body:any={account:address,tokenid:tokenid};
     body.type_network=this.network.indexOf("devnet")>-1 ? "devnet" : "mainnet";
     return this.httpClient.post(environment.server+"/api/mint_for_contest/",body);
   }
@@ -457,5 +467,17 @@ export class NetworkService {
 
   get_operations() {
     return this.httpClient.get(environment.server+"/api/operations/");
+  }
+
+  upload_operation(filename:string, content:any) {
+    return this.httpClient.post(environment.server+"/api/operations/",{filename:filename,file:content});
+  }
+
+  delete_operation(ope: string) {
+    return this.httpClient.delete(environment.server+"/api/operations/"+ope+"/");
+  }
+
+  get_nft_from_db(id: string) {
+    return this.httpClient.get(environment.server+"/api/get_nft_from_db/?id="+id);
   }
 }

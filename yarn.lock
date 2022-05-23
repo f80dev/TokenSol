@@ -1575,12 +1575,12 @@
   dependencies:
     "buffer" "~6.0.3"
 
-"@solana/spl-token-registry@^0.2.3505":
-  "integrity" "sha512-9PMjD0L6XLP8Lb75P/IxKvNJ7zbTvkQ8fZ9E+/tLAPsitRgbCUMzCwJqRLQZBOXMxqaCaGDmf/hoa1DPqjmAjw=="
-  "resolved" "https://registry.npmjs.org/@solana/spl-token-registry/-/spl-token-registry-0.2.3505.tgz"
-  "version" "0.2.3505"
+"@solana/spl-token-registry@^0.2.7":
+  "integrity" "sha512-OFmpoiDDaFUIO1tY/B6V8el3fI2RKXwURdbsmnqZcZtb1wfMBOs6Liiua21U5g5XcXw3sIHJTmdogVDlua60SA=="
+  "resolved" "https://registry.npmjs.org/@solana/spl-token-registry/-/spl-token-registry-0.2.7.tgz"
+  "version" "0.2.7"
   dependencies:
-    "cross-fetch" "3.0.6"
+    "cross-fetch" "^3.0.6"
 
 "@solana/spl-token@^0.2.0":
   "integrity" "sha512-RWcn31OXtdqIxmkzQfB2R+WpsJOVS6rKuvpxJFjvik2LyODd+WN58ZP3Rpjpro03fscGAkzlFuP3r42doRJgyQ=="
@@ -2424,9 +2424,9 @@
   "version" "1.0.0"
 
 "async@^2.6.1", "async@^2.6.2":
-  "integrity" "sha512-zflvls11DCy+dQWzTW2dzuilv8Z5X/pjfmZOWba6TNIVDm+2UDaJmXSOXlasHKfNBs8oo3M0aT50fDEWfKZjXg=="
-  "resolved" "https://registry.npmjs.org/async/-/async-2.6.3.tgz"
-  "version" "2.6.3"
+  "integrity" "sha512-mzo5dfJYwAn29PeiJ0zvwTo04zj8HDJj0Mn8TD7sno7q12prdbnasKJHhkm2c1LgrhlJ0teaea8860oxi51mGA=="
+  "resolved" "https://registry.npmjs.org/async/-/async-2.6.4.tgz"
+  "version" "2.6.4"
   dependencies:
     "lodash" "^4.17.14"
 
@@ -3269,19 +3269,12 @@
     "postcss" "^8.3.7"
     "pretty-bytes" "^5.3.0"
 
-"cross-fetch@^3.1.4":
+"cross-fetch@^3.0.6", "cross-fetch@^3.1.4":
   "integrity" "sha512-lvb1SBsI0Z7GDwmuid+mU3kWVBwTVUbe7S0H52yaaAdQOXq2YktTCZdlAcNKFzE6QtRz0snpw9bNiPeOIkkQvw=="
   "resolved" "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.1.5.tgz"
   "version" "3.1.5"
   dependencies:
     "node-fetch" "2.6.7"
-
-"cross-fetch@3.0.6":
-  "integrity" "sha512-KBPUbqgFjzWlVcURG+Svp9TlhA5uliYtiNx/0r8nv0pdypeQCRJ9IaSIc3q/x3q8t3F75cHuwxVql1HFGHCNJQ=="
-  "resolved" "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.0.6.tgz"
-  "version" "3.0.6"
-  dependencies:
-    "node-fetch" "2.6.1"
 
 "cross-spawn@^7.0.3":
   "integrity" "sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w=="
@@ -6075,6 +6068,11 @@
     "json-schema" "0.4.0"
     "verror" "1.10.0"
 
+"jsqr@^1.4.0":
+  "integrity" "sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A=="
+  "resolved" "https://registry.npmjs.org/jsqr/-/jsqr-1.4.0.tgz"
+  "version" "1.4.0"
+
 "just-debounce-it@^1.1.0":
   "integrity" "sha512-itSWJS5d2DTSCizVJ2Z0Djx/dGmUGfZe7WNfUfVP23+htGcIcPHbEjL4eB8ljojTs/+oYwLexImRRCP0A2WXjA=="
   "resolved" "https://registry.npmjs.org/just-debounce-it/-/just-debounce-it-1.5.0.tgz"
@@ -7203,6 +7201,13 @@
   dependencies:
     "tslib" "^2.0.0"
 
+"ngx-webcam@0.4.1":
+  "integrity" "sha512-8WoC8GWHaN5tH+4zO0/gfUigVKg/jX7JShAewpumJIgJXFmlKhSPnPjewNNxv7OTQiOOb+5Mh6lhTo52VLlY9A=="
+  "resolved" "https://registry.npmjs.org/ngx-webcam/-/ngx-webcam-0.4.1.tgz"
+  "version" "0.4.1"
+  dependencies:
+    "tslib" "^2.3.0"
+
 "node-addon-api@^2.0.0":
   "integrity" "sha512-Ntyt4AIXyaLIuMHF6IOoTakB3K+RWxwtsHNRxllEoA6vPwP9o4866g6YWDLUdnucilZhmkxiHwHr11gAENw+QA=="
   "resolved" "https://registry.npmjs.org/node-addon-api/-/node-addon-api-2.0.2.tgz"
@@ -7214,11 +7219,6 @@
   "version" "2.6.7"
   dependencies:
     "whatwg-url" "^5.0.0"
-
-"node-fetch@2.6.1":
-  "integrity" "sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw=="
-  "resolved" "https://registry.npmjs.org/node-fetch/-/node-fetch-2.6.1.tgz"
-  "version" "2.6.1"
 
 "node-fetch@https://registry.npmjs.org/@achingbrain/node-fetch/-/node-fetch-2.6.7.tgz":
   "integrity" "sha512-iTASGs+HTFK5E4ZqcMsHmeJ4zodyq8L38lZV33jwqcBJYoUt3HjN4+ot+O9/0b+ke8ddE7UgOtVuZN/OkV19/g=="

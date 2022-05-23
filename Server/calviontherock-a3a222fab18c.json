@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "calviontherock",
+  "private_key_id": "a3a222fab18c63e3f8852c3ea172c9d151bb7bca",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC7Xf8+nMx/Gfi1\nU4T9rMCjSmR4yGdq6pXLKT5yZS91ikEQCPtHqVm2aXl0t5ZO7gss1ahpLnT5J+0V\nqQBLfR4LceNxeL/ABBNuVhcbDx5/DUvmm7lfyX1tKmzzC9GVaCFS3UxtJsdjs64X\nJftzGNRWDkWShPunui7AZCJEb8qjXgMjho/krStqZmD6JhIBCfWJsz58pKPZ+AX+\njgfQBkF5tPdOhsTEpasrKC05xtSlc3KtxYrF0+Jgz/rcOJeBx5f93kHCEPcCDRfK\nF+EW7xShioaU6ePI544EJ2dIscURrmx7MZnuwQA+S6uaSmgG26pxMNUIGnr6f5eM\nLXZH/olFAgMBAAECggEAA/JX7E9vk0qIqrEd85GZ5BajKA5VsYQ0u7kQxZUAmHY6\nPeOW6CPLKBA1my8knAQaVoWE4UGSzb0b1ORVEPwuVY8zBv44lq5iNPELHBjk+gIj\naz16H3+UvlBgXvDG4aeZCepBDTssVaapWL16h57Bc7NSiAV4KtQxx1zxsJD8E6Ff\nzE7V7Ne7Xyr+KvgUwKCiDKxO5XhKs/OOddyzWc//S1m2pxn6LNScdPKiB922QCBF\nAL1cmBK2JFIxpYwVpR841tHDH31OdixExezx8Uc7wWrbeti4GT5Te6Tt4n7lRO/h\nAECWpr725/2ttwIrR39ifobkD6FXr2T3vPAyNATjAQKBgQDraEpf6LykWaMNi+++\nfJzyTiiARkUkRbSow5FFh3d3hIq2QeWp6bji7UbUqs1rFsCK8yYmSr69Nfp3p8Jg\no3gaPepKrsdg5Os+fQOVwKGKxboH/7ed02zX9ReWZohohRgWEOCyHZHi85jLDhfM\nfH9NUk4xSZmYHpzhVk48Zoc8BQKBgQDLweURnR9FVb+wiBPzy/y1gfH28xJfDBj4\n7XU1d+ZmnLBdY7S1/cLRbV8duufBqFQvi6dsPU5bjC57aeLq5fjg0iq7pvUzWcXG\nwRGwVIRXCzEdNgaNRz/xFje9kZ4Vnyv8vHXlBiQi7k43sqyLSHRwhkr4cm3t1Qmy\nxZaOOATcQQKBgBN2Gb/4E7BaoLo7+WP8FVWK1JpWNN0cziStllLzMhM1Z+pNZFk5\ns0k/aH2oaTcTOHPESkEcKMynq788pTssCH/S4o2uCVmfUztlRmiY9kHsusZyg5GO\nqw7nej262EgbyLP6TTksbKUgkl8nGRyUpkmUJla4yPPkg/+1DN69cyypAoGAdf6S\n6OBUe5Jsr44d/9DhRzs5JAkfWmtnCsB4X75PbpzOhUZ4H+wUJbNwoYbbLwqLtfzp\nt4TJG7rSMCXhgqYqugb7ODA3TsVuAutLkxFekgmpJ4Fhye642KRFI0JwiZTjpDh/\nDWHBC3l1UkvmH8KVq5QZVkbt4gy80QobZcCLEAECgYBqT1fG34zVAUzOh0bbNm1S\nrlpXqhermUqi6I/LchoYNaCG9apHvMBawl8Emj/iTcixK0eGBTqVEWyF4YgIRftH\nqToQVV6t4+Qno3GPcF1Vw8DZTC3qlDyoDfKKjv+Kvxpz5VCfRsEiH97HaL0cxXVf\nRAxJzSBnZxVI/mSRXu4Mbg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "nfluent@calviontherock.iam.gserviceaccount.com",
+  "client_id": "102117199466422480000",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/nfluent%40calviontherock.iam.gserviceaccount.com"
+}

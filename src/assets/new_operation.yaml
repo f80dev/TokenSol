@@ -1,0 +1,44 @@
+#Ce fichier décrit les opérations de distribution de NFT via le service d'nfluent (https://nfluent.io)
+#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)
+#une fois terminé, ce fichier doit être chargé à l'adresse : https://tokensol.nfluent.io/build
+
+title: "demo"
+description: "Cette opération est une démonstration du distributeur de NFT"
+
+#localisation du fichier contenant les NFTs à proposer
+#Plusieurs valeurs sont possibles:
+#     - "database:<collection>" ou "db:<collection>" signifie que les NFT ont été importé préalablement via les outils nfluent (fichier Excel).
+#     - une adresse internet peut désigner un fichier csv contenant une description des NFT distribué
+#     - une adresse internet peut désigner un fichier json contenant un NFT à distribuer
+data:
+  nfts:
+#    - source: "https://raw.githubusercontent.com/f80dev/TokenSol/master/src/assets/NFT_demo_1.json"
+#      max_mint: 1
+    - source: "http://127.0.0.1:4200/assets/NFT_demo_1.json"
+      max_mint: 10
+
+    - source: "http://127.0.0.1:4200/assets/NFT_demo_2.json"
+      max_mint: 10
+
+    - source: database
+      collection: demo
+
+
+showVisual: True
+
+#Liste des comptes en charge du minage
+miners:
+  elrond: "paul"
+  solana: "paul"
+
+#Permet de commencer l'opération à un moment précis et la faire s'arrêter
+period:
+  dtStart: "now"
+  dtEnd: ""
+  duration: 1
+
+security:
+  #Liste des adresses internet (IP ADDRESS) pouvant appeler l'api
+  whitelist:
+    - "*"
+

@@ -1,8 +1,24 @@
 <div class="mainform">
   <table><tr>
     <td>
+
+      <a href="./assets/new_operation.yaml" download>Modèle d'opération</a>
+
+      <app-upload-file (uploaded)="upload_operation($event)"
+                       title="Ajouter une opération"
+                       style="margin: 10px"
+                       extensions=".yaml">
+        Importer une opération
+      </app-upload-file>
+
+      <button type="button" mat-raised-button mat-button (click)="delete_ope()">
+        Supprimer
+      </button>
+    </td>
+    <td>
       <mat-form-field appearance="fill">
-        <mat-select  [(value)]="selected_ope" (selectionChange)="refresh($event)" >
+        <mat-label>Lancer une opération</mat-label>
+        <mat-select  [(value)]="selected_ope" (selectionChange)="refresh_ope($event)" >
           <mat-option *ngFor="let ope of opes" [value]="ope">
             {{ope.title}}
           </mat-option>
@@ -10,7 +26,12 @@
       </mat-form-field>
     </td>
     <td>
-      <a [href]="url" target="_blank">{{url}}</a>
+      <table *ngIf="url!=''">
+        <tr><td>Page complète</td><td><a [href]="url" target="same">{{url}}</a></td></tr>
+        <tr><td>Iframe</td><td>{{iframe_code}}</td></tr>
+        <tr><td>QRCode</td><td>{{image_code}}</td></tr>
+      </table>
+
     </td>
   </tr></table>
 

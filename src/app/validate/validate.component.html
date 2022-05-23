@@ -1,10 +1,33 @@
-<div class="mainform" cdkTrapFocus>
+<div class="mainform" cdkTrapFocus style="text-align: center;">
   <h2>{{operation}}</h2>
-  <mat-form-field appearance="fill" style="min-width: 300px;font-size: large;">
-    <mat-label>Veuillez saisir</mat-label>
-    <input matInput type="text" [(ngModel)]="query" cdkFocusInitial (ngModelChange)="update_model()">
+  <mat-form-field appearance="fill" style="min-width: 400px;font-size: medium;">
+    <mat-label>Adresse du propriétaire</mat-label>
+    <input matInput type="text" [(ngModel)]="query" cdkFocusInitial (ngModelChange)="update_model($event)">
     <mat-icon matSuffix (click)="query=''">cancel</mat-icon>
   </mat-form-field>
+  <br>
+  <button type="button" mat-raised-button mat-button (click)="update_model(query)">
+    Rechercher
+  </button>
+
+  <br><br>
+
+  <app-scanner *ngIf="message.length==0" (flash)="onflash($event)"></app-scanner>
+
+  <br>
+  <app-hourglass [message]="message"></app-hourglass>
+
+  <div style="width:100%;text-align: center;font-size: small;">
+    <table>
+      <tr *ngFor="let t of tokens">
+        <td>{{t.metadataOffchain.name}}</td>
+        <td *ngFor="let p of t.metadataOffchain.attributes">
+            <span *ngIf="p.trait_type.indexOf('Pass')>-1">{{p.trait_type}}={{p.value}}</span>
+        </td>
+      </tr>
+    </table>
+
+  </div>
 
 
 </div>

@@ -56,6 +56,8 @@ import { DealermachineComponent } from './dealermachine/dealermachine.component'
 import { ContestComponent } from './contest/contest.component';
 import { BuildOpeComponent } from './build-ope/build-ope.component';
 import { HourglassComponent } from './hourglass/hourglass.component';
+import { ScannerComponent } from './scanner/scanner.component';
+import {WebcamModule} from "ngx-webcam";
 
 
 @NgModule({
@@ -83,7 +85,8 @@ import { HourglassComponent } from './hourglass/hourglass.component';
     DealermachineComponent,
     ContestComponent,
     BuildOpeComponent,
-    HourglassComponent
+    HourglassComponent,
+    ScannerComponent
 
   ],
     imports: [
@@ -119,7 +122,8 @@ import { HourglassComponent } from './hourglass/hourglass.component';
         MatCheckboxModule,
         ClipboardModule,
         MatSliderModule,
-        MatExpansionModule
+        MatExpansionModule,
+        WebcamModule
     ],
   providers: [
     FilterPipe,AliasPipe,SafePipe,OrderPipe,

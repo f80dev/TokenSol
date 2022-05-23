@@ -6,3 +6,11 @@ mat-expansion-panel {
 mat-expansion-panel-header {
   font-size: large;
 }
+
+button {
+  margin-left: 3px;
+}
+
+mat-slider {
+  width: 200px;
+}

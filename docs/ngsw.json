@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1652719200849,
+  "timestamp": 1653315648113,
   "index": "/index.html",
   "assetGroups": [
     {
@@ -13,7 +13,7 @@
       "urls": [
         "/favicon.ico",
         "/index.html",
-        "/main.ad8fd73772993a67.js",
+        "/main.846269cb66a290fb.js",
         "/manifest.webmanifest",
         "/polyfills.7014c2acee6a7c7f.js",
         "/runtime.10cb596ddd43fd10.js",
@@ -30,6 +30,8 @@
       },
       "urls": [
         "/assets/Assets.xlsm",
+        "/assets/NFT_demo_1.json",
+        "/assets/NFT_demo_2.json",
         "/assets/circle1.png",
         "/assets/circle2.png",
         "/assets/circle3.png",
@@ -43,6 +45,7 @@
         "/assets/icons/icon-512x512.png",
         "/assets/icons/icon-72x72.png",
         "/assets/icons/icon-96x96.png",
+        "/assets/new_operation.yaml",
         "/assets/square1.png",
         "/assets/square2.png",
         "/assets/square3.png",
@@ -59,7 +62,9 @@
   ],
   "dataGroups": [],
   "hashTable": {
-    "/assets/Assets.xlsm": "bac39bb2eb1d499f328ea5026bb4cbda0aca28ac",
+    "/assets/Assets.xlsm": "6e1c9d5a57bcd37d196aa9dc96e05f23f575d40a",
+    "/assets/NFT_demo_1.json": "360320a3dc6d3478e8e95657591b1df898644d64",
+    "/assets/NFT_demo_2.json": "af1c811f4e73e2b41f6dd006c8f4642249713547",
     "/assets/circle1.png": "365838b3ab5e42389b73be782b420ccd2c905bed",
     "/assets/circle2.png": "ea632adf4f50da0b67cd818df587c11892db68f1",
     "/assets/circle3.png": "5815903f660573db9db9432da1dd51949e4ac318",
@@ -73,6 +78,7 @@
     "/assets/icons/icon-512x512.png": "559d9c4318b45a1f2b10596bbb4c960fe521dbcc",
     "/assets/icons/icon-72x72.png": "c457e56089a36952cd67156f9996bc4ce54a5ed9",
     "/assets/icons/icon-96x96.png": "3914125a4b445bf111c5627875fc190f560daa41",
+    "/assets/new_operation.yaml": "37e40f975d0a381ca62eca23c873d4efce768bb5",
     "/assets/square1.png": "8624955a3d614697dcf4d970af31e42eb575fff6",
     "/assets/square2.png": "cd286d7e30ce8858053d88ae7fc1017e7682f5ee",
     "/assets/square3.png": "758cd9bfda6dbe5e3ea59f2803517e7d02298810",
@@ -84,8 +90,8 @@
     "/assets/triangle4.png": "11cd856f8006f4e501123daf0eb6e7c81d8fd333",
     "/assets/~$Assets.xlsm": "b48ae618d652e658e7c8a49db4eb6fd3253f70a6",
     "/favicon.ico": "22f6a4a3bcaafafb0254e0f2fa4ceb89e505e8b2",
-    "/index.html": "c5ad567d2145a07338ffacf801fee37de716c73b",
-    "/main.ad8fd73772993a67.js": "c8444aa8a151fb763e74e7cfadd28de34824fbb7",
+    "/index.html": "96e796a9b4c32db4f1af76fb8f2cdfb35e621794",
+    "/main.846269cb66a290fb.js": "d7248f6e143c231415398d5322b590783b69b79b",
     "/manifest.webmanifest": "6348b1883937a48efd24d84f75d511f40c5e7fe4",
     "/polyfills.7014c2acee6a7c7f.js": "71c12b509fb77535a94d49727a87faeb5ddb03b0",
     "/runtime.10cb596ddd43fd10.js": "4b0cf88c21f2410f6f71ac6db6db4daab6ddf3c0",

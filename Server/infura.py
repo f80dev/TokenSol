@@ -1,6 +1,8 @@
 import base64
+import json
 
 import requests
+from ipfshttpclient import multipart
 
 from settings import INFURA_PROJECT_ID, INFURA_PROJECT_SECRET
 
@@ -15,9 +17,19 @@ class Infura:
         f=open("./Temp/"+body["filename"],"wb")
         f.write(base64.b64decode(body["content"].split(";base64,")[1]))
         f.close()
+      else:
+        f=open("./temp/temp.json","w")
+        json.dump(body,f)
+        f.close()
 
-    response = requests.post('https://ipfs.infura.io:5001/api/v0/add', files={"file":f.name},auth=(INFURA_PROJECT_ID, INFURA_PROJECT_SECRET))
 
-    if removeFile:del f
+    data=json.dumps(body).encode("utf-8")
+    response = requests.post('https://ipfs.infura.io:5001/api/v0/add',files={"file":data},auth=(INFURA_PROJECT_ID, INFURA_PROJECT_SECRET))
+    #response = requests.post('https://ipfs.infura.io:5001/api/v0/put',body,auth=(INFURA_PROJECT_ID, INFURA_PROJECT_SECRET))
 
     return response.json()["Hash"]
+
+
+
+  def get_link(self, cid):
+    return "https://ipfs.io/ipfs/"+cid

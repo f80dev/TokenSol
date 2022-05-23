@@ -3,14 +3,15 @@ import {NetworkService} from "../network.service";
 import {MetabossService} from "../metaboss.service";
 import {ActivatedRoute} from "@angular/router";
 import {Location} from "@angular/common"
-import {showError, showMessage} from "../../tools";
+import {$$, showError, showMessage} from "../../tools";
 import {FilterPipe} from "../filter.pipe";
 import {Token} from "../nfts/nfts.component";
 import {AliasPipe} from "../alias.pipe";
 import {MatSelectChange} from "@angular/material/select";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {ClipboardModule} from "@angular/cdk/clipboard";
-import {TextFieldModule} from '@angular/cdk/text-field';
+import {stringify} from "querystring";
+
 
 @Component({
   selector: 'app-manage',
@@ -60,13 +61,12 @@ export class ManageComponent implements OnInit {
     if(this.type_addr=="token_list"){
       this.nfts=[];
       for(let a of this.addrs){
-        this.network.get_tokens_from("token",a).then((r:any)=> {
+        this.network.get_tokens_from("token",a,this.limit).then((r:any)=> {
           this.nfts.push(r[0]);
         });
       }
     }else{
       if(this.metaboss.admin_key && this.type_addr!=""){
-
         let new_url="./manage/?search="+this.type_addr+"&account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network;
         this._location.replaceState(new_url);
         this.nfts=[];
@@ -76,9 +76,8 @@ export class ManageComponent implements OnInit {
         if(pubkey.length==0)return;
 
         this.network.wait("Récupération des NFT par "+this.type_addr+" pour "+pubkey);
-
-        this.network.get_tokens_from(this.type_addr, pubkey).then((r:any)=>{
-          showMessage(this,r.length+" NFTs récupérés");
+        this.network.get_tokens_from(this.type_addr, pubkey,this.limit).then((r:any)=>{
+          showMessage(this,r.length+" NFTs affichés");
           this.network.wait("")
           this.nfts=r;
         }).catch(err=>{this.network.wait("");showError(this,err);});
@@ -91,18 +90,18 @@ export class ManageComponent implements OnInit {
   burn_all() {
     let nfts:Token[]=this.filterPipe.transform(this.nfts,['search_collection',this.search_collection]);
     nfts=this.filterPipe.transform(nfts,['search_metadata',this.search_metadata]);
-
     let i=0;
     for(let nft of nfts){
       i=i+1;
       setTimeout(()=>{
+        $$("Destruction de "+nft.address)
         this.metaboss.burn(nft.address,this.network.network,5).then(success=>{
           if(i==nfts.length){
             showMessage(this,"détruit");
             this.refresh();
           }
         }).catch(err => {showError(this,err)})
-      },i*2000)
+      },i*5000)
 
     }
 
@@ -126,7 +125,7 @@ export class ManageComponent implements OnInit {
   //   });
   // }
 
-
+  limit=20;
   paste_list(evt:ClipboardEvent) {
     if(evt.clipboardData){
       this.addrs=evt.clipboardData.getData("text").split("\r\n");

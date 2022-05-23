@@ -45,6 +45,7 @@ class IPFS:
           cid={"Hash":self.client.add_str(body)}
 
         if removeFile and f: del f
+        cid["url"]="https://ipfs.io/ipfs/"+cid["Hash"]
 
         return cid
 

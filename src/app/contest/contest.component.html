@@ -1,10 +1,12 @@
 <div class="mainform" style="text-align: center;">
 
-  <img *ngIf="visual.length>0" [src]="visual" style="max-width:60%;">
-  <br><br>
+  <div style="max-width: 500px;width:80%;display: inline-block;">
+    <img *ngIf="visual.length>0" [src]="visual" style="object-fit: cover;width:100%;">
+  </div>
 
+  <br>
 
-  <a *ngIf="url.length>0" [href]="url">
+  <a *ngIf="url.length>0" [href]="url" target="_blank">
     <img [src]="qrcode" style="width: 200px;height:200px;">
   </a>
 </div>

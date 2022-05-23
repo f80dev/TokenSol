@@ -19,7 +19,11 @@ export interface Layer {
   text:string
   width:number
   height:number
-  fontstyle:any
+  fontstyle: {
+    name:string
+    size:number
+    color:string
+  }
 }
 
 @Component({
@@ -32,6 +36,7 @@ export interface Layer {
 export class CreatorComponent implements OnInit {
   layers: Layer[]=[];
   col_width=500;
+  backcolor="black";
   col_height=500;
   platforms=PLATFORMS;
   limit=10;
@@ -40,15 +45,18 @@ export class CreatorComponent implements OnInit {
   previews:any[]=[];
   text_to_add: string="Texte ici";
   fontsize: number=100;
-  color: any="#000000";
-  fontname: string="corbel.ttf"
+  color: any="#FFFFFF";
+
+  font:any= {name:"Corbel",file:"corbel.ttf"}
   sel_platform: any="nftstorage";
   sel_config: any="";
   fontfiles: any;
   position_text: { x: any; y: any }={x:10,y:10};
-  filename_format: string ="visual__idx__.png";
+  filename_format: string ="image";
   show_collection: boolean=false;
   message="";
+  max_items: number=8;
+  config_name: string="maconfig";
 
   constructor(
     public network:NetworkService,
@@ -71,6 +79,7 @@ export class CreatorComponent implements OnInit {
     })
     this.network.list_installed_fonts().subscribe((r:any)=>{
       this.fontfiles=r.fonts;
+      this.font=r.fonts[0];
     })
 
   }
@@ -115,7 +124,7 @@ export class CreatorComponent implements OnInit {
         width:this.col_width,
         height:this.col_height,
         fontstyle:{
-          name:this.fontname,
+          name:this.font.file,
           size:this.fontsize,
           color:this.color
         }
@@ -130,11 +139,15 @@ export class CreatorComponent implements OnInit {
     this.show_collection=false;
     this.network.reset_collection().subscribe(()=>{
       for(let l of this.layers){
+        this.message="Composition du calque "+l.name;
         this.network.add_layer(l).subscribe(()=>{
           i=i+1;
           if(i==this.layers.length){
-            if(format=="zip")
+            if(format=="zip"){
+              this.message="";
               open(environment.server+"/api/collection/?size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit,"_blank")
+            }
+
 
             if(format=="preview"){
               this.message="Fabrication de la collection en cours ...";
@@ -145,6 +158,7 @@ export class CreatorComponent implements OnInit {
             }
 
             if(format=="upload"){
+              this.message="";
               open(environment.server+"/api/collection/?format=upload&platform="+this.sel_platform+"&limit="+this.limit,"_blank")
             }
 
@@ -160,6 +174,11 @@ export class CreatorComponent implements OnInit {
       showMessage(this,"Vous devez sélectionner la couche cible pour créer le visuel");
       return;
     }
+    l.fontstyle={
+      name:this.font.file,
+      color:this.color,
+      size:this.fontsize
+    }
     this.network.create_text_layer(this.position_text.x,this.position_text.y,this.text_to_add,l).subscribe((r:any)=>{
       for(let image of r.images)
         l.files.push(image);
@@ -168,15 +187,21 @@ export class CreatorComponent implements OnInit {
 
 
   onclick_on_text($event: MouseEvent,l:Layer) {
-    this.position_text={x:$event.offsetX,y:$event.offsetY}
+    this.position_text={x:$event.offsetX/2,y:$event.offsetY/2}
   }
 
-  remove_file(layer: Layer, file: File) {
-    let pos=layer.files.indexOf(file);
-    layer.files.splice(pos,1);
-    this.network.add_layer(layer).subscribe(()=>{
-      showMessage(this,"Mise a jour");
-    });
+  remove_file($event:MouseEvent, layer: Layer, file: File) {
+    if($event.button==0 && $event.ctrlKey){
+      $event.stopPropagation();
+      let pos=layer.files.indexOf(file);
+      layer.files.splice(pos,1);
+      this.network.add_layer(layer).subscribe(()=>{
+        showMessage(this,"Mise a jour");
+
+      });
+
+    }
+
   }
 
   update_position(layer: Layer, variation:number) {
@@ -212,9 +237,11 @@ export class CreatorComponent implements OnInit {
     });
   }
 
+
+
   build_sample(samples:any[],reset=true) {
     if(reset)this.layers=[];
-    let fontstyle={name:this.fontname, color:this.color,size:this.fontsize}
+    let fontstyle={name:this.font.file, color:this.color,size:this.fontsize}
     let i=this.layers.length;
     for(let sample of samples){
       for(let k=0;k<100;k++)sample["files"]=sample["files"].replace("$appli$",environment.appli);
@@ -243,9 +270,19 @@ export class CreatorComponent implements OnInit {
     }
   }
 
+  find_font(filename:string) {
+    for(let f of this.fontfiles){
+      if(f.file==filename)
+        return f;
+    }
+    return null;
+  }
+
 
   load_config(name="config") {
     if(name){
+      this.config_name=name;
+      this._location.replaceState("./creator?config="+name);
       this.network.load_config(name).subscribe((r:any)=>{
         this.layers=r.layers;
         this.col_width=r.width;
@@ -254,6 +291,10 @@ export class CreatorComponent implements OnInit {
         this.limit=r.limit;
         this.sel_platform=r.platform;
         this.show_collection=true;
+        this.fontsize=r.fontstyle.size;
+        this.font=this.find_font(r.fontstyle.name);
+        this.color=r.fontstyle.color;
+        this.previews=[];
       },(err=>{showError(this,err)}));
     }
   }
@@ -266,15 +307,21 @@ export class CreatorComponent implements OnInit {
       height:this.col_height,
       limit:this.limit,
       filename_format:this.filename_format,
-      platform:this.sel_platform
+      platform:this.sel_platform,
+      fontstyle:{
+        name:this.font.file,
+        color:this.color,
+        size:this.fontsize
+      }
     }
     for(let l of body.layers){
       for(let f of l.files)
         f="\""+f+"\""
     }
-    let name="config";
-    this.network.save_config_on_server(name,body).subscribe(()=>{
-      open(environment.server+"/api/configs/"+name+"/?format=file","config");
+    this.config_name=this.config_name.replace(".yaml.yaml",".yaml");
+    this.network.save_config_on_server(this.config_name,body).subscribe(()=>{
+      this.sel_config=this.config_name;
+      open(environment.server+"/api/configs/"+this.config_name+"/?format=file","config");
     })
   }
 
@@ -317,8 +364,9 @@ export class CreatorComponent implements OnInit {
         let modele=this.text_to_add;
         if(modele.indexOf("__idx__")==-1)modele=modele+"__idx__";
         this.text_to_add="";
+        let nbr_digits=end.toString().length;
         for(let i=start;i<=end;i++){
-          this.text_to_add=this.text_to_add+modele.replace("__idx__",String(i))+"|";
+          this.text_to_add=this.text_to_add+modele.replace("__idx__",i.toString().padStart(nbr_digits,'0'))+"|";
         }
       });
     });
@@ -328,9 +376,7 @@ export class CreatorComponent implements OnInit {
     layer.files=[];
   }
 
-  upload_on_storage_platform() {
 
-  }
 
 
   open_file(file: any) {
