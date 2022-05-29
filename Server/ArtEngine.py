@@ -35,8 +35,8 @@ class Element():
 class Sticker(Element):
   image:Image
 
-  def __init__(self,name="",image=None,dimension=None,text:str=None,x:int=None,y:int=None,fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"}):
-    super().__init__(name,"png")
+  def __init__(self,name="",image=None,dimension=None,text:str=None,x:int=None,y:int=None,fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"},ext="PNG"):
+    super().__init__(name,ext)
 
     if not image:
       self.image=Image.new("RGBA",dimension)
@@ -48,14 +48,21 @@ class Sticker(Element):
           else:
             self.image=Image.open(image).convert("RGBA")
         else:
-          self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
+          if "/api/images/" in image:
+            filename=image.split("/api/images/")[1].split("?")[0]
+            f=open("./temp/"+filename,"rb")
+            self.image=Image.open(f).convert("RGBA")
+            f.close()
+          else:
+            self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
 
         if dimension:self.image=self.image.resize(dimension)
 
-
-
       else:
-        self.image=image.image.copy()
+        if type(image)==bytes:
+          self.image=Image.open(BytesIO(image))
+        else:
+          self.image=image.image.copy()
 
     if text:
       self.image.info={"name":text}
@@ -104,7 +111,8 @@ class Sticker(Element):
     self.image.alpha_composite(src)
 
   def save(self,filename):
-    self.image.save(filename)
+    #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp pour le Webp
+    self.image.save(filename,quality=98,method=6,lossless=True)
 
 
 
@@ -197,6 +205,7 @@ class Layer:
 
 
   def add(self,elt:Element,autoName=True):
+    if elt is None: return self
     elt.name=self.name+"-"+str(len(self.elements))
     self.elements.append(elt)
     return self

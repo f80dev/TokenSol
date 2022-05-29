@@ -22,12 +22,13 @@
       <a mat-list-item [routerLink]="'wallet'" *ngIf="user.hasPerm('wallet')">Mes NFTs</a>
       <a mat-list-item (click)="login()" *ngIf="!user.connected()">Login</a>
       <a mat-list-item (click)="logout()" *ngIf="user.connected()">Logout</a>
+      <a mat-list-item [routerLink]="'admin'">Administrateur</a>
       <a mat-list-item [routerLink]="'help'" *ngIf="user.hasPerm('help')">Aide</a>
       <a mat-list-item [routerLink]="'about'" *ngIf="user.hasPerm('about')">A propros</a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>
-    <mat-toolbar color="primary">
+    <mat-toolbar color="primary" *ngIf="toolbar_visible=='true'" >
       <button
         type="button"
         mat-icon-button

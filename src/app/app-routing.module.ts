@@ -14,6 +14,7 @@ import {ValidateComponent} from "./validate/validate.component";
 import {DealermachineComponent} from "./dealermachine/dealermachine.component";
 import {ContestComponent} from "./contest/contest.component";
 import {BuildOpeComponent} from "./build-ope/build-ope.component";
+import {AdminComponent} from "./admin/admin.component";
 
 
 const routes: Routes = [
@@ -22,6 +23,7 @@ const routes: Routes = [
   { path: 'reload', component: FaucetComponent },
   { path: 'mint', component: MintComponent },
   { path: 'keys', component: KeysComponent },
+  { path: 'admin', component: AdminComponent },
   { path: 'contest', component: ContestComponent },
   { path: 'creator', component: CreatorComponent },
   { path: 'manage', component: ManageComponent },

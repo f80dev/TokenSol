@@ -24,10 +24,23 @@
   <br><br>
   <h2>Liste des clés disponibles</h2>
 
-  <ul>
-    <li *ngFor="let key of keys" (click)="sel_key(key.name)" style="cursor: pointer">
-      {{key.name}}
-    </li>
-  </ul>
+  <table>
+    <tr *ngFor="let key of keys">
+      <td>
+        <strong>{{key.name}}</strong>
+      </td>
+      <td>
+        <button type="button" mat-raised-button mat-button (click)="sel_key(key.name)">
+          Sélectionner
+        </button>
+      </td>
+      <td>
+        <button type="button" mat-raised-button mat-button (click)="del_key(key.name)">
+          Supprimer
+        </button>
+      </td>
+    </tr>
+  </table>
+
 
 </div>

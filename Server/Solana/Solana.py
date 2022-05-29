@@ -2,6 +2,7 @@ import json
 import os
 import platform
 import subprocess
+from base64 import b64decode
 from datetime import datetime
 from os import listdir
 from os.path import exists
@@ -39,44 +40,40 @@ class Solana:
 
 
 
-  def exec(self,command:str,param:str="",account:str="",keyfile="admin.json",data=None,sign=False,delay=1.0,owner=""):
+  def exec(self,command:str,param:str="",account:str="",keyfile="",data=None,sign=False,delay=1.0,owner=""):
     if len(owner)>0:owner=self.find_address_from_json(owner)
 
-    if "Solana" in os.listdir(): os.chdir("./Solana")
-    keyfile=keyfile +".json" if not keyfile.endswith(".json") else keyfile
-    if not keyfile in os.listdir("./Keys/"):
-      log("Clé introuvable")
-      return {"error":keyfile+" introuvable"}
+    if len(keyfile)>0:
+      keyfile=keyfile +".json" if not keyfile.endswith(".json") else keyfile
+      if not keyfile.startswith("./Solana/Keys/"):
+        if not keyfile in os.listdir("./Solana/Keys/"):
+          log("Clé introuvable")
+          return {"error":keyfile+" introuvable"}
 
-    keyfile="./Keys/"+keyfile if not keyfile.startswith("./Keys") else keyfile
+        keyfile="./Solana/Keys/"+keyfile if not keyfile.startswith("./Solana/Keys") else keyfile
 
     if data:
-      file_to_mint="./Temp/to_mint_"+str(datetime.now().timestamp())+".json"
+      file_to_mint="./Solana/Temp/to_mint_"+str(datetime.now().timestamp())+".json"
       with open(file_to_mint, 'w') as f:
         f.writelines(json.dumps(data,indent=4, sort_keys=True))
         f.close()
 
-    mes=None
-    progname="./metaboss-ubuntu-latest" if platform.system()!="Windows" else "metaboss.exe"
+    progname="./Solana/metaboss-ubuntu-latest" if platform.system()!="Windows" else "metaboss.exe"
     encoder="ANSI" if platform.system()=="Windows" else "utf8"
 
-    if progname.replace("./","") in os.listdir():
-      cmd=progname+" "+command+" "+param+" --keypair "+keyfile+" -r "+self.api
-      if len(account)>0:cmd=cmd+" --account "+account
-      if len(owner)>0:cmd=cmd+" --receiver "+owner
-      if data: cmd=cmd+" --nft-data-file "+file_to_mint+(" --sign" if sign else "")
+    cmd=progname+" "+command+" "+param+" -r "+self.api
+    if len(keyfile)>0:cmd=cmd+" --keypair "+keyfile
+    if len(account)>0:cmd=cmd+" --account "+account
+    if len(owner)>0:cmd=cmd+" --receiver "+owner
+    if data: cmd=cmd+" --nft-data-file "+file_to_mint+(" --sign" if sign else "")
 
-      log(cmd)
-      mes=subprocess.run(cmd,capture_output=True,timeout=10000,shell=True)
-      sleep(delay)
-    else:
-      log(progname+" non installé")
+    log(cmd)
+    mes=subprocess.run(cmd,capture_output=True,timeout=10000,shell=True)
+    sleep(delay)
 
-    if len(mes.stderr)==0 and data:
+
+    if not mes is None and len(mes.stderr)==0 and data:
       if exists(file_to_mint):os.remove(file_to_mint)
-
-    if progname.replace("./","") in os.listdir():
-      os.chdir("..")
 
     if len(mes.stderr)==0:
       rc=dict()
@@ -123,14 +120,24 @@ class Solana:
 
 
 
-  def get_keys(self,dir=SOLANA_KEY_DIR):
+  def get_keys(self,dir=SOLANA_KEY_DIR,with_private=False):
     rc=[]
     for f in listdir(dir):
       if f.endswith(".json"):
         txt=open(SOLANA_KEY_DIR+f,"r").readlines()
         keypair=self.toKeypair(txt[0])
 
-        rc.append({"name":f.replace(".json",""),"pubkey":str(keypair.public_key.to_base58(),"utf8")})
+        key={
+          "name":f.replace(".json",""),
+          "pubkey":str(keypair.public_key.to_base58(),"utf8"),
+        }
+        if with_private:
+          l=[]
+          for b in keypair.secret_key:
+            l.append(int(b))
+          key["privatekey"]=str(l)
+        rc.append(key)
+
     return rc
 
 
@@ -154,20 +161,23 @@ class Solana:
   #http://127.0.0.1:4242/api/nfts/
   def get_nfts(self, name):
     pubkey=self.find_address_from_json(name)
-    token_account_opts=TokenAccountOpts(mint=None,program_id=TOKEN_PROGRAM_ID)
+    token_account_opts=TokenAccountOpts(mint=None,program_id=TOKEN_PROGRAM_ID,encoding="jsonParsed")
     rc=self.client.get_token_accounts_by_owner(PublicKey(pubkey),token_account_opts,Confirmed)
-    # for item in rc["result"]["value"]:
-    # 	item["content"]=base64.b64decode(item["account"]["data"][0])
-    return rc["result"]["value"]
+    tokens=rc["result"]["value"]
+    return tokens
 
   def scan(self,addr,network="solana-devnet"):
-    url="https://api-devnet.solscan.io" if network=="solana-devnet" else "https://api.solscan.io"
-    url=url+"/account?address="+addr
-    rc=requests.get(url,headers={
-      "Content-Type":"application/json; charset=UTF-8",
-      "User-Agent":"Mozilla/5.0 (iPad; U; CPU OS 3_2_1 like Mac OS X; en-us) AppleWebKit/531.21.10 (KHTML, like Gecko) Mobile/7B405"
-    })
-    return rc.json()["data"]
+    rc=self.exec("decode mint -o ./Solana/Temp",account=addr,delay=1)
+    filename="./Solana/Temp/"+addr + ".json"
+    if exists(filename):
+      rc= json.load(open(filename, "r"))
+      os.remove(filename)
+    else:
+      rc={}
+    return rc
+
+
+
 
   def get_token_by_miner(self, account):
     """
@@ -209,4 +219,27 @@ class Solana:
     rc["unity"]="SOL"
     rc["uri"]=_data["uri"]
     return rc
+
+  def get_infos(self, account_addr):
+    """
+    voir https://medium.com/@jorge.londono_31005/understanding-solanas-mint-account-and-token-accounts-546c0590e8e
+    regarder : https://solana-labs.github.io/solana-program-library/token/js/modules.html#getAssociatedTokenAddress
+    :param account_addr:
+    :return:
+    """
+    _addr=PublicKey(account_addr)
+    TokenMintAccount=self.client.get_account_info(_addr,Confirmed,"jsonParsed")
+    infos=self.client.get_token_accounts_by_delegate(_addr,TokenAccountOpts(program_id=TOKEN_PROGRAM_ID),Confirmed)
+    return infos
+
+  def sign(self,mintAddress, creators):
+    """
+    voir https://metaboss.rs/sign.html
+    :param mintAddress:
+    :param creators:
+    :return:
+    """
+    for creator in creators:
+      alias=self.find_json_from_address(creator)
+      self.exec("sign one",keyfile=alias,account=mintAddress)
 

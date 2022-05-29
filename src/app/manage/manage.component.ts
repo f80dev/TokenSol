@@ -79,7 +79,11 @@ export class ManageComponent implements OnInit {
         this.network.get_tokens_from(this.type_addr, pubkey,this.limit).then((r:any)=>{
           showMessage(this,r.length+" NFTs affichés");
           this.network.wait("")
-          this.nfts=r;
+          this.nfts=[];
+          for(let nft of r){
+            if(nft.mint && nft.mint.length>0)
+              this.nfts.push(nft);
+          }
         }).catch(err=>{this.network.wait("");showError(this,err);});
       }
     }
@@ -95,13 +99,12 @@ export class ManageComponent implements OnInit {
       i=i+1;
       setTimeout(()=>{
         $$("Destruction de "+nft.address)
-        this.metaboss.burn(nft.address,this.network.network,5).then(success=>{
+        this.metaboss.burn(nft.address,this.network.network,1).then(success=>{
           if(i==nfts.length){
             showMessage(this,"détruit");
-            this.refresh();
           }
         }).catch(err => {showError(this,err)})
-      },i*5000)
+      },i*1000)
 
     }
 
@@ -125,7 +128,7 @@ export class ManageComponent implements OnInit {
   //   });
   // }
 
-  limit=20;
+  limit=200;
   paste_list(evt:ClipboardEvent) {
     if(evt.clipboardData){
       this.addrs=evt.clipboardData.getData("text").split("\r\n");

@@ -24,6 +24,7 @@ export class AppComponent implements OnInit {
       shareReplay()
     );
   networks=NETWORKS;
+  toolbar_visible: string="true";
 
 
   constructor(
@@ -36,6 +37,7 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.toolbar_visible=this.routes.snapshot.queryParamMap.get('toolbar') || "false";
     this.user.disconnect();
     setTimeout(()=>{
       this.network_service.network=this.routes.snapshot.queryParamMap.get("network") || "solana-devnet";

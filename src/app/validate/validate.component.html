@@ -1,33 +1,82 @@
 <div class="mainform" cdkTrapFocus style="text-align: center;">
-  <h2>{{operation}}</h2>
-  <mat-form-field appearance="fill" style="min-width: 400px;font-size: medium;">
-    <mat-label>Adresse du propriétaire</mat-label>
-    <input matInput type="text" [(ngModel)]="query" cdkFocusInitial (ngModelChange)="update_model($event)">
-    <mat-icon matSuffix (click)="query=''">cancel</mat-icon>
-  </mat-form-field>
-  <br>
-  <button type="button" mat-raised-button mat-button (click)="update_model(query)">
-    Rechercher
-  </button>
+  <div *ngIf="user!.length>0">
+    <div *ngIf="operation.validate?.visible && result_message?.length==0">
+      <h2>{{operation.title}}</h2>
+      <div *ngIf="message?.length==0 && tokens.length==0">
+        <div *ngIf="operation.validate?.manual_input">
+          <mat-form-field appearance="fill" style="min-width: 400px;font-size: medium;">
+            <mat-label>Adresse du propriétaire</mat-label>
+            <input matInput type="text" [(ngModel)]="query" cdkFocusInitial (keypress)="update_model($event)">
+            <mat-icon matSuffix (click)="query=''">cancel</mat-icon>
+          </mat-form-field>
+          <br>
+          <button type="button" mat-raised-button mat-button (click)="update_token(query)">
+            Rechercher
+          </button>
+        </div>
 
-  <br><br>
+        <br><br>
 
-  <app-scanner *ngIf="message.length==0" (flash)="onflash($event)"></app-scanner>
+        <app-scanner *ngIf="operation.validate.camera" (flash)="onflash($event)"></app-scanner>
+      </div>
 
-  <br>
-  <app-hourglass [message]="message"></app-hourglass>
+      <br>
+      <app-hourglass [message]="message"></app-hourglass>
 
-  <div style="width:100%;text-align: center;font-size: small;">
-    <table>
-      <tr *ngFor="let t of tokens">
-        <td>{{t.metadataOffchain.name}}</td>
-        <td *ngFor="let p of t.metadataOffchain.attributes">
-            <span *ngIf="p.trait_type.indexOf('Pass')>-1">{{p.trait_type}}={{p.value}}</span>
-        </td>
-      </tr>
-    </table>
+      <div *ngIf="tokens.length>0">
+        <div style="width:100%;text-align: center;font-size: small;">
+          <table style="padding: 10px;width:90%;margin:5%;" class="mat-elevation-z4">
+            <tr>
+              <th>Nom du NFT</th>
+              <th *ngFor="let idx of attributes_to_show[0]">
+                {{tokens[0].metadataOffchain.attributes[idx]?.trait_type}}
+              </th>
+              <th>Commandes disponibles</th>
+            </tr>
+            <tr *ngFor="let t of tokens">
+              <td *ngIf="t.metadataOffchain?.name">{{t?.metadataOffchain?.name}}</td>
+              <td *ngFor="let idx of attributes_to_show[0]">
+                <span style="font-size: x-large">{{t.metadataOffchain.attributes[idx]?.value}}</span>
+              </td>
+              <td>
+                <button *ngFor="let action of operation.validate.actions.buttons"
+                        style="margin: 5px"
+                        type="button" mat-raised-button mat-button
+                        (click)="validate(t,action)">
+                  {{action.label}}
+                </button>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="result_message && result_message.length>0">
+      <br>
+      <div style="font-size: xx-large;width:100%;text-align: center;">
+        {{result_message}}
+      </div>
+      <br>
+      <mat-form-field appearance="fill" style="min-width: 400px;font-size: medium;">
+        <mat-label>Saisir un email pour envoyer le ticket de transaction</mat-label>
+        <input matInput type="text" [(ngModel)]="email">
+        <mat-icon matSuffix (click)="email=''">cancel</mat-icon>
+      </mat-form-field>
+
+      <br>
+      <button type="button" mat-raised-button
+              mat-button (click)="confirm_transac()">
+        Envoyer
+      </button>
+    </div>
+  </div>
+  <div *ngIf="user?.length==0">
+    <mat-form-field appearance="fill" style="min-width: 400px;font-size: medium;">
+      <mat-label>Veuillez saisir votre code d'accès (reçu par mail)</mat-label>
+      <input matInput type="text" [(ngModel)]="access_code" (ngModelChange)="update_access_code()">
+      <mat-icon matSuffix (click)="access_code=''">cancel</mat-icon>
+    </mat-form-field>
 
   </div>
-
 
 </div>

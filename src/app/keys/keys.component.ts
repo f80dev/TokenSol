@@ -20,6 +20,10 @@ export class KeysComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.refresh();
+  }
+
+  refresh(){
     this.metaboss.keys().subscribe((r)=>{this.keys=r;})
   }
 
@@ -38,4 +42,9 @@ export class KeysComponent implements OnInit {
     showMessage(this,name+" sélectionnée");
   }
 
+  del_key(name: string) {
+    this.metaboss.del_key(name).subscribe(()=>{
+      this.refresh();
+    });
+  }
 }

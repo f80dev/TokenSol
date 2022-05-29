@@ -1,38 +1,1 @@
-#Ce fichier dÈcrit les opÈrations de distribution de NFT via le service d'nfluent (https://nfluent.io)
-#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)
-#une fois terminÈ, ce fichier doit Ítre chargÈ ‡ l'adresse : https://tokensol.nfluent.io/build
-
-title: "Calvi2022"
-description: "Cette opÈration est une dÈmonstration du distributeur de NFT"
-
-#localisation du fichier contenant les NFTs ‡ proposer
-#Plusieurs valeurs sont possibles:
-#     - "database:<collection>" ou "db:<collection>" signifie que les NFT ont ÈtÈ importÈ prÈalablement via les outils nfluent (fichier Excel).
-#     - une adresse internet peut dÈsigner un fichier csv contenant une description des NFT distribuÈ
-#     - une adresse internet peut dÈsigner un fichier json contenant un NFT ‡ distribuer
-data:
-  nfts:
-    - source: database
-      collection: "La Citadella"
-    
-    - source: database
-      collection: "A Madonna Di A Sierra"
-
-showVisual: True
-
-#Liste des comptes en charge du minage
-miners:
-  elrond: "paul"
-  solana: "paul"
-
-#Permet de commencer l'opÈration ‡ un moment prÈcis et la faire s'arrÍter
-period:
-  dtStart: "now"
-  dtEnd: ""
-  duration: 1
-
-security:
-  #Liste des adresses internet (IP ADDRESS) pouvant appeler l'api
-  whitelist:
-    - "*"
-
+#Ce fichier d√©crit les op√©rations de distribution de NFT via le service d'nfluent (https://nfluent.io)#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)#une fois termin√©, ce fichier doit √™tre charg√© √† l'adresse : https://tokensol.nfluent.io/buildid: "calviontherocks"title: "Calvi2022"description: "Op√©ration de distribution des"url: ""website: ""version: 0.1#localisation du fichier contenant les NFTs √† proposer#Plusieurs valeurs sont possibles:#     - "database:<collection>" ou "db:<collection>" signifie que les NFT ont √©t√© import√© pr√©alablement via les outils nfluent (fichier Excel).#     - une adresse internet peut d√©signer un fichier csv contenant une description des NFT distribu√©#     - une adresse internet peut d√©signer un fichier json contenant un NFT √† distribuerdata:  sources:    - "database"#Liste des comptes en charge du minageminers:  elrond: "paul"  solana: "paul"validate:  visible: True  camera: True    #Si possible, utilise la cam√©ra du device  manual_input: True  application: "$tokensol$/validate"  operation_file: "calvi22.yaml"  users:    - "paul.dudule@gmail.com"    - "hhoareau@gmail.com"    - "sophie.dudule@gmail.com"  #Liste des propri√©t√©s montr√©es au validateur  properties:    - "Edition1"    - "Edition2"    - "Edition3"    - "Edition4"    - "Edition5"    - "Derni√®re utilisation"  #Lorsque le validateur appuit sur validation du billet l'API de action_api est appel√©  actions:    buttons:      - api : $nfluent_server$/api/action_calvi/?nb_pass=1        label: Distribuer 1 pass        n_pass: 1      - api : $nfluent_server$/api/action_calvi/?nb_pass=2        label: Distribuer 2 pass        n_pass: 2    security:      secret: "dudule12"    #secret pass√© en param√®tre des APIs      ip_whitelist:         #liste des adresses IP pouvant appeler l'API        - "*"  #Seul les NFT qui v√©rifient les conditions ci-dessous n√©c√©ssitent une validation  filters:    mint_authority:    name:      - "La Citadella"      - "A Madonna Di A Sierra"    symbol:#Section destin√© √† la distribution de NFT gratuitementlottery:  visible: False  application: "$nfluent_appli$/contest"  collections:        #Liste des collections concern√© par la distribution gratuite    - ""  showVisual: True    #Affiche le visuel  duration: 10        #dur√©e en seconde d'affichage des NFTs  period:    #Permet de commencer l'op√©ration √† un moment pr√©cis et la faire s'arr√™ter    dtStart: "now"    dtEnd: ""    duration: 1security:  #Liste des adresses internet (IP ADDRESS) pouvant appeler l'api  whitelist:    - "*"

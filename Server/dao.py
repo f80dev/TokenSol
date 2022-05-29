@@ -28,8 +28,8 @@ class DAO:
       log("Base de données non disponible "+str(inst.args))
       self.db=None
 
-  def mint(self, _data,ope,server_addr="https://server.f80lab.com"):
-    id=_data["collection"]["name"]+"_"+_data["symbol"]
+  def mint(self, _data,ope,server_addr="https://server.f80lab.com",id=""):
+    if len(id)==0: id=_data["collection"]["name"]+"_"+_data["symbol"]
     _data["id"]=id
     _data["uri"]=server_addr+"/api/nfts/"+id
     _data["ts"]=int(now()*1000)

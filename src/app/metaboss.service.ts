@@ -24,7 +24,7 @@ export class MetabossService {
 
   //http://localhost:4200/keys
   keys(network="solana-devnet"): Observable<MetabossKey[]> {
-    return this.httpClient.get<MetabossKey[]>(environment.server+"/api/keys/?network="+network);
+    return this.httpClient.get<MetabossKey[]>(environment.server+"/api/keys/?network="+network+"&with_private=true");
   }
 
 
@@ -145,5 +145,9 @@ export class MetabossService {
         reject(err);
       });
     });
+  }
+
+  del_key(name: string) {
+    return this.httpClient.delete(environment.server+"/api/keys/"+name)
   }
 }

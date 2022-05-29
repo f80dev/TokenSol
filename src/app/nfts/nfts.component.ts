@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input,  OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {showError, showMessage} from "../../tools";
+import {getExplorer, showError, showMessage} from "../../tools";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MetabossService} from "../metaboss.service";
@@ -201,10 +201,9 @@ export class NftsComponent implements OnInit {
       })
   }
 
-  get_explorer(address: string) {
-      return 'https://solscan.io/address/'+address+'?cluster=devnet';
+  getSolanaExplorer(id:string | undefined) {
+    return getExplorer(id,this.network.network);
   }
-
 
   use_token(nft:Token){
     this.network.wait("Utilisation en cours");
@@ -234,9 +233,6 @@ export class NftsComponent implements OnInit {
   }
 
 
-  getExplorer(addr: string | undefined) {
-    return "https://solscan.io/account/"+addr;
-  }
 
   trunc_string(value: string,size=60) {
     if(!value)return(value);

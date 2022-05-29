@@ -1349,6 +1349,41 @@
   "resolved" "https://registry.npmjs.org/@leichtgewicht/ip-codec/-/ip-codec-2.0.3.tgz"
   "version" "2.0.3"
 
+"@metaplex-foundation/beet-solana@^0.1.1":
+  "integrity" "sha512-QV2DbxjaJWLkMvn12OC09g+r7a6R0uNwf8msYuOUSw4cG7amXzvFb7s0bh4IxY3Rk8/0ma0PfKi/FEdC7Hi4Pg=="
+  "resolved" "https://registry.npmjs.org/@metaplex-foundation/beet-solana/-/beet-solana-0.1.1.tgz"
+  "version" "0.1.1"
+  dependencies:
+    "@metaplex-foundation/beet" ">=0.1.0"
+    "@solana/web3.js" "^1.31.0"
+
+"@metaplex-foundation/beet@^0.1.0", "@metaplex-foundation/beet@>=0.1.0":
+  "integrity" "sha512-gUlgl4h9XzSvSx7lUDvYQuy1eMxu4UXbt5MSR9K/dYIHHd3gcCxm8/6vn0VnUXMvpwVHS8tezxlsaKu+TIu6zQ=="
+  "resolved" "https://registry.npmjs.org/@metaplex-foundation/beet/-/beet-0.1.4.tgz"
+  "version" "0.1.4"
+  dependencies:
+    "ansicolors" "^0.3.2"
+    "bn.js" "^5.2.0"
+    "debug" "^4.3.3"
+
+"@metaplex-foundation/cusper@^0.0.2":
+  "integrity" "sha512-S9RulC2fFCFOQraz61bij+5YCHhSO9llJegK8c8Y6731fSi6snUSQJdCUqYS8AIgR0TKbQvdvgSyIIdbDFZbBA=="
+  "resolved" "https://registry.npmjs.org/@metaplex-foundation/cusper/-/cusper-0.0.2.tgz"
+  "version" "0.0.2"
+
+"@metaplex-foundation/mpl-token-metadata@^2.1.2":
+  "integrity" "sha512-q8mxPwErwC+6USguiCqZX4aHhswoSEw9oh9MBYvuNtFp03+SVzcOyUOdX1zN2oJzEsGk8ymIyzPbgzi9O5rJZQ=="
+  "resolved" "https://registry.npmjs.org/@metaplex-foundation/mpl-token-metadata/-/mpl-token-metadata-2.1.2.tgz"
+  "version" "2.1.2"
+  dependencies:
+    "@metaplex-foundation/beet" "^0.1.0"
+    "@metaplex-foundation/beet-solana" "^0.1.1"
+    "@metaplex-foundation/cusper" "^0.0.2"
+    "@solana/spl-token" "^0.2.0"
+    "@solana/web3.js" "^1.35.1"
+    "bn.js" "^5.2.0"
+    "debug" "^4.3.3"
+
 "@multiformats/murmur3@^1.0.3", "@multiformats/murmur3@^1.1.1":
   "integrity" "sha512-TPIBMPX4DX7T4291bPUAn/AMW6H6mnYoI4Bza1DeX1I59dpTWBbOgxaqc+139Ph+NEgb/PNd3sFS8VFoOXzNlw=="
   "resolved" "https://registry.npmjs.org/@multiformats/murmur3/-/murmur3-1.1.1.tgz"
@@ -1592,7 +1627,7 @@
     "@solana/web3.js" "^1.32.0"
     "start-server-and-test" "^1.14.0"
 
-"@solana/web3.js@^1.32.0", "@solana/web3.js@^1.39.1":
+"@solana/web3.js@^1.31.0", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.35.1", "@solana/web3.js@^1.39.1":
   "integrity" "sha512-Q7XnWTAiU7n7GcoINDAAMLO7CJHpm5kPK46HKwJi2x0cusHQ3WFa7QEp6aPzH7tuf7yl/Kw1lYitcwTVOvqARA=="
   "resolved" "https://registry.npmjs.org/@solana/web3.js/-/web3.js-1.39.1.tgz"
   "version" "1.39.1"
@@ -2327,6 +2362,11 @@
   "version" "4.3.0"
   dependencies:
     "color-convert" "^2.0.1"
+
+"ansicolors@^0.3.2":
+  "integrity" "sha512-QXu7BPrP29VllRxH8GwB7x5iX5qWKAAMLqKQGWTeLWVlNHNOpVMJ91dsxQAIWXpjuW5wqvxu3Jd/nRjrJ+0pqg=="
+  "resolved" "https://registry.npmjs.org/ansicolors/-/ansicolors-0.3.2.tgz"
+  "version" "0.3.2"
 
 "any-signal@^2.1.2":
   "integrity" "sha512-B+rDnWasMi/eWcajPcCWSlYc7muXOrcYrqgyzcdKisl2H/WTlQ0gip1KyQfr0ZlxJdsuWCj/LWwQm7fhyhRfIQ=="
@@ -3451,7 +3491,7 @@
   dependencies:
     "ms" "^2.1.1"
 
-"debug@^4.0.1", "debug@^4.1.0", "debug@^4.1.1", "debug@^4.2.0", "debug@^4.3.0", "debug@^4.3.1", "debug@^4.3.2", "debug@~4.3.1", "debug@~4.3.2", "debug@4", "debug@4.3.3":
+"debug@^4.0.1", "debug@^4.1.0", "debug@^4.1.1", "debug@^4.2.0", "debug@^4.3.0", "debug@^4.3.1", "debug@^4.3.2", "debug@^4.3.3", "debug@~4.3.1", "debug@~4.3.2", "debug@4", "debug@4.3.3":
   "integrity" "sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q=="
   "resolved" "https://registry.npmjs.org/debug/-/debug-4.3.3.tgz"
   "version" "4.3.3"

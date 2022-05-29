@@ -14,8 +14,9 @@ FTX_API_SECRET="didGh8C8laA3TVZBPioeggn6r4YNuphzlRIu4_YF"
 INFURA_PROJECT_ID="28bvVmf3lmX8xWj3UlHCaNPD0lQ"
 INFURA_PROJECT_SECRET="8e4ed073cf43c280787c3cf2e7c2176a"
 
-SIGNATURE="L'equipe nFluent"
+SIGNATURE="L'équipe nFluent"
 APPNAME="TokenSol"
 
-SMTP_SERVER="smtp.ionos.fr"
+SMTP_SERVER="ssl0.ovh.net"
+SMTP_SERVER_PORT=587
 IMAP_SERVER="imap.ionos.fr"

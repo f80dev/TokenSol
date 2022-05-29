@@ -31,8 +31,9 @@ export class ContestComponent implements OnInit {
         this.url=r.url;
         this.visual=r.visual || "";
       },(err:any)=>{
-        showMessage(this,"Opération non référencée");
-      })
+        if(err.status!=404)
+          showMessage(this,"Opération non référencée");
+      });
     }
   }
 

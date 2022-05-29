@@ -58,6 +58,9 @@ import { BuildOpeComponent } from './build-ope/build-ope.component';
 import { HourglassComponent } from './hourglass/hourglass.component';
 import { ScannerComponent } from './scanner/scanner.component';
 import {WebcamModule} from "ngx-webcam";
+import { DbtableComponent } from './dbtable/dbtable.component';
+import {MatTableModule} from "@angular/material/table";
+import { AdminComponent } from './admin/admin.component';
 
 
 @NgModule({
@@ -86,7 +89,9 @@ import {WebcamModule} from "ngx-webcam";
     ContestComponent,
     BuildOpeComponent,
     HourglassComponent,
-    ScannerComponent
+    ScannerComponent,
+    DbtableComponent,
+    AdminComponent
 
   ],
     imports: [
@@ -123,7 +128,8 @@ import {WebcamModule} from "ngx-webcam";
         ClipboardModule,
         MatSliderModule,
         MatExpansionModule,
-        WebcamModule
+        WebcamModule,
+        MatTableModule
     ],
   providers: [
     FilterPipe,AliasPipe,SafePipe,OrderPipe,

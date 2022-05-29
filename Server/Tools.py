@@ -8,7 +8,7 @@ from email.mime.text import MIMEText
 import requests
 
 from secret import USERNAME, PASSWORD
-from settings import SMTP_SERVER, SIGNATURE, APPNAME
+from settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
 
 
 def is_email(addr):
@@ -60,14 +60,14 @@ def open_html_file(name:str,replace=dict(),domain_appli=""):
 
 
 
-def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="reply@f80lab.com",subject="",attach=None,filename="macle.xpem"):
+def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename="macle.xpem"):
   if not is_email(_to):return None
-  with smtplib.SMTP(SMTP_SERVER, 587) as server:
+  with smtplib.SMTP(SMTP_SERVER, SMTP_SERVER_PORT,timeout=10) as server:
     server.ehlo()
     server.starttls()
     try:
       log("Tentative de connexion au serveur de messagerie")
-      server.login(USERNAME, PASSWORD+"!!")
+      server.login(USERNAME, PASSWORD)
       log("Connexion réussie. Tentative d'envoi")
 
       msg = MIMEMultipart()
@@ -104,7 +104,7 @@ def int_to_hex(number,nbChar=2,zerox=True):
 
 
 def filetype(filename=""):
-  if filename.endswith(".jpg") or filename.endswith(".png") or filename.startswith("data:image"):return "image"
+  if filename.endswith(".jpg") or filename.endswith(".psd") or filename.endswith(".png") or filename.startswith("data:image") or filename.endswith("webp"):return "image"
   if filename.endswith(".json"):return "json"
   if filename.endswith(".txt"):return "text"
   return filename[filename.rindex(".")+1:]

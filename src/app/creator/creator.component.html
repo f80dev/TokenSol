@@ -43,7 +43,7 @@
 
 <!--  Travail sur les textes -->
   <mat-expansion-panel [expanded]="show_addtext!=null">
-    <mat-expansion-panel-header>Ajout de texte a {{show_addtext?.name}}</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Ajout de texte</mat-expansion-panel-header>
     <table style="width: 100%;vertical-align: middle;">
       <tr>
         <td>
@@ -75,9 +75,13 @@
         <td>
           <input [(colorPicker)]="color" [style.background]="color"><br>
 
-          X:<mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="position_text.x"></mat-slider><br>
-          Y:<mat-slider [max]="100" [min]="0" [thumbLabel]="true" [(ngModel)]="position_text.y"></mat-slider><br>
-          FontSize: <mat-slider [max]="200" [min]="20" [thumbLabel]="true" [(ngModel)]="fontsize"></mat-slider><br>
+          X:<mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="position_text.x"></mat-slider>
+          <input type="number" [(ngModel)]="position_text.x" style="width:50px">
+          <br>
+          Y:<mat-slider [max]="100" [min]="0" [thumbLabel]="true" [(ngModel)]="position_text.y"></mat-slider>
+          <input type="number" [(ngModel)]="position_text.y"  style="width:50px;">
+
+          <br>
 
           <br>
           Fonte:
@@ -85,6 +89,10 @@
             <mat-option *ngFor="let f of fontfiles" [value]="f">{{f.name}}</mat-option>
           </mat-select>
           <br>
+          FontSize: <mat-slider [max]="300" [min]="10" [thumbLabel]="true" [(ngModel)]="fontsize"></mat-slider>
+          <input type="number" [(ngModel)]="fontsize"  style="width:50px;">
+          <br>
+
 
         </td>
         <td>
@@ -226,6 +234,16 @@
       <mat-label>Nom des fichiers</mat-label>
       <input matInput type="text" [(ngModel)]="filename_format" >
     </mat-form-field>
+
+    <mat-form-field style="fontsize:small">
+      <mat-label>Format des images</mat-label>
+      <mat-select [(value)]="sel_ext">
+        <mat-option value="webp">webp</mat-option>
+        <mat-option value="gif">gif</mat-option>
+        <mat-option value="png">png</mat-option>
+      </mat-select>
+    </mat-form-field>
+
 
     <button type="button" mat-raised-button mat-button
             (click)="save_config()">

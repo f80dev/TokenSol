@@ -20,12 +20,12 @@
 #fabrication: docker build -t f80hub/tokensol . && docker push f80hub/tokensol:latest
 #installation: docker rm -f tokensol && docker pull f80hub/tokensol:latest
 #Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp
-#démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py 4242 ssl
+#démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py 4242 https://server.f80lab.com ssl
 
 #demarage sur windows :
-# du main docker run --restart=always -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest python3 app.py 4242
+# du main docker run --restart=always -p 4242:4242 -v /root/temp:/temp -v /root/certs:/certs --name tokensol -ti f80hub/tokensol:latest python3 app.py 4242
 # analyse de l'image docker run --restart=always -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest bash
-#test en mode batch : docker run --restart=always -v /root/certs:/certs -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest bash
+#test en mode batch : docker run --restart=always -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest bash
 #à tester avec la commande ./metaboss-ubuntu-latest update name --account GwCtQjSZj3CSNRbHVVJ7MqJHcMBGJJ9eHSyxL9X1yAXy --keypair admin.json --new-name dudule
 
 FROM python:3.9.0-buster
@@ -66,6 +66,7 @@ RUN mkdir temp
 RUN mkdir Configs
 RUN mkdir Fonts
 RUN mkdir Operations
+
 RUN mkdir ./Solana/Temp
 RUN mkdir ./Elrond/PEM
 RUN mkdir ./Solana/Keys

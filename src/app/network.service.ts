@@ -14,9 +14,10 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {$$,MetabossKey,words} from "../tools";
 import {environment} from "../environments/environment";
 
-import {Token} from "./nfts/nfts.component";
+import {Creator, Token} from "./nfts/nfts.component";
 import {Layer} from "./creator/creator.component";
-import {delay, retry} from "rxjs";
+import {delay, retry, timeout} from "rxjs";
+import {AliasPipe} from "./alias.pipe";
 
 export enum type_addr {
   "owner",
@@ -110,18 +111,23 @@ export class NetworkService {
 
 
   create_token(offchain:any,mintAuthority:string,mintAddress:string,data_sup:any,splMintInfo:any,owner:string) {
-    let token = {
+    let token:Token = {
+      search:{collection:words(offchain.collection),metadata:words(Object.values(offchain.attributes))},
       address: mintAddress,
-      metadataPDA: {},
-      mint: data_sup.metadata.mint,
-      splMintInfo: splMintInfo,
-      splTokenInfo:{address: "", amount: "", isFrozen: false, mint: "", state: 0, owner:owner},
-      metadataOffchain: offchain,
-      metadataOnchain:data_sup.metadata,
-      search:{
-        collection:words(data_sup.collection),
-        metadata:words(Object.values(offchain.attributes))
-      }
+        metadataPDA: {},
+        mint: mintAuthority,
+        splMintInfo: splMintInfo,
+        splTokenInfo: {address: "", amount: "", isFrozen: false, mint: "", state: 0, owner: owner},
+        metadataOffchain: offchain,
+        metadataOnchain:{
+          key:0,
+          updateAuthority:owner,
+          mint:"",
+          data:data_sup,
+          primarySaleHappened:0,
+          isMutable:1,
+          type:"metaplex"
+        }
     }
 
     return token;
@@ -163,35 +169,35 @@ export class NetworkService {
   }
 
 
-  complete_token(owner:string,r:any[]) : Promise<any[]> {
+  complete_token(owner:string,e:any,filter:any=null,short=false) : Promise<any> {
     $$("Completion des tokens");
     return new Promise((resolve, reject) => {
-      let rc: any[] = [];
-      if(!r)reject(new Error("Empty list"))
-      let nRequete=0;
+      let rc: any={};
 
-      for (let e of r) {
         if(e.account && e.account.data){
           let accountInfo:any = SPLToken.AccountLayout.decode(e.account.data);
+          let mintAddress=accountInfo.mint.toBase58();
+
+
           accountInfo["pubkey"] = e.pubkey;
           let layoutInfo = SPLToken.MintLayout.decode(e.account.data);
-          let mintAddress=accountInfo.mint.toBase58();
           let mintAuthority=layoutInfo.mintAuthority.toBase58();
-          nRequete=nRequete+1;
-          setTimeout(()=>{
-            $$("Analyse de "+mintAddress);
-            this.solscan_info(mintAddress).then((dt:any)=>{
-              let url_metadata=dt.data?.metadata?.data.uri;
-
-              this.httpClient.get(url_metadata).pipe(retry(3)).subscribe((offchain:any)=>{
-                rc.push(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,layoutInfo,owner));
-                if(rc.length==r.length)resolve(rc);
-              },(err:any)=>{
-                $$("Anomalie ",err);
-              })
-            })
-          },nRequete*500);}
-      }
+          if(filter==null || (filter.mintAuthority && mintAuthority==filter.mintAuthority)){
+              $$("Analyse de "+mintAddress);
+              this.httpClient.get(environment.server+"/api/scan/"+mintAddress).subscribe((token_account:any)=>{
+                if(token_account!={}){
+                  this.httpClient.get(token_account.uri).pipe(retry(1),timeout(2000)).subscribe((offchain:any)=>{
+                    resolve(this.create_token(offchain,mintAuthority,mintAddress,token_account,layoutInfo,owner));
+                  },(err:any)=>{
+                    $$("Anomalie ",err);
+                    reject(err);
+                  })
+                } else {
+                  reject();
+                }
+              },(err)=>{reject(err);})
+            }
+          }
     });
   }
 
@@ -264,7 +270,8 @@ export class NetworkService {
   }
 
 
-  get_tokens_from(type_addr:string,addr:string,limit=100) : Promise<any[]> {
+  get_tokens_from(type_addr:string,addr:string,limit=100,short=false,filter:any=null) : Promise<any[]> {
+
     $$("Recherche de token par "+type_addr)
     return new Promise((resolve,reject) => {
       if(addr==null){
@@ -297,16 +304,20 @@ export class NetworkService {
               let values=result.value;
               $$(values.length+" nfts trouvés");
               values=values.slice(0,limit);
+              if(values.length==0)resolve(values);
+              for(let requete=0;requete<values.length;requete++){
 
-              this.complete_token(addr,values).then(r => {
-                resolve(r);
-              }).catch((err)=>{
-                $$("erreur ",err);
-                reject(err);
-              })
-            }).catch((err:any)=>{
-              $$("erreur ",err);
-              reject(err);
+                  this.complete_token(addr,values[requete],filter,short).then(token => {
+                    values[requete]=token;
+                    if(requete==values.length-1)resolve(values);
+                  }).catch((err)=>{
+                    $$("Anomalie");
+                    if(requete==values.length-1)resolve(values);
+                  })
+
+              }
+
+            }).catch((err:any)=>{reject(err);
             });
           }
 
@@ -397,13 +408,18 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/get_list");
   }
 
-  add_layer(l: any) {
-    return this.httpClient.post(environment.server+"/api/layers/",l);
+  add_layer(l: any,w=0,h=0) {
+    const _l={...l}
+    if(w>0 && h>0){
+      _l.width=w;
+      _l.height=h;
+    }
+    return this.httpClient.post(environment.server+"/api/layers/",  _l);
   }
 
-  get_collection(limit: number,file_format:string) {
+  get_collection(limit: number,file_format:string,ext="webp") {
     return this.httpClient.get(
-      environment.server+"/api/collection/?name="+file_format+"&format=preview&limit="+limit,
+      environment.server+"/api/collection/?image="+ext+"&name="+file_format+"&format=preview&limit="+limit,
       { headers: new HttpHeaders({ timeout: `${200000}` }) }
       );
   }
@@ -423,6 +439,10 @@ export class NetworkService {
   upload(file: any ,platform="nftstorage"){
       this.wait("Chargement du fichier");
       return this.httpClient.post(environment.server+"/api/upload/?platform="+platform,file);
+  }
+
+  remove_image(name:string){
+    return this.httpClient.delete(environment.server+"/api/images/"+name);
   }
 
   reset_collection() {
@@ -465,8 +485,8 @@ export class NetworkService {
   }
 
 
-  get_operations() {
-    return this.httpClient.get(environment.server+"/api/operations/");
+  get_operations(ope="") {
+    return this.httpClient.get(environment.server+"/api/operations/"+ope);
   }
 
   upload_operation(filename:string, content:any) {
@@ -479,5 +499,25 @@ export class NetworkService {
 
   get_nft_from_db(id: string) {
     return this.httpClient.get(environment.server+"/api/get_nft_from_db/?id="+id);
+  }
+
+  validate(action:any, t:Token,user_addr:string,operateur:string) {
+    let url=action.api.replace("$nfluent_server$",environment.server);
+    $$("Appel de "+url+" suite a validation");
+    return this.httpClient.post(url,{
+      user:user_addr,
+      operateur:operateur,
+      token:t.mint,
+      uri:t.metadataOnchain.data.uri,
+      offchain:t.metadataOffchain
+    });
+  }
+
+  send_mail_to_validateur(operation: any) {
+    return this.httpClient.post(environment.server+"/api/send_email_to_validateur/",operation);
+  }
+
+  send_transaction_confirmation(email: string, body: any) {
+    return this.httpClient.post(environment.server+"/api/send_transaction_confirmation/"+email+"/",body)
   }
 }

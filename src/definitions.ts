@@ -15,5 +15,8 @@ export const NETWORKS=["solana-devnet","solana-mainnet","elrond-devnet","elrond-
 export const PLATFORMS=[
   {label:"NFT storage",value:"nftstorage"},
   {label:"IPFS",value:"ipfs"},
-  {label:"Infura (IPFS)",value:"infura"}
+  {label:"Infura (IPFS)",value:"infura"},
+  {label:"nFluent Server",value:"nfluent"}
 ]
+
+export const SALT="sel"
