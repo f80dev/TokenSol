@@ -150,4 +150,8 @@ export class MetabossService {
   del_key(name: string) {
     return this.httpClient.delete(environment.server+"/api/keys/"+name)
   }
+
+  encrypte_key(name:string) {
+    return this.httpClient.get(environment.server+"/api/encrypt_key/"+name)
+  }
 }

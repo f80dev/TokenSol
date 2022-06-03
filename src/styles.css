@@ -22,12 +22,13 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 button {
   min-width: 120px;
   width: fit-content;
-  margin: 15px;
+  margin: 20px;
   font-size: small;
-
 }
 
 mat-form-field {
   margin: 10px
 }
+
+
 

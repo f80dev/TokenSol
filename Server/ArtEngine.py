@@ -5,6 +5,7 @@ from os.path import exists
 from random import random,seed
 
 import ffmpeg
+import numpy as np
 import requests
 from PIL import Image
 from PIL.Image import BICUBIC
@@ -33,14 +34,13 @@ class Element():
 
 
 class Sticker(Element):
-  image:Image
+  image:Image=None
+  text:dict=None
 
   def __init__(self,name="",image=None,dimension=None,text:str=None,x:int=None,y:int=None,fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"},ext="PNG"):
     super().__init__(name,ext)
 
-    if not image:
-      self.image=Image.new("RGBA",dimension)
-    else:
+    if image:
       if type(image)==str:
         if not image.startswith("http"):
           if "base64" in image:
@@ -62,53 +62,96 @@ class Sticker(Element):
         if type(image)==bytes:
           self.image=Image.open(BytesIO(image))
         else:
-          self.image=image.image.copy()
+          self.image=image.copy()
 
     if text:
-      self.image.info={"name":text}
-      self.write(text,x=(x/100)*dimension[0],y=(y/100)*dimension[1],color=fontstyle["color"],size=fontstyle["size"],fontname=fontstyle["name"])
+      self.text={
+        "text":text,
+        "fontstyle":fontstyle,
+        "dimension":dimension,
+        "x":x,"y":y
+      }
+
+    if not text and not image:
+      self.image=Image.new("RGBA",dimension)
+
+
+  def render_text(self,factor=1):
+    dimension=(int(self.text["dimension"][0]*factor),int(self.text["dimension"][1]*factor))
+
+    self.image=Image.new("RGBA",dimension)
+    self.image.info={"name":self.text["text"]}
+    fontstyle=self.text["fontstyle"]
+    self.write(
+      self.text["text"],
+      x=(self.text["x"]/100)*dimension[0],y=(self.text["y"]/100)*dimension[1],
+      color=fontstyle["color"],
+      size=int((fontstyle["size"]/100)*dimension[0]),
+      fontname=fontstyle["name"]
+    )
+    return self.image
+
+  def clear(self):
+    if self.text :
+      self.image=None
 
   def write(self,text:str,position="bottom-left",fontname="corbel.ttf",size=22,color=(0,0,0,255),x=None,y=None):
-    self.image.info={"name":text}
     font = truetype("./Fonts/"+fontname, size)
+
+    self.image.info={"name":text}
+
     draw=Draw(self.image)
     if x and y:
       draw.text((x,y),text,color,font=font)
     else:
       draw.text((20,self.image.height-30),text,color,font=font)
 
+    return self.image
+
 
   def clone(self,new_name=""):
     if new_name=="": new_name=self.name+"_clone"
-    return Sticker(new_name,self.image.copy())
+    return Sticker(name=new_name,image=self.image.copy())
 
   def replace_color(self,old_color,new_color):
-    for i in range(0,self.image.size[0]):# process all pixels
-      for j in range(0,self.image.size[1]):
-        data = self.image.getpixel((i,j))
-        if (data==old_color):
-          self.image.putpixel((i,j),new_color)
+    if old_color.startswith("#"):old_color=(int(old_color[1:2],16),int(old_color[3:4],16),int(old_color[5:6],16))
+    if new_color.startswith("#"):new_color=(int(new_color[1:2],16),int(new_color[3:4],16),int(new_color[5:6],16))
 
-  # def analyse(self):
-  #   palette=dict()
-  #   for i in range(0,self.image.size[0]):# process all pixels
-  #     for j in range(0,self.image.size[1]):
-  #       data = self.image.getpixel((i,j))
-  #       key=str(data)
-  #       palette[key]=palette[key]+1 if key in palette else 0
-  #
-  #   palette=dict(sorted(palette.items(), key=lambda item: item[1],reverse=True))
-  #   return list(palette.keys())[0:5]
+    data = np.array(self.image)
+    red, green, blue, alpha = data.T
+    replacement_area = (red == old_color[0]) & (blue == old_color[2]) & (green == old_color[1])
+    data[..., :-1][replacement_area.T] = (new_color[0], new_color[2], new_color[1])
 
-  def toBase64(self,format="PNG"):
+    return Image.fromarray(data,"RGBA")
+
+
+  def toBase64(self,format="WEBP",factor=1):
     buffered = BytesIO()
+    if self.image is None and self.text is not None:
+      self.render_text(factor)
+
     self.image.save(buffered, format=format)
+    self.clear()
     return "data:image/"+format.lower()+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
 
-  def fusion(self,to_concat):
-    log("Fusion de "+self.name+" avec "+to_concat.name)
-    src:Image=to_concat.image.resize(size=self.image.size,resample=BICUBIC)
-    self.image.alpha_composite(src)
+
+
+  def fusion(self,to_concat,factor):
+    #log("Fusion de "+self.name+" avec "+to_concat.name)
+    if to_concat.image is None and not to_concat.text is None:
+      src=to_concat.render_text(factor)
+
+    if self.image and to_concat.image:
+      src:Image=to_concat.image.resize(size=self.image.size,resample=BICUBIC)
+      self.image.alpha_composite(src)
+      to_concat.clear()
+      return True
+
+    return False
+
+
+
+
 
   def save(self,filename):
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp pour le Webp
@@ -183,13 +226,11 @@ class TextElement(Element):
 
 
 class Layer:
-  def __init__(self,name="",element=None,width=500,height=500,position=0,unique=False,indexed=True):
+  def __init__(self,name="",element=None,position=0,unique=False,indexed=True):
     self.elements=[]
     self.name=name if len(name)>0 else str(now())
-    self.width=width
     self.unique=unique if type(unique)!=str else False
     self.indexed=indexed if type(indexed)!=str else False
-    self.height=height
     self.position=position
     if element:self.add(element)
 
@@ -278,41 +319,46 @@ class ArtEngine:
   def sort(self):
     self.layers=sorted(self.layers,key=lambda x:x.position)
 
-  def generate(self,collage:Element,dir="",limit=100,seed_generator=0):
+  def generate(self,collage:Element,dir="",limit=100,seed_generator=0,width=500,height=500):
     if seed_generator>0:seed(seed_generator)
     if len(dir)>0 and not dir.endswith("/"):dir=dir+"/"
     rc=list()
-    width=0
-    height=0
     max_item=1
 
     self.sort()
+    log("On détermine la taille de l'image finale et le nombre d'image maximum générable")
     for layer in self.layers:
-      width=max(width,layer.width)
-      height=max(height,layer.height)
       if layer.indexed:
         max_item=max_item*len(layer.elements)
 
     histo=[]
     index=0
     limit=min(limit,max_item)
+    log("Lancement de la génération de "+str(limit)+" images")
     while index<limit:
 
       name=[]
+      log("NFT "+str(index)+"/"+str(limit)+" généré")
       for layer in self.layers:
-        log("Ajout d'un élément du calque "+layer.name)
-        elt=layer.random() if not layer.unique else layer.elements[0]
+        if len(layer.elements)==0:
+          elt=None
+        else:
+          elt=layer.random() if not layer.unique else layer.elements[0]
+
         if elt is None:
           log("il n'y a plus assez de NFT pour respecter l'unicité")
           index=limit
           break
         else:
-          if layer.indexed:name.append(elt.name)
-          collage.fusion(elt)
+          if layer.indexed or layer.unique:name.append(elt.name)
+          factor=1 if elt.text is None else width/elt.text["dimension"][0]
+          collage.fusion(elt,factor)
+          if layer.unique:
+            layer.remove(elt)
 
       if not name in histo and index<limit:
         index=index+1
-        if layer.unique: layer.remove(elt)
+
         histo.append(name)
         if len(dir)>0:
           # if index<len(self.filenames):

@@ -40,17 +40,26 @@ class Solana:
 
 
 
-  def exec(self,command:str,param:str="",account:str="",keyfile="",data=None,sign=False,delay=1.0,owner=""):
+  def exec(self,command:str,param:str="",account:str="",keyfile="",data=None,sign=False,delay=1.0,owner="",private_key=None):
     if len(owner)>0:owner=self.find_address_from_json(owner)
 
-    if len(keyfile)>0:
-      keyfile=keyfile +".json" if not keyfile.endswith(".json") else keyfile
-      if not keyfile.startswith("./Solana/Keys/"):
-        if not keyfile in os.listdir("./Solana/Keys/"):
-          log("Clé introuvable")
-          return {"error":keyfile+" introuvable"}
+    if not private_key is None:
+      #La clé privée à directement été fournie a exec
+      keyfile="./Solana/Keys/temp.json"
+      with open(keyfile,"wb") as file:
+        file.write(private_key)
+        file.close()
 
-        keyfile="./Solana/Keys/"+keyfile if not keyfile.startswith("./Solana/Keys") else keyfile
+    else:
+      #On recherche un fichier
+      if len(keyfile)>0:
+        keyfile=keyfile +".json" if not keyfile.endswith(".json") else keyfile
+        if not keyfile.startswith("./Solana/Keys/"):
+          if not keyfile in os.listdir("./Solana/Keys/"):
+            log("Clé introuvable")
+            return {"error":keyfile+" introuvable"}
+
+          keyfile="./Solana/Keys/"+keyfile if not keyfile.startswith("./Solana/Keys") else keyfile
 
     if data:
       file_to_mint="./Solana/Temp/to_mint_"+str(datetime.now().timestamp())+".json"

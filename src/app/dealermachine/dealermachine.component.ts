@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
 import {showMessage} from "../../tools";
@@ -14,6 +14,7 @@ export class DealermachineComponent implements OnInit {
   wallet_link: string="";
   nft:any={};
 
+
   constructor(
     public routes:ActivatedRoute,
     public network:NetworkService,
@@ -27,7 +28,8 @@ export class DealermachineComponent implements OnInit {
       if(!nft){
         this.lost();
       }
-    })
+    });
+
   }
 
   //http://127.0.0.1:4200/dealermachine/?ope=calvi2022
@@ -56,4 +58,6 @@ export class DealermachineComponent implements OnInit {
     }
 
   }
+
+
 }

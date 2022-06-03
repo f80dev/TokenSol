@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {UserService} from "../user.service";
+import {Clipboard} from '@angular/cdk/clipboard';
 import {MetabossService} from "../metaboss.service";
 import {MetabossKey, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -16,6 +16,7 @@ export class KeysComponent implements OnInit {
 
   constructor(
     public metaboss:MetabossService,
+    public clipboard: Clipboard,
     public toast:MatSnackBar
   ) { }
 
@@ -44,7 +45,14 @@ export class KeysComponent implements OnInit {
 
   del_key(name: string) {
     this.metaboss.del_key(name).subscribe(()=>{
-      this.refresh();
+      setTimeout(()=>{this.refresh();},1000);
+    });
+  }
+
+  encrypt(key: any) {
+    this.metaboss.encrypte_key(key.name).subscribe((r:any)=>{
+      this.clipboard.copy(key.name+": "+r.encrypt);
+      showMessage(this,"La clé est disponible dans le presse papier")
     });
   }
 }

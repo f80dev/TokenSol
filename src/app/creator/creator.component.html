@@ -19,6 +19,12 @@
           <mat-label>Nombre d'unités</mat-label>
           <input matInput type="number" [(ngModel)]="limit" >
         </mat-form-field>
+
+        <mat-form-field appearance="fill" style="max-width: 100px">
+          <mat-label>Seed</mat-label>
+          <input matInput type="number" [(ngModel)]="seed" >
+        </mat-form-field>
+
       </td>
       <td>
 
@@ -37,6 +43,21 @@
         </mat-form-field>
 
       </td>
+      <td>
+        <mat-form-field style="fontsize:small">
+          <mat-label>Palette</mat-label>
+          <mat-select [(value)]="sel_palette" (selectionChange)="change_palette($event)">
+            <mat-option *ngFor="let k of palette_names" [value]="palette[k]">
+              {{k}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </td>
+      <td>
+        <div id="showPalette">
+          <div style="width: 20px;height:20px;display: inline-block" *ngFor="let color of sel_colors" [style.background-color]="color" ></div>
+        </div>
+      </td>
     </tr>
   </table>
 
@@ -52,6 +73,11 @@
                   (click)="add_serial(show_addtext)">
             Série numérique
           </button>
+          &nbsp;&nbsp;
+          <mat-checkbox [(ngModel)]="usePalette" *ngIf="sel_colors.length>0">Utiliser la palette sélectionnée</mat-checkbox>
+
+          <br>
+
           <mat-form-field appearance="fill" style="max-width: 600px;width: 100%;">
             <mat-label>Texte a ajouter</mat-label>
             <input matInput type="text" [(ngModel)]="text_to_add" title="Insérer __idx__ pour générer des séries automatiquement">
@@ -63,7 +89,7 @@
           <div style="width:200px;height: 200px;border: 1px solid black;cursor: crosshair;position: relative;" [style.background-color]="backcolor"
                (click)="onclick_on_text($event,show_addtext)">
             <div [ngStyle]="{
-              'font-size':fontsize/(col_width/200)+'px',
+              'font-size':(200*fontsize/100)+'px',
               position: 'absolute',display:'block',
               'z-index': 10,'pointer-events':'none',
               top:position_text.y*2+'px',left:position_text.x*2+'px',
@@ -73,8 +99,7 @@
           </div>
         </td>
         <td>
-          <input [(colorPicker)]="color" [style.background]="color"><br>
-
+          Couleur du texte : <input *ngIf="!usePalette" [(colorPicker)]="color" [style.background]="color"><br>
           X:<mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="position_text.x"></mat-slider>
           <input type="number" [(ngModel)]="position_text.x" style="width:50px">
           <br>
@@ -89,7 +114,7 @@
             <mat-option *ngFor="let f of fontfiles" [value]="f">{{f.name}}</mat-option>
           </mat-select>
           <br>
-          FontSize: <mat-slider [max]="300" [min]="10" [thumbLabel]="true" [(ngModel)]="fontsize"></mat-slider>
+          FontSize: <mat-slider [max]="40" [min]="1" [step]="0.1" [thumbLabel]="true" [(ngModel)]="fontsize"></mat-slider>
           <input type="number" [(ngModel)]="fontsize"  style="width:50px;">
           <br>
 
@@ -139,10 +164,11 @@
           <mat-icon *ngIf="layer.position<layers.length-1"  (click)="update_position(layer,+1)">keyboard_arrow_down</mat-icon>
         </td>
         <td style="width:fit-content;min-width: 100px;">
-          {{layer.name}}
+          {{layer.name}}<br>
+          <span style="font-size: small;">{{layer.elements.length}} éléments</span>
         </td>
 
-        <td style="width:175px">
+        <td style="width:200px">
           <app-upload-file (uploaded)="on_upload($event,layer)"
                            title="Chargée une image depuis votre ordinateur"
                            extensions=".png,.psd">
@@ -155,12 +181,16 @@
             <mat-icon>link</mat-icon>
           </button>
 
-
-
           <button style="width: fit-content" mat-icon-button mat-button
                   title="Inclure du texte"
                   (click)="generate(layer)">
             <mat-icon>notes</mat-icon>
+          </button>
+
+          <button style="width: fit-content" mat-icon-button mat-button
+                  title="Générer des copies par variation de couleurs"
+                  (click)="generate_with_color(layer)">
+            <mat-icon>palette</mat-icon>
           </button>
 
           <button style="width: fit-content" mat-icon-button mat-button
@@ -184,14 +214,16 @@
         </td>
         <td style="text-align: left;">
 
-          <div *ngFor="let file of layer.files.slice(0,max_items)" style="display: inline-block;margin: 5px;">
-            <img *ngIf="file?.length>0"
-                 [src]="file"
+          <div *ngFor="let elt of layer.elements?.slice(0,max_items)"
+               title="Cliquer pour voir à l'échelle 1:1"
+               style="display: inline-block;margin: 5px;">
+            <img *ngIf="elt?.image?.length>0"
+                 [src]="elt.image"
                  alt="En cours de chargement"
                  style="width: 100px;height: 100px;cursor: pointer;" [style.background-color]="backcolor" class="mat-elevation-z4"
-                 (mousedown)="remove_file($event,layer,file)" (click)="open_file(file)">
+                 (mousedown)="remove_element($event,layer,elt)" (click)="open_file(elt)">
           </div>
-          <span *ngIf="max_items<1000 && layer.files.length>max_items" style="font-size: xx-large;cursor: pointer;" (click)="max_items=1000">...</span>
+          <span *ngIf="layer.elements && max_items<1000 && layer.elements.length>max_items" style="font-size: xx-large;cursor: pointer;" (click)="max_items=1000">...</span>
         </td>
       </tr>
 
@@ -203,12 +235,14 @@
     </button>
 
     <button type="button" mat-raised-button mat-button
-            (click)="build_sample([
-            {name:'carrés',files:'$appli$/assets/square1.png,$appli$/assets/square2.png,$appli$/assets/square3.png,$appli$/assets/square4.png,$appli$/assets/square5.png',text:''},
-            {name:'cercles',files:'$appli$/assets/circle1.png,$appli$/assets/circle2.png,$appli$/assets/circle3.png,$appli$/assets/circle4.png,$appli$/assets/circle5.png',text:''},
-            {name:'triangles',files:'$appli$/assets/triangle1.png,$appli$/assets/triangle2.png,$appli$/assets/triangle3.png',text:''},
-            {name:'label',files:'',text:'NFT #1|NFT #2|NFT #3|NFT #4|NFT #5|NFT #6|NFT #7|NFT #8|NFT #9'}
-          ])">
+            (click)="build_sample(
+            [
+              {name:'label',files:'',text:'NFT #1|NFT #2|NFT #3|NFT #4|NFT #5|NFT #6|NFT #7|NFT #8|NFT #9',position:3},
+              {name:'triangles',files:'$appli$/assets/triangle1.png,$appli$/assets/triangle2.png,$appli$/assets/triangle3.png',text:'',position:2},
+              {name:'cercles',files:'$appli$/assets/circle1.png,$appli$/assets/circle2.png,$appli$/assets/circle3.png,$appli$/assets/circle4.png,$appli$/assets/circle5.png',text:'',position:1},
+              {name:'carrés',files:'$appli$/assets/square1.png,$appli$/assets/square2.png,$appli$/assets/square3.png,$appli$/assets/square4.png,$appli$/assets/square5.png',text:'',position:0},
+              ]
+              )">
       Un exemple
     </button>
 
@@ -260,8 +294,8 @@
     <br>
 
     <div style="width: 100%;" class="mat-elevation-z4">
-      <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;" *ngFor="let img of previews">
-        <img [src]="img.src" style="width: 100px;margin-left:5px;">
+      <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
+        <img [src]="img.src" style="width: 100px;margin-left:5px;" (click)="open_file({image:img.src})">
         <small>{{img.filename}}</small>
       </div>
     </div>

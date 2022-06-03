@@ -4,9 +4,18 @@
     <img *ngIf="visual.length>0" [src]="visual" style="object-fit: cover;width:100%;">
   </div>
 
-  <br>
+  <br><br>
 
+  Flasher ce QRCode pour récupérer gratuitement le NFT<br>
   <a *ngIf="url.length>0" [href]="url" target="_blank">
     <img [src]="qrcode" style="width: 200px;height:200px;">
   </a>
+
+  <br>
+  <br>
+
+  <div *ngIf="delay>0" style="font-size: large;">
+    {{delay}} secondes avant changement
+  </div>
+
 </div>

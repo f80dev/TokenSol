@@ -4,26 +4,20 @@ import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
-import {showError, showMessage} from "../../tools";
+import {$$, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PLATFORMS} from "../../definitions";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Location} from "@angular/common";
+import {MatSelectChange} from "@angular/material/select";
 
 export interface Layer {
   unique: boolean
   indexed: boolean
   name:string
   position:number
-  files:any[]
+  elements:any[]
   text:string
-  width:number
-  height:number
-  fontstyle: {
-    name:string
-    size:number
-    color:string
-  }
 }
 
 @Component({
@@ -35,16 +29,24 @@ export interface Layer {
 
 export class CreatorComponent implements OnInit {
   layers: Layer[]=[];
-  col_width=500;
+  col_width=200;
   backcolor="black";
-  col_height=500;
+  col_height=200;
   platforms=PLATFORMS;
   limit=10;
   show_addtext:any;
   configs:string[]=[];
   previews:any[]=[];
+  sel_ext: string="webp";
+  seed: number=0;
+  sel_palette: string="purple";
+  palette_names: string[]=[];
+  usePalette: boolean=false;
+  sel_colors: any[]=[];
+
+
   text_to_add: string="Texte ici";
-  fontsize: number=100;
+  fontsize: number=12;
   color: any="#FFFFFF";
 
   font:any= {name:"Corbel",file:"corbel.ttf"}
@@ -57,6 +59,7 @@ export class CreatorComponent implements OnInit {
   message="";
   max_items: number=8;
   config_name: string="maconfig";
+  palette: any={};
 
   constructor(
     public network:NetworkService,
@@ -86,6 +89,11 @@ export class CreatorComponent implements OnInit {
   ngOnInit(): void {
     this.layers=[];
     this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
+    this.network.get_palettes().subscribe((p)=>{
+      this.palette_names=Object.keys(p);
+      this.palette=p;
+      this.sel_palette=this.palette_names[0];
+    })
     this.refresh();
   }
 
@@ -96,7 +104,6 @@ export class CreatorComponent implements OnInit {
   }
 
 
-
   on_upload(evt: any,layer:Layer) {
     let body={
       filename:evt.filename,
@@ -105,7 +112,7 @@ export class CreatorComponent implements OnInit {
     }
 
     this.network.upload(body,this.sel_platform).subscribe((r:any)=>{
-      layer.files.push(r.url);
+      layer.elements.push({image:r.url});
     })
   }
 
@@ -123,29 +130,22 @@ export class CreatorComponent implements OnInit {
     }).afterClosed().subscribe((name:string) => {
       this.layers.push({
         name:name,
-        files:[],
+        elements:[],
         text:"",
         unique:false,
         indexed:true,
-        position:this.layers.length,
-        width:this.col_width,
-        height:this.col_height,
-        fontstyle:{
-          name:this.font.file,
-          size:this.fontsize,
-          color:this.color
-        }
+        position:this.layers.length
       })
     });
   }
 
 
-  fill_layer(i:number,w:number,h:number,func:Function){
+  fill_layer(i:number,w:number,h:number,preview:number,func:Function){
     this.message = "Composition de " + i + " calques sur " + this.layers.length;
-    this.network.add_layer(this.layers[i],w,h).subscribe(()=> {
+    this.network.add_layer(this.layers[i],w,h,preview).subscribe(()=> {
       i = i + 1;
       if(i<this.layers.length){
-        this.fill_layer(i,w,h,func);
+        this.fill_layer(i,w,h,preview,func);
       }else{
         func();
       }
@@ -157,15 +157,15 @@ export class CreatorComponent implements OnInit {
     let i=0;
     this.show_collection=false;
     this.network.reset_collection().subscribe(()=>{
-      this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,()=>{
+      this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
         if(format=="zip"){
           this.message="";
-          open(environment.server+"/api/collection/?image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit,"_blank")
+          open(environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit,"_blank")
         }
 
         if(format=="preview"){
           this.message="Fabrication de la collection en cours ...";
-          this.network.get_collection(this.limit,this.filename_format,this.sel_ext).subscribe((r:any)=>{
+          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed).subscribe((r:any)=>{
             this.message="";
             this.previews=r;
           },(err)=>{showError(this,err);})
@@ -180,19 +180,28 @@ export class CreatorComponent implements OnInit {
   }
 
 
+  //Génére un sticker sur la base d'un texte et l'ajoute à la layer l
   generate(l:Layer){
     if(l==null){
       showMessage(this,"Vous devez sélectionner la couche cible pour créer le visuel");
       return;
     }
-    l.fontstyle={
-      name:this.font.file,
-      color:this.color,
-      size:this.fontsize
+
+    let i=0;
+    for(let txt of this.text_to_add.split("|")){
+      if(i==this.sel_colors.length)i=0;
+      let elt=this.create_element(txt);
+      if(this.usePalette)elt.fontstyle.color=this.sel_colors[i];
+      l.elements.push({"text":elt});
+      i=i+1;
     }
-    this.network.create_text_layer(this.position_text.x,this.position_text.y,this.text_to_add,l).subscribe((r:any)=>{
-      for(let image of r.images)
-        l.files.push(image);
+
+    this.message="Génération de la série d'images"
+    this.network.update_layer(l,20).subscribe((r:any)=>{
+      this.message="";
+      l.elements=r.elements;
+    },(err)=>{
+      showError(this,err);
     });
   }
 
@@ -201,33 +210,37 @@ export class CreatorComponent implements OnInit {
     this.position_text={x:$event.offsetX/2,y:$event.offsetY/2}
   }
 
-  remove_file($event:MouseEvent, layer: Layer, file: File) {
+  remove_element($event:MouseEvent, layer: Layer, element:any) {
     if($event.button==0 && $event.ctrlKey){
       $event.stopPropagation();
-      let pos=layer.files.indexOf(file);
-      layer.files.splice(pos,1);
-      this.network.add_layer(layer).subscribe(()=>{
+      let pos=layer.elements.indexOf(element);
+      layer.elements.splice(pos,1);
+      this.network.update_layer(layer).subscribe((elements:any)=>{
         showMessage(this,"Mise a jour");
-
       });
 
     }
-
   }
+
+
 
   update_position(layer: Layer, variation:number) {
     let idx=this.layers.indexOf(layer);
     if(layer.position+variation>=0 && layer.position<=this.layers.length){
       this.layers[idx+variation].position=this.layers[idx+variation].position-variation
       layer.position=layer.position+variation;
-      this.layers.sort((l1,l2) => {if(l1.position>l2.position)return 1; else return -1;})
+      this.sort_layers();
     }
   }
+
+
 
   delete_layer(layer: Layer) {
     let pos=this.layers.indexOf(layer);
     this.layers.splice(pos,1);
   }
+
+
 
   add_link(layer:Layer) {
     this.dialog.open(PromptComponent, {
@@ -242,7 +255,7 @@ export class CreatorComponent implements OnInit {
     }).afterClosed().subscribe((urls: string) => {
       if (urls) {
         for(let url of urls.split(",")){
-          layer.files.push(url);
+          layer.elements.push(url);
         }
       }
     });
@@ -250,36 +263,49 @@ export class CreatorComponent implements OnInit {
 
 
 
-  build_sample(samples:any[],reset=true) {
+  build_sample(layers:any[],reset=true) {
     if(reset)this.layers=[];
-    let fontstyle={name:this.font.file, color:this.color,size:this.fontsize}
-    let i=this.layers.length;
-    for(let sample of samples){
-      for(let k=0;k<100;k++)sample["files"]=sample["files"].replace("$appli$",environment.appli);
+
+    for(let l of layers){
+      $$("Mise a jour des noms de fichier avec le chemin complet");
+      for(let k=0;k<100;k++)l["files"]=l["files"].replace("$appli$",environment.appli);
 
       let layer:Layer={
-        name:sample.hasOwnProperty("name") ? sample.name : "layer"+i,
-        files:sample["files"].length>0 ? sample["files"].split(",") : [],
-        text:sample["text"],
+        name:l.hasOwnProperty("name") ? l.name : "layer",
+        elements:[],
+        text:l["text"],
         unique:false,
         indexed:true,
-        position:i,
-        width:this.col_width,height:this.col_height,
-        fontstyle:fontstyle
+        position:l.position,
       }
 
-      if(sample["text"].length>0){
-        this.network.create_text_layer(25,40,sample["text"],layer).subscribe((r:any)=>{
-          layer.files=r.images;
-          this.layers.push(layer);
-        });
+      if(l["text"]){
+        for(let text of l["text"].split("|")){
+          layer.elements.push({text:this.create_element(text)})
+        }
       } else {
-        this.layers.push(layer);
+        if(l["files"] && l["files"].length>0)
+          for(let file of l["files"].split(",")){
+            layer.elements.push({image:file});
+          }
       }
 
-      i=i+1;
+      this.network.update_layer(layer).subscribe((r:any)=>{
+        layer.elements=r.elements;
+        this.layers.push(layer);
+        if(this.layers.length==layers.length)this.sort_layers();
+      });
+
     }
+
   }
+
+
+  sort_layers(){
+    this.layers.sort((l1,l2) => {if(l1.position>l2.position)return 1; else return -1;})
+  }
+
+
 
   find_font(filename:string) {
     for(let f of this.fontfiles){
@@ -300,6 +326,10 @@ export class CreatorComponent implements OnInit {
         this.col_height=r.height;
         this.filename_format=r.filename_format;
         this.limit=r.limit;
+        this.seed=r.seed || 0;
+        this.position_text.x=r.x || 10;
+        this.text_to_add=r.text_to_add || "";
+        this.position_text.y=r.y || 10;
         this.sel_platform=r.platform;
         this.show_collection=true;
         this.fontsize=r.fontstyle.size;
@@ -314,12 +344,17 @@ export class CreatorComponent implements OnInit {
   }
 
   //https://server.f80lab.com/api/configs/?format=file
-  sel_ext: string="webp";
+
+
   save_config() {
     let body={
       layers: this.layers,
       width:this.col_width,
       height:this.col_height,
+      x:this.position_text.x,
+      y:this.position_text.y,
+      seed:this.seed,
+      text_to_add:this.text_to_add,
       limit:this.limit,
       filename_format:this.filename_format,
       platform:this.sel_platform,
@@ -330,7 +365,7 @@ export class CreatorComponent implements OnInit {
       }
     }
     for(let l of body.layers){
-      for(let f of l.files)
+      for(let f of l.elements)
         f="\""+f+"\""
     }
     this.config_name=this.config_name.replace(".yaml.yaml",".yaml");
@@ -388,20 +423,52 @@ export class CreatorComponent implements OnInit {
   }
 
   clear_layer(layer: Layer) {
-    for(let f of layer.files){
-      if(f.indexOf("/api/images/")>-1){
-        let id=f.split("/api/images/")[1].split("?")[0];
+    for(let f of layer.elements){
+      if(f.image.indexOf("/api/images/")>-1){
+        let id=f.image.split("/api/images/")[1].split("?")[0];
         this.network.remove_image(id).subscribe(()=>{});
       }
-
     }
-    layer.files=[];
+    layer.elements=[];
   }
 
 
-
-
   open_file(file: any) {
-    open(file,"preview");
+    let data=file.image;
+    if(data.startsWith("data:")){
+      let w = window.open('about:blank');
+      let image = new Image();
+      image.src = data;
+      setTimeout(()=>{if(w)w.document.write(image.outerHTML);}, 0);
+    } else {
+      open(data,"preview");
+    }
+  }
+
+  create_element(text: any,name="") {
+    return {
+      name:name,
+      text:text,
+      fontstyle: {
+        name: this.font.file,
+        color: this.color,
+        size: this.fontsize
+      },
+      dimension:[this.col_width, this.col_height],
+      x: Number(this.position_text.x),
+      y: Number(this.position_text.y),
+    }
+  }
+
+  generate_with_color(layer: Layer) {
+    this.network.clone_with_color(layer,this.color,this.sel_palette).subscribe((images:any)=>{
+      for(let img of images){
+        layer.elements.push({image:img});
+      }
+    })
+  }
+
+  change_palette($event: MatSelectChange) {
+    this.sel_colors=Object.values(this.sel_palette);
   }
 }

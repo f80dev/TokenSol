@@ -1,1 +1,131 @@
-#Ce fichier décrit les opérations de distribution de NFT via le service d'nfluent (https://nfluent.io)#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)#une fois terminé, ce fichier doit être chargé à l'adresse : https://tokensol.nfluent.io/buildid: "calviontherocks"title: "Calvi2022"description: "Opération de distribution des"url: ""website: ""version: 0.1#localisation du fichier contenant les NFTs à proposer#Plusieurs valeurs sont possibles:#     - "database:<collection>" ou "db:<collection>" signifie que les NFT ont été importé préalablement via les outils nfluent (fichier Excel).#     - une adresse internet peut désigner un fichier csv contenant une description des NFT distribué#     - une adresse internet peut désigner un fichier json contenant un NFT à distribuerdata:  sources:    - "database"#Liste des comptes en charge du minageminers:  elrond: "paul"  solana: "paul"validate:  visible: True  camera: True    #Si possible, utilise la caméra du device  manual_input: True  application: "$tokensol$/validate"  operation_file: "calvi22.yaml"  users:    - "paul.dudule@gmail.com"    - "hhoareau@gmail.com"    - "sophie.dudule@gmail.com"  #Liste des propriétés montrées au validateur  properties:    - "Edition1"    - "Edition2"    - "Edition3"    - "Edition4"    - "Edition5"    - "Dernière utilisation"  #Lorsque le validateur appuit sur validation du billet l'API de action_api est appelé  actions:    buttons:      - api : $nfluent_server$/api/action_calvi/?nb_pass=1        label: Distribuer 1 pass        n_pass: 1      - api : $nfluent_server$/api/action_calvi/?nb_pass=2        label: Distribuer 2 pass        n_pass: 2    security:      secret: "dudule12"    #secret passé en paramètre des APIs      ip_whitelist:         #liste des adresses IP pouvant appeler l'API        - "*"  #Seul les NFT qui vérifient les conditions ci-dessous nécéssitent une validation  filters:    mint_authority:    name:      - "La Citadella"      - "A Madonna Di A Sierra"    symbol:#Section destiné à la distribution de NFT gratuitementlottery:  visible: False  application: "$nfluent_appli$/contest"  collections:        #Liste des collections concerné par la distribution gratuite    - ""  showVisual: True    #Affiche le visuel  duration: 10        #durée en seconde d'affichage des NFTs  period:    #Permet de commencer l'opération à un moment précis et la faire s'arrêter    dtStart: "now"    dtEnd: ""    duration: 1security:  #Liste des adresses internet (IP ADDRESS) pouvant appeler l'api  whitelist:    - "*"
+#Ce fichier décrit les opérations de distribution de NFT via le service d'nfluent (https://nfluent.io)
+
+#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)
+
+#une fois terminé, ce fichier doit être chargé a l'adresse : https://tokensol.nfluent.io/build
+
+
+id: "calvi22"
+title: "Calvi2022"
+description: "Opération de distribution des"
+url: ""
+website: ""
+version: 0.1
+network: solana-devnet      #Réseau concerné par l'opération
+
+#la section accounts contient les clés privées (cryptées) des comptes Ã utiliser pendant l'opération
+accounts:
+  solana:
+    paul: Z0FBQUFBQmltR2ZCaDRoMUw2VFdla2hJajh2STNlOV8xQlhUcXgxcGtfUFllX1BVT3gxN0xULXVzTGpCSVF1N29vTzR1OTBuX0lVakY2bjVpNlhNQ0x3WUttWGJnTnRnWEZaVXBiMWNHaHdnTmtyUms1OENOcjB2QkV2ZFJrSkZiZzE4RENtWHBJbVNBYVZZaC1LMnBrbEctSGJvNWsxdHJvbmpTa01GWW1KODFENFlSbTFsRHNWX28wX1Z1ZVc5SjdVdkpqRW8zM1ByQW9GNlB1YXNIUVN4YXdIUFhCS3N2Z2dKQnM0aW9ncGVyTWZmMDF0VzNWYUlaVzNocFh6X1pEQUswMXRjbXEyb3lCRE9UZmxiY2xnX0x4QnhZXzMzM2pZX1ZOQ2VNWHoxSVc2TVByQVBjMWFCTXpJRVZLU05BTkJYUUFZcUpUYjRTZTFoLXZMMXFPZkFlWGFLS3pOYV9mSGpnVklOMU5aM1NUb25hMmFvbXZ5YUU2QXZvSjUyeWtJNDQzMk9XZlRs
+    roger: Z0FBQUFBQmltR2ZSTDVUdUpOTzlVMXhaN2YxUDhtdVNaZkJUWUliNTl5TVdKekhQODdVMTh3cWpEWFpwRzM0S2JSY0xPUEdpdExPU3VZUnQ1U29HQ2RJWndiRkZZampGb3lzNGhTVFRVeUdiMVY5VlR5Mkg0MkRNSzZKRTRDOXVYMFhPZnRfdXp1NGp3OU0yRkpST3lpU1J1NlJDajgxOUF5ZGpiRjR2VzIxazRILUxXVW04QjQzMlliZC0zTDljWUFGMEZqTzFVSVZLTnBpdlFreTBxZWFSdnNYdXFFb0pzejhUV05ZNE42RF9XZ0dYYmIyY3lCQTRyLVh1TnZHalMtRmdaYUZ4OURqOUUzdGlMX09TSVE5aUtudnA1X2ZWUVhJcWpQZjBJT1M0NXV6SDZ2emk3TGpXQlhRcGpGT0RZZXRpelIxMkFQdjEzVUNnWDg3ZVJoQjZfQlpqWUpPZHJOUVRSbTZLR0ZhMkNlX2VjNG9ReGxlTWVvWHBMY0x0NE5ZX1hTbVQ1bVZy
+    thomas: Z0FBQUFBQmltR2ZYa29IVjBQSXh1dmJ3UmhvZmxLZUJJSUI3eUoxOW5HZHVacnBua1lVVnRRQmc0cWtqMWJudEh5Z2R3VS1pdF85VGRoTzB5VnJlenJhcUdDUkpPR3FidnctaDNBdzNzQ0dqZGg4aXJZeWtBSWRoVEJtd3RUelBkaVZ4NkZxVVBjczNhd1c3UTRER183NUdxV3BueGRyd2xWSFNzamtIVVdxSVFqcWFRMzUwSkxTUUNGS2VwMHBnTDdFQXI1ZXNYSHJmdk1VS1NmUTBjQU5iVjV5bUFGY1VvNk9mSTdiaXJqM3dpVUxOSW5tWjlnb09kVFFvNy13NGp4OFQ4bEdHN0ZDdUpVb2JsNXUxQ2dzbWtIbFNNOUh6THNLcEx2bHlJWk94bmZqaG9mUVR6c1VtckpyM0JrRXdmcmhPdFJLLUphVjU3TUhfa2JwVkliNFl4SFRRUXVNZGRVckRIeUN5OFpZMnI1MURxMHJQUEJFWXVTUUIyTF9ZS1lzMGZmT1NKSWRh
+    sophie: Z0FBQUFBQmltR2ZiNVBBVjBTZmY5TXlBYU5qRWdHYl81dld2c1VlY3hDMS1HWWhHU2NHLVhtNnBFQ0ZnOHhxZlU5dUVaaDdER2Y4a0ttUlE2MlRfWjg3Rmsyc2NVbFpsLVBSSTNwUEpXemNva0ptQnBPNHVEdmxqYVpodklnNFB6ejRqZVVwZTc5UXRBbktPb2k4LXc4QnNENHdhMVZ0QzVOVEh6TEhuSWVXTThhSDFQRWFvd1hibDdKU2JJa2U5SWJiaTFJMGJCUmt4cGx2ZEJRdnJZcGZLeThjcS1BR3p5bndnWDBmV3B4V0RzS0JPR3RxdkVMQzd4WlBjdjZJbGRHOW9BMmh3c1JXVWpGQllnUTl0ZU50SllVVHpFQ2JRbHZoZjU3M1N0TnhBS0FkR0ltcFpfQWxqT2tiWjVjRVgzVDA1MUtZZ3VXQ0xKa3ZuRDh0M1Z1Mm51bEhOaDVzR2ttbUs4eGNvaG9ZYzJ2Tk1UVG0yRXdVPQ==
+
+#localisation du fichier contenant les NFTs Ã proposer
+#Plusieurs valeurs sont possibles:
+#     - "database:<collection>" ou "db:<collection>" signifie que les NFT ont été importé préalablement via les outils nfluent (fichier Excel).
+#     - une adresse internet peut désigner un fichier csv contenant une description des NFT distribué
+#     - une adresse internet peut désigner un fichier json contenant un NFT Ã distribuer
+
+data:
+  sources:
+#    - type: database
+#      connexion: server
+
+#    - type: json              #Les NFTs sont contenus dans un fichier json
+#      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+
+    - type: web              #Les NFTs sont contenus dans un fichier json
+      connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+
+
+
+
+#Liste des comptes en charge du minage
+miners:
+  elrond: "paul"
+  solana: "paul"
+
+
+validate:
+  visible: True
+  camera: True    #Si possible, utilise la caméra du device
+  manual_input: True
+
+  application: "$tokensol$/validate"
+  operation_file: "calvi22.yaml"
+
+  users:
+    - "paul.dudule@gmail.com"
+    - "hhoareau@gmail.com"
+    - "sophie.dudule@gmail.com"
+    - "thomas@nfluent.io"
+
+  #Liste des propriétés montrées au validateur
+  properties:
+    - "Edition1"
+    - "Edition2"
+    - "Edition3"
+    - "Edition4"
+    - "Edition5"
+    - "Dernière utilisation"
+
+  #Lorsque le validateur appui sur validation du billet l'API de action_api est appelé
+  actions:
+    buttons:
+      - api : $nfluent_server$/api/action_calvi/?nb_pass=1
+        label: Attribuer 1 pass
+        n_pass: 1
+
+      - api : $nfluent_server$/api/action_calvi/?nb_pass=2
+        label: Attribuer 2 pass
+        n_pass: 2
+
+    security:
+      secret: "dudule12"        #secret passée en paramètre des APIs
+      ip_whitelist:             #liste des adresses IP pouvant appeler l'API
+        - "*"
+
+  method:                     #Methode à utiliser pour la mise a jour
+    update_token: True        #Indique que le NFT va être mise a jour
+    update_authority: paul    #Compte utilisé pour la mise a jour (ce compte doit être présent sur le serveur)
+    storage: github           #plateformes disponibles: IPFS, IPFS via infura, NFTStorage
+    repository: test          #Répertoire utilisé pour stocker les métadataoffchain
+
+
+  #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
+  filters:
+    mint_authority:
+
+    collections:
+      - "La Citadella"
+      - "A Madonna Di A Sierra"
+
+    symbol: ''      #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
+
+
+
+
+
+#Section destinée la distribution de NFT gratuitement
+lottery:
+  visible: True
+
+  application: "$nfluent_appli$/contest"
+
+  collections:        #Liste des collections concernées par la distribution gratuite
+    - "A Madonna Di A Sierra"
+
+  showVisual: True    #Affiche le visuel
+  duration: 10        #durée en seconde d'affichage des NFTs
+
+  period:
+    #Permet de commencer l'opération à un moment précis et la faire s'arrêter
+    dtStart: "now"
+    dtEnd: ""
+    duration: 1
+
+security:
+  #Liste des adresses internet (IP ADDRESS) pouvant appeler l'api
+  whitelist:
+    - "*"

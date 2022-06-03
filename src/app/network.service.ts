@@ -16,8 +16,7 @@ import {environment} from "../environments/environment";
 
 import {Creator, Token} from "./nfts/nfts.component";
 import {Layer} from "./creator/creator.component";
-import {delay, retry, timeout} from "rxjs";
-import {AliasPipe} from "./alias.pipe";
+import {retry, timeout} from "rxjs";
 
 export enum type_addr {
   "owner",
@@ -178,7 +177,6 @@ export class NetworkService {
           let accountInfo:any = SPLToken.AccountLayout.decode(e.account.data);
           let mintAddress=accountInfo.mint.toBase58();
 
-
           accountInfo["pubkey"] = e.pubkey;
           let layoutInfo = SPLToken.MintLayout.decode(e.account.data);
           let mintAuthority=layoutInfo.mintAuthority.toBase58();
@@ -186,7 +184,17 @@ export class NetworkService {
               $$("Analyse de "+mintAddress);
               this.httpClient.get(environment.server+"/api/scan/"+mintAddress).subscribe((token_account:any)=>{
                 if(token_account!={}){
-                  this.httpClient.get(token_account.uri).pipe(retry(1),timeout(2000)).subscribe((offchain:any)=>{
+                  let headers = new Headers({
+                    'Cache-Control':  'no-cache, no-store, must-revalidate, post-check=0, pre-check=0',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                  });
+
+                  //Impossible d'avoir le résultat de suite : https://stackoverflow.com/questions/46551413/github-not-update-raw-after-commit
+                  let url=token_account.uri+"?ts="+Date.now();
+                  $$("Ouverture de "+url);
+                  // @ts-ignore
+                  this.httpClient.get(url,{headers: headers}).pipe(retry(1),timeout(2000)).subscribe((offchain:any)=>{
                     resolve(this.create_token(offchain,mintAuthority,mintAddress,token_account,layoutInfo,owner));
                   },(err:any)=>{
                     $$("Anomalie ",err);
@@ -408,31 +416,24 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/get_list");
   }
 
-  add_layer(l: any,w=0,h=0) {
+  add_layer(l: any,w=0,h=0,preview=0) {
     const _l={...l}
     if(w>0 && h>0){
       _l.width=w;
       _l.height=h;
     }
-    return this.httpClient.post(environment.server+"/api/layers/",  _l);
+    return this.httpClient.post(environment.server+"/api/layers/?preview="+preview,  _l);
   }
 
-  get_collection(limit: number,file_format:string,ext="webp") {
+  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0) {
     return this.httpClient.get(
-      environment.server+"/api/collection/?image="+ext+"&name="+file_format+"&format=preview&limit="+limit,
+      environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format=preview&limit="+limit,
       { headers: new HttpHeaders({ timeout: `${200000}` }) }
       );
   }
 
-  create_text_layer(x: number, y: number, text_to_add: string,l:Layer) {
-    return this.httpClient.post(environment.server+"/api/layers/",
-      {x:x,y:y,
-        text:text_to_add,
-        name:l.name,
-        unique:l.unique,
-        indexed:l.indexed,
-        width:l.width,height:l.height,
-        fontstyle:l.fontstyle});
+  update_layer(l:Layer, limit=100) {
+    return this.httpClient.post(environment.server+"/api/layers/?preview="+limit,l);
   }
 
   //recoit un objet aux propriétés filename & content
@@ -486,6 +487,7 @@ export class NetworkService {
 
 
   get_operations(ope="") {
+    if(ope.startsWith("http"))ope="b64:"+btoa(ope);
     return this.httpClient.get(environment.server+"/api/operations/"+ope);
   }
 
@@ -501,23 +503,37 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/get_nft_from_db/?id="+id);
   }
 
-  validate(action:any, t:Token,user_addr:string,operateur:string) {
+  validate(action:any, t:Token,user_addr:string,operateur:string,operation_name:string,mint_addr:string) {
     let url=action.api.replace("$nfluent_server$",environment.server);
     $$("Appel de "+url+" suite a validation");
     return this.httpClient.post(url,{
       user:user_addr,
       operateur:operateur,
-      token:t.mint,
+      operation:operation_name,
+      token:t.address,
       uri:t.metadataOnchain.data.uri,
       offchain:t.metadataOffchain
     });
   }
 
-  send_mail_to_validateur(operation: any) {
-    return this.httpClient.post(environment.server+"/api/send_email_to_validateur/",operation);
+  send_mail_to_validateur(operation: any,user:string) {
+    return this.httpClient.post(environment.server+"/api/send_email_to_validateur/"+user,operation);
   }
 
   send_transaction_confirmation(email: string, body: any) {
     return this.httpClient.post(environment.server+"/api/send_transaction_confirmation/"+email+"/",body)
+  }
+
+  clone_with_color(layer: any, origin_color: string, palette: string) {
+    let body={
+      layer:layer,
+      color:origin_color,
+      palette:palette
+    }
+    return this.httpClient.post(environment.server+"/api/clone_with_color/",body)
+  }
+
+  get_palettes() {
+    return this.httpClient.get(environment.server+"/api/palettes/");
   }
 }

@@ -1,11 +1,14 @@
+import base64
 import datetime as datetime
 import smtplib
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from os.path import exists
 
 import requests
+from cryptography.fernet import Fernet
 
 from secret import USERNAME, PASSWORD
 from settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
@@ -58,6 +61,41 @@ def open_html_file(name:str,replace=dict(),domain_appli=""):
 
   return body
 
+
+
+def decrypt(content:bytes):
+  """
+  fonction de decryptage
+  :param text:
+  :return:
+  """
+  if type(content)==str:content=base64.b64decode(content)
+
+  secret_key_filename="./secret_key"
+  with open(secret_key_filename,"rb") as file:
+    key=file.read(10000)
+  f=Fernet(key)
+  return f.decrypt(content)
+
+
+
+def encrypt(text:str):
+  """
+  fonction d'encryptage utilisant le fichier secret_key du repertoire principale
+  :param text:
+  :return:
+  """
+  secret_key_filename="./secret_key"
+  if exists(secret_key_filename):
+    with open(secret_key_filename,"rb") as file:
+      key=file.read()
+  else:
+    key = Fernet.generate_key()
+    with open(secret_key_filename,"wb") as file:
+      file.write(key)
+
+  f=Fernet(key)
+  return f.encrypt(text.encode())
 
 
 def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename="macle.xpem"):

@@ -3,6 +3,7 @@ import {environment} from "../../environments/environment";
 import {NetworkService} from "../network.service";
 import {showMessage} from "../../tools";
 import {ActivatedRoute} from "@angular/router";
+import {MatSnackBar} from "@angular/material/snack-bar";
 
 @Component({
   selector: 'app-build-ope',
@@ -12,13 +13,16 @@ import {ActivatedRoute} from "@angular/router";
 export class BuildOpeComponent implements OnInit {
   sel_ope: any=null;
   url: string = "";
+  url_lottery: string = "";
   opes: any[]=[];
   iframe_code: string="";
   image_code: string="";
+  url_ope: string="";
 
   constructor(
     public network:NetworkService,
-    public routes:ActivatedRoute
+    public routes:ActivatedRoute,
+    public toast:MatSnackBar
   ) { }
 
   ngOnInit(): void {
@@ -29,15 +33,15 @@ export class BuildOpeComponent implements OnInit {
     this.network.get_operations().subscribe((r:any)=>{
       this.opes=r;
       if(!this.sel_ope){
-        this.sel_ope=r[0].content;
-        this.refresh_ope({value:{code:r[0].code}});
+        this.sel_ope=r[0];
+        this.refresh_ope(r[0]);
       }
     })
   }
 
   refresh_ope($event: any) {
-    let ope=$event.value.code.replace(".yaml","");
-    let url=this.sel_ope.lottery.application.replace("$tokensol$",environment.appli)+"?ope="+ope;
+    let ope=$event.filename;
+    let url=this.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
     this.sel_ope.lottery.application=url;
     this.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";
     this.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
@@ -56,14 +60,24 @@ export class BuildOpeComponent implements OnInit {
   }
 
   delete_ope() {
-    this.network.delete_operation(this.sel_ope.code).subscribe(()=>{
-      this.refresh();
+    open(environment.server+"/api/operations/"+this.sel_ope.id+"?format=file","_blanck");
+    // this.network.delete_operation(this.sel_ope.code).subscribe(()=>{
+    //   this.refresh();
+    // });
+  }
+
+  send_mail(user="") {
+    this.network.send_mail_to_validateur(this.sel_ope,user).subscribe(()=>{
+      showMessage(this,"Notifications envoyées");
     });
   }
 
-  send_mail() {
-    this.network.send_mail_to_validateur(this.sel_ope).subscribe(()=>{
-      showMessage(this,"Notifications envoyées");
-    });
+  update_url_ope(evt:any) {
+    this.sel_ope={};
+    this.url=environment.appli+"/validate?toolbar=false&ope=b64:"+btoa(this.url_ope);
+    this.network.get_operations(this.url_ope).subscribe((ope:any)=>{
+      this.sel_ope=ope;
+      showMessage(this,"Operation chargée");
+    })
   }
 }

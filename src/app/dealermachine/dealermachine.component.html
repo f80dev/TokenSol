@@ -6,7 +6,7 @@
 
   <div *ngIf="message.length==0 && wallet_link==''">
     <mat-form-field appearance="fill" style="width: 300px">
-      <mat-label>Adresse de votre wallet ou email si vous n'en avez pas</mat-label>
+      <mat-label>Indiquez l'adresse de votre wallet ou votre email si vous n'en avez pas</mat-label>
       <input matInput type="text" [(ngModel)]="address">
     </mat-form-field>
 
@@ -17,8 +17,15 @@
   </div>
 
   <div *ngIf="wallet_link.length>0">
-    Consulter votre wallet pour y retrouver votre nouveau NFT<br>
-    <a [href]="wallet_link" target="_blank">Ouvrir votre wallet</a>
+    <span *ngIf="address.indexOf('@')>-1">
+      Consulter votre email {{address}} pour retrouver votre nouveau NFT
+    </span>
+    <div *ngIf="address.indexOf('@')==-1">
+      Consulter votre wallet pour y retrouver votre nouveau NFT<br>
+      <a [href]="wallet_link" target="_blank">Ouvrir votre wallet</a>
+    </div>
+
+
   </div>
 
 

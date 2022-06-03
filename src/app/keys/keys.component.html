@@ -22,7 +22,7 @@
   </button>
 
   <br><br>
-  <h2>Liste des clés disponibles</h2>
+  <h2>Liste des clés disponibles sur le serveur</h2>
 
   <table>
     <tr *ngFor="let key of keys">
@@ -39,8 +39,18 @@
           Supprimer
         </button>
       </td>
+      <td>
+        <button type="button" mat-raised-button mat-button (click)="encrypt(key)">
+          Encrypter
+        </button>
+      </td>
+      <td *ngIf="key.encrypt">
+        {{key.encrypt}}
+      </td>
     </tr>
   </table>
 
+  <br>
+  <p>La fonction <strong>Encrypter</strong> permet d'insérer les clés directement dans un fichier d'opération sans risque pour leur confidentialité</p>
 
 </div>

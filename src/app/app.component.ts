@@ -37,9 +37,9 @@ export class AppComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.toolbar_visible=this.routes.snapshot.queryParamMap.get('toolbar') || "false";
     this.user.disconnect();
     setTimeout(()=>{
+      this.toolbar_visible=this.routes.snapshot.queryParamMap.get('toolbar') || "true";
       this.network_service.network=this.routes.snapshot.queryParamMap.get("network") || "solana-devnet";
       this.update_network();
     },500);

@@ -1,3 +1,7 @@
 td,tr,table {
   padding: 10px;
 }
+
+td {
+  text-align: center;
+}

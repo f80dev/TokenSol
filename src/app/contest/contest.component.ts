@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute} from "@angular/router";
 import {environment} from "../../environments/environment";
@@ -11,12 +11,14 @@ import {MatSnackBar} from "@angular/material/snack-bar";
   styleUrls: ['./contest.component.css']
 })
 //test: http://127.0.0.1:4200/contest?ope=demo
-export class ContestComponent implements OnInit {
+export class ContestComponent implements OnInit,OnDestroy {
 
-  ope:string="";
+  operation:any;
   qrcode: string="";
   url: string="";
   visual: string="";
+  delay=0;
+  handle: any;
 
   constructor(
     public routes:ActivatedRoute,
@@ -38,12 +40,20 @@ export class ContestComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.ope=this.routes.snapshot.queryParamMap.get("ope") || "";
-    this.ask_token(this.ope!);
-    if(this.ope && this.ope!=''){
-      setInterval(()=>{this.ask_token(this.ope!)},Number(this.routes.snapshot.queryParamMap.get("delay")) || 3000);
-    }
+    this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((ope:any)=>{
+      this.operation=ope;
+      this.handle=setInterval(()=>{
+        if(this.delay==0){
+          this.delay=this.operation.lottery.duration;
+          this.ask_token(this.operation.id!)
+        }
+        this.delay=this.delay-1;
+        },1000);
+    })
+  }
 
+  ngOnDestroy(): void {
+    clearInterval(this.handle);
   }
 
 }

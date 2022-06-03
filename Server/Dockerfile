@@ -57,6 +57,7 @@ RUN pip3 -v install pymongo
 RUN pip3 -v install google-cloud-storage
 RUN pip3 -v install PyGithub
 RUN pip3 -v install fonttools
+RUN pip3 -v install numpy
 
 WORKDIR /
 RUN mkdir Solana
@@ -77,6 +78,8 @@ EXPOSE 4242
 
 COPY ./Fonts/*.ttf $APP_HOME/Fonts
 COPY *.py $APP_HOME
+COPY *.json $APP_HOME
+COPY *.html $APP_HOME
 COPY ./Solana/*.py $APP_HOME/Solana/
 COPY ./Secret/*.py $APP_HOME/Secret/
 COPY ./Elrond/*.py $APP_HOME/Elrond/

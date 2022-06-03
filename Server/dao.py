@@ -30,6 +30,7 @@ class DAO:
 
   def mint(self, _data,ope,server_addr="https://server.f80lab.com",id=""):
     if len(id)==0: id=_data["collection"]["name"]+"_"+_data["symbol"]
+    if "_id" in _data:del _data["_id"]
     _data["id"]=id
     _data["uri"]=server_addr+"/api/nfts/"+id
     _data["ts"]=int(now()*1000)
