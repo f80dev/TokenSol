@@ -1,0 +1,26 @@
+{
+    "Issuer": "NfluenT for Calvi On The rocks",
+    "creators": [
+        {
+            "address": "LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr",
+            "share": 10,
+            "verified": false
+        },
+        {
+            "address": "799C3Tr6gxdwspPoDEBvFGgLCyzMrSrFjd3CkVW6ukar",
+            "share": 90,
+            "verified": false
+        },
+        {
+            "address": "DKS7of5db3NoYWyGLqzvqs3UaN1nPEannsZ8Mo85B7jk",
+            "share": 0,
+            "verified": false
+        }
+    ],
+    "description": "La Citadella - Pass Festival NFT 1 personne, valable pour 5 \u00e9ditions Calvi On The Rocks de votre choix.",
+    "external_url": "",
+    "name": "76La Citadella #1",
+    "seller_fee_basis_points": 1000,
+    "symbol": "COR22A1",
+    "uri": "https://raw.githubusercontent.com/nfluentdev/test/main/LaCitadella_COR22A1"
+}

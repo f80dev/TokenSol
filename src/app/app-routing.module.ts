@@ -28,6 +28,7 @@ const routes: Routes = [
   { path: 'creator', component: CreatorComponent },
   { path: 'manage', component: ManageComponent },
   { path: 'dealermachine', component:DealermachineComponent },
+  { path: 'dm', component:DealermachineComponent },
   { path: 'build', component:BuildOpeComponent },
   { path: 'validate', component: ValidateComponent },
   { path: 'wallet', component: MywalletComponent },

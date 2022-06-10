@@ -3,6 +3,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
 import {showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {AliasPipe} from "../alias.pipe";
 
 @Component({
   selector: 'app-dealermachine',
@@ -13,13 +14,14 @@ export class DealermachineComponent implements OnInit {
   address: string="";
   wallet_link: string="";
   nft:any={};
-
+  final_message="";
 
   constructor(
     public routes:ActivatedRoute,
     public network:NetworkService,
     public toast:MatSnackBar,
-    public router:Router
+    public router:Router,
+    public alias:AliasPipe
   ) { }
 
   ngOnInit(): void {
@@ -44,17 +46,18 @@ export class DealermachineComponent implements OnInit {
   valide() {
     let id=this.routes.snapshot.queryParamMap.get("id");
     if(id){
-      if(this.address.length>5){
+        let addr=this.alias.transform(this.address,"pubkey");
         this.message="Demande en cours";
-        this.network.mint_for_contest(this.address,id).subscribe((r:any)=>{
+        this.network.mint_for_contest(addr,id).subscribe((r:any)=>{
           showMessage(this,"Vous avez gagné un nouveau NFT");
-          this.wallet_link=r.wallet_link;
           this.message="";
-          this.router.navigate(r.ope.redirect.win);
+          if(r.redirection.startsWith("http"))
+            this.router.navigate(r.redirection);
+          else
+            this.final_message=r.redirection;
         },(err)=>{
           this.lost();
         })
-      }
     }
 
   }

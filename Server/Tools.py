@@ -98,7 +98,7 @@ def encrypt(text:str):
   return f.encrypt(text.encode())
 
 
-def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename="macle.xpem"):
+def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename=""):
   if not is_email(_to):return None
   with smtplib.SMTP(SMTP_SERVER, SMTP_SERVER_PORT,timeout=10) as server:
     server.ehlo()

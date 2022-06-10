@@ -26,15 +26,15 @@ METABOSS_DIR="./Solana/"
 class Solana:
   def __init__(self,network="solana-devnet"):
     self.network=network.replace("solana-","").replace("solana_","")
-    self.api="https://api.mainnet-beta.solana.com" if network=="mainnet" else "https://api.devnet.solana.com"
+    self.api="https://api.mainnet-beta.solana.com" if self.network=="mainnet" else "https://api.devnet.solana.com"
     self.client=Client(self.api,Confirmed)
 
 
-  def get_token(self,addr:str,network="devnet"):
+  def get_token(self,addr:str):
     token={}
     rc=self.client.get_account_info(PublicKey(addr),Confirmed,encoding="jsonParsed")
     token["accountInfo"]=rc["result"]["value"]["data"]
-    rc=self.scan(addr,network)
+    rc=self.scan(addr)
     token["metadataOnchain"]=rc
     return token
 
@@ -87,7 +87,7 @@ class Solana:
     if len(mes.stderr)==0:
       rc=dict()
       for line in str(mes.stdout,encoder).split("\n"):
-        if line.startswith("Tx id:"): rc["transaction"]=line.split(": ")[1]
+        if line.startswith("Tx "): rc["transaction"]=line.split(": ")[1]
         if line.startswith("Mint account: "):rc["mint"]=line.split(": ")[1]
 
       log(str(mes.stdout,encoder))
@@ -111,8 +111,8 @@ class Solana:
     :param user:
     :return:
     """
-    addr=self.find_address_from_json(user,'')
-    rc=self.client.get_balance(addr["pubkey"],Confirmed)
+    addr=self.find_address_from_json(user,'pubkey')
+    rc=self.client.get_balance(addr,Confirmed)
     balance=rc["result"]["value"]/1e9
     return balance
 
@@ -139,12 +139,18 @@ class Solana:
         key={
           "name":f.replace(".json",""),
           "pubkey":str(keypair.public_key.to_base58(),"utf8"),
+          "unity":"SOL"
         }
+
         if with_private:
           l=[]
           for b in keypair.secret_key:
             l.append(int(b))
           key["privatekey"]=str(l)
+
+
+        key["balance"]=self.balance(key["pubkey"])
+
         rc.append(key)
 
     return rc
@@ -175,9 +181,9 @@ class Solana:
     tokens=rc["result"]["value"]
     return tokens
 
-  def scan(self,addr,network="solana-devnet"):
-    rc=self.exec("decode mint -o ./Solana/Temp",account=addr,delay=1)
+  def scan(self,addr):
     filename="./Solana/Temp/"+addr + ".json"
+    rc=self.exec("decode mint -o ./Solana/Temp",account=addr,delay=1)
     if exists(filename):
       rc= json.load(open(filename, "r"))
       os.remove(filename)
@@ -201,10 +207,16 @@ class Solana:
     if not "category" in _data["properties"]:
       _data["properties"]["category"]="image"
 
+    if "creators" in _data["properties"]:
+      for c in _data["properties"]["creators"]:
+        c["address"]=self.find_address_from_json(c["address"])
+
     return {
       "attributes":_data["attributes"],
       "properties":_data["properties"],
       "description":_data["description"],
+      "collection":_data["collection"],
+      "seller_fee_basis_points":_data["seller_fee_basis_points"],
       "name":_data["name"],
       "image":_data["image"],
       "symbol":_data["symbol"],
@@ -217,7 +229,7 @@ class Solana:
 
     if "properties" in _data: _data["creators"]=_data["properties"]["creators"]
     for c in _data["creators"]:
-      if len(c["address"])<20: c["address"]=Solana().find_address_from_json(c["address"])
+      if len(c["address"])<20: c["address"]=self.find_address_from_json(c["address"])
       c["verified"]=False
 
     for k in ["properties","collection","image","attributes"]:

@@ -179,10 +179,10 @@ export class NftsComponent implements OnInit {
       return;
     }
 
-    if(nft.metadataOnchain?.updateAuthority!=this.metaboss.admin_key?.pubkey){
-      showMessage(this,"Cette signature ne permet pas la mise a jour du NFT");
-      return;
-    }
+    // if(nft.metadataOnchain?.updateAuthority!=this.metaboss.admin_key?.pubkey){
+    //   showMessage(this,"Cette signature ne permet pas la mise a jour du NFT");
+    //   return;
+    // }
 
     this.ask_for_attribute(attr.value,attr.trait_type).then((new_value:any)=>{
       for(let i=0;i<nft.metadataOffchain?.attributes.length;i++){

@@ -51,6 +51,20 @@
   </tr></table>
 
   <div *ngIf="sel_ope">
+    <h1>{{sel_ope.title}}</h1>
+    <small>{{sel_ope.description}}</small>
+
+    <table style="line-height: 85%;">
+      <tr>
+        <td>network:</td><td>{{sel_ope.network}}</td>
+      </tr>
+      <tr>
+        <td>version:</td><td>{{sel_ope.version}}</td>
+      </tr>
+    </table>
+
+
+
     <div *ngIf="sel_ope.lottery.visible" style="padding: 10px" class="mat-elevation-z4">
       Loterie<br>
       <table>
@@ -94,6 +108,8 @@
           <td>
             Voir l'application de validation<br>
             <a [href]="sel_ope.validate.application" target="_self">Ouvrir</a>
+            <br>
+            <a [href]="sel_ope.validate.application+'&toolbar=false'" target="_self">Sans menu</a>
           </td>
         </tr>
       </table>

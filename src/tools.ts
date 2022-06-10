@@ -6,6 +6,8 @@ export interface MetabossKey {
   pubkey: string
   privatekey:string | null
   encrypt:string | null
+  balance:number | null
+  unity:string | null
 }
 
 export function toStringify(obj:any) {

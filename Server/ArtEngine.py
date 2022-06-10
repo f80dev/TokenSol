@@ -4,10 +4,13 @@ from io import BytesIO
 from os.path import exists
 from random import random,seed
 
+import cairo
 import ffmpeg
+import imageio
+import numpy
 import numpy as np
 import requests
-from PIL import Image
+from PIL import Image, ImageSequence
 from PIL.Image import BICUBIC
 from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
@@ -24,7 +27,7 @@ class Element():
   def fusion(self,to_concat):
     pass
 
-  def save(self,filename):
+  def save(self,filename,quality=98):
     pass
 
   def toStr(self):
@@ -35,6 +38,7 @@ class Element():
 
 class Sticker(Element):
   image:Image=None
+  frames=[]
   text:dict=None
 
   def __init__(self,name="",image=None,dimension=None,text:str=None,x:int=None,y:int=None,fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"},ext="PNG"):
@@ -50,13 +54,10 @@ class Sticker(Element):
         else:
           if "/api/images/" in image:
             filename=image.split("/api/images/")[1].split("?")[0]
-            f=open("./temp/"+filename,"rb")
-            self.image=Image.open(f).convert("RGBA")
-            f.close()
+            self.image=Image.open("./temp/"+filename)
+            if self.image and self.image.mode!="RGBA":self.image=self.image.convert("RGBA")
           else:
             self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
-
-        if dimension:self.image=self.image.resize(dimension)
 
       else:
         if type(image)==bytes:
@@ -91,9 +92,33 @@ class Sticker(Element):
     )
     return self.image
 
+
+  def render_svg(self,dictionnary:dict={}):
+    svg_code=self.text
+    for k in dictionnary.keys():
+      svg_code=svg_code.replace(k,dictionnary[k])
+
+    with cairo.SVGSurface(svg_code,self.text["dimension"][0],self.text["dimension"][1]) as surface:
+      buffered = BytesIO()
+      surface.write_to_png(buffered)
+      self.image.save(buffered, format="WEBP",quality=90)
+    return self.image
+
   def clear(self):
     if self.text :
       self.image=None
+
+  def open(self):
+    if self.image and self.image.readonly==0:
+      self.image=Image.open(self.image.filename)
+
+  def close(self):
+    if self.image:
+      self.image.close()
+
+  def delete(self):
+    if self.image:
+      os.remove(self.image.filename)
 
   def write(self,text:str,position="bottom-left",fontname="corbel.ttf",size=22,color=(0,0,0,255),x=None,y=None):
     font = truetype("./Fonts/"+fontname, size)
@@ -125,37 +150,97 @@ class Sticker(Element):
     return Image.fromarray(data,"RGBA")
 
 
-  def toBase64(self,format="WEBP",factor=1):
+  def toBase64(self,format="WEBP",factor=1,quality=98):
     buffered = BytesIO()
     if self.image is None and self.text is not None:
       self.render_text(factor)
 
-    self.image.save(buffered, format=format)
+    self.image.save(buffered, format=format,quality=quality)
     self.clear()
     return "data:image/"+format.lower()+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
 
 
+  def merge_animated_image(self,base:Image,to_paste:Image):
+    filename="./temp/temp"+str(now())+".gif"
+    wr=imageio.get_writer(filename,mode="I")
+
+    frames_to_paste = [f.convert("RGBA").resize(base.size) for f in ImageSequence.Iterator(to_paste)]
+    frame_base=[f.convert("RGBA") for f in ImageSequence.Iterator(base)]
+    for i,frame in enumerate(frames_to_paste):
+      if i<len(frame_base):
+        frame_base[i].alpha_composite(frame)
+      else:
+        #Il y a plus assez d'image dans la base donc on ajoute les images a coller
+        frame_base.append(frame)
+
+      ndarray=numpy.asarray(frame_base[i])
+      wr.append_data(ndarray)
+
+    wr.close()
+    rc=Image.open(filename)
+    rc.load()
+    return rc
+
+
+  def convert_image_to_animated(self,base:Image,n_frames:int):
+    filename="./temp/temp"+str(now())+".gif"
+
+    wr=imageio.get_writer(filename,mode="I")
+    for i in range(n_frames):
+      ndarray=numpy.asarray(base)
+      wr.append_data(ndarray)
+    wr.close()
+
+    rc= Image.open(filename)
+    return rc
+
 
   def fusion(self,to_concat,factor):
-    #log("Fusion de "+self.name+" avec "+to_concat.name)
-    if to_concat.image is None and not to_concat.text is None:
-      src=to_concat.render_text(factor)
+      #log("Fusion de "+self.name+" avec "+to_concat.name)
+      if to_concat.image is None and not to_concat.text is None:
+        if "<svg" in to_concat.text:
+          src=to_concat.render_svg()
+        else:
+          src=to_concat.render_text(factor)
 
-    if self.image and to_concat.image:
-      src:Image=to_concat.image.resize(size=self.image.size,resample=BICUBIC)
-      self.image.alpha_composite(src)
-      to_concat.clear()
-      return True
+      if self.image and to_concat.image:
+        if (to_concat.image.format=="WEBP" or to_concat.image.format=="GIF") and to_concat.image.is_animated:
+          if self.image.format is None:
+            #Convert to animated
+            self.image=self.convert_image_to_animated(self.image.copy(),to_concat.image.n_frames)
 
-    return False
+          #Décomposition de l'image a coller
+          self.image=self.merge_animated_image(self.image,to_concat.image)
+
+        else:
+          if self.image.format is None:
+            self.image.alpha_composite(to_concat.image.resize(self.image.size))
+          else:
+            self.image=self.merge_animated_image(self.image.copy(),to_concat.image)
+
+        return True
+
+      return False
 
 
 
 
 
-  def save(self,filename):
+  def save(self,filename,quality=98):
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp pour le Webp
-    self.image.save(filename,quality=98,method=6,lossless=True)
+    if self.text and self.text["text"] and "<svg" in self.text["text"]:
+      f=open(filename,"w")
+      f.writelines(self.text["text"])
+      f.close()
+    else:
+      if not self.image.format is None and self.image.is_animated:
+        frames = [f.convert("RGBA") for f in ImageSequence.Iterator(self.image)]
+        frames[0].save(filename,append_images=frames[1:],save_all=True)
+      else:
+        self.image.save(filename,quality=int(quality),method=6,lossless=(quality==100),save_all=True)
+
+      self.image.close()
+      if self.image.format and self.image.filename: os.remove(self.image.filename)
 
 
 
@@ -197,6 +282,10 @@ class VideoElement(Element):
 
   def toStr(self):
     return self.video
+
+
+
+
 
 
 
@@ -319,21 +408,16 @@ class ArtEngine:
   def sort(self):
     self.layers=sorted(self.layers,key=lambda x:x.position)
 
-  def generate(self,collage:Element,dir="",limit=100,seed_generator=0,width=500,height=500):
+  def generate(self,collage:Element,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100):
     if seed_generator>0:seed(seed_generator)
     if len(dir)>0 and not dir.endswith("/"):dir=dir+"/"
     rc=list()
     max_item=1
 
     self.sort()
-    log("On détermine la taille de l'image finale et le nombre d'image maximum générable")
-    for layer in self.layers:
-      if layer.indexed:
-        max_item=max_item*len(layer.elements)
 
     histo=[]
     index=0
-    limit=min(limit,max_item)
     log("Lancement de la génération de "+str(limit)+" images")
     while index<limit:
 
@@ -350,11 +434,15 @@ class ArtEngine:
           index=limit
           break
         else:
-          if layer.indexed or layer.unique:name.append(elt.name)
+          if layer.indexed or layer.unique: name.append(elt.name)
           factor=1 if elt.text is None else width/elt.text["dimension"][0]
+          elt.open()
           collage.fusion(elt,factor)
-          if layer.unique:
-            layer.remove(elt)
+          if layer.unique: layer.remove(elt)
+          elt.close()
+
+          if elt.image.format and elt.image.filename.startswith("./temp/temp"):
+            elt.delete()
 
       if not name in histo and index<limit:
         index=index+1
@@ -366,7 +454,7 @@ class ArtEngine:
           # else:
           filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "__idx__" in self.name else dir+self.name.replace("__idx__",str(index))+"."+collage.ext
           rc.append(filename)
-          collage.save(filename)
+          collage.save(filename,quality)
         else:
           rc.append(collage.toStr())
 
@@ -386,9 +474,3 @@ class ArtEngine:
     for l in self.layers:
       if l.name==name:
         self.layers.remove(l)
-
-
-
-
-
-

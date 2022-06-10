@@ -10,8 +10,10 @@ import {PLATFORMS} from "../../definitions";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Location} from "@angular/common";
 import {MatSelectChange} from "@angular/material/select";
+import {ClipboardModule} from "@angular/cdk/clipboard";
 
 export interface Layer {
+  params: any;
   unique: boolean
   indexed: boolean
   name:string
@@ -68,7 +70,8 @@ export class CreatorComponent implements OnInit {
     public routes:ActivatedRoute,
     public toast:MatSnackBar,
     public safe:SafePipe,
-    public _location:Location
+    public _location:Location,
+    public clipboard:ClipboardModule
   ) {}
 
 
@@ -129,6 +132,7 @@ export class CreatorComponent implements OnInit {
         }
     }).afterClosed().subscribe((name:string) => {
       this.layers.push({
+        params:{},
         name:name,
         elements:[],
         text:"",
@@ -141,7 +145,7 @@ export class CreatorComponent implements OnInit {
 
 
   fill_layer(i:number,w:number,h:number,preview:number,func:Function){
-    this.message = "Composition de " + i + " calques sur " + this.layers.length;
+    this.network.wait("Composition de " + i + " calques sur " + this.layers.length);
     this.network.add_layer(this.layers[i],w,h,preview).subscribe(()=> {
       i = i + 1;
       if(i<this.layers.length){
@@ -149,7 +153,7 @@ export class CreatorComponent implements OnInit {
       }else{
         func();
       }
-    });
+    },(err)=>{showError(this,err)});
   }
 
 
@@ -159,20 +163,20 @@ export class CreatorComponent implements OnInit {
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
         if(format=="zip"){
-          this.message="";
-          open(environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit,"_blank")
+          this.network.wait("");
+          open(environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality,"_blank")
         }
 
         if(format=="preview"){
-          this.message="Fabrication de la collection en cours ...";
-          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed).subscribe((r:any)=>{
-            this.message="";
+          this.network.wait("Fabrication de la collection en cours ...");
+          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality).subscribe((r:any)=>{
+            this.network.wait("");
             this.previews=r;
           },(err)=>{showError(this,err);})
         }
 
         if(format=="upload"){
-          this.message="";
+          this.network.wait("");
           open(environment.server+"/api/collection/?format=upload&platform="+this.sel_platform+"&limit="+this.limit,"_blank")
         }
       });
@@ -182,6 +186,16 @@ export class CreatorComponent implements OnInit {
 
   //Génére un sticker sur la base d'un texte et l'ajoute à la layer l
   generate(l:Layer){
+    l.params={
+      text:this.text_to_add,
+      x:this.position_text.x,
+      y:this.position_text.y,
+      font:{
+        name:this.fontfiles,
+        size:this.fontsize,
+        color:this.color
+      }
+    }
     if(l==null){
       showMessage(this,"Vous devez sélectionner la couche cible pour créer le visuel");
       return;
@@ -189,16 +203,18 @@ export class CreatorComponent implements OnInit {
 
     let i=0;
     for(let txt of this.text_to_add.split("|")){
-      if(i==this.sel_colors.length)i=0;
-      let elt=this.create_element(txt);
-      if(this.usePalette)elt.fontstyle.color=this.sel_colors[i];
-      l.elements.push({"text":elt});
-      i=i+1;
+      if(txt.length>0){
+        if(i==this.sel_colors.length)i=0;
+        let elt=this.create_element(txt);
+        if(this.usePalette)elt.fontstyle.color=this.sel_colors[i];
+        l.elements.push({"text":elt});
+        i=i+1;
+      }
     }
 
-    this.message="Génération de la série d'images"
+    this.network.wait("Génération de la série d'images")
     this.network.update_layer(l,20).subscribe((r:any)=>{
-      this.message="";
+      this.network.wait("");
       l.elements=r.elements;
     },(err)=>{
       showError(this,err);
@@ -210,15 +226,24 @@ export class CreatorComponent implements OnInit {
     this.position_text={x:$event.offsetX/2,y:$event.offsetY/2}
   }
 
-  remove_element($event:MouseEvent, layer: Layer, element:any) {
-    if($event.button==0 && $event.ctrlKey){
+  modify_element($event:MouseEvent, layer: Layer, element:any) {
+    if($event.button==0){
       $event.stopPropagation();
       let pos=layer.elements.indexOf(element);
-      layer.elements.splice(pos,1);
+      if($event.ctrlKey){
+        layer.elements.splice(pos,1);
+      }
+
+      if($event.shiftKey){
+        if(pos==0)pos=1;
+        let e=layer.elements[pos-1];
+        layer.elements[pos-1]=layer.elements[pos];
+        layer.elements[pos]=e;
+      }
+
       this.network.update_layer(layer).subscribe((elements:any)=>{
         showMessage(this,"Mise a jour");
       });
-
     }
   }
 
@@ -271,6 +296,7 @@ export class CreatorComponent implements OnInit {
       for(let k=0;k<100;k++)l["files"]=l["files"].replace("$appli$",environment.appli);
 
       let layer:Layer={
+        params:{},
         name:l.hasOwnProperty("name") ? l.name : "layer",
         elements:[],
         text:l["text"],
@@ -344,6 +370,7 @@ export class CreatorComponent implements OnInit {
   }
 
   //https://server.f80lab.com/api/configs/?format=file
+  quality=98;
 
 
   save_config() {
@@ -378,10 +405,10 @@ export class CreatorComponent implements OnInit {
 
 
   on_upload_config($event: any) {
-    this.message="Chargement du fichier de configuration";
+    this.network.wait("Chargement du fichier de configuration");
     let txt=atob($event.file.split("base64,")[1]);
     this.network.save_config_on_server($event.filename,txt).subscribe(()=>{
-      this.message="";
+      this.network.wait("");
       this.load_config($event.filename);
     },(err)=>{
       showError(this);
@@ -470,5 +497,62 @@ export class CreatorComponent implements OnInit {
 
   change_palette($event: MatSelectChange) {
     this.sel_colors=Object.values(this.sel_palette);
+  }
+
+  load_text_config(l:Layer) {
+    if(l.params){
+      this.fontfiles=l.params.font.name;
+      this.position_text.x=l.params.x;
+      this.position_text.y=l.params.y;
+      this.text_to_add=l.params.text;
+      this.color=l.params.font.color;
+      this.fontsize=l.params.font.size;
+    }
+  }
+
+  reset() {
+    this.layers=[]
+  }
+
+  find_image() {
+    this.dialog.open(PromptComponent,{
+      width: 'auto',data:
+        {
+          title: "Terme à trouver",
+          type: "text",
+          value:"",
+          onlyConfirm:false,
+          lbl_ok:"Ok",
+          lbl_cancel:"Annuler"
+        }
+    }).afterClosed().subscribe(resp => {
+      if(resp){
+        open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
+        open("https://emojipedia.org/search/?q="+resp,"search_emoji")
+        open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
+        open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
+        open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
+        open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
+      }
+    });
+  }
+
+  paste_picture(layer: Layer) {
+    navigator.clipboard.read().then((content)=>{
+      for (const item of content) {
+        if (!item.types.includes('image/png')) {throw new Error('Clipboard contains non-image data.');}
+        item.getType('image/png').then((blob)=>{
+          let reader = new FileReader();
+          reader.readAsDataURL(blob)
+          reader.onload=()=>{
+            let s=reader.result;
+            this.network.upload(s,this.sel_platform,blob.type).subscribe((r:any)=>{
+              layer.elements.push({image:r.url});
+              this.network.wait("")
+            })
+          }
+        })
+      }
+    })
   }
 }

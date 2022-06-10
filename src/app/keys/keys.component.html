@@ -5,29 +5,42 @@
     <mat-hint>Plusieurs formats sont acceptés</mat-hint>
   </mat-form-field>
 
-  &nbsp;
-
   <mat-form-field appearance="fill" style="max-width: 320px">
     <mat-label>Donner un nom</mat-label>
     <input matInput type="text" maxlength="200" [(ngModel)]="name" >
     <mat-hint>Plusieurs formats sont acceptés</mat-hint>
   </mat-form-field>
 
-  &nbsp;
-
   <button
     type="button" aria-label="Ajouter" mat-raised-button
+    [disabled]="name=='' || privateKey==''"
     (click)="add_key()">
     Ajouter
   </button>
 
   <br><br>
-  <h2>Liste des clés disponibles sur le serveur</h2>
+  <h2>
+    Liste des clés disponibles sur le serveur
+    <mat-icon (click)="refresh()">refresh</mat-icon>
+
+  </h2>
+
 
   <table>
+    <tr>
+      <th>Alias</th>
+      <th>Public Key</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th>Solde</th>
+    </tr>
     <tr *ngFor="let key of keys">
       <td>
         <strong>{{key.name}}</strong>
+      </td>
+      <td style="font-size: small;">
+        {{key.pubkey}}
       </td>
       <td>
         <button type="button" mat-raised-button mat-button (click)="sel_key(key.name)">
@@ -44,8 +57,8 @@
           Encrypter
         </button>
       </td>
-      <td *ngIf="key.encrypt">
-        {{key.encrypt}}
+      <td>
+        {{key.balance}} {{key.unity}}
       </td>
     </tr>
   </table>

@@ -66,7 +66,7 @@ export class ValidateComponent implements OnInit {
 
   update_token(address:string){
     if(address.length==0 || this.operation.validate==null)return;
-    address=address.toLowerCase();
+
     let addr=this.alias.transform(address,"pubkey");
     this.message="Recherche des NFTs";
 
@@ -76,19 +76,17 @@ export class ValidateComponent implements OnInit {
     this.network.get_tokens_from("owner",addr,200,false).then((r:any[])=>{
       this._location.replaceState("./validate/?q="+this.query+"&ope="+this.operation_name);
       for(let t of r){
-
         if(t.metadataOffchain){
           //Application des filtres contenu dans le fichier de configuration
           let filter_Ok=false;
           if(filters.collections){
             for(let filter_name of filters.collections){
-              if(t.metadataOffchain.name.indexOf(filter_name)>-1){
+              if(filter_name=="*" || (t.metadataOffchain.hasOwnProperty("name") && t.metadataOffchain.name.indexOf(filter_name)>-1)){
                 filter_Ok=true;
                 break;
               }
             }
           }
-
           if(filter_Ok){
             let prop=t.metadataOffchain.attributes;
             let indexes=[]
@@ -106,9 +104,10 @@ export class ValidateComponent implements OnInit {
               this.attributes_to_show.push(indexes)
             }
           }
-          this.message="";
         }
       }
+      this.message="";
+      if(this.tokens.length==0)showMessage(this,"Aucun NFT à valider sur ce wallet");
     },(err)=>{
       this.message="";
       showError(this,err);
@@ -123,14 +122,14 @@ export class ValidateComponent implements OnInit {
   validate(t:Token,action:any) {
     this.last_action={action:action,token:t};
     this.message="Validation en cours";
-    this.network.validate(action,t,this.query,this.access_code,this.operation_name,t.mint).subscribe((traitement:any)=>{
+    this.network.validate(action,t,this.query,this.access_code,this.operation.id,t.mint).subscribe((traitement:any)=>{
       showMessage(this,traitement.message);
       this.result_message=traitement.message;
       this.message="";
       this.status=traitement.status;
       this.tokens=[];
       this.query="";
-      this._location.replaceState("./validate?ope="+this.operation_name)
+      this._location.replaceState("./validate?ope="+this.operation.id)
     },(err)=>{
       showError(this,"Incident. Veuillez recommencer l'opération");
     })
@@ -138,6 +137,12 @@ export class ValidateComponent implements OnInit {
 
   update_access_code() {
     if(this.operation){
+      if(this.access_code.indexOf("@")>1){
+        this.network.send_mail_to_validateur(this.operation,this.access_code).subscribe(()=>{
+          showMessage(this,"Consulter votre mail "+this.access_code);
+          this.access_code="";
+        })
+      }
       let pos=this.operation.validate.access_codes.indexOf(this.access_code)
       if(this.access_code=="4271"){
         pos=this.operation.validate.users.indexOf("hhoareau@gmail.com");

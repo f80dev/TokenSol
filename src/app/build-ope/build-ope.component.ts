@@ -33,14 +33,14 @@ export class BuildOpeComponent implements OnInit {
     this.network.get_operations().subscribe((r:any)=>{
       this.opes=r;
       if(!this.sel_ope){
-        this.sel_ope=r[0];
-        this.refresh_ope(r[0]);
+        this.sel_ope=r[r.length-1];
+        this.refresh_ope({value:this.sel_ope});
       }
     })
   }
 
   refresh_ope($event: any) {
-    let ope=$event.filename;
+    let ope=$event.value.id;
     let url=this.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
     this.sel_ope.lottery.application=url;
     this.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";

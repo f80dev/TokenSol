@@ -111,7 +111,7 @@ export class NetworkService {
 
   create_token(offchain:any,mintAuthority:string,mintAddress:string,data_sup:any,splMintInfo:any,owner:string) {
     let token:Token = {
-      search:{collection:words(offchain.collection),metadata:words(Object.values(offchain.attributes))},
+      search:{collection:"",metadata:""},
       address: mintAddress,
         metadataPDA: {},
         mint: mintAuthority,
@@ -120,13 +120,16 @@ export class NetworkService {
         metadataOffchain: offchain,
         metadataOnchain:{
           key:0,
-          updateAuthority:owner,
+          updateAuthority:"",
           mint:"",
           data:data_sup,
           primarySaleHappened:0,
           isMutable:1,
           type:"metaplex"
         }
+    }
+    if(offchain && offchain!={} && offchain.hasOwnProperty("attributes")){
+      token.search={collection:words(offchain.collection),metadata:words(Object.values(offchain.attributes))}
     }
 
     return token;
@@ -182,7 +185,7 @@ export class NetworkService {
           let mintAuthority=layoutInfo.mintAuthority.toBase58();
           if(filter==null || (filter.mintAuthority && mintAuthority==filter.mintAuthority)){
               $$("Analyse de "+mintAddress);
-              this.httpClient.get(environment.server+"/api/scan/"+mintAddress).subscribe((token_account:any)=>{
+              this.httpClient.get(environment.server+"/api/scan/"+mintAddress+"?network="+this.network).subscribe((token_account:any)=>{
                 if(token_account!={}){
                   let headers = new Headers({
                     'Cache-Control':  'no-cache, no-store, must-revalidate, post-check=0, pre-check=0',
@@ -194,11 +197,11 @@ export class NetworkService {
                   let url=token_account.uri+"?ts="+Date.now();
                   $$("Ouverture de "+url);
                   // @ts-ignore
-                  this.httpClient.get(url,{headers: headers}).pipe(retry(1),timeout(2000)).subscribe((offchain:any)=>{
+                  this.httpClient.get(url,{headers: headers}).pipe(retry(3),timeout(5000)).subscribe((offchain:any)=>{
                     resolve(this.create_token(offchain,mintAuthority,mintAddress,token_account,layoutInfo,owner));
                   },(err:any)=>{
-                    $$("Anomalie ",err);
-                    reject(err);
+                    $$("Anomalie à la lecture des métadata sur "+token_account.uri,err);
+                    resolve(this.create_token({},mintAuthority,mintAddress,token_account,layoutInfo,owner));
                   })
                 } else {
                   reject();
@@ -313,14 +316,18 @@ export class NetworkService {
               $$(values.length+" nfts trouvés");
               values=values.slice(0,limit);
               if(values.length==0)resolve(values);
-              for(let requete=0;requete<values.length;requete++){
 
-                  this.complete_token(addr,values[requete],filter,short).then(token => {
-                    values[requete]=token;
-                    if(requete==values.length-1)resolve(values);
+              let completed_token=0;
+              for(let k=0;k<values.length;k++){
+                  this.complete_token(addr,values[k],filter,short).then(token => {
+                    completed_token++;
+                    values[k]=token;
+                    if(completed_token==values.length){
+                      resolve(values);
+                    }
                   }).catch((err)=>{
-                    $$("Anomalie");
-                    if(requete==values.length-1)resolve(values);
+                    $$("Anomalie, tous les NFTs ne sont pas analysé");
+                    resolve(values);
                   })
 
               }
@@ -425,9 +432,9 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/layers/?preview="+preview,  _l);
   }
 
-  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0) {
+  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98) {
     return this.httpClient.get(
-      environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format=preview&limit="+limit,
+      environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format=preview&limit="+limit+"&quality="+quality,
       { headers: new HttpHeaders({ timeout: `${200000}` }) }
       );
   }
@@ -437,9 +444,9 @@ export class NetworkService {
   }
 
   //recoit un objet aux propriétés filename & content
-  upload(file: any ,platform="nftstorage"){
+  upload(file: any ,platform="nftstorage",type="image/png"){
       this.wait("Chargement du fichier");
-      return this.httpClient.post(environment.server+"/api/upload/?platform="+platform,file);
+      return this.httpClient.post(environment.server+"/api/upload/?platform="+platform+"&type="+type,file);
   }
 
   remove_image(name:string){

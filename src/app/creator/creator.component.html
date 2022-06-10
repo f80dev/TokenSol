@@ -147,6 +147,11 @@
             (click)="backcolor=(backcolor=='white' ? 'black' : 'white')">
       Inverser le fond
     </button>
+    <button style="width: fit-content" mat-raised-button mat-button
+            title="Trouver des images"
+            (click)="find_image()">
+      Trouver des images
+    </button>
     <br>
 
     <table style="padding: 10px;width:100%;">
@@ -156,14 +161,14 @@
         <th>Commandes</th>
         <th>Contribue à l'unicité</th>
         <th>Usage unique par NFT</th>
-        <th>Cliquer sur une image + CTRL sur le clavier pour la supprimer</th>
+        <th>Cliquer sur une image + CTRL sur le clavier pour la supprimer ou SHIFT pour la déplacer</th>
       </tr>
       <tr *ngFor="let layer of layers" style="text-align: center;vertical-align: middle">
         <td style="width: 15px;">
           <mat-icon *ngIf="layer.position>0" (click)="update_position(layer,-1)">keyboard_arrow_up</mat-icon><br>
           <mat-icon *ngIf="layer.position<layers.length-1"  (click)="update_position(layer,+1)">keyboard_arrow_down</mat-icon>
         </td>
-        <td style="width:fit-content;min-width: 100px;">
+        <td style="width:fit-content;min-width: 100px;" (click)="load_text_config(layer)" title="Cliquer pour rappeler les paramètres de fabrication">
           {{layer.name}}<br>
           <span style="font-size: small;">{{layer.elements.length}} éléments</span>
         </td>
@@ -171,7 +176,7 @@
         <td style="width:200px">
           <app-upload-file (uploaded)="on_upload($event,layer)"
                            title="Chargée une image depuis votre ordinateur"
-                           extensions=".png,.psd">
+                           extensions=".png,.psd,.webp,.gif,.jpg,.svg">
             <mat-icon>image</mat-icon>
           </app-upload-file>
 
@@ -187,6 +192,15 @@
             <mat-icon>notes</mat-icon>
           </button>
 
+          <br>
+
+          <button style="width: fit-content" mat-icon-button mat-button
+                  title="Coller une image contenu dans le presse-papier"
+                  (click)="paste_picture(layer)">
+            <mat-icon>content_paste</mat-icon>
+          </button>
+
+
           <button style="width: fit-content" mat-icon-button mat-button
                   title="Générer des copies par variation de couleurs"
                   (click)="generate_with_color(layer)">
@@ -198,6 +212,7 @@
                   (click)="delete_layer(layer)">
             <mat-icon>cancel</mat-icon>
           </button>
+
 
           <button style="width: fit-content" mat-icon-button mat-button
                   title="Effacer tous les éléments"
@@ -221,7 +236,7 @@
                  [src]="elt.image"
                  alt="En cours de chargement"
                  style="width: 100px;height: 100px;cursor: pointer;" [style.background-color]="backcolor" class="mat-elevation-z4"
-                 (mousedown)="remove_element($event,layer,elt)" (click)="open_file(elt)">
+                 (mousedown)="modify_element($event,layer,elt)" (click)="open_file(elt)">
           </div>
           <span *ngIf="layer.elements && max_items<1000 && layer.elements.length>max_items" style="font-size: xx-large;cursor: pointer;" (click)="max_items=1000">...</span>
         </td>
@@ -244,6 +259,10 @@
               ]
               )">
       Un exemple
+    </button>
+
+    <button type="button" mat-raised-button mat-button (click)="reset()">
+      Nouveau
     </button>
 
   </mat-expansion-panel>
@@ -279,15 +298,14 @@
     </mat-form-field>
 
 
-    <button type="button" mat-raised-button mat-button
-            (click)="save_config()">
-      Enregistrer la configuration
-    </button>
+    <div style="display: inline-block;width:200px">
+      Qualité des NFT:<br>
+      <mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="quality"></mat-slider>
+    </div>
 
-    <mat-form-field appearance="fill" style="max-width: 200px">
-      <mat-label>Nom de la configuration</mat-label>
-      <input matInput type="text" [(ngModel)]="config_name" >
-    </mat-form-field>
+
+
+
 
 
 
@@ -311,7 +329,7 @@
     <table>
       <tr>
         <td>
-          Charger une configuration:
+          Charger une configuration:<br>
 
           <app-upload-file (uploaded)="on_upload_config($event)"
                            title="Chargée une configuration depuis votre ordinateur"
@@ -329,6 +347,19 @@
             </mat-select>
           </mat-form-field>
 
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <button type="button" mat-raised-button mat-button
+                  (click)="save_config()">
+            Enregistrer la configuration
+          </button>
+
+          <mat-form-field appearance="fill" style="max-width: 200px">
+            <mat-label>Nom de la configuration</mat-label>
+            <input matInput type="text" [(ngModel)]="config_name" >
+          </mat-form-field>
         </td>
       </tr>
     </table>

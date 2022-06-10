@@ -3,6 +3,7 @@ import {Clipboard} from '@angular/cdk/clipboard';
 import {MetabossService} from "../metaboss.service";
 import {MetabossKey, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {NetworkService} from "../network.service";
 
 @Component({
   selector: 'app-keys',
@@ -17,6 +18,7 @@ export class KeysComponent implements OnInit {
   constructor(
     public metaboss:MetabossService,
     public clipboard: Clipboard,
+    public network:NetworkService,
     public toast:MatSnackBar
   ) { }
 
@@ -25,7 +27,11 @@ export class KeysComponent implements OnInit {
   }
 
   refresh(){
-    this.metaboss.keys().subscribe((r)=>{this.keys=r;})
+    this.network.wait("Chargement des comptes");
+    this.metaboss.keys(this.network.network).subscribe((r)=>{
+      this.network.wait("");
+      this.keys=r;
+    })
   }
 
   add_key() {
@@ -33,7 +39,7 @@ export class KeysComponent implements OnInit {
       name:this.name,
       key:this.privateKey
     }).subscribe(()=>{
-      this.sel_key(this.name);
+      this.refresh();
       this.name="";
     })
   }

@@ -25,8 +25,8 @@
         </div>
         <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;" *ngFor="let file of nft.metadataOffchain?.properties?.files">
           <a [href]="file?.uri" target="_blank">
-            <img style="object-fit: contain;width: 100%;" [src]="file?.uri" *ngIf="file.type.indexOf('image')>-1">
-            <mat-icon *ngIf="file.type.indexOf('image')==-1" style="font-size: xx-large;">link</mat-icon>
+            <img style="object-fit: contain;width: 100%;" [src]="file?.uri" *ngIf="file.type && file.type.indexOf('image')>-1">
+            <mat-icon *ngIf="!file.type || file.type.indexOf('image')==-1" style="font-size: xx-large;">link</mat-icon>
           </a>
         </div>
       </div>

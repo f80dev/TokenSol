@@ -28,17 +28,20 @@ class DAO:
       log("Base de données non disponible "+str(inst.args))
       self.db=None
 
-  def mint(self, _data,ope,server_addr="https://server.f80lab.com",id=""):
-    if len(id)==0: id=_data["collection"]["name"]+"_"+_data["symbol"]
+
+  def lazy_mint(self, _data,ope,server_addr="https://server.f80lab.com",id=""):
     if "_id" in _data:del _data["_id"]
-    _data["id"]=id
-    _data["uri"]=server_addr+"/api/nfts/"+id
+    if not "id" in _data:
+      if len(id)==0: id=_data["collection"]["name"]+"_"+_data["symbol"]
+      _data["id"]=id
+
+    if not "uri" in _data or len(_data["uri"])==0: _data["uri"]=server_addr+"/api/nfts/"+id
     _data["ts"]=int(now()*1000)
     _data["ope"]=ope
-    result=self.db["nfts"].replace_one(filter={"id":id},replacement=_data,upsert=True)
+    result=self.db["nfts"].replace_one(filter={"id":_data["id"]},replacement=_data,upsert=True)
     rc={
       "error":"",
-      "result":{"transaction":"","mint":id},
+      "result":{"transaction":"","mint":_data["id"]},
       "balance":0,
       "link_mint":"",
       "uri":_data["uri"],
@@ -66,6 +69,18 @@ class DAO:
   def get_dict(self, id):
     return self.db["dicts"].find_one(filter={"_id":ObjectId(id)})
 
-  def add_histo(self, account, collection_id):
-	  self.db["histo"].insert_one({"addr":account,"collection":collection_id,"ts":now()})
+  def add_histo(self, ope,command,account, collection_id,transaction_id,network="",comment="",params=list()):
+	  self.db["histo"].insert_one({
+      "operation":ope,
+      "command":command,
+      "addr":account,
+      "collection":collection_id,
+      "ts":now(),
+      "transaction":transaction_id,
+      "network":network,
+      "comment":comment,
+      "params":params
+    })
+
+
 

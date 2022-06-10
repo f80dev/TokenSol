@@ -34,7 +34,7 @@ class GithubStorage:
       else:
         contents = r.get_contents(id,ref=self.branch)
     except Exception as inst:
-      log("Probleme de mise a jour / creation "+str(inst.args))
+      #log("Probleme de mise a jour / creation "+str(inst.args))
       r.create_file(id,"create",content,self.branch)
 
     return {"cid":id,"url":url}

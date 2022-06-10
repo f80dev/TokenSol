@@ -29,7 +29,7 @@ export class MetabossService {
 
 
   add_key(key:any){
-    return this.httpClient.post(environment.server+"/api/keys/",key);
+    return this.httpClient.post(environment.server+"/api/keys/"+key["name"],key);
   }
 
 

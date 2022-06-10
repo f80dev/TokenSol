@@ -11,7 +11,6 @@ import {MatSelectChange} from "@angular/material/select";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {ClipboardModule} from "@angular/cdk/clipboard";
 
-
 @Component({
   selector: 'app-manage',
   templateUrl: './manage.component.html',
@@ -36,6 +35,15 @@ export class ManageComponent implements OnInit {
     private alias_pipe:AliasPipe
   ) {}
 
+
+
+  // test(){
+  //   const connection = new Connection("devnet");
+  //   const tokenPublicKey = "Gz3vYbpsB2agTsAwedtvtTkQ1CG9vsioqLW3r9ecNpvZ";
+  //   Metadata.load(connection, tokenPublicKey).then((r)=>{
+  //     console.log(r);
+  //   })
+  // }
 
   ngOnInit(): void {
     this.refresh();
@@ -111,7 +119,7 @@ export class ManageComponent implements OnInit {
 
   onkeypress($event: KeyboardEvent) {
     if($event.keyCode==13){
-      localStorage.setItem("view",this.pubkey);
+      localStorage.setItem("view",this.pubkey.toLowerCase());
       this.refresh();
     }
   }

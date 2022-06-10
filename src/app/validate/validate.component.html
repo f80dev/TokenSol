@@ -3,6 +3,9 @@
     <div *ngIf="operation.validate?.visible && result_message?.length==0">
       <h2>{{operation.title}}</h2>
       <div *ngIf="message?.length==0 && tokens.length==0">
+
+        <span>{{operation.validate?.support?.message_search}}</span>
+
         <div *ngIf="operation.validate?.manual_input">
           <mat-form-field appearance="fill" style="min-width: 400px;font-size: medium;">
             <mat-label>Adresse du propriétaire</mat-label>
@@ -26,7 +29,7 @@
 
       <div *ngIf="tokens.length>0">
         <div style="width:100%;text-align: center;font-size: small;">
-
+          <span>{{operation.validate?.support?.message_action}}</span>
           <table style="padding: 10px;width:90%;margin:5%;" class="mat-elevation-z4" *ngIf="screen=='landscape'">
             <tr>
               <th>Nom du NFT</th>
@@ -118,12 +121,12 @@
 
 
   <div *ngIf="user?.length==0">
+    <h2>{{operation.validate?.title}}</h2>
     <mat-form-field appearance="fill" style="min-width: 400px;font-size: medium;">
-      <mat-label>Veuillez saisir votre code d'accès (reçu par mail)</mat-label>
+      <mat-label>Veuillez saisir votre code d'accès (ou votre mail si vous n'avez pas votre code)</mat-label>
       <input matInput type="text" [(ngModel)]="access_code" (ngModelChange)="update_access_code()">
       <mat-icon matSuffix (click)="access_code=''">cancel</mat-icon>
     </mat-form-field>
-
   </div>
 
 </div>

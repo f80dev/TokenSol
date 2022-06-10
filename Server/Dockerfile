@@ -58,6 +58,10 @@ RUN pip3 -v install google-cloud-storage
 RUN pip3 -v install PyGithub
 RUN pip3 -v install fonttools
 RUN pip3 -v install numpy
+RUN pip3 -v install svglib
+RUN pip3 -v install pycairo
+RUN pip3 -v install imageio
+
 
 WORKDIR /
 RUN mkdir Solana
@@ -78,6 +82,7 @@ EXPOSE 4242
 
 COPY ./Fonts/*.ttf $APP_HOME/Fonts
 COPY *.py $APP_HOME
+COPY secret_key $APP_HOME
 COPY *.json $APP_HOME
 COPY *.html $APP_HOME
 COPY ./Solana/*.py $APP_HOME/Solana/
