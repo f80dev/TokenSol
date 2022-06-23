@@ -14,9 +14,10 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {$$,MetabossKey,words} from "../tools";
 import {environment} from "../environments/environment";
 
-import {Creator, Token} from "./nfts/nfts.component";
+import {Creator, SplTokenInfo, Token} from "./nfts/nfts.component";
 import {Layer} from "./creator/creator.component";
 import {retry, timeout} from "rxjs";
+import {AliasPipe} from "./alias.pipe";
 
 export enum type_addr {
   "owner",
@@ -109,24 +110,25 @@ export class NetworkService {
   }
 
 
-  create_token(offchain:any,mintAuthority:string,mintAddress:string,data_sup:any,splMintInfo:any,owner:string) {
+  create_token(offchain:any,mintAuthority:string,mintAddress:string,data_sup:any,splMintInfo:any,splTokenInfo:SplTokenInfo) {
     let token:Token = {
       search:{collection:"",metadata:""},
       address: mintAddress,
-        metadataPDA: {},
-        mint: mintAuthority,
-        splMintInfo: splMintInfo,
-        splTokenInfo: {address: "", amount: "", isFrozen: false, mint: "", state: 0, owner: owner},
-        metadataOffchain: offchain,
-        metadataOnchain:{
-          key:0,
-          updateAuthority:"",
-          mint:"",
-          data:data_sup,
-          primarySaleHappened:0,
-          isMutable:1,
-          type:"metaplex"
-        }
+      network:this.network,
+      metadataPDA: {},
+      mint: mintAuthority,
+      splMintInfo: splMintInfo,
+      splTokenInfo: splTokenInfo,
+      metadataOffchain: offchain,
+      metadataOnchain:{
+        key:0,
+        updateAuthority:"",
+        mint:"",
+        data:data_sup,
+        primarySaleHappened:0,
+        isMutable:1,
+        type:"metaplex"
+      }
     }
     if(offchain && offchain!={} && offchain.hasOwnProperty("attributes")){
       token.search={collection:words(offchain.collection),metadata:words(Object.values(offchain.attributes))}
@@ -161,9 +163,13 @@ export class NetworkService {
           let url_metadata=dt.data?.metadata?.data.uri;
           let owner="";
           let mintAuthority=dt;
+          let splTokenInfo:SplTokenInfo={
+            address: mintAddress, amount: 0, isFrozen: false, mint: "", owner: owner, state: 0
+          };
+
           if(dt.data.metadata.primarySaleHappened==0)owner=dt.data.metadata.updateAuthority;
           this.httpClient.get(url_metadata).subscribe((offchain:any)=>{
-            resolve(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,dt.data.tokenInfo,owner));
+            resolve(this.create_token(offchain,mintAuthority,dt.data.metadata.mint,dt.data,dt.data.tokenInfo,splTokenInfo));
           })
         }
       })
@@ -176,39 +182,41 @@ export class NetworkService {
     return new Promise((resolve, reject) => {
       let rc: any={};
 
-        if(e.account && e.account.data){
-          let accountInfo:any = SPLToken.AccountLayout.decode(e.account.data);
-          let mintAddress=accountInfo.mint.toBase58();
+      if(e.account && e.account.data){
+        let splTokenInfo:any = SPLToken.AccountLayout.decode(e.account.data);
+        let mintAddress=splTokenInfo.mint.toBase58();
 
-          accountInfo["pubkey"] = e.pubkey;
-          let layoutInfo = SPLToken.MintLayout.decode(e.account.data);
-          let mintAuthority=layoutInfo.mintAuthority.toBase58();
-          if(filter==null || (filter.mintAuthority && mintAuthority==filter.mintAuthority)){
-              $$("Analyse de "+mintAddress);
-              this.httpClient.get(environment.server+"/api/scan/"+mintAddress+"?network="+this.network).subscribe((token_account:any)=>{
-                if(token_account!={}){
-                  let headers = new Headers({
-                    'Cache-Control':  'no-cache, no-store, must-revalidate, post-check=0, pre-check=0',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                  });
+        splTokenInfo["pubkey"] = e.pubkey;
+        let layoutInfo = SPLToken.MintLayout.decode(e.account.data);
+        let mintAuthority=layoutInfo.mintAuthority.toBase58();
+        splTokenInfo.amount=Number(splTokenInfo.amount);
 
-                  //Impossible d'avoir le résultat de suite : https://stackoverflow.com/questions/46551413/github-not-update-raw-after-commit
-                  let url=token_account.uri+"?ts="+Date.now();
-                  $$("Ouverture de "+url);
-                  // @ts-ignore
-                  this.httpClient.get(url,{headers: headers}).pipe(retry(3),timeout(5000)).subscribe((offchain:any)=>{
-                    resolve(this.create_token(offchain,mintAuthority,mintAddress,token_account,layoutInfo,owner));
-                  },(err:any)=>{
-                    $$("Anomalie à la lecture des métadata sur "+token_account.uri,err);
-                    resolve(this.create_token({},mintAuthority,mintAddress,token_account,layoutInfo,owner));
-                  })
-                } else {
-                  reject();
-                }
-              },(err)=>{reject(err);})
+        if(filter==null || (filter.mintAuthority && mintAuthority==filter.mintAuthority)){
+          $$("Analyse de "+mintAddress);
+          this.httpClient.get(environment.server+"/api/scan/"+mintAddress+"?network="+this.network).subscribe((token_account:any)=>{
+            if(token_account!={}){
+              let headers = new Headers({
+                'Cache-Control':  'no-cache, no-store, must-revalidate, post-check=0, pre-check=0',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+              });
+
+              //Impossible d'avoir le résultat de suite : https://stackoverflow.com/questions/46551413/github-not-update-raw-after-commit
+              let url=token_account.uri+"?ts="+Date.now();
+              $$("Ouverture de "+url);
+              // @ts-ignore
+              this.httpClient.get(url,{headers: headers}).pipe(retry(3),timeout(5000)).subscribe((offchain:any)=>{
+                resolve(this.create_token(offchain,mintAuthority,mintAddress,token_account,layoutInfo,splTokenInfo));
+              },(err:any)=>{
+                $$("Anomalie à la lecture des métadata sur "+token_account.uri,err);
+                resolve(this.create_token({},mintAuthority,mintAddress,token_account,layoutInfo,splTokenInfo));
+              })
+            } else {
+              reject();
             }
-          }
+          },(err)=>{reject(err);})
+        }
+      }
     });
   }
 
@@ -241,6 +249,7 @@ export class NetworkService {
       splMintInfo: undefined,
       splTokenInfo: undefined,
       mint:t.solMintAddress,
+      network:this.network,
       address:t.solMintAddress,
       metadataPDA:{},
       metadataOffchain: {
@@ -319,16 +328,16 @@ export class NetworkService {
 
               let completed_token=0;
               for(let k=0;k<values.length;k++){
-                  this.complete_token(addr,values[k],filter,short).then(token => {
-                    completed_token++;
-                    values[k]=token;
-                    if(completed_token==values.length){
-                      resolve(values);
-                    }
-                  }).catch((err)=>{
-                    $$("Anomalie, tous les NFTs ne sont pas analysé");
+                this.complete_token(addr,values[k],filter,short).then(token => {
+                  completed_token++;
+                  values[k]=token;
+                  if(completed_token==values.length){
                     resolve(values);
-                  })
+                  }
+                }).catch((err)=>{
+                  $$("Anomalie, tous les NFTs ne sont pas analysé");
+                  resolve(values);
+                })
 
               }
 
@@ -436,7 +445,7 @@ export class NetworkService {
     return this.httpClient.get(
       environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format=preview&limit="+limit+"&quality="+quality,
       { headers: new HttpHeaders({ timeout: `${200000}` }) }
-      );
+    );
   }
 
   update_layer(l:Layer, limit=100) {
@@ -445,8 +454,8 @@ export class NetworkService {
 
   //recoit un objet aux propriétés filename & content
   upload(file: any ,platform="nftstorage",type="image/png"){
-      this.wait("Chargement du fichier");
-      return this.httpClient.post(environment.server+"/api/upload/?platform="+platform+"&type="+type,file);
+    this.wait("Chargement du fichier");
+    return this.httpClient.post(environment.server+"/api/upload/?platform="+platform+"&type="+type,file);
   }
 
   remove_image(name:string){
@@ -481,13 +490,23 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/send_conf",{address:address,tokenid:tokenid});
   }
 
-  get_new_token(ope: string,url:string) {
-    let url_api=environment.server+"/api/get_new_code/"+ope+"/"+btoa(url);
+  //nbr contient le nombre de nft a fournir
+  get_new_token(ope: string,url_appli:string="",nbr=1) {
+    if(url_appli=="")url_appli="https://tokenfactory.nfluent.io";
+    let url_api=environment.server+"/api/get_new_code/"+ope+"/"+btoa(url_appli)+"?limit="+nbr;
     return this.httpClient.get(url_api);
   }
 
-  mint_for_contest(address: string,tokenid:string){
-    let body:any={account:address,tokenid:tokenid};
+  mint_for_contest(addr: string,tokenid:string,ope:any,miner:string,metadata_storage:string){
+    let body:any={
+      account:addr,
+      tokenid:tokenid,
+      network:ope.network,
+      miner:miner,
+      ope:ope.id,
+      metadata_storage:metadata_storage
+    };
+
     body.type_network=this.network.indexOf("devnet")>-1 ? "devnet" : "mainnet";
     return this.httpClient.post(environment.server+"/api/mint_for_contest/",body);
   }
@@ -517,6 +536,7 @@ export class NetworkService {
       user:user_addr,
       operateur:operateur,
       operation:operation_name,
+      network:t.network,
       token:t.address,
       uri:t.metadataOnchain.data.uri,
       offchain:t.metadataOffchain
@@ -542,5 +562,25 @@ export class NetworkService {
 
   get_palettes() {
     return this.httpClient.get(environment.server+"/api/palettes/");
+  }
+
+  getfaqs() {
+    return this.httpClient.get(environment.server+"/api/getyaml/faqs");
+  }
+
+  del_config(id_config:string) {
+    return this.httpClient.delete(environment.server+"/api/configs/"+id_config+"/");
+  }
+
+  apply_filter(layer_name: string, filter: string) {
+    return this.httpClient.post(environment.server+"/api/apply_filter/",{layer:layer_name,filter:filter});
+  }
+
+  get_tokens_for_dispenser(ope="",limit=1000) {
+    return this.httpClient.get(environment.server+"/api/get_tokens_for_dispenser/"+ope+"?limit="+limit);
+  }
+
+  get_nfts_from_operation(ope:string) {
+    return this.httpClient.get(environment.server+"/api/nfts_from_operation/"+ope);
   }
 }

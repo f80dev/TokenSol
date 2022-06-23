@@ -6,11 +6,12 @@ import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
 import {$$, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {PLATFORMS} from "../../definitions";
+import {PLATFORMS, PRICE_PER_TOKEN, TOKEN_FACTORY_WALLET} from "../../definitions";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Location} from "@angular/common";
 import {MatSelectChange} from "@angular/material/select";
 import {ClipboardModule} from "@angular/cdk/clipboard";
+import {UserService} from "../user.service";
 
 export interface Layer {
   params: any;
@@ -68,6 +69,7 @@ export class CreatorComponent implements OnInit {
     public dialog:MatDialog,
     public router:Router,
     public routes:ActivatedRoute,
+    public user:UserService,
     public toast:MatSnackBar,
     public safe:SafePipe,
     public _location:Location,
@@ -90,14 +92,16 @@ export class CreatorComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.layers=[];
-    this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
-    this.network.get_palettes().subscribe((p)=>{
-      this.palette_names=Object.keys(p);
-      this.palette=p;
-      this.sel_palette=this.palette_names[0];
-    })
-    this.refresh();
+
+      this.layers=[];
+      this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
+      this.network.get_palettes().subscribe((p)=>{
+        this.palette_names=Object.keys(p);
+        this.palette=p;
+        this.sel_palette=this.palette_names[0];
+      })
+      this.refresh();
+
   }
 
 
@@ -105,6 +109,22 @@ export class CreatorComponent implements OnInit {
     let rc=file;
     //return rc.split("base64,")[1];
   }
+
+
+  paiement(nTokenToMint:number,profil:any) {
+    return new Promise((resolve, reject) => {
+      if(profil.perms.indexOf("free_build")>-1 || profil.perms.indexOf("*")>-1){
+        resolve("ok")
+      } else {
+        this.user.wallet.sendTransaction(TOKEN_FACTORY_WALLET, nTokenToMint * PRICE_PER_TOKEN).then((result) => {
+          showMessage(this, "Paiement ok");
+          resolve(result);
+        }).catch(()=>{reject();})
+      }
+
+    });
+  }
+
 
 
   on_upload(evt: any,layer:Layer) {
@@ -164,7 +184,11 @@ export class CreatorComponent implements OnInit {
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
         if(format=="zip"){
           this.network.wait("");
-          open(environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality,"_blank")
+          this.user.connect("create").then((profil:any)=>{
+            this.paiement(this.limit,profil).then(()=>{
+              open(environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality,"_blank")
+            });
+          });
         }
 
         if(format=="preview"){
@@ -344,9 +368,16 @@ export class CreatorComponent implements OnInit {
 
   load_config(name="config") {
     if(name){
+      this.network.wait("Chargement en cours ...");
       this.config_name=name;
       this._location.replaceState("./creator?config="+name);
       this.network.load_config(name).subscribe((r:any)=>{
+        for(let l of r.layers){
+          for(let e of l.elements){
+            if(this.sel_platform=="nfluent")e.image=e.image.replace("http://127.0.0.1:4242/","https://server.nfluent.io:4242/");
+            if(this.sel_platform=="nfluent local")e.image=e.image.replace("https://server.nfluent.io:4242/","http://127.0.0.1:4242/");
+          }
+        }
         this.layers=r.layers;
         this.col_width=r.width;
         this.col_height=r.height;
@@ -362,6 +393,7 @@ export class CreatorComponent implements OnInit {
         this.font=this.find_font(r.fontstyle.name);
         this.color=r.fontstyle.color;
         this.previews=[];
+        this.network.wait("");
       },(err=>{
         showError(this,err);
         this._location.replaceState("./creator");
@@ -371,35 +403,50 @@ export class CreatorComponent implements OnInit {
 
   //https://server.f80lab.com/api/configs/?format=file
   quality=98;
+  config_with_image=true;
 
 
   save_config() {
-    let body={
-      layers: this.layers,
-      width:this.col_width,
-      height:this.col_height,
-      x:this.position_text.x,
-      y:this.position_text.y,
-      seed:this.seed,
-      text_to_add:this.text_to_add,
-      limit:this.limit,
-      filename_format:this.filename_format,
-      platform:this.sel_platform,
-      fontstyle:{
-        name:this.font.file,
-        color:this.color,
-        size:this.fontsize
+    // if(this.config_with_image){
+    //   for(let l of this.layers){
+    //     for(let e of l.elements){
+    //       //TODO: a terminer pour inclure les images dans la config
+    //     }
+    //   }
+    // }
+
+    return new Promise((resolve,reject) => {
+      let body = {
+        layers: this.layers,
+        width: this.col_width,
+        height: this.col_height,
+        x: this.position_text.x,
+        y: this.position_text.y,
+        seed: this.seed,
+        text_to_add: this.text_to_add,
+        limit: this.limit,
+        filename_format: this.filename_format,
+        platform: this.sel_platform,
+        fontstyle: {
+          name: this.font.file,
+          color: this.color,
+          size: this.fontsize
+        }
       }
-    }
-    for(let l of body.layers){
-      for(let f of l.elements)
-        f="\""+f+"\""
-    }
-    this.config_name=this.config_name.replace(".yaml.yaml",".yaml");
-    this.network.save_config_on_server(this.config_name,body).subscribe(()=>{
-      this.sel_config=this.config_name;
-      setTimeout(()=>{this.refresh()},1000);
-      open(environment.server+"/api/configs/"+this.config_name+"/?format=file","config");
+
+      for (let l of body.layers) {
+        for (let f of l.elements)
+          f = "\"" + f + "\""
+      }
+      this.config_name = this.config_name.replace(".yaml.yaml", ".yaml");
+      this.network.save_config_on_server(this.config_name, body).subscribe(() => {
+        this.sel_config = this.config_name;
+        setTimeout(() => {
+          this.refresh()
+        }, 1000);
+        open(environment.server + "/api/configs/" + this.config_name + "/?format=file", "config");
+        resolve("ok")
+      });
     });
   }
 
@@ -511,7 +558,10 @@ export class CreatorComponent implements OnInit {
   }
 
   reset() {
-    this.layers=[]
+    this.save_config().then(()=>{
+      this.layers=[]
+      this.config_name=""
+    });
   }
 
   find_image() {
@@ -530,9 +580,9 @@ export class CreatorComponent implements OnInit {
         open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
         open("https://emojipedia.org/search/?q="+resp,"search_emoji")
         open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
-        open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
         open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
         open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
+        open("https://all-free-download.com/free-vector/"+resp+".html/","search_vectors")
       }
     });
   }
@@ -554,5 +604,50 @@ export class CreatorComponent implements OnInit {
         })
       }
     })
+  }
+
+  del_config(sel_config: any) {
+    this.network.del_config(sel_config).subscribe(()=>{
+      showMessage(this,"Configuration supprimé");
+      this.refresh();
+    })
+  }
+
+  apply_filter(layer: Layer) {
+    let filters=[
+      {label:"Noicir",value:"to_black"},
+      {label:"Eclaircir",value:"to_white"},
+      {label:"Posteriser",value:"posterize"},
+      {label:"Solariser",value:"solarize"},
+      {label:"Flouter",value:"blur"},
+      {label:"Equaliser",value:"equalize"},
+      {label:"Noir & blanc",value:"grayscale"},
+      {label:"Retourner",value:"flip"},
+      {label:"Mirroir",value:"mirror"},
+      {label:"Contraster",value:"contrast"}
+    ]
+    this.dialog.open(PromptComponent, {
+      width: 'auto', data:
+        {
+          title: "Choisir un filtre",
+          type: "list",
+          options:filters,
+          value:"blur",
+          onlyConfirm: false,
+          lbl_ok: "Ok",
+          lbl_cancel: "Annuler"
+        }
+    }).afterClosed().subscribe((filter: string) => {
+      if(filter){
+        this.network.add_layer(layer,this.col_width,this.col_height).subscribe(()=> {
+          this.network.apply_filter(layer.name,filter).subscribe((r:any)=>{
+            for(let i of r.images)
+              layer.elements.push({image:i})
+            this.refresh();
+          })
+        });
+      }
+
+    });
   }
 }

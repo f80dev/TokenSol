@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import {UserService} from "../user.service";
 
 @Component({
   selector: 'app-admin',
@@ -8,9 +9,12 @@ import { Component, OnInit } from '@angular/core';
 //test http://127.0.0.1:4200/admin
 export class AdminComponent implements OnInit {
 
-  constructor() { }
+  constructor(
+    public user:UserService
+  ) { }
 
   ngOnInit(): void {
+    this.user.connect();
   }
 
 }

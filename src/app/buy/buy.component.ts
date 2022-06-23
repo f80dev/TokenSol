@@ -22,7 +22,7 @@ export class BuyComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.user.connect(()=>{
+    this.user.connect().then((addr)=>{
       this.network.get_nfts_from_miner(new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")).then(r=>{
         this.nfts=r;
         this.refresh();

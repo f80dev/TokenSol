@@ -19,6 +19,8 @@ export class ContestComponent implements OnInit,OnDestroy {
   visual: string="";
   delay=0;
   handle: any;
+  minutes: string="0";
+  secondes: number=0;
 
   constructor(
     public routes:ActivatedRoute,
@@ -42,12 +44,16 @@ export class ContestComponent implements OnInit,OnDestroy {
   ngOnInit(): void {
     this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((ope:any)=>{
       this.operation=ope;
+
       this.handle=setInterval(()=>{
         if(this.delay==0){
           this.delay=this.operation.lottery.duration;
           this.ask_token(this.operation.id!)
         }
         this.delay=this.delay-1;
+        let minutes=Math.trunc(this.delay/60);
+        this.minutes=(minutes<10 ? "0" : "")+minutes;
+        this.secondes=this.delay % 60;
         },1000);
     })
   }

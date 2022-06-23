@@ -7,6 +7,7 @@ export interface MetabossKey {
   privatekey:string | null
   encrypt:string | null
   balance:number | null
+  explorer:string | null
   unity:string | null
 }
 
@@ -132,3 +133,12 @@ export function $$(s: string, obj: any= null) {
   if (lg.indexOf('!!') > -1  || localStorage.getItem("debug")=="2") {alert(lg); }
 }
 
+export function detect_network(addr:string){
+  if(addr.startsWith("erd"))return "elrond";
+  return "solana";
+}
+
+export function detect_type_network(network:string){
+  if(network.indexOf("devnet")>-1)return "devnet";
+  return "mainnet";
+}

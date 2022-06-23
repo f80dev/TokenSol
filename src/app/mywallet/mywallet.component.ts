@@ -15,9 +15,7 @@ export class MywalletComponent implements OnInit {
   constructor(public user:UserService,public network:NetworkService) { }
 
   ngOnInit(): void {
-    this.user.connect(()=>{
       this.refresh();
-    });
   }
 
   refresh(index:number=0) {

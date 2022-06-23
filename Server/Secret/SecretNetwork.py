@@ -24,4 +24,5 @@ class SecretNetwork:
     :return:
     """
 
-    wallet = wallet(mk)
+    pass
+    # wallet = wallet(mk)

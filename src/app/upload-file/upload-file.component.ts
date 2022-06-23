@@ -44,7 +44,7 @@ export class UploadFileComponent implements OnInit {
           this.message = "";
           if(!this.encode)content=atob(content);
           this.onupload.emit({
-            filename:this.filename,
+            filename:file.name,
             file:content,
             type:content.split("data:")[1].split(";")[0]
           })

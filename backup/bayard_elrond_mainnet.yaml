@@ -1,0 +1,75 @@
+#Ce fichier décrit les opérations de distribution de NFT via le service d'nfluent (https://nfluent.io)
+
+#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)
+
+#une fois terminé, ce fichier doit être chargé a l'adresse : https://tokensol.nfluent.io/build
+
+
+id: "bayard_elrond_mainnet"          #cet Id doit être cohérent avec le nom du fichier
+title: "Démo Bayard sur Elrond"     #est le titre usuel de l'operation qui apparait pour les validateurs
+description: ""
+website: ""                     #désigne le site concerné par l'opération
+version: 0.1
+network: elrond-mainnet          #Réseau concerné par l'opération
+metadata_storage: github/bayard
+
+database:                 #base de données contenant les historiques
+  connexion: cloud
+  dbname: nfluent
+
+
+data:
+  sources:
+    - type: database
+      connexion: cloud      #localisation (cloud:server Atlas, server: f80lab)
+      dbname: nfluent       #Nom de la base de données contenant les NFTS
+
+
+#Section lié à la distribution nominative de NFT
+dispenser:
+  visible: True
+  miner: nminer                                       #mineur en charge de la création des tokens
+  application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
+
+  collections:                                      #Liste des collections concernée par la distribution
+    - name: "NFluenT"
+      limit: 50                                      #Maximum de NFT distribuable par collection
+
+
+
+
+#Section destinée la distribution de NFT gratuitement
+lottery:
+  visible: True
+  miner: nminer
+
+  redirections:
+    winner: "Bravo vous avez un nouveau NFT, vous pouvez fermer cette fenêtre"
+    looser: "Retentez votre chance"
+
+  application: "$nfluent_appli$/contest"
+
+
+  collections: #Définie les limites sur le nombre de nft miner
+    - name: "NFluenT"
+      limit: 50
+
+  limits:
+    by_day: 50
+    by_month: 50
+    by_year: 50
+
+
+  showVisual: True    #Affiche le visuel
+  duration: 100        #durée en seconde d'affichage des NFTs
+
+  period:
+    #Permet de commencer l'opération à un moment précis et la faire s'arrêter
+    dtStart: "now"
+    dtEnd: ""
+    duration: 1
+
+security:
+  #Liste des adresses internet (IP ADDRESS) pouvant appeler l'api
+  whitelist:
+    - "*"

@@ -10,8 +10,7 @@ import imageio
 import numpy
 import numpy as np
 import requests
-from PIL import Image, ImageSequence
-from PIL.Image import BICUBIC
+from PIL import Image, ImageSequence, ImageFilter, ImageOps,ImageEnhance
 from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
 
@@ -109,16 +108,25 @@ class Sticker(Element):
       self.image=None
 
   def open(self):
-    if self.image and self.image.readonly==0:
-      self.image=Image.open(self.image.filename)
+    if not self.image is None:
+      if self.image.readonly==0 and self.image.format:
+        if self.image.filename!="":
+          self.image=Image.open(self.image.filename)
+        else:
+          if self.image.fp:
+            self.image.fp.open()
+
 
   def close(self):
-    if self.image:
+    if self.image and self.image.format and self.image.filename!="":
       self.image.close()
 
   def delete(self):
-    if self.image:
+    try:
       os.remove(self.image.filename)
+      return True
+    except:
+      return False
 
   def write(self,text:str,position="bottom-left",fontname="corbel.ttf",size=22,color=(0,0,0,255),x=None,y=None):
     font = truetype("./Fonts/"+fontname, size)
@@ -161,7 +169,7 @@ class Sticker(Element):
 
 
   def merge_animated_image(self,base:Image,to_paste:Image):
-    filename="./temp/temp"+str(now())+".gif"
+    filename="./temp/temp_merge_"+str(now())+".gif"
     wr=imageio.get_writer(filename,mode="I")
 
     frames_to_paste = [f.convert("RGBA").resize(base.size) for f in ImageSequence.Iterator(to_paste)]
@@ -177,20 +185,21 @@ class Sticker(Element):
       wr.append_data(ndarray)
 
     wr.close()
+    to_paste.close()
     rc=Image.open(filename)
-    rc.load()
     return rc
 
 
   def convert_image_to_animated(self,base:Image,n_frames:int):
-    filename="./temp/temp"+str(now())+".gif"
+    filename="./temp/temp_convert_"+str(now())+".gif"
 
     wr=imageio.get_writer(filename,mode="I")
     for i in range(n_frames):
-      ndarray=numpy.asarray(base)
+      ndarray=numpy.asarray(base.convert("RGBA"))
       wr.append_data(ndarray)
     wr.close()
 
+    base.close()
     rc= Image.open(filename)
     return rc
 
@@ -199,28 +208,33 @@ class Sticker(Element):
       #log("Fusion de "+self.name+" avec "+to_concat.name)
       if to_concat.image is None and not to_concat.text is None:
         if "<svg" in to_concat.text:
+          log("Collage d'un SVG")
           src=to_concat.render_svg()
         else:
+          log("Collage d'un texte")
           src=to_concat.render_text(factor)
 
       if self.image and to_concat.image:
         if (to_concat.image.format=="WEBP" or to_concat.image.format=="GIF") and to_concat.image.is_animated:
           if self.image.format is None:
-            #Convert to animated
-            self.image=self.convert_image_to_animated(self.image.copy(),to_concat.image.n_frames)
+            #log("Convertion de la base en image animé")
+            self.image=self.convert_image_to_animated(self.image,to_concat.image.n_frames)
 
-          #Décomposition de l'image a coller
+          #log("Collage d'une image animé sur la base")
           self.image=self.merge_animated_image(self.image,to_concat.image)
+          to_concat.image.close()
 
         else:
+          #log("Collage d'une image fixe ...")
           if self.image.format is None:
+            #log("... sur la base fixe")
             self.image.alpha_composite(to_concat.image.resize(self.image.size))
           else:
-            self.image=self.merge_animated_image(self.image.copy(),to_concat.image)
+            #log("... sur une base animé")
+            to_concat.image=self.convert_image_to_animated(to_concat.image,self.image.n_frames)
+            self.image=self.merge_animated_image(self.image,to_concat.image)
+            to_concat.image.close()
 
-        return True
-
-      return False
 
 
 
@@ -233,14 +247,12 @@ class Sticker(Element):
       f.writelines(self.text["text"])
       f.close()
     else:
-      if not self.image.format is None and self.image.is_animated:
+      if self.image.format=="GIF" or  self.image.format=="WEBP" :
         frames = [f.convert("RGBA") for f in ImageSequence.Iterator(self.image)]
+        self.image.close()
         frames[0].save(filename,append_images=frames[1:],save_all=True)
       else:
         self.image.save(filename,quality=int(quality),method=6,lossless=(quality==100),save_all=True)
-
-      self.image.close()
-      if self.image.format and self.image.filename: os.remove(self.image.filename)
 
 
 
@@ -372,6 +384,33 @@ class Layer:
 
     return rc
 
+  def apply_filter(self, filter_name:str):
+    filter_name=filter_name.lower()
+    rc=[]
+    for elt in self.elements:
+      if elt.image:
+        _filter=None
+        if filter_name=="blur":_filter=ImageFilter.BLUR
+
+        if _filter is None:
+          if filter_name=="equalize":new_elt=Sticker(image=ImageOps.equalize(elt.image).copy())
+          if filter_name=="grayscale":new_elt=Sticker(image=ImageOps.grayscale(elt.image).copy())
+          if filter_name=="flip":new_elt=Sticker(image=ImageOps.flip(elt.image).copy())
+          if filter_name=="mirror":new_elt=Sticker(image=ImageOps.mirror(elt.image).copy())
+          if filter_name=="solarize":new_elt=Sticker(image=ImageOps.solarize(elt.image).copy())
+          if filter_name=="posterize":new_elt=Sticker(image=ImageOps.posterize(elt.image,8).copy())
+          if filter_name=="to_white":new_elt=Sticker(image=ImageEnhance.Brightness(elt.image).enhance(0.7))
+          if filter_name=="to_black":new_elt=Sticker(image=ImageEnhance.Brightness(elt.image).enhance(0.3))
+          if filter_name=="contrast":new_elt=Sticker(image=ImageEnhance.Contrast(elt.image).enhance(0.8))
+          if filter_name=="posterize":new_elt=Sticker(image=ImageOps.posterize(elt.image).copy())
+
+        else:
+          new_elt=Sticker(image=elt.image.filter(_filter).copy())
+
+        rc.append(new_elt.toBase64())
+
+    return rc
+
 
 
 class ArtEngine:
@@ -408,11 +447,10 @@ class ArtEngine:
   def sort(self):
     self.layers=sorted(self.layers,key=lambda x:x.position)
 
-  def generate(self,collage:Element,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100):
+  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp"):
     if seed_generator>0:seed(seed_generator)
     if len(dir)>0 and not dir.endswith("/"):dir=dir+"/"
     rc=list()
-    max_item=1
 
     self.sort()
 
@@ -420,9 +458,10 @@ class ArtEngine:
     index=0
     log("Lancement de la génération de "+str(limit)+" images")
     while index<limit:
+      collage=Sticker("collage",dimension=(width,height),ext=ext)
 
       name=[]
-      log("NFT "+str(index)+"/"+str(limit)+" généré")
+      log("Génération du NFT "+str(index)+"/"+str(limit))
       for layer in self.layers:
         if len(layer.elements)==0:
           elt=None
@@ -435,14 +474,17 @@ class ArtEngine:
           break
         else:
           if layer.indexed or layer.unique: name.append(elt.name)
-          factor=1 if elt.text is None else width/elt.text["dimension"][0]
+
+          #log("Ouverture de l'élément à coller")
           elt.open()
-          collage.fusion(elt,factor)
+
+          collage.fusion(elt,1 if elt.text is None else width/elt.text["dimension"][0])
           if layer.unique: layer.remove(elt)
+
+          #log("Fermeture de l'élélement collé")
           elt.close()
 
-          if elt.image.format and elt.image.filename.startswith("./temp/temp"):
-            elt.delete()
+
 
       if not name in histo and index<limit:
         index=index+1
@@ -457,6 +499,11 @@ class ArtEngine:
           collage.save(filename,quality)
         else:
           rc.append(collage.toStr())
+
+
+        collage.close()
+        collage.delete()
+
 
     return rc
 

@@ -27,6 +27,11 @@ class NFTStorage:
       data=content
       service="store"
 
+    if type(content)==bytes:
+      data=content
+      service="upload"
+
     result=requests.api.post("https://api.nft.storage/"+service,data,headers={"Authorization":"Bearer "+NFT_STORAGE_KEY}).json()
     cid=result["value"]["cid"]
-    return {"cid":cid,"url":"https://"+cid+".ipfs.nftstorage.link"+("?"+filename) if len(filename)>0 else ""}
+    url="https://"+cid+".ipfs.nftstorage.link"
+    return {"cid":cid,"url":url+(("?"+filename) if len(filename)>0 else "")}

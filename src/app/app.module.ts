@@ -1,6 +1,10 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
+// import { GoogleLoginProvider } from 'angularx-social-login';
+// import {
+//   SocialLoginModule,
+//   SocialAuthServiceConfig,
+// } from 'angularx-social-login';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {SolWalletsModule} from "angular-sol-wallets";
@@ -61,6 +65,10 @@ import {WebcamModule} from "ngx-webcam";
 import { DbtableComponent } from './dbtable/dbtable.component';
 import {MatTableModule} from "@angular/material/table";
 import { AdminComponent } from './admin/admin.component';
+import {GOOGLE_CLIENT_ID} from "../definitions";
+import { FaqsComponent } from './faqs/faqs.component';
+import { DispenserComponent } from './dispenser/dispenser.component';
+import {GooglePayButtonModule} from "@google-pay/button-angular";
 
 
 @NgModule({
@@ -91,7 +99,9 @@ import { AdminComponent } from './admin/admin.component';
     HourglassComponent,
     ScannerComponent,
     DbtableComponent,
-    AdminComponent
+    AdminComponent,
+    FaqsComponent,
+    DispenserComponent
 
   ],
     imports: [
@@ -129,12 +139,25 @@ import { AdminComponent } from './admin/admin.component';
         MatSliderModule,
         MatExpansionModule,
         WebcamModule,
-        MatTableModule
+        MatTableModule,
+        GooglePayButtonModule
     ],
   providers: [
+
     FilterPipe,AliasPipe,SafePipe,OrderPipe,
-    {provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}}
+    {provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}},
+
   ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+
+
+// {provide: 'SocialAuthServiceConfig',
+//   useValue: {
+//   autoLogin: false,
+//     providers: [{
+//     id: GoogleLoginProvider.PROVIDER_ID,
+//     provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
+//   }],
+// } as SocialAuthServiceConfig}

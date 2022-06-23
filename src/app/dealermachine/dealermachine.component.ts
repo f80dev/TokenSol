@@ -4,6 +4,7 @@ import {NetworkService} from "../network.service";
 import {showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
+import {Location} from "@angular/common";
 
 @Component({
   selector: 'app-dealermachine',
@@ -11,13 +12,15 @@ import {AliasPipe} from "../alias.pipe";
   styleUrls: ['./dealermachine.component.css']
 })
 export class DealermachineComponent implements OnInit {
-  address: string="";
+  address: string="paul.dudule@gmail.com";
   wallet_link: string="";
   nft:any={};
   final_message="";
+  ope: any={};
 
   constructor(
     public routes:ActivatedRoute,
+    public _location:Location,
     public network:NetworkService,
     public toast:MatSnackBar,
     public router:Router,
@@ -25,37 +28,66 @@ export class DealermachineComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.network.get_nft_from_db(this.routes.snapshot.queryParamMap.get("id") || "").subscribe((nft:any)=>{
-      this.nft=nft || {};
-      if(!nft){
-        this.lost();
-      }
-    });
-
+    this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((ope:any)=>{
+      this.ope=ope;
+      this.network.get_nft_from_db(this.routes.snapshot.queryParamMap.get("id") || "").subscribe((nft:any)=>{
+        this.nft=nft || {};
+        if(!nft){
+          this.lost()
+        } else {
+          this.price=""+nft.marketplace.initial_price;
+        }
+      });
+    })
   }
 
   //http://127.0.0.1:4200/dealermachine/?ope=calvi2022
   message: string="";
+  price: string="";
 
-  lost(ope:any=null){
-    showMessage(this,"Vous vous êtes fais doublé ! Retentez votre chance")
-    this.message="";
-    if(ope)this.router.navigate(ope.redirect.win);
+  lost(){
+    if(this.ope.lottery.hasOwnProperty("end_process")){
+      this.end_process(this.ope.lottery.end_process.looser.message,this.ope.lottery.end_process.looser.redirection)
+    } else {
+      this.end_process("Ce NFT vous a échapé");
+    }
+  }
+
+  win(){
+    if(this.ope.lottery.hasOwnProperty("end_process")){
+      this.end_process(this.ope.lottery.end_process.winner.message,this.ope.lottery.end_process.winner.redirection)
+    } else {
+      this.end_process("Ce NFT est le votre.");
+    }
+  }
+
+  end_process(sMessage:string,rediction=null){
+    if(rediction){
+      showMessage(this,sMessage);
+      setTimeout(()=>{
+        open(this.ope.lottery.end_process.winner.redirection);
+        },500);
+    } else {
+      this.message=sMessage+". Vous pouvez fermer cette écran";
+    }
   }
 
   valide() {
-    let id=this.routes.snapshot.queryParamMap.get("id");
+    let id=this.routes.snapshot.queryParamMap.get("id")  || "";
+    let addr=this.alias.transform(this.address,"pubkey");
     if(id){
-        let addr=this.alias.transform(this.address,"pubkey");
         this.message="Demande en cours";
-        this.network.mint_for_contest(addr,id).subscribe((r:any)=>{
-          showMessage(this,"Vous avez gagné un nouveau NFT");
+        this.network.mint_for_contest(addr,id,this.ope,this.ope.lottery.miner,this.ope.metadata_storage).subscribe((r:any)=>{
+          this.nft=null;
           this.message="";
-          if(r.redirection.startsWith("http"))
-            this.router.navigate(r.redirection);
-          else
-            this.final_message=r.redirection;
+          if(r.error.length>0){
+            this.message=r.error+". ";
+            this.lost();
+          } else {
+            this.win();
+          }
         },(err)=>{
+          this.message="";
           this.lost();
         })
     }
@@ -63,4 +95,8 @@ export class DealermachineComponent implements OnInit {
   }
 
 
+  onLoadPaymentData($event: any) {
+    if($event.returnValue)
+      this.valide();
+  }
 }

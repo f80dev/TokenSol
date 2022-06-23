@@ -5,50 +5,60 @@
 #une fois terminé, ce fichier doit être chargé a l'adresse : https://tokensol.nfluent.io/build
 
 
-id: "calvi22"
-title: "Calvi2022_mainnet"
-description: "Opération de distribution des"
-url: ""
-website: ""
+id: "calvi22_devnet"          #cet Id doit être cohérent avec le nom du fichier
+title: "Calvi2022_devnet"     #est le titre usuel de l'operation qui apparait pour les validateurs
+description: "Version test de l'opération de distribution de NFT sur le festival CalviOnTheRocks"
+website: "https://www.calviontherocks.com/fr"   #désigne le site concerné par l'opération
 version: 0.1
 network: solana-mainnet      #Réseau concerné par l'opération
+metadata_storage: github/test4
+
+database:                 #base de données contenant les historiques
+  connexion: cloud
+  dbname: nfluent
+
 
 #la section accounts contient les clés privées (cryptées) des comptes Ã utiliser pendant l'opération
 accounts:
   solana:
     paul: Z0FBQUFBQmltR2ZCaDRoMUw2VFdla2hJajh2STNlOV8xQlhUcXgxcGtfUFllX1BVT3gxN0xULXVzTGpCSVF1N29vTzR1OTBuX0lVakY2bjVpNlhNQ0x3WUttWGJnTnRnWEZaVXBiMWNHaHdnTmtyUms1OENOcjB2QkV2ZFJrSkZiZzE4RENtWHBJbVNBYVZZaC1LMnBrbEctSGJvNWsxdHJvbmpTa01GWW1KODFENFlSbTFsRHNWX28wX1Z1ZVc5SjdVdkpqRW8zM1ByQW9GNlB1YXNIUVN4YXdIUFhCS3N2Z2dKQnM0aW9ncGVyTWZmMDF0VzNWYUlaVzNocFh6X1pEQUswMXRjbXEyb3lCRE9UZmxiY2xnX0x4QnhZXzMzM2pZX1ZOQ2VNWHoxSVc2TVByQVBjMWFCTXpJRVZLU05BTkJYUUFZcUpUYjRTZTFoLXZMMXFPZkFlWGFLS3pOYV9mSGpnVklOMU5aM1NUb25hMmFvbXZ5YUU2QXZvSjUyeWtJNDQzMk9XZlRs
 
+
+#Fonctionnement de la section data ______________________________________________________________________________________________________________________________
 #localisation du fichier contenant les NFTs Ã proposer
 #Plusieurs valeurs sont possibles:
 #     - "database:<collection>" ou "db:<collection>" signifie que les NFT ont été importé préalablement via les outils nfluent (fichier Excel).
 #     - une adresse internet peut désigner un fichier csv contenant une description des NFT distribué
 #     - une adresse internet peut désigner un fichier json contenant un NFT Ã distribuer
+#connexion désigne la localisation de la base de donnée. Cela peut être un alias (server, cloud, cloud2) ou
+#plus simplement une chaine de connexion comme "mongodb+srv://Hhoareau:<password>@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
+#"mongodb://admin:<password>@server.f80lab.com:27017"
 
 data:
   sources:
-#    - type: database
-#      connexion: server
+    - type: database
+      connexion: web3      #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
+      dbname: nfluent       #Nom de la base de données contenant les NFTS
 
 #    - type: json              #Les NFTs sont contenus dans un fichier json
 #      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
 
-    - type: web              #Les NFTs sont contenus dans un fichier json
-      connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+#    - type: web              #Les NFTs sont contenus dans un fichier json
+#      connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
 
-#    - type: config
+#    - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
 #      connexion: "Exemple.yaml"
 #      seed: 10                          #Permet de générer toujours la même séquence
 #      limit: 5                          #Nombre de nft à générer
 #      creators:                         #Compte à utiliser comme créateurs
 #        - "paul"
 
-#Liste des comptes en charge du minage
-miners:
-  elrond: "paul"
-  solana: "paul"
 
 
+#Fonctionnement de la section Validate _____________________________________________________________________________________________________________________________
+#Section responsable du process de validation des NFTs
 validate:
+  title: "Bienvenu dans l'application de validation des passes Calvi On The Rocks"
   visible: True           #La section de validation est visible
   camera: True            #Si possible, utilise la caméra du device
   manual_input: True      #Le validateur peut saisir manuellement l'adresse du NFT du visiteur
@@ -61,13 +71,40 @@ validate:
     - "sophie.dudule@gmail.com"
     - "thomas@nfluent.io"
 
+  support:
 
-  properties:                 #Liste des propriétés montrées au validateur
+    #message affiché aux validateurs pour la détection du wallet
+    message_search:
+      "
+      Veuillez flasher le QRCode du wallet FTX des visiteurs
+      "
+
+    #message affiché aux validateurs pour l'attribution des passes
+    message_action:
+      "
+      Veuillez attribuer le nombre de passes souhaitez en fonction du solde restant sur le NFT
+      "
+
+    #message affiché en cas de dysfonctionnement de l'outil
+    warning_process:
+      "
+      En cas de dysfonctionnement veuillez adresser un mail à <a href='mailto:support@nfluent.io'>support@nfluent.io</a> en précisant
+      <ul>
+        <li>l'adresse du wallet du client</li>
+        <li>le nombre de passe attribué</li>
+      </ul>
+      "
+
+    #Section des points de contact présentés aux validateurs
+    contacts:
+      message: Besoin d'aide ?                      #Message afficher en tête des points de contact du support
+      mail: mailto:support@nfluent.io
+      phone: ""
+      telegram: "https://t.me/+S2pSVLljMEVjN2Jk"    #Le lien d'invitation telegram s'obtient dans le menu "Gérer le groupe" de l'application Telegram
+
+
+  properties:                 #Liste des propriétés montrées au validateur à la validation du billet
     - "Edition1"
-    - "Edition2"
-    - "Edition3"
-    - "Edition4"
-    - "Edition5"
     - "Last use"
 
   #Lorsque le validateur appui sur validation du billet l'API de action_api est appelé
@@ -77,14 +114,14 @@ validate:
         label: Attribuer 1 pass
         n_pass: 1               #nombre de passe à distribuer
         collections:            #limiter l'action à certaines collections
-          - "*"
+          - "PASS The Private Island Club"
+          - "BILLET The Private Island Club"
+          - "PASS VIP"
+          - "BILLET VIP"
+          - "PASS Festival"
+          - "BILLET Festival"
 
-      - api : $nfluent_server$/api/action_calvi/?nb_pass=2
-        label: Attribuer 2 pass
-        n_pass: 2
-        collections:
-          - "*"
-
+    #Cette section dédiée à la sécurité regroupe certains points permettant de renforcer la sécurité des APIs
     security:
       secret: "dudule12"        #secret passée en paramètre des APIs
       ip_whitelist:             #liste des adresses IP pouvant appeler l'API
@@ -92,56 +129,89 @@ validate:
 
   method:                     #Methode à utiliser pour la mise a jour
     update_token: True        #Indique que le NFT va être mise a jour à chaque modification des metadata
-    update_authority: paul    #Compte utilisé pour la mise a jour des NFT (ce compte doit être présent sur le serveur)
+    update_authority: nminer  #Compte utilisé pour la mise a jour des NFT (ce compte doit être présent sur le serveur)
     storage: github           #plateformes disponibles: IPFS, IPFS via infura, NFTStorage
-    repository: test2         #Répertoire utilisé pour stocker les métadataoffchain
+    repository: CalviOnTheRocks2022         #Répertoire utilisé pour stocker les métadata offchain après mise a jour
 
 
   #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
   filters:
     mint_authority: ''
 
-    collections:
-      - "La Citadella"
-      - "A Madonna Di A Sierra"
+    collections:                #Liste des collections éligible à la validation
+      - "PASS The Private Island Club"
+      - "BILLET The Private Island Club"
+      - "PASS VIP"
+      - "BILLET VIP"
+      - "PASS Festival"
+      - "BILLET Festival"
 
     symbol: ''      #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
 
 
 
+#Fonctionnement de la section dispenser ____________________________________________________________________________________________________________________________
+#Section lié à la distribution nominative de NFT
+dispenser:
+  visible: False
+  miner: paul                                       #mineur en charge de la création des tokens
+  application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
+
+  collections:                                      #Liste des collections concernée par la distribution
+    - name: "BILLET Festival"
+      limit: 5                                      #Maximum de NFT distribuable par collection
 
 
 
-
+#Fonctionnement de la section lottery ________________________________________________________________________________________________________________________________
 #Section destinée la distribution de NFT gratuitement
 lottery:
-  visible: True
+  visible: False     #Rends la section visible ou pas en production
+  miner: paul
 
-  redirections:
-    winner: "Bravo vous avez un nouveau NFT, vous pouvez fermer cette fenêtre"
-    looser: "Retentez votre chance"
+  #Ensemble d'attribues pour la présentation de l'écran
+  screen:
+    background_style: {"background-color":"#494975FF","font-weight":"lighter","color":"white","height":"100vh","text-align":"center"}           #Style appliqué au fond de l'écran
+    qrcode_size: 80%                             #taille du qrcode
+    visual_size: 80%                             #taille du visuel
+    title: "Gagnez des NFTs exclusifs"             #titre en haut de la fenêtre
+    bottom_title: "Calvi On The Rocks"              #titre en bas de la fenêtre
+    title_style: {"font-size":"x-large","margin":"10px"}   #style du titre
+    showVisual: True                        #Affiche le visuel
+
+
+  end_process:
+    winner:
+      message: "Bravo vous avez un nouveau NFT, vous pouvez fermer cette fenêtre" #Message affiché après l'obtention du NFT
+      redirection: "https://www.calviontherocks.com/fr"
+    looser:
+      message: "Retentez votre chance"                                            #Messge affiché si l'obtention du NFT à échoué
+      redirection: "https://www.calviontherocks.com/fr"
 
   application: "$nfluent_appli$/contest"
 
-  collections:        #Liste des collections concernées par la distribution gratuite
-    - "A Madonna Di A Sierra"
+  collections: #Définie les limites sur le nombre de nft miner
+    - name: "A Madonna Di A Sierra"
+      limit: 50
 
-  limits: #Définie les limites sur le nombre de nft miner
-    collections:
-      - name: "A Madonna Di A Sierra"
-        total: 5
+    - name: "La Citadella"
+      limit: 50
 
-      - name: "La Citadella"
-        total: 5
+  limits:     #définis les quotas de minages toutes collections confondus
+    by_day: 50
+    by_month: 50
+    by_year: 50
 
-    total:
-      by_day: 5
-      by_month: 5
-      by_year: 5
+  payment:          #Section désignant le réceptionnaire des payment via google pay : https://www.npmjs.com/package/@google-pay/button-angular
+    merchantId: "BCR2DN4TYD4Z5XCR"
+    merchantName: "NFluenT"
+    currencyCode: "EUR"
+    countryCode: "FR"
 
 
-  showVisual: True    #Affiche le visuel
+
+
   duration: 100        #durée en seconde d'affichage des NFTs
 
   period:

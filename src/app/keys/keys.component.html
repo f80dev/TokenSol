@@ -18,35 +18,35 @@
     Ajouter
   </button>
 
+  <app-upload-file extensions=".key,.txt"
+                   style="margin:10px;"
+                   (uploaded)="onuploaded_key_file($event)">Charger les fichiers de clé
+  </app-upload-file>
+
   <br><br>
   <h2>
-    Liste des clés disponibles sur le serveur
+    Liste des clés disponibles sur le serveur pour le {{network.network}}
     <mat-icon (click)="refresh()">refresh</mat-icon>
 
   </h2>
 
 
   <table>
-    <tr>
+    <tr style="font-style: italic;font-size: large">
       <th>Alias</th>
       <th>Public Key</th>
-      <th></th>
       <th></th>
       <th></th>
       <th>Solde</th>
     </tr>
     <tr *ngFor="let key of keys">
       <td>
-        <strong>{{key.name}}</strong>
+        <a [href]="key.explorer" target="_blank"><strong>{{key.name}}</strong></a>
       </td>
       <td style="font-size: small;">
         {{key.pubkey}}
       </td>
-      <td>
-        <button type="button" mat-raised-button mat-button (click)="sel_key(key.name)">
-          Sélectionner
-        </button>
-      </td>
+
       <td>
         <button type="button" mat-raised-button mat-button (click)="del_key(key.name)">
           Supprimer

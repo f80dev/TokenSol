@@ -5,21 +5,33 @@
     <title>Votre nouveau NFT</title>
 </head>
 <body>
-    Bonjour,<br>
+    <br>Bonjour,<br><br>
 
-    <p style="margin-left:10px">
-        Vous disposez maintenant d'un portefeuil sur la blockchaine Elrond
+      Vous êtes le propriétaire du NFT '{{nft_name}}' stocké sur la blockchaine <a href="https://elrond.com">Elrond</a>
 
-        Le NFT {{nft_name}} a été transférer.
-        Retrouver le dans votre nouveau wallet sur {{wallet_address}}
+      Retrouver le dans votre wallet grâce à l'application <a href="https://maiar.com/">Maiar</a> disponible sur<br>
+      <ul>
+        <li><a href="https://play.google.com/store/apps/details?id=com.elrond.maiar.wallet&hl=en&gl=US">Android</a></li>
+        <li><a href="https://apps.apple.com/us/app/maiar/id1519405832">iPhone</a></li>
+        <li><a href="{{url_wallet}}/recover">votre navigateur web</a></li>
+      </ul><br>
 
-        Vous trouvez ci-joint votre signature nécéssaire y accèder de façon absolument sécurisée.
-        Ce fichier est crypté et doit rester en lieu sûr. Vous ne devez pas le partager.<br><br>
+        En utilisant la suite des mots ci-dessous pour créer le wallet: <br>
+        <div style="text-align:center;color:red;padding:5px;margin:5px;width:80%;margin-left:10%;background-color: lightgray;font-size: large;border-radius: 8px;">{{words}}</div><br>
 
-        Vous pouvez également utilisé la suite des mots suivante: <br>
-      <span style="font-size: medium;color:red">{{words}}</span>
+        ou en flashant ce QRcode depuis l'application Maiar lorsque celle ci le propose.<br>
+        <img src="{{qrcode}}" style="width: 250px">
+        <br>
 
-    </p>
+      Pour garantir une sécurité maximum sur votre wallet,
+      recopiez la suite des mots ci-dessus sur un support papier et effacez ce mail après l'installation du wallet sur votre smartphone.<br>
+
+
+
+<!--        Vous pouvez également accèder à votre wallet, par le web en utilisant <a href="{{url_wallet}}/unlock/pem">ce lien</a> et le fichier ci-joint pour vous connecter.-->
+<!--        Ce fichier doit rester en lieu sûr. Vous ne devez pas le partager.<br><br>-->
+
+
 
     {{signature}}
 

@@ -73,7 +73,6 @@
                   (click)="add_serial(show_addtext)">
             Série numérique
           </button>
-          &nbsp;&nbsp;
           <mat-checkbox [(ngModel)]="usePalette" *ngIf="sel_colors.length>0">Utiliser la palette sélectionnée</mat-checkbox>
 
           <br>
@@ -192,6 +191,12 @@
             <mat-icon>notes</mat-icon>
           </button>
 
+          <button style="width: fit-content" mat-icon-button mat-button
+                  title="Inclure du texte"
+                  (click)="apply_filter(layer)">
+            <mat-icon>filter</mat-icon>
+          </button>
+
           <br>
 
           <button style="width: fit-content" mat-icon-button mat-button
@@ -284,7 +289,7 @@
     </button>
 
     <mat-form-field appearance="fill" style="max-width: 200px">
-      <mat-label>Nom des fichiers</mat-label>
+      <mat-label>Nom des fichiers téléchargés</mat-label>
       <input matInput type="text" [(ngModel)]="filename_format" >
     </mat-form-field>
 
@@ -328,38 +333,50 @@
 
     <table>
       <tr>
+        <th>Charger une configuration</th>
+        <th>Enregistrer une configuration</th>
+      </tr>
+      <tr>
         <td>
-          Charger une configuration:<br>
-
           <app-upload-file (uploaded)="on_upload_config($event)"
                            title="Chargée une configuration depuis votre ordinateur"
                            extensions=".yaml">
-            Depuis l'ordinateur
+            Depuis votre ordinateur
           </app-upload-file>
-
+          <br>
 
           <mat-form-field style="fontsize:small">
-            <mat-label>Configuration disponibles</mat-label>
-            <mat-select [(value)]="sel_config" (selectionChange)="load_config(sel_config)">
+            <mat-label>Depuis le serveur</mat-label>
+            <mat-select [(value)]="sel_config">
               <mat-option *ngFor="let config of configs" [value]="config">
                 {{config}}
               </mat-option>
             </mat-select>
           </mat-form-field>
 
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <button type="button" mat-raised-button mat-button
-                  (click)="save_config()">
-            Enregistrer la configuration
+          <button type="button" mat-raised-button mat-button (click)="load_config(sel_config)">
+            Charger
           </button>
 
+          <button type="button" mat-raised-button mat-button (click)="del_config(sel_config)">
+           Supprimer
+          </button>
+
+
+        </td>
+
+        <td>
           <mat-form-field appearance="fill" style="max-width: 200px">
             <mat-label>Nom de la configuration</mat-label>
             <input matInput type="text" [(ngModel)]="config_name" >
           </mat-form-field>
+          <button type="button" mat-raised-button mat-button
+                  (click)="save_config()">
+            Enregistrer
+          </button>
+        </td>
+        <td>
+          <mat-checkbox [(ngModel)]="config_with_image">Inclure les images</mat-checkbox>
         </td>
       </tr>
     </table>

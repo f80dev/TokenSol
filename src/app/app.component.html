@@ -7,24 +7,25 @@
       <span style="font-size: xx-small" *ngIf="user.connected()">
         {{user.addr}}
       </span>
-      <span *ngIf="!user.connected()">{{title}} <small>v{{version}}</small></span>
+
+      <div style="line-height: 90%" *ngIf="!user.connected()">
+        {{title}}<br>
+        <small>v{{version}}</small>
+      </div>
+
     </mat-toolbar>
     <mat-nav-list>
-      <a mat-list-item [routerLink]="'validate'" *ngIf="user.hasPerm('validate')">Contrôle d'acces</a>
-      <a mat-list-item [routerLink]="'buy'" *ngIf="user.hasPerm('buy')">Achat de NFT</a>
-      <a mat-list-item [routerLink]="'creator'" *ngIf="user.hasPerm('creator')">Générateur de collection</a>
-      <a mat-list-item [routerLink]="'reload'" *ngIf="user.hasPerm('reload') || network_service.network.indexOf('devnet')>-1">Rechargement</a>
-      <a mat-list-item [routerLink]="'keys'" *ngIf="user.hasPerm('keys')">Gestion des clés</a>
-      <a mat-list-item [routerLink]="'mint'" *ngIf="user.hasPerm('mint')">Miner</a>
-      <a mat-list-item [routerLink]="'validate'" >Validate</a>
-      <a mat-list-item [routerLink]="'build'" >Gestion des opérations</a>
-      <a mat-list-item [routerLink]="'manage'" *ngIf="user.hasPerm('manage')">Gestion des NFTs</a>
-      <a mat-list-item [routerLink]="'wallet'" *ngIf="user.hasPerm('wallet')">Mes NFTs</a>
-      <a mat-list-item (click)="login()" *ngIf="!user.connected()">Login</a>
-      <a mat-list-item (click)="logout()" *ngIf="user.connected()">Logout</a>
+      <a mat-list-item [routerLink]="'creator'">Générateur de collection</a>
+      <a mat-list-item [routerLink]="'reload'">Rechargement</a>
+      <a mat-list-item [routerLink]="'keys'">Gestion des clés</a>
+      <a mat-list-item [routerLink]="'mint'">Miner</a>
+      <a mat-list-item [routerLink]="'build'">Gestion des opérations</a>
+      <a mat-list-item [routerLink]="'manage'">Gestion des NFTs</a>
+      <a mat-list-item [routerLink]="'wallet'">Mes NFTs</a>
       <a mat-list-item [routerLink]="'admin'">Administrateur</a>
-      <a mat-list-item [routerLink]="'help'" *ngIf="user.hasPerm('help')">Aide</a>
-      <a mat-list-item [routerLink]="'about'" *ngIf="user.hasPerm('about')">A propros</a>
+      <a mat-list-item [routerLink]="'help'">Aide</a>
+      <a mat-list-item [routerLink]="'faqs'">Questions Fréquentes</a>
+      <a mat-list-item [routerLink]="'about'">A propros</a>
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>
@@ -37,8 +38,6 @@
         <mat-icon>menu</mat-icon>
       </button>
 
-
-      &nbsp;
       <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;">
         <mat-spinner style="display: inline-block;" color="warn" diameter="20"></mat-spinner>&nbsp;{{network_service.waiting}}
       </div>
@@ -52,7 +51,6 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      &nbsp;&nbsp;
 
       <app-selectkey [keys]="network_service.keys" fontsize="10px" (refresh)="this.refresh()">
         Signature
@@ -78,4 +76,5 @@
     <router-outlet></router-outlet>
   </mat-sidenav-content>
 </mat-sidenav-container>
+
 

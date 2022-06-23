@@ -61,7 +61,7 @@ RUN pip3 -v install numpy
 RUN pip3 -v install svglib
 RUN pip3 -v install pycairo
 RUN pip3 -v install imageio
-
+RUN pip3 -v install bip_utils
 
 WORKDIR /
 RUN mkdir Solana
@@ -88,7 +88,9 @@ COPY *.html $APP_HOME
 COPY ./Solana/*.py $APP_HOME/Solana/
 COPY ./Secret/*.py $APP_HOME/Secret/
 COPY ./Elrond/*.py $APP_HOME/Elrond/
+
 COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
+COPY ./Elrond/PEM/*.json $APP_HOME/Elrond/PEM/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
 COPY ./Configs/*.yaml $APP_HOME/Configs/

@@ -1,6 +1,7 @@
 import hmac
 import time
 
+import requests
 from requests import Request, Session
 
 from Tools import log
@@ -8,13 +9,15 @@ from settings import FTX_API_KEY, FTX_API_SECRET
 
 
 class FTX:
-  def __init__(self, endpoint="https://ftx.us/api"):
+  def __init__(self, endpoint="https://ftx.us/api",api_key=FTX_API_KEY,secret_key=FTX_API_SECRET):
     self.endpoint = endpoint + "/"
     self.session=Session()
+    self.api_key=api_key
+    self.secret_key=secret_key
 
   def api(self, service, method="GET", timeout=0):
     """
-    voir
+    voir https://docs.ftx.us/?python#authentication
     :param service:
     :param method:
     :return:
@@ -27,20 +30,21 @@ class FTX:
     request = Request(method, url)
     prepared = request.prepare()
 
-    signature_payload = f'{ts}{prepared.method}{prepared.path_url}'
-    if prepared.body:
-      signature_payload += prepared.body
+    s=prepared.path_url[prepared.path_url.rindex("/"):]
+    signature_payload = f'{ts}{prepared.method}{s}'
+    if prepared.body: signature_payload += prepared.body
     signature_payload = signature_payload.encode()
 
-    signature = hmac.new(FTX_API_SECRET.encode(), signature_payload, 'sha256').hexdigest()
+    signature = hmac.new(self.secret_key.encode(), signature_payload, 'sha256').hexdigest()
 
-    prepared.headers['FTX-KEY'] = FTX_API_KEY
-    prepared.headers['FTX-SIGN'] = signature
-    prepared.headers['FTX-TS'] = str(ts)
+    prepared.headers[f'FTX-KEY'] = self.api_key
+    prepared.headers[f'FTX-SIGN'] = signature
+    prepared.headers[f'FTX-TS'] = str(ts)
 
-    resp = self.session.send(prepared)
+    resp=requests.get(url,headers=prepared.headers)
 
     return resp
+
 
   def collections(self, filter: str = ""):
     resp = self.api("nft/collections", timeout=10)
@@ -94,3 +98,11 @@ class FTX:
           rc.append(new_nft)
 
     return {"status_code":200,"results":rc}
+
+
+  def get_nfts_balances(self):
+    rc=self.api("nft/balances")
+    if rc.status_code==401:
+      return []
+    else:
+      return rc.result

@@ -27,7 +27,9 @@ class Infura:
     response = requests.post('https://ipfs.infura.io:5001/api/v0/add',files={"file":data},auth=(INFURA_PROJECT_ID, INFURA_PROJECT_SECRET))
     #response = requests.post('https://ipfs.infura.io:5001/api/v0/put',body,auth=(INFURA_PROJECT_ID, INFURA_PROJECT_SECRET))
 
-    return response.json()["Hash"]
+    rc=response.json()
+    rc["url"]="https://ipfs.io/ipfs/"+rc["Hash"]
+    return rc
 
 
 

@@ -10,3 +10,16 @@ table,tr {
 td {
   text-align: left;
 }
+
+mat-icon {
+  font-size: small;
+}
+
+mat-expansion-panel {
+  margin: 10px;
+}
+
+mat-expansion-panel-header {
+  color: blueviolet;
+  font-weight: bold;
+}

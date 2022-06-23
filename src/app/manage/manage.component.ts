@@ -91,6 +91,8 @@ export class ManageComponent implements OnInit {
             if(nft.mint && nft.mint.length>0)
               this.nfts.push(nft);
           }
+
+          this.nfts.sort((a:Token, b:Token) => (a.splTokenInfo!.amount < b.splTokenInfo!.amount) ? 1 : -1)
         }).catch(err=>{this.network.wait("");showError(this,err);});
       }
     }

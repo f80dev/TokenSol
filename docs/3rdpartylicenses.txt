@@ -95,6 +95,9 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
+@google-pay/button-angular
+Apache-2.0
+
 @solana/buffer-layout
 MIT
 The MIT License (MIT)
@@ -1700,6 +1703,9 @@ OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 
 minimalistic-crypto-utils
+MIT
+
+ng-navigator-share
 MIT
 
 ngx-color-picker

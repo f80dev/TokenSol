@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import {PERMS} from "../definitions";
 import {SolWalletsService, Wallet} from "angular-sol-wallets";
 import {HttpClient} from "@angular/common/http";
+import {Router} from "@angular/router";
+import {environment} from "../environments/environment";
+import {$$} from "../tools";
 
 
 
@@ -10,42 +12,52 @@ import {HttpClient} from "@angular/common/http";
 })
 export class UserService {
   addr: string | undefined;
-  perms: string[]=PERMS["anonymous"];
+  profil={
+    routes:["/help","/about","/"],
+    perms:["reload"],
+    email:"",
+    alias:"anonymous"
+  };
+
   private _wallet: Wallet | undefined;
   amount: number=0;
 
   constructor(
     private solWalletS : SolWalletsService,
-    private httpClient : HttpClient
+    private httpClient : HttpClient,
+    public router:Router
   ) {
   }
 
 
-  init(wallet:Wallet){
-    this._wallet=wallet;
-    this.addr=wallet.publicKey?.toBase58();
-    if(Object.keys(PERMS).indexOf(<string>this.addr)>-1) {
-      this.perms = PERMS[<string>this.addr];
-    } else {
-      this.perms=PERMS['connected'];
-    }
+  init(wallet:Wallet,route=""){
+    return new Promise((resolve, reject) => {
+      this._wallet=wallet;
+      this.addr=wallet.publicKey?.toBase58();
+      this.httpClient.get(environment.server+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
+        this.profil = r;
+        resolve(r);
+      },(err)=>{
+        $$("!probleme de récupération des permissions")
+        reject(err);
+      })
+    });
+
   }
 
 
 
   connected() {
     return this.addr && this.addr.length>0;
-    this.perms=PERMS['connected'];
   }
 
 
   logout() {
     this.addr="";
-    this.perms=PERMS['anonymous'];
   }
 
   hasPerm(perm: string) {
-    return this.perms.indexOf(perm.toLowerCase())>-1;
+    return this.profil.perms.indexOf(perm.toLowerCase())>-1;
   }
 
 
@@ -59,14 +71,23 @@ export class UserService {
   }
 
 
-  connect(func:Function | null){
-    this.solWalletS.connect().then( (wallet:Wallet) => {
-      this.init(wallet);
-      console.log("Wallet connected successfully with this address:", wallet.publicKey);
-      if(func)func();
-    }).catch(err => {
-      console.log("Error connecting wallet", err );
-    })
+  connect(requis:string=""){
+    return new Promise((resolve, reject) => {
+
+      this.solWalletS.connect().then( (wallet:Wallet) => {
+        this.init(wallet).then((profil:any)=>{
+          if(requis.length>0){
+            if(profil.perms.indexOf("*")==-1 && profil.perms.indexOf(requis)==-1)
+              this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
+          }
+          resolve(profil);
+        }).catch(()=>{reject();});
+      }).catch(err => {
+        console.log("Error connecting wallet", err );
+        this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
+        reject(err);
+      })
+    });
   }
 
 

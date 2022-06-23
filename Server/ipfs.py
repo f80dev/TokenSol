@@ -12,7 +12,7 @@ from multiaddr import Multiaddr
 class IPFS:
     client=None
 
-    def __init__(self, addr:str,port:int):
+    def __init__(self, addr:str):
         self.client=Client(Multiaddr(addr))
 
 

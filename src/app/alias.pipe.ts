@@ -14,12 +14,14 @@ export class AliasPipe implements PipeTransform {
 
   transform(value: string | undefined, ...args: unknown[]): string {
     if(!value)return "";
-    if(typeof value=="string")value=value.toLowerCase();
+    let comp_value=value;
+    if(typeof value=="string")
+      comp_value=value.toLowerCase();
     for(let k of this.network.keys){
       if(args.length>0 && args[0]=="pubkey"){
-        if(k.name.toLowerCase()==value)return k.pubkey;
+        if(k.name.toLowerCase()==comp_value)return k.pubkey;
       }else{
-        if(k.pubkey.toLowerCase()==value)return k.name;
+        if(k.pubkey.toLowerCase()==comp_value)return k.name;
       }
     }
     return value;

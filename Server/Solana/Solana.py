@@ -2,13 +2,13 @@ import json
 import os
 import platform
 import subprocess
-from base64 import b64decode
 from datetime import datetime
 from os import listdir
 from os.path import exists
 from time import sleep
 
-import requests
+from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages, Bip39SeedGenerator, SolAddrEncoder, Bip44, \
+  Bip44Coins, Bip44Changes
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 
@@ -40,7 +40,7 @@ class Solana:
 
 
 
-  def exec(self,command:str,param:str="",account:str="",keyfile="",data=None,sign=False,delay=1.0,owner="",private_key=None):
+  def exec(self,command:str,param:str="",account:str="",keyfile="",data=None,sign=False,delay=1.0,owner="",private_key=None,timeout=100000):
     if len(owner)>0:owner=self.find_address_from_json(owner)
 
     if not private_key is None:
@@ -77,7 +77,7 @@ class Solana:
     if data: cmd=cmd+" --nft-data-file "+file_to_mint+(" --sign" if sign else "")
 
     log(cmd)
-    mes=subprocess.run(cmd,capture_output=True,timeout=10000,shell=True)
+    mes=subprocess.run(cmd,capture_output=True,timeout=timeout,shell=True)
     sleep(delay)
 
 
@@ -135,10 +135,11 @@ class Solana:
       if f.endswith(".json"):
         txt=open(SOLANA_KEY_DIR+f,"r").readlines()
         keypair=self.toKeypair(txt[0])
-
+        pubkey=str(keypair.public_key.to_base58(),"utf8")
         key={
           "name":f.replace(".json",""),
-          "pubkey":str(keypair.public_key.to_base58(),"utf8"),
+          "explorer":self.getExplorer(pubkey),
+          "pubkey":pubkey,
           "unity":"SOL"
         }
 
@@ -171,6 +172,7 @@ class Solana:
           return k[field]
         else:
           return k
+    log("l'alias "+name+" est introuvable sur le serveur !")
     return None
 
   #http://127.0.0.1:4242/api/nfts/
@@ -229,6 +231,10 @@ class Solana:
 
     if "properties" in _data: _data["creators"]=_data["properties"]["creators"]
     for c in _data["creators"]:
+      if c["address"] is None:
+        log("Une adresse des créateurs est vide")
+        return False
+
       if len(c["address"])<20: c["address"]=self.find_address_from_json(c["address"])
       c["verified"]=False
 
@@ -240,6 +246,8 @@ class Solana:
     rc["unity"]="SOL"
     rc["uri"]=_data["uri"]
     return rc
+
+
 
   def get_infos(self, account_addr):
     """
@@ -263,4 +271,21 @@ class Solana:
     for creator in creators:
       alias=self.find_json_from_address(creator)
       self.exec("sign one",keyfile=alias,account=mintAddress)
+
+
+
+  def create_account(self,wallet_name="solflare"):
+    mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromWordsNumber(Bip39WordsNum.WORDS_NUM_12)
+    #la clé privée est [182,63,142,58,126,108,186,179,192,119,0,192,222,214,166,138,255,104,34,15,180,199,192,203,245,165,49,129,70,240,30,60,207,163,155,203,54,141,157,210,87,64,54,20,70,201,221,50,235,168,20,177,28,84,203,87,192,116,237,226,23,90,55,92]
+    #mnemonic= "interest faculty level puppy lottery will bounce mother portion put addict heavy"
+    seed_bytes = Bip39SeedGenerator(mnemonic, Bip39Languages.ENGLISH).Generate()
+    bip44_mst_ctx =Bip44.FromSeed(seed_bytes, Bip44Coins.SOLANA)
+    bip44_acc_ctx  = bip44_mst_ctx.Purpose().Coin().Account(0)
+    if wallet_name=="solflare": bip44_acc_ctx = bip44_acc_ctx.Change(Bip44Changes.CHAIN_EXT)
+    integers=[int(x) for x in bytes(bip44_acc_ctx.PrivateKey().Raw())]+[int(x) for x in bytes(bip44_acc_ctx.PublicKey().RawCompressed())]
+    return mnemonic,bip44_acc_ctx.PublicKey().ToAddress(),bytes(bip44_acc_ctx.PrivateKey().Raw()).hex(),str(integers)
+
+  def getExplorer(self, addr):
+    return "https://solscan.io/account/"+addr+"?cluster="+self.network
+
 

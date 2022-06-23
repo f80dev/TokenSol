@@ -4,7 +4,7 @@ import {NetworkService} from "../network.service";
 import {Token} from "../nfts/nfts.component";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
-import {getExplorer, showError, showMessage} from "../../tools";
+import {detect_network, detect_type_network, getExplorer, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {SALT} from "../../definitions";
 
@@ -15,7 +15,6 @@ import {SALT} from "../../definitions";
 })
 export class ValidateComponent implements OnInit {
 
-  operation_name: string ="calvi2022";
   status:string="";
   query: string="";
   tokens:Token[]=[];
@@ -28,6 +27,7 @@ export class ValidateComponent implements OnInit {
   result_message: string = "";
   email: string="";
   last_action: any={};
+  show_warning_process:boolean =false;
 
   constructor(public routes:ActivatedRoute,
               public network:NetworkService,
@@ -36,33 +36,42 @@ export class ValidateComponent implements OnInit {
               public alias:AliasPipe
   ) { }
 
-  refresh(){
-    this.network.get_operations(this.operation_name).subscribe((ope:any)=>{
+  refresh(ope_id=""){
+    this.network.get_operations(ope_id).subscribe((ope:any)=>{
       this.operation=ope;
+      this.network.network=ope.network;
       if(this.user.length==0)this.update_access_code();
       setTimeout(()=>{this.update_token(this.query);},1500);
+    },(err)=>{
+      showError(this,"Impossible de récupérer le fichier d'opération");
     })
   }
 
 
   ngOnInit(): void {
-    this.operation_name=this.routes.snapshot.queryParamMap.get("operation") || this.routes.snapshot.queryParamMap.get("ope") || "";
     this.query=this.routes.snapshot.queryParamMap.get("q") || "";
+
     this.user=this.routes.snapshot.queryParamMap.get("user") || "";
     this.access_code=this.routes.snapshot.queryParamMap.get("access_code") || "";
 
-    if(this.operation_name=="")this._location.back();
-    this.refresh();
+    if(!this.routes.snapshot.queryParamMap.has("ope"))this._location.back();
+    this.refresh(this.routes.snapshot.queryParamMap.get("ope") || "");
   }
 
+
+
   search(query:string){
-    this.network.isValideToken("calvi2022",query).subscribe((r:any)=>{})
+    this.network.isValideToken(this.operation.id,query).subscribe((r:any)=>{})
   }
+
+
 
   update_model($event:any) {
     if($event.keyCode==13)
       this.update_token(this.query);
   }
+
+
 
   update_token(address:string){
     if(address.length==0 || this.operation.validate==null)return;
@@ -70,39 +79,24 @@ export class ValidateComponent implements OnInit {
     let addr=this.alias.transform(address,"pubkey");
     this.message="Recherche des NFTs";
 
-    //let filter={mintAuthority:this.alias.transform(this.operation.validate.filter.mintAuthority,"pubkey")};
     let filters=this.operation.validate.filters;
-
-    this.network.get_tokens_from("owner",addr,200,false).then((r:any[])=>{
-      this._location.replaceState("./validate/?q="+this.query+"&ope="+this.operation_name);
+    this.network.network=detect_network(address)+"-"+detect_type_network(this.operation.network);
+    this.network.get_tokens_from("owner",addr,200,false).then((r:Token[])=>{
+      this._location.replaceState("./validate/?q="+this.query+"&ope="+this.operation.id);
       for(let t of r){
-        if(t.metadataOffchain){
+        if(t.splTokenInfo?.amount!>0 && t.metadataOffchain){
           //Application des filtres contenu dans le fichier de configuration
           let filter_Ok=false;
           if(filters.collections){
             for(let filter_name of filters.collections){
-              if(filter_name=="*" || (t.metadataOffchain.hasOwnProperty("name") && t.metadataOffchain.name.indexOf(filter_name)>-1)){
+              if(filter_name=="*" || (t.metadataOffchain.hasOwnProperty("collection") && t.metadataOffchain.collection.name.indexOf(filter_name)>-1)){
                 filter_Ok=true;
                 break;
               }
             }
           }
           if(filter_Ok){
-            let prop=t.metadataOffchain.attributes;
-            let indexes=[]
-            let props=Object.assign([], this.operation.validate.properties);;
-            for(let p of this.operation.validate.properties){
-              let s=new Buffer(p, 'binary').toString("utf8");
-              props.push(s);
-            }
-            for(var index=0;index<prop.length;index++){
-              if(props.indexOf(prop[index]["trait_type"])>-1)
-                indexes.push(index)
-            }
-            if(indexes.length>0){
-              this.tokens.push(t);
-              this.attributes_to_show.push(indexes)
-            }
+            this.tokens.push(t);
           }
         }
       }
@@ -111,7 +105,7 @@ export class ValidateComponent implements OnInit {
     },(err)=>{
       this.message="";
       showError(this,err);
-    })
+    });
   }
 
   onflash($event: any) {
@@ -172,4 +166,24 @@ export class ValidateComponent implements OnInit {
     this.tokens=[];
     this.query="";
   }
+
+  open_token(t: Token) {
+    open("https://solscan.io/token/"+t.address,"open");
+  }
+
+  show_attribute(t: Token, idx: string) {
+    let k=0;
+    for(let a of t.metadataOffchain.attributes)
+      if(a.trait_type==idx){
+        break;
+      } else {
+        k=k+1;
+      }
+    if(t.metadataOffchain.attributes[k] && t.metadataOffchain.attributes[k].trait_type==idx){
+      return t.metadataOffchain.attributes[k].value;
+    }
+    return "";
+  }
+
+
 }

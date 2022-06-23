@@ -14,7 +14,7 @@ export interface Creator {
 export interface SplTokenInfo {
   mint:string
   owner:string
-  amount: string
+  amount: number
   state:number
   address:string
   isFrozen:boolean
@@ -67,6 +67,7 @@ export interface Search {
 }
 export interface Token {
   mint:string,
+  network: string
   address: string,
   splTokenInfo : SplTokenInfo | undefined
   splMintInfo : SplMintInfo | undefined,

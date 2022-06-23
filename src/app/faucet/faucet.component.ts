@@ -22,7 +22,7 @@ export class FaucetComponent implements OnInit {
 
   ngOnInit(): void {
     if(this.network.isSolana())
-      this.user.connect(()=>{this.refresh();});
+      this.user.connect().then((addr)=>{this.refresh();});
   }
 
   refresh(){
@@ -32,8 +32,12 @@ export class FaucetComponent implements OnInit {
   reload() {
     if(this.network.isElrond())
       open("https://r3d4.fr/elrond/devnet/index.php","_blank")
-    else
-      this.network.airdrop(this.user.wallet.publicKey!);
+    else{
+      this.network.airdrop(this.user.wallet.publicKey!).then(()=>{
+        this.refresh();
+      });
+    }
+
   }
 
 

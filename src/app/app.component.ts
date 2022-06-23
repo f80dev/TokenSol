@@ -1,5 +1,5 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import { Component, OnInit} from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -40,7 +40,6 @@ export class AppComponent implements OnInit {
     this.user.disconnect();
     setTimeout(()=>{
       this.toolbar_visible=this.routes.snapshot.queryParamMap.get('toolbar') || "true";
-      this.network_service.network=this.routes.snapshot.queryParamMap.get("network") || "solana-devnet";
       this.update_network();
     },500);
   }
@@ -52,7 +51,7 @@ export class AppComponent implements OnInit {
 
 
   login() {
-    this.user.connect(()=>{
+    this.user.connect().then((addr)=>{
       this.router.navigate(["wallet"]);
     })
   }

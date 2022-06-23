@@ -1,4 +1,4 @@
-import {Component, NgModule} from '@angular/core';
+import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from "@angular/router";
 
 import {HelpComponent} from "./help/help.component";
@@ -15,16 +15,20 @@ import {DealermachineComponent} from "./dealermachine/dealermachine.component";
 import {ContestComponent} from "./contest/contest.component";
 import {BuildOpeComponent} from "./build-ope/build-ope.component";
 import {AdminComponent} from "./admin/admin.component";
+import {FaqsComponent} from "./faqs/faqs.component";
+import {DispenserComponent} from "./dispenser/dispenser.component";
 
 
 const routes: Routes = [
   { path: 'help', component: HelpComponent },
   { path: 'about', component: AboutComponent },
   { path: 'reload', component: FaucetComponent },
+  { path: 'faqs', component: FaqsComponent },
   { path: 'mint', component: MintComponent },
   { path: 'keys', component: KeysComponent },
   { path: 'admin', component: AdminComponent },
   { path: 'contest', component: ContestComponent },
+  { path: 'dispenser', component: DispenserComponent },
   { path: 'creator', component: CreatorComponent },
   { path: 'manage', component: ManageComponent },
   { path: 'dealermachine', component:DealermachineComponent },

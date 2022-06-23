@@ -11,6 +11,7 @@ import {showMessage} from "../../tools";
 export class DbtableComponent implements OnInit {
 
   @Input("table") table:string="";
+  @Input("max_len") max_len=20;
   @Input("excludes") excludes:string="";
   rows:any[]=[];
   cols: string[]=[];
@@ -38,5 +39,16 @@ export class DbtableComponent implements OnInit {
     this.httpClient.delete(environment.server+"/api/tables/"+this.table).subscribe(()=>{
       this.refresh();
     })
+  }
+
+  truncate(txt:string) {
+    if(txt && typeof txt=="string"){
+      if(txt.length<this.max_len){
+        return txt;
+      } else {
+        return txt.substring(0,this.max_len)+"...";
+      }
+    } else
+      return txt;
   }
 }

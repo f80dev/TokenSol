@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
-  version: "0.1.12",
+  version: "0.1.19",
   server:"https://server.f80lab.com:4242",
-  appname:"TokenSol",
-  appli:"https://tokensol.nfluent.io"
+  appname:"Token Factory",
+  appli:"https://tokenfactory.nfluent.io"
 };

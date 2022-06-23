@@ -1,5 +1,7 @@
 <div class="mainform">
 
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Qu'est-ce qu'une opération ?</mat-expansion-panel-header>
     une <strong>opération</strong> est un fichier regroupant
     <ul>
       <li>la liste des wallets utilisés pour le minage et comme créateur des nfts </li>
@@ -8,112 +10,253 @@
       <li>le processus de génération automatique des NFTs (en construction)</li>
       <li>le processus de distribution 'libre-service' des NFTs (en construction)</li>
     </ul>
+  </mat-expansion-panel>
 
-  <table>
-    <tr>
-    <td>
-      Créer une nouvelle opération<br>
-      <a href="./assets/new_operation.yaml" download>Télécharger le modèle</a>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Gestion des opérations</mat-expansion-panel-header>
+    <table>
+      <tr>
+        <td>
+          Créer une nouvelle opération<br>
+          <a href="./assets/new_operation.yaml" download>Télécharger le modèle</a>
 
-      </td>
-    <td>
-      Importer une opération<br>depuis votre poste<br>
-      <app-upload-file (uploaded)="upload_operation($event)"
-                       title="Ajouter une opération"
-                       style="margin: 10px"
-                       extensions=".yaml">
-        Importer
-      </app-upload-file>
-      <br>
-    </td>
-    <td>
-      <button type="button" mat-raised-button mat-button (click)="delete_ope()">
-        Supprimer
-      </button>
-    </td>
-    <td>
-      <mat-form-field appearance="fill" style="width:300px;" *ngIf="url_ope==''">
-        <mat-label>Sélectionner une opération hébergée sur le serveur</mat-label>
-        <mat-select [(value)]="sel_ope" (selectionChange)="refresh_ope($event)" >
-          <mat-option *ngFor="let ope of opes" [value]="ope">
-            {{ope.title}}
-          </mat-option>
-        </mat-select>
-        <mat-icon matSuffix (click)="sel_ope=null;">cancel</mat-icon>
-      </mat-form-field>
-      /
-      <mat-form-field appearance="fill" style="width:300px;">
-        <mat-label>Utiliser une operation depuis un lien web</mat-label>
-        <input matInput type="url" [(ngModel)]="url_ope" (ngModelChange)="update_url_ope($event)">
-        <mat-icon matSuffix (click)="url_ope=''">cancel</mat-icon>
-      </mat-form-field>
-    </td>
-  </tr></table>
+        </td>
+        <td>
+          Importer une opération<br>depuis votre poste<br>
+          <app-upload-file (uploaded)="upload_operation($event)"
+                           title="Ajouter une opération"
+                           style="margin: 10px"
+                           extensions=".yaml">
+            Importer
+          </app-upload-file>
+          <br>
+        </td>
+
+        <td>
+          <mat-form-field appearance="fill" style="width:300px;" *ngIf="url_ope==''">
+            <mat-label>Sélectionner une opération hébergée sur le serveur</mat-label>
+            <mat-select [(value)]="sel_ope" (selectionChange)="refresh_ope($event)" >
+              <mat-option *ngFor="let ope of opes" [value]="ope">
+                {{ope.title}}
+              </mat-option>
+            </mat-select>
+            <mat-icon matSuffix (click)="sel_ope=null;">cancel</mat-icon>
+          </mat-form-field>
+          /
+          <mat-form-field appearance="fill" style="width:300px;">
+            <mat-label>Utiliser une operation depuis un lien web</mat-label>
+            <input matInput type="url" [(ngModel)]="url_ope" (ngModelChange)="update_url_ope($event)">
+            <mat-icon matSuffix (click)="url_ope=''">cancel</mat-icon>
+          </mat-form-field>
+        </td>
+
+        <td>
+          <button type="button" mat-raised-button mat-button (click)="delete_ope()">
+            Supprimer
+          </button>
+          <button type="button" mat-raised-button mat-button (click)="download_ope()">
+            Télécharger
+          </button>
+          <button type="button" mat-raised-button mat-button (click)="edit_ope()">
+            Editer
+          </button>
+
+        </td>
+      </tr></table>
+
+  </mat-expansion-panel>
 
   <div *ngIf="sel_ope">
-    <h1>{{sel_ope.title}}</h1>
+    <div class="mat-display-3"  >{{sel_ope.title}}</div>
     <small>{{sel_ope.description}}</small>
 
-    <table style="line-height: 85%;">
+    <table style="line-height: 125%;">
       <tr>
-        <td>network:</td><td>{{sel_ope.network}}</td>
+        <td style="font-size: large;">
+          network: {{sel_ope.network}}<br>
+          version: {{sel_ope.version}}<br>
+          Storage: {{sel_ope.metadata_storage}}
+        </td>
       </tr>
-      <tr>
-        <td>version:</td><td>{{sel_ope.version}}</td>
-      </tr>
+
     </table>
 
-
-
-    <div *ngIf="sel_ope.lottery.visible" style="padding: 10px" class="mat-elevation-z4">
-      Loterie<br>
+    <div style="padding: 10px;text-align: left;" class="mat-elevation-z4">
+      Les NFTs disponible pour cette opérations<br>
       <table>
         <tr>
-          <td style="text-align: left;">
-            Page complète: <a [href]="sel_ope.lottery.application" target="same">{{sel_ope.lottery.application}}</a><br>
-            Iframe: {{sel_ope.lottery.iframe_code}}<br>
-            QRCode: {{sel_ope.lottery.image_code}}
-          </td>
+          <th>NFTs par collection</th>
         </tr>
-      </table>
-    </div>
-    <br>
-    <div *ngIf="sel_ope.validate.visible || url_ope.length>0" style="padding: 10px" class="mat-elevation-z4">
-      Validation
-      <table>
-        <tr style="vertical-align: top;">
-          <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
-            Propriétés visibles du validateurs:
-            <ul>
-              <li *ngFor="let prop of sel_ope.validate.properties">
-                {{prop}}
-              </li>
-            </ul>
-          </td>
-          <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
-            Liste des validateurs autorisés
-            <ul>
-              <li *ngFor="let user of sel_ope.validate.users">
-                <mat-icon (click)="send_mail(user)"
-                          style="cursor: pointer;font-size: medium;"
-                          [title]="'notifier '+user">notifications</mat-icon>
-                {{user}}
-              </li>
-            </ul>
-            <button type="button" mat-raised-button mat-button (click)="send_mail()">
-              Tous les notifier
-            </button>
-          </td>
-
+        <tr>
           <td>
-            Voir l'application de validation<br>
-            <a [href]="sel_ope.validate.application" target="_self">Ouvrir</a>
-            <br>
-            <a [href]="sel_ope.validate.application+'&toolbar=false'" target="_self">Sans menu</a>
+            <ul>
+              <li *ngFor="let k of collection_keys">
+                {{k}}: {{collections[k]}}
+              </li>
+            </ul>
           </td>
         </tr>
       </table>
     </div>
+
+
+
+      <mat-expansion-panel *ngIf="sel_ope.dispenser?.visible">
+        <mat-expansion-panel-header>Distribution</mat-expansion-panel-header>
+        <table>
+          <tr>
+            <th>Propriétés</th>
+            <th>Collections distribuables</th>
+          </tr>
+
+          <tr>
+            <td>
+              Mineur: {{sel_ope.dispenser?.miner}}<br>
+              Network: {{sel_ope.network}}
+            </td>
+            <td>
+              <ul>
+                <li *ngFor="let col of sel_ope.dispenser.collections">
+                  {{col.name}} < {{col.limit}}
+                </li>
+              </ul>
+            </td>
+            <td style="text-align: right;">
+              <button type="button" mat-raised-button mat-button color="primary"
+                      (click)="open_appli(url_dispenser_app,'distribuer')">
+                <mat-icon style="font-size: x-large;">start</mat-icon> Commencer
+              </button>
+
+              <br><br>
+
+              <mat-icon (click)="share_link(url_dispenser_app,'Distributeur pour '+sel_ope.title,'Ouvrir ce lien distribuer des NFTs')"
+                        style="cursor: pointer;font-size: large;"
+                        title="Partager l'outil">
+                share
+              </mat-icon>
+
+            </td>
+          </tr>
+        </table>
+      </mat-expansion-panel>
+
+
+      <mat-expansion-panel *ngIf="sel_ope.lottery?.visible">
+        <mat-expansion-panel-header>Loterie</mat-expansion-panel-header>
+        <table>
+          <tr>
+            <th>Propriété</th>
+            <th>Collections impliquées</th>
+            <th>Code à intégrer</th>
+          </tr>
+          <tr style="width: 100%;">
+            <td>
+              Mineur: {{sel_ope.lottery?.miner}}<br>
+              Network: {{sel_ope.network}}
+            </td>
+            <td>
+              <ul>
+                <li *ngFor="let col of sel_ope.lottery.collections">
+                  {{col.name}}
+                </li>
+              </ul>
+            </td>
+            <td style="text-align: left;">
+              Store : <a [href]="sel_ope.lottery.application" target="same">Ouvrir</a><br>
+              Iframe: <mat-icon [cdkCopyToClipboard]="sel_ope.lottery.iframe_code">build</mat-icon><br>
+              QRCode: <mat-icon [cdkCopyToClipboard]="sel_ope.lottery.image_code">build</mat-icon>
+            </td>
+            <td>
+            <span *ngFor="let col of collections_lottery">
+
+            </span>
+            </td>
+            <td style="text-align: right;">
+              <button type="button" mat-raised-button mat-button color="primary"
+                      (click)="open_appli(sel_ope.lottery.application,'_self')">
+                <mat-icon style="font-size: x-large;">start</mat-icon> Commencer
+              </button>
+
+              <br><br>
+
+              <mat-icon (click)="share_link(sel_ope.lottery.application,'Mode lotterie pour '+sel_ope.title,'Ouvrir ce lien pour initier la distribution')"
+                        style="cursor: pointer;font-size: large;"
+                        title="Partager l'outil">
+                share
+              </mat-icon>
+
+
+            </td>
+          </tr>
+        </table>
+      </mat-expansion-panel>
+
+
+      <mat-expansion-panel *ngIf="sel_ope.validate?.visible || url_ope.length>0">
+        <mat-expansion-panel-header>
+          Validation
+        </mat-expansion-panel-header>
+
+        <table>
+          <tr>
+            <th>Paramètres de la validation</th>
+            <th>Propriétés visibles du validateurs</th>
+            <th>Liste des validateurs autorisés</th>
+            <th>Collections à valider</th>
+
+          </tr>
+          <tr style="vertical-align: top;">
+            <td>
+              <strong>Update:</strong> {{sel_ope.validate.method.update_authority}}<br>
+              <strong>Storage:</strong> {{sel_ope.validate.method.storage}} / {{sel_ope.validate.method.repository}}
+            </td>
+            <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
+              <ul>
+                <li *ngFor="let prop of sel_ope.validate.properties">
+                  {{prop}}
+                </li>
+              </ul>
+            </td>
+            <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
+
+              <ul>
+                <li *ngFor="let user of sel_ope.validate.users">
+                  <mat-icon (click)="send_mail(user)"
+                            style="cursor: pointer;font-size: medium;"
+                            [title]="'notifier '+user">notifications</mat-icon>
+                  {{user}}
+                </li>
+              </ul>
+              <button type="button" mat-raised-button mat-button (click)="send_mail()">
+                Tous les notifier
+              </button>
+            </td>
+            <td>
+              <ul>
+                <li *ngFor="let col of sel_ope.validate.filters.collections">
+                  {{col}}
+                </li>
+              </ul>
+            </td>
+
+            <td style="text-align: right;">
+              <button type="button" mat-raised-button mat-button color="primary"
+                      (click)="open_appli(sel_ope.validate.application+'&toolbar=false','_self')">
+                <mat-icon style="font-size: x-large;">start</mat-icon> Commencer
+              </button>
+              <br><br>
+
+              <mat-icon (click)="share_link(sel_ope.validate.application+'&toolbar=false','validation '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')"
+                        style="cursor: pointer;font-size: large;"
+                        title="Partager l'outil">
+                share
+              </mat-icon>
+            </td>
+          </tr>
+        </table>
+      </mat-expansion-panel>
+
+
   </div>
 
 </div>
