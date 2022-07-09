@@ -36,7 +36,7 @@ class NFLUENT extends Module
     {
         $this->name = 'NFLUENT';
         $this->tab = 'administration';
-        $this->version = '1.0.3';
+        $this->version = '1.0.4';
         $this->author = 'NFLUENT';
         $this->need_instance = 1;
 
@@ -66,7 +66,7 @@ class NFLUENT extends Module
         return parent::install() &&
             $this->registerHook('header') &&
             $this->registerHook('backOfficeHeader') &&
-            $this->registerHook('actionOrderStatusUpdate') &&
+            $this->registerHook('actionPaymentConfirmation') &&
             $this->registerHook('actionOrderStatusPostUpdate');
     }
 
@@ -240,6 +240,30 @@ class NFLUENT extends Module
     }
 
 
+  public function api2($args){
+      $url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
+
+      $content = json_encode($args);
+
+      $curl = curl_init($url);
+      curl_setopt($curl, CURLOPT_HEADER, false);
+      curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($curl, CURLOPT_HTTPHEADER,array("Content-type: application/json"));
+      curl_setopt($curl, CURLOPT_POST, true);
+      curl_setopt($curl, CURLOPT_POSTFIELDS, $content);
+
+      $json_response = curl_exec($curl);
+
+      $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+      curl_close($curl);
+
+      return $response = json_decode($json_response, true);
+    }
+
+
+
+
 
   public function hookActionOrderStatusPostUpdate($params){
     $newOrderStatus = $params['newOrderStatus'];
@@ -257,7 +281,7 @@ class NFLUENT extends Module
       );
 
       Logger::AddLog("hookActionOrderStatusPostUpdate. argument=".print_r($args));
-      $this->api($args);
+      $this->api2($args);
     }
 
   }
@@ -267,8 +291,5 @@ class NFLUENT extends Module
   }
 
 
-    public function hookActionOrderStatusUpdate($param){
-      //$this->api($params);
-      //Logger::AddLog("hookActionOrderStatusUpdate. Data : ".print_r($param));
-    }
+
 }
