@@ -256,7 +256,7 @@ export class NetworkService {
         seller_fee_basis_points: t.royaltyFeeRate*100,
         issuer:t.issuer,
         attributes:l_attributes,
-        collection: {name: t.collection},
+        collection: {name: t.collection,family:""},
         name: t.name,
         description: t.description,
         image: t.imageUrl,
@@ -386,6 +386,17 @@ export class NetworkService {
     });
   }
 
+  installed_wallet(){
+    let rc=[];
+    // @ts-ignore
+    if(window.hasOwnProperty("phantom"))rc.push("phantom");
+    // @ts-ignore
+    if(window.hasOwnProperty("solflare"))rc.push("solflare");
+    // @ts-ignore
+    if(window.hasOwnProperty("elrondWallet"))rc.push("maiar");
+    return rc;
+  }
+
   wait(message: string) {
     this.waiting=message;
     setTimeout(()=>{this.waiting=""},10000);
@@ -441,9 +452,11 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/layers/?preview="+preview,  _l);
   }
 
-  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98) {
+  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98,data={}) {
+    let url=environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format=preview&limit="+limit+"&quality="+quality;
+    url=url+"&data="+btoa(JSON.stringify(data));
     return this.httpClient.get(
-      environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format=preview&limit="+limit+"&quality="+quality,
+      url,
       { headers: new HttpHeaders({ timeout: `${200000}` }) }
     );
   }
@@ -576,11 +589,28 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/apply_filter/",{layer:layer_name,filter:filter});
   }
 
-  get_tokens_for_dispenser(ope="",limit=1000) {
-    return this.httpClient.get(environment.server+"/api/get_tokens_for_dispenser/"+ope+"?limit="+limit);
+  get_tokens_to_send(ope="",section="dispenser", limit=1000) {
+    return this.httpClient.get(environment.server+"/api/get_tokens_to_send/"+ope+"?limit="+limit+"&section="+section);
   }
 
   get_nfts_from_operation(ope:string) {
     return this.httpClient.get(environment.server+"/api/nfts_from_operation/"+ope);
+  }
+
+  transfer_to(mint_addr: string, to_addr: string,owner:string) {
+    return this.httpClient.get(environment.server+"/api/transfer_to/"+mint_addr+"/"+to_addr+"/"+owner);
+  }
+
+  generate_svg(data:string) {
+    return this.httpClient.post(environment.server+"/api/generate_svg/",data);
+  }
+
+  // create_account(network: string, alias: string) {
+  //   return this.httpClient.get(environment.server+"/api/create_account/"+network+"/"+alias+"/");
+  // }
+  export_to_prestashop(id:string) {
+    return this.httpClient.get(environment.server+"/api/export_to_prestashop/?ope="+id);
+
+
   }
 }

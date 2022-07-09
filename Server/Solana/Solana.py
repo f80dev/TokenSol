@@ -16,17 +16,23 @@ import base58
 from solana.keypair import Keypair
 from solana.rpc.commitment import Confirmed
 from solana.rpc.types import TokenAccountOpts
-from spl.token.constants import TOKEN_PROGRAM_ID
 
-from Tools import log
+from solana.transaction import Transaction
+from spl.token.constants import TOKEN_PROGRAM_ID
+from spl.token.instructions import transfer,TransferParams
+
+from Tools import log, send_mail, open_html_file, get_qrcode
 
 SOLANA_KEY_DIR="./Solana/Keys/"
 METABOSS_DIR="./Solana/"
 
 class Solana:
+  alias=dict()
+
   def __init__(self,network="solana-devnet"):
-    self.network=network.replace("solana-","").replace("solana_","")
-    self.api="https://api.mainnet-beta.solana.com" if self.network=="mainnet" else "https://api.devnet.solana.com"
+    self.network=network.replace("solana-","").replace("solana_","").lower()
+    #self.api="https://api.mainnet-beta.solana.com" if "mainnet" in self.network else "https://api.devnet.solana.com"
+    self.api="https://solana--mainnet.datahub.figment.io/apikey/9ae7977641d309a67b096098a7102046" if "mainnet" in self.network else "https://solana--devnet.datahub.figment.io/apikey/9ae7977641d309a67b096098a7102046"
     self.client=Client(self.api,Confirmed)
 
 
@@ -40,7 +46,7 @@ class Solana:
 
 
 
-  def exec(self,command:str,param:str="",account:str="",keyfile="",data=None,sign=False,delay=1.0,owner="",private_key=None,timeout=100000):
+  def exec(self,command:str,param:str="",account:str="",keyfile="",data=None,sign=False,delay=2.0,owner="",private_key=None,timeout=10000):
     if len(owner)>0:owner=self.find_address_from_json(owner)
 
     if not private_key is None:
@@ -84,19 +90,35 @@ class Solana:
     if not mes is None and len(mes.stderr)==0 and data:
       if exists(file_to_mint):os.remove(file_to_mint)
 
-    if len(mes.stderr)==0:
-      rc=dict()
+    rc=dict()
+    if len(mes.stderr)>0:
+      if "This transaction has already been processed" in str(mes.stderr,"utf8"):
+        addr=self.find_address_from_json(keyfile)
+        transations=self.client.get_signatures_for_address(addr)["result"]
+        tx_sig=transations[0]["signature"]
+        rc["transaction"]=tx_sig
+
+        if command.startswith("mint"):
+          transaction=self.client.get_transaction(tx_sig)
+          if len(transaction["result"]["transaction"]["message"]["accountKeys"])>0:
+            mint_addr=transaction["result"]["transaction"]["message"]["accountKeys"][0]
+            if rc==dict():rc={"transaction":[],"mint":[]}
+            rc["mint"]=mint_addr
+
+        if rc==dict():
+          return {"error":str(mes.stderr,encoder),"command":cmd}
+      else:
+        return {"error":str(mes.stderr,encoder)}
+
+    if rc==dict():
       for line in str(mes.stdout,encoder).split("\n"):
         if line.startswith("Tx "): rc["transaction"]=line.split(": ")[1]
         if line.startswith("Mint account: "):rc["mint"]=line.split(": ")[1]
 
       log(str(mes.stdout,encoder))
-    else:
-      rc="error"
-
 
     return {
-      "error":str(mes.stderr,encoder),
+      "error":"",
       "result":rc,
       "link_mint":("https://solscan.io/token/"+rc["mint"]+"?cluster="+self.network) if "mint" in rc else "",
       "link_transaction":("https://solscan.io/tx/"+rc["transaction"]+"?cluster="+self.network) if "transaction" in rc else "",
@@ -129,7 +151,7 @@ class Solana:
 
 
 
-  def get_keys(self,dir=SOLANA_KEY_DIR,with_private=False):
+  def get_keys(self,dir=SOLANA_KEY_DIR,with_private=False,with_balance=False,with_qrcode=False):
     rc=[]
     for f in listdir(dir):
       if f.endswith(".json"):
@@ -140,6 +162,7 @@ class Solana:
           "name":f.replace(".json",""),
           "explorer":self.getExplorer(pubkey),
           "pubkey":pubkey,
+          "qrcode":get_qrcode(pubkey) if with_qrcode else "",
           "unity":"SOL"
         }
 
@@ -149,8 +172,10 @@ class Solana:
             l.append(int(b))
           key["privatekey"]=str(l)
 
-
-        key["balance"]=self.balance(key["pubkey"])
+        if with_balance:
+          key["balance"]=self.balance(key["pubkey"])
+        else:
+          key["balance"]=-1
 
         rc.append(key)
 
@@ -165,6 +190,7 @@ class Solana:
 
 
   def find_address_from_json(self,name:str,field="pubkey",dir=SOLANA_KEY_DIR):
+    name=name.replace(SOLANA_KEY_DIR,"").replace(".json","")
     if len(name)>40:return name
     for k in self.get_keys(dir=dir):
       if k["name"]==name:
@@ -183,9 +209,15 @@ class Solana:
     tokens=rc["result"]["value"]
     return tokens
 
+
   def scan(self,addr):
+    """
+    decoder la data d'un NFT
+    :param addr:
+    :return:
+    """
     filename="./Solana/Temp/"+addr + ".json"
-    rc=self.exec("decode mint -o ./Solana/Temp",account=addr,delay=1)
+    rc=self.exec("decode mint -o ./Solana/Temp",account=addr,delay=0)
     if exists(filename):
       rc= json.load(open(filename, "r"))
       os.remove(filename)
@@ -228,7 +260,6 @@ class Solana:
 
 
   def mint(self, _data,miner,sign=True,owner=""):
-
     if "properties" in _data: _data["creators"]=_data["properties"]["creators"]
     for c in _data["creators"]:
       if c["address"] is None:
@@ -241,7 +272,10 @@ class Solana:
     for k in ["properties","collection","image","attributes"]:
       if k in _data:del _data[k]
 
-    rc=self.exec("mint one",keyfile=miner,data=_data,sign=sign,owner=owner)
+    rc=self.exec("mint one",keyfile=miner,data=_data,sign=sign,owner=owner,delay=2)
+    if "This transaction has already been processed" in rc["error"]:
+      self.client.get_confirmed_transaction()
+
     rc["balance"]=self.balance(miner)
     rc["unity"]="SOL"
     rc["uri"]=_data["uri"]
@@ -270,11 +304,17 @@ class Solana:
     """
     for creator in creators:
       alias=self.find_json_from_address(creator)
-      self.exec("sign one",keyfile=alias,account=mintAddress)
+      self.exec("sign one",keyfile=alias,account=mintAddress,delay=0.1)
 
 
 
-  def create_account(self,wallet_name="solflare"):
+
+  def create_account(self,email="",wallet_name="solflare"):
+    """
+    Ouvre un compte sur Solana
+    :param wallet_name:
+    :return: mmemonic, publickey,privatekey en hexa, privatekey en decimals
+    """
     mnemonic = Bip39MnemonicGenerator(Bip39Languages.ENGLISH).FromWordsNumber(Bip39WordsNum.WORDS_NUM_12)
     #la clé privée est [182,63,142,58,126,108,186,179,192,119,0,192,222,214,166,138,255,104,34,15,180,199,192,203,245,165,49,129,70,240,30,60,207,163,155,203,54,141,157,210,87,64,54,20,70,201,221,50,235,168,20,177,28,84,203,87,192,116,237,226,23,90,55,92]
     #mnemonic= "interest faculty level puppy lottery will bounce mother portion put addict heavy"
@@ -283,9 +323,38 @@ class Solana:
     bip44_acc_ctx  = bip44_mst_ctx.Purpose().Coin().Account(0)
     if wallet_name=="solflare": bip44_acc_ctx = bip44_acc_ctx.Change(Bip44Changes.CHAIN_EXT)
     integers=[int(x) for x in bytes(bip44_acc_ctx.PrivateKey().Raw())]+[int(x) for x in bytes(bip44_acc_ctx.PublicKey().RawCompressed())]
-    return mnemonic,bip44_acc_ctx.PublicKey().ToAddress(),bytes(bip44_acc_ctx.PrivateKey().Raw()).hex(),str(integers)
+    pubkey=bip44_acc_ctx.PublicKey().ToAddress()
+    privkey=bytes(bip44_acc_ctx.PrivateKey().Raw()).hex()
+    if len(email)>0:
+      send_mail(open_html_file("mail_new_solana_account",{
+        "wallet_address":pubkey, #_account.public_key.to_base58(),
+        "words":mnemonic,
+        "private_key":privkey, #_account.secret_key.hex(),
+        #"private_key_in_list":str([int(x) for x in _account.secret_key])
+      }),email,subject="Votre compte Solana est disponible")
+
+    return mnemonic,pubkey,privkey,str(integers)
 
   def getExplorer(self, addr):
     return "https://solscan.io/account/"+addr+"?cluster="+self.network
+
+  def transfer(self, nft_addr, to,owner):
+    recent_blockhash=self.client.get_recent_blockhash(Confirmed)["result"]["value"]["blockhash"]
+
+    txn=Transaction(recent_blockhash=recent_blockhash,fee_payer=PublicKey(owner))
+    txn.add(transfer(TransferParams(TOKEN_PROGRAM_ID,PublicKey(nft_addr),PublicKey(to),PublicKey(owner),1,[PublicKey(owner)])))
+
+    account=self.find_json_from_address(owner)
+
+    filename=SOLANA_KEY_DIR+account+".json"
+    if exists(filename):
+      f=open(filename,"r")
+      key=f.readlines()
+      f.close()
+      self.client.send_transaction(txn,Keypair(key))
+      return True
+    else:
+      log("Signature inconnue")
+      return False
 
 

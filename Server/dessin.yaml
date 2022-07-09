@@ -1,0 +1,17 @@
+svg:
+  files:
+    - "dessin.svg"
+
+  layers:
+    - key: __idx__
+      values:
+        - "1"
+        - "2"
+        - "3"
+
+    - key: Titre
+      values:
+        - "A"
+        - "B"
+        - "C"
+      unique: False

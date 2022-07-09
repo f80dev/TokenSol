@@ -1,0 +1,168 @@
+//lire https://blog.thoughtram.io/angular/2017/05/23/custom-themes-with-angular-material.html
+
+@use 'sass:map';
+@use './node_modules/@angular/material' as mat;
+
+@font-face {
+        font-family: Helvetica;
+        src: url("assets/HelveticaInseratLT.ttf") format("ttf");
+}
+
+html {font-size: 0.8vw;}
+
+@media(max-width: 1500px) {
+        html {font-size: 1vw;}
+}
+
+@media(max-width: 1000px) {
+        html {font-size: 1.4vw;}
+}
+
+@media(max-width: 500px) {
+        html {font-size: 2vw;}
+}
+
+
+//voir https://material.angular.io/guide/typography#typography-config
+/* Argument de mat.define-typography-level
+  $font-size,
+  $line-height: $font-size,
+  $font-weight: 400,
+  $font-family: null,
+  $letter-spacing: normal
+ */
+$nfluent-typography: mat.define-typography-config(
+        $display-4: mat.define-typography-level(4rem, 4rem, 800, Helvetica, $letter-spacing: -0.07em),
+        $display-3: mat.define-typography-level(3rem, 3rem, 800, Helvetica, $letter-spacing: -0.08em),       //H2
+        $display-2: mat.define-typography-level(2.5rem, 2.5rem, 800, Helvetica, $letter-spacing: -0.07em), //H3
+        $display-1: mat.define-typography-level(2rem, 2rem, 600,Helvetica),
+        $headline:  mat.define-typography-level(1.5rem, 1.5rem, 500, $font-family: Helvetica),
+        $title:  mat.define-typography-level(1.4rem, 1.4rem, 500, $font-family: Helvetica),
+        $subheading-2:  mat.define-typography-level(1.2rem, 1.2rem, 600, $font-family: Robotto),
+        $subheading-1:  mat.define-typography-level(1.2rem, 1.2rem, 500,$font-family: Robotto),
+        $body-2: mat.define-typography-level(16px, 16px, 400, $font-family: Robotto),
+        $body-1: mat.define-typography-level(14px, 14px, 400, $font-family: Robotto),
+        $button: mat.define-typography-level(16px, 16px, 500, Helvetica, $letter-spacing: -0.07em),
+        $caption: mat.define-typography-level(12px, 12px, 500, Helvetica, $letter-spacing: -0.07em),
+);
+
+
+//voir https://material.angular.io/guide/theming#palettes
+$nfluent-indigo-palette :(
+        50: #EFE5F8,
+        100: #D4BFED,
+        200: #B894E2,
+        300: #9D67D7,
+        400: #8743CE,
+        500: #7016C5,
+        600: #670FBF,
+        700: #5800B7,
+        800: #4B00B1,
+        900: #3200A7,
+        contrast: (
+                50: rgba(black,0.87),
+                100: rgba(black,0.87),
+                200: rgba(black,0.87),
+                300: rgba(black,0.87),
+                400: rgba(black,0.87),
+                500: white,
+                600: white,
+                700: white,
+                800: white,
+                900: white
+        )
+);
+
+$nfluent-green-palette :(
+        50: #EBFDE8,
+        100: #CEFAC7,
+        200: #AAF6A1,
+        300: #81F177,
+        400: #56EC52,
+        500: #00E726,
+        600: #00D51D,
+        700: #00C00F,
+        800: #00AB00,
+        900: #008800,
+        contrast: (
+                50: rgba(black,0.87),
+                100: rgba(black,0.87),
+                200: rgba(black,0.87),
+                300: rgba(black,0.87),
+                400: rgba(black,0.87),
+                500: rgba(black,0.87),
+                600: rgba(black,0.87),
+                700: white,
+                800: white,
+                900: white
+        )
+);
+
+
+$nfluent-primary-color: mat.define-palette($nfluent-indigo-palette, 700);
+$nfluent-accent-color:mat.define-palette($nfluent-green-palette, 500);
+$nfluent-warn-color:mat.define-palette(mat.$red-palette, A200, A100, A400);
+
+
+$nfluent-theme: mat.define-light-theme((
+        color: (
+                primary:$nfluent-primary-color,
+                secondary:#ffffff,
+                accent: $nfluent-accent-color,
+                warn: $nfluent-warn-color,
+        ),
+        typography: $nfluent-typography
+));
+
+
+$nfluent-dark-theme: mat.define-dark-theme((
+        color: (
+                primary:$nfluent-primary-color,
+                secondary:#ffffff,
+                accent: $nfluent-accent-color,
+                warn: $nfluent-warn-color
+        ),
+        typography: $nfluent-typography
+));
+
+
+
+@include mat.core();
+
+
+
+// Emit styles for MatButton based on `$my-theme`. Because the configuration
+// passed to `define-light-theme` omits typography, `button-theme` will not
+// emit any typography styles.
+@include mat.all-component-themes($nfluent-theme);
+@include mat.all-component-typographies($nfluent-typography);
+
+
+a {
+        color: mat.get-color-from-palette($nfluent-primary-color, 700);
+}
+
+body,html {
+        color: mat.get-color-from-palette($nfluent-primary-color, 700);
+}
+
+.color-accent {
+        color: mat.get-color-from-palette($nfluent-accent-color, 500);
+}
+
+.color-primary {
+        color: mat.get-color-from-palette($nfluent-primary-color, 500);
+}
+
+.colorize-accent {
+        filter: url('#teal-lightgreen');
+}
+
+.sidemenu {
+  background-color: mat.get-color-from-palette($nfluent-primary-color, 400);
+  color: mat.get-color-from-palette($nfluent-primary-color, A400);
+}
+
+.colorize-primary {
+        filter: url('#purple-sepioa');
+}

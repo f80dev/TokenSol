@@ -68,7 +68,7 @@ class DAO:
     }
     return rc
 
-  def nfts_from_collection(self, col):
+  def nfts_from_collection(self, col, withQuantity=True):
     rc=[]
     if col:
       nfts=self.db["nfts"].find(filter={"collection.name":col["name"]})
@@ -80,7 +80,7 @@ class DAO:
       nft["id"]=nft["collection"]["name"]+"_"+nft["symbol"]
       nft["dbname"]=self.dbname
       nft["domain"]=self.domain
-      rc.append(nft)
+      if not withQuantity or nft["quantity"]>0: rc.append(nft)
     return rc
 
 

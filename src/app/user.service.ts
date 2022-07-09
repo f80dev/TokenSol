@@ -36,6 +36,7 @@ export class UserService {
       this.addr=wallet.publicKey?.toBase58();
       this.httpClient.get(environment.server+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
         this.profil = r;
+        r.address=wallet.publicKey?.toBase58();
         resolve(r);
       },(err)=>{
         $$("!probleme de récupération des permissions")
@@ -71,22 +72,29 @@ export class UserService {
   }
 
 
-  connect(requis:string=""){
+  connect(requis:string="",network="solana"){
     return new Promise((resolve, reject) => {
-
-      this.solWalletS.connect().then( (wallet:Wallet) => {
-        this.init(wallet).then((profil:any)=>{
-          if(requis.length>0){
-            if(profil.perms.indexOf("*")==-1 && profil.perms.indexOf(requis)==-1)
-              this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
-          }
-          resolve(profil);
-        }).catch(()=>{reject();});
-      }).catch(err => {
-        console.log("Error connecting wallet", err );
-        this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
-        reject(err);
-      })
+      if(network=="elrond"){
+        // @ts-ignore
+        open("wallet.elrond.com","walletElrond")
+      }else{
+        // @ts-ignore
+        if(window.solflare || window.phantom){
+          this.solWalletS.connect().then( (wallet:Wallet) => {
+            this.init(wallet).then((profil:any)=>{
+              if(requis.length>0){
+                if(profil.perms.indexOf("*")==-1 && profil.perms.indexOf(requis)==-1)
+                  this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
+              }
+              resolve(profil);
+            }).catch(()=>{reject();});
+          }).catch(err => {
+            console.log("Error connecting wallet", err );
+            this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
+            reject(err);
+          })
+        }
+      }
     });
   }
 

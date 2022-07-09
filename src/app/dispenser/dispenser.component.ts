@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
-import {ActivatedRoute} from "@angular/router";
-import {showError, showMessage} from "../../tools";
+import {ActivatedRoute, Router} from "@angular/router";
+import {encrypt, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {PromptComponent} from "../prompt/prompt.component";
@@ -16,12 +16,14 @@ export class DispenserComponent implements OnInit {
   nfts: any[]=[];
   message="";
   operation: any;
+  dest="";
 
 
   constructor(
     public network:NetworkService,
     public routes:ActivatedRoute,
     public dialog:MatDialog,
+    public router:Router,
     public toast:MatSnackBar,
     public alias:AliasPipe
   ) { }
@@ -31,8 +33,10 @@ export class DispenserComponent implements OnInit {
     let limit=Number(this.routes.snapshot.queryParamMap.get("limit") || "1000") ;
     this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((operation:any)=>{
       this.operation=operation;
-      this.network.get_tokens_for_dispenser(operation.id,limit).subscribe((nfts:any) => {
+      this.message="Chargement des NFTs";
+      this.network.get_tokens_to_send(operation.id,"dispenser",limit).subscribe((nfts:any) => {
         this.nfts=[];
+        this.message="";
         for(let nft of nfts){
           if(nft.quantity>0){
             nft.opacity==1;
@@ -51,32 +55,22 @@ export class DispenserComponent implements OnInit {
       showMessage(this,"Ce NFT ne peut plus être miné");
       return;
     }
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Destinataire de ce NFT",
-          result: "paul.dudule@gmail.com",
-          type: "text",
-          placeholder:"indiquer son adresse email ou son wallet",
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((addr:string) => {
-      if(addr){
-        this.alias.transform(addr,"pubkey")
-        this.message="Minage et envoi en cours sur le wallet "+addr;
-        this.network.mint_for_contest(addr,nft.collection.name+"_"+nft.symbol,this.operation,this.operation.dispenser.miner,this.operation.metadata_storage).subscribe((r:any)=>{
-          this.message="";
-          showMessage(this,"Envoyé");
-        },(err:any)=>{
-          showError(this,err);
-        });
-      }else{
-        showMessage(this,"Envoi annulé");
-      }
 
-    });
+    nft.price=0;
+    this.router.navigate(["dealermachine"],{queryParams:{param:encrypt(this.operation.id+"&&&"+btoa(JSON.stringify(nft))+"&&&false")}})
+
+      // if(this.dest){
+      //   this.alias.transform(this.dest,"pubkey")
+      //   this.message="Minage et envoi en cours sur le wallet "+this.dest;
+      //   this.network.mint_for_contest(this.dest,nft.collection.name+"_"+nft.symbol,this.operation,this.operation.dispenser.miner,this.operation.metadata_storage).subscribe((r:any)=>{
+      //     this.message="";
+      //     showMessage(this,"Envoyé");
+      //   },(err:any)=>{
+      //     showError(this,err);
+      //   });
+      // }else{
+      //   showMessage(this,"Envoi annulé");
+      // }
 
   }
 }

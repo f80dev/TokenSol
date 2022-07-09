@@ -44,10 +44,12 @@
               "tweetnacl"
             ],
             "styles": [
-              "./node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css",
-              "src/styles.css"
+              "src/styles.css",
+              "src/nfluent.scss"
             ],
-            "scripts": [],
+            "scripts": [
+
+            ],
             "serviceWorker": true,
             "ngswConfigPath": "ngsw-config.json"
           },
@@ -115,10 +117,12 @@
               "src/manifest.webmanifest"
             ],
             "styles": [
-              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
+              "src/nfluent.scss",
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+
+            ]
           }
         }
       }

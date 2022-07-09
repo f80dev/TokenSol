@@ -21,4 +21,12 @@ content:
       Vous pouvez adresser votre demande à support@nfluent.io
       "
 
+  - index: validation_process
+    title: Comment se déroule la validation ?
+    order: 0
+    format: html
+    content: "
+      ici description de la procédure de validation
+      "
+
 

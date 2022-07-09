@@ -9,15 +9,54 @@ CRYPT_KEY_FOR_NFT=""
 
 MONGO_INITDB_ROOT_USERNAME="root"
 MONGO_INITDB_ROOT_PASSWORD="hh4271"
-MONGO_CLUSTER_CONNECTION_STRING= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
+WEB3_PASSWORD="hh4271!!"
+MONGO_CLUSTER_CONNECTION_STRING_2= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
+MONGO_CLUSTER_CONNECTION_STRING="mongodb+srv://nfluent:hh4271@cluster0.ygd13.mongodb.net/?retryWrites=true&w=majority"
 
 USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"
+
+ELROND_PASSWORD="Hh42714280!!"
 
 GOOGLE_ACCOUNT="nfluent@calviontherock.iam.gserviceaccount.com"
 GOOGLE_ACCESS_KEY="GOOG1EZCKSY76GLYNQRL2IYHTBJX3XYCOB3LJY6ZMGS7OZLZKNNVNCX75KODY"
 GOOGLE_SECRET_KEY="bZw6LY6t2NwPyA6AmwSwlsDO6iIg7RfmnFeoDjVa"
 
-GITHUB_TOKEN="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"
+GITHUB_TOKEN="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"
+GITHUB_ACCOUNT="nfluentdev"
 SALT='sel'
 ENCRYPTION_KEY="nfluentkey"
+
+PERMS={
+  "BjW8USn6XpyCW5dg95bNKey5XZ6KWaTox1nPDFYr4fdc":{
+    "alias":"MainWallet","email":"hhoareau@gmail.com",
+    "perms":["*"]
+  },
+  "2r44aqyxcMdxoDNpN7cK4WUYkB14B9ScriDd5CXBTfcG":{
+    "copy_from":"BjW8USn6XpyCW5dg95bNKey5XZ6KWaTox1nPDFYr4fdc"
+  },
+  "Ee2zEFPiNhs7ZxuRg7aA1J4qDFNM5yQWH4CtzP7tssAt":{
+    "alias":"Paul","email":"paul.dudule@gmail.com",
+    "perms":["admin","create"]
+  },
+  "CegbuL4ShMnmunp2v61aBcUfQw57KFbzTsVKDPgKJZc2":{
+    "alias":"Thomas","email":"thomas@nfluent.io",
+    "perms":["*"]
+  },
+
+  "DKS7of5db3NoYWyGLqzvqs3UaN1nPEannsZ8Mo85B7jk":{
+    "alias":"ThomasDev","email":"thomas@nfluent.io",
+    "perms":["*"]
+  },
+
+  "DJuJznMC8sgMEYAVcEWje5Ap3wNYkmv3nnRP3XLGyom6":{
+    "alias":"NFluentDev","email":"dev@nfluent.io",
+    "perms":["*"]
+  },
+
+  "anonymous":{
+    "alias":"anonymous",
+    "email":"",
+    "perms":["reload"]
+  }
+}

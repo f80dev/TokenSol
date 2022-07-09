@@ -17,7 +17,6 @@ import {Clipboard} from "@angular/cdk/clipboard";
 export class BuildOpeComponent implements OnInit {
   sel_ope: any=null;
   url: string = "";
-  url_lottery: string = "";
   opes: any[]=[];
   iframe_code: string="";
   image_code: string="";
@@ -27,6 +26,9 @@ export class BuildOpeComponent implements OnInit {
   nfts: any=[];
   collections: any={};
   collection_keys:string[]=[];
+  url_store="";
+  store_collections: any[]=[];
+  sources: any;
 
   constructor(
     public network:NetworkService,
@@ -47,7 +49,15 @@ export class BuildOpeComponent implements OnInit {
       this.network.get_operations().subscribe((r:any)=>{
         this.opes=r;
         if(!this.sel_ope){
-          this.sel_ope=r[r.length-1];
+          let ope=this.routes.snapshot.queryParamMap.get("ope");
+          if(ope){
+            for(let sel of r){
+              if(sel.id==ope)this.sel_ope=sel;
+            }
+          }else{
+            this.sel_ope=r[r.length-1];
+          }
+          this.url_store=environment.appli+"/store?toolbar=false&ope="+this.sel_ope.id;
           this.refresh_ope({value:this.sel_ope});
         }
       })
@@ -58,10 +68,13 @@ export class BuildOpeComponent implements OnInit {
     let ope=$event.value.id;
     let url=this.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
     this.sel_ope.lottery.application=url;
+    this.network.wait("Récupération des NFTs issue des sources");
     this.network.get_nfts_from_operation(this.sel_ope.id).subscribe((r:any)=>{
+      this.network.wait("")
       this.nfts=[]
       this.collection_keys=[];
-      for(let nft of r){
+      this.sources=r.sources;
+      for(let nft of r.nfts){
         let k=nft.collection.name;
         if(k && nft.quantity>0){
           if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
@@ -69,11 +82,12 @@ export class BuildOpeComponent implements OnInit {
           this.collections[k]=this.collections[k]+nft["quantity"];
         }
       }
-    })
+    });
     this.url_dispenser_app=this.sel_ope.dispenser.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
     this.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";
     this.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
-    this.sel_ope.validate.application=this.sel_ope.validate.application.replace("$tokensol$",environment.appli)+"?ope="+ope;
+    this.sel_ope.validate.application=this.sel_ope.validate.application.replace("$tokenfactory$",environment.appli)+"?ope="+ope;
+    this.store_collections=$event.value.store.collections;
   }
 
 
@@ -114,6 +128,7 @@ export class BuildOpeComponent implements OnInit {
     open(environment.server+"/api/operations/"+this.sel_ope.id,"download");
   }
 
+
   share_link(url:string,title:string,text:string) {
     this.ngNavigatorShareService.share({
       title: title,
@@ -129,11 +144,18 @@ export class BuildOpeComponent implements OnInit {
   }
 
   open_appli(href: string, target: string) {
+    href=href.replace("$nfluent_appli$",environment.appli).replace("https://tokenfactory.nfluent.io",environment.appli)+"&ope="+this.sel_ope.id;
     open(href,target);
   }
 
   edit_ope() {
     let url="https://codebeautify.org/yaml-editor-online?url="+encodeURI(environment.server+"/api/getyaml/"+this.sel_ope.id+"/txt/?dir=./Operations");
     open(url,"editor");
+  }
+
+  send_prestashop(id:string) {
+    this.network.export_to_prestashop(id).subscribe((r:any)=>{
+      showMessage(this,"NFTs transférés")
+    });
   }
 }

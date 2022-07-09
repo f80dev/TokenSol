@@ -1,5 +1,5 @@
 <div class="mainform">
-
+  <div class="mat-display-3 color-primary">Gestion des opérations</div>
   <mat-expansion-panel>
     <mat-expansion-panel-header>Qu'est-ce qu'une opération ?</mat-expansion-panel-header>
     une <strong>opération</strong> est un fichier regroupant
@@ -68,41 +68,61 @@
 
   <div *ngIf="sel_ope">
     <div class="mat-display-3"  >{{sel_ope.title}}</div>
-    <small>{{sel_ope.description}}</small>
+    <small class="color-primary mat-display-1">{{sel_ope.description}}</small>
 
     <table style="line-height: 125%;">
-      <tr>
+      <tr style="font-size: medium">
+        <td>
+          Network:<br>
+          Version:<br>
+          Stockage:<br>
+        </td>
         <td style="font-size: large;">
-          network: {{sel_ope.network}}<br>
-          version: {{sel_ope.version}}<br>
-          Storage: {{sel_ope.metadata_storage}}
+           {{sel_ope.network}}<br>
+          {{sel_ope.version}}<br>
+          {{sel_ope.metadata_storage}}
         </td>
       </tr>
 
     </table>
 
-    <div style="padding: 10px;text-align: left;" class="mat-elevation-z4">
-      Les NFTs disponible pour cette opérations<br>
-      <table>
-        <tr>
-          <th>NFTs par collection</th>
-        </tr>
-        <tr>
-          <td>
-            <ul>
-              <li *ngFor="let k of collection_keys">
-                {{k}}: {{collections[k]}}
-              </li>
-            </ul>
-          </td>
-        </tr>
-      </table>
-    </div>
+    <mat-expansion-panel>
+      <mat-expansion-panel-header  class="color-primary">Source des NFTs</mat-expansion-panel-header>
+
+        <table style="text-align: left;">
+          <tr>
+            <th>Sources</th>
+            <th>Nombre de NFTs par collection</th>
+          </tr>
+          <tr>
+            <td>
+              Les NFTs disponible pour cette opérations sont extraits de: <br><br>
+              <ul class="mat-subheading-1">
+                <li *ngFor="let src of sources">
+                  <span *ngIf="src.type=='web'">contenu dans le fichier <span class="color-accent">{{src.connexion}}</span></span>
+                  <span *ngIf="src.type=='network'"><span class="color-accent">{{src.connexion}}</span> et possédés par <span class="color-accent">{{src.owner | alias}}</span></span>
+                  <span *ngIf="src.type=='database'"> contenu dans la base <span class="color-accent">{{src.connexion}} / {{src.dbname}}</span></span>
+                  ({{src.ntokens}})
+                </li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li *ngFor="let k of collection_keys">
+                  {{k}}: {{collections[k]}}
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </table>
+
+    </mat-expansion-panel>
+
 
 
 
       <mat-expansion-panel *ngIf="sel_ope.dispenser?.visible">
-        <mat-expansion-panel-header>Distribution</mat-expansion-panel-header>
+        <mat-expansion-panel-header  class="color-primary">Distribution</mat-expansion-panel-header>
         <table>
           <tr>
             <th>Propriétés</th>
@@ -124,16 +144,15 @@
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
                       (click)="open_appli(url_dispenser_app,'distribuer')">
-                <mat-icon style="font-size: x-large;">start</mat-icon> Commencer
+                Tester
               </button>
 
-              <br><br>
+              <br>
+              <button type="button" mat-raised-button mat-button color="primary"
+                      (click)="share_link(url_dispenser_app,'Distributeur pour '+sel_ope.title,'Ouvrir ce lien distribuer des NFTs')">
+                Partager
+              </button>
 
-              <mat-icon (click)="share_link(url_dispenser_app,'Distributeur pour '+sel_ope.title,'Ouvrir ce lien distribuer des NFTs')"
-                        style="cursor: pointer;font-size: large;"
-                        title="Partager l'outil">
-                share
-              </mat-icon>
 
             </td>
           </tr>
@@ -142,7 +161,7 @@
 
 
       <mat-expansion-panel *ngIf="sel_ope.lottery?.visible">
-        <mat-expansion-panel-header>Loterie</mat-expansion-panel-header>
+        <mat-expansion-panel-header  class="color-primary">Loterie</mat-expansion-panel-header>
         <table>
           <tr>
             <th>Propriété</th>
@@ -174,17 +193,14 @@
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
                       (click)="open_appli(sel_ope.lottery.application,'_self')">
-                <mat-icon style="font-size: x-large;">start</mat-icon> Commencer
+                Tester
               </button>
+              <br>
 
-              <br><br>
-
-              <mat-icon (click)="share_link(sel_ope.lottery.application,'Mode lotterie pour '+sel_ope.title,'Ouvrir ce lien pour initier la distribution')"
-                        style="cursor: pointer;font-size: large;"
-                        title="Partager l'outil">
-                share
-              </mat-icon>
-
+              <button type="button" mat-raised-button mat-button color="primary"
+                      (click)="share_link(sel_ope.lottery.application,'Mode lotterie pour '+sel_ope.title,'Ouvrir ce lien pour initier la distribution')">
+                Partager
+              </button>
 
             </td>
           </tr>
@@ -193,7 +209,7 @@
 
 
       <mat-expansion-panel *ngIf="sel_ope.validate?.visible || url_ope.length>0">
-        <mat-expansion-panel-header>
+        <mat-expansion-panel-header class="color-primary">
           Validation
         </mat-expansion-panel-header>
 
@@ -241,21 +257,69 @@
 
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli(sel_ope.validate.application+'&toolbar=false','_self')">
-                <mat-icon style="font-size: x-large;">start</mat-icon> Commencer
+                      (click)="open_appli(sel_ope.validate.application,'_self')">
+                 Tester
               </button>
-              <br><br>
+              <br>
 
-              <mat-icon (click)="share_link(sel_ope.validate.application+'&toolbar=false','validation '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')"
-                        style="cursor: pointer;font-size: large;"
-                        title="Partager l'outil">
-                share
-              </mat-icon>
+              <button type="button" mat-raised-button mat-button color="primary"
+                      (click)="share_link(sel_ope.validate.application,'validation '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
+                Partager
+              </button>
+
             </td>
           </tr>
         </table>
       </mat-expansion-panel>
 
+
+    <mat-expansion-panel *ngIf="sel_ope.store?.visible || url_ope.length>0">
+      <mat-expansion-panel-header class="color-primary">
+        Store
+      </mat-expansion-panel-header>
+      <table >
+        <tr style="width: 100%;">
+          <th>Collection en ventes</th>
+          <th>Prestashop</th>
+          <th>Vente directe</th>
+        </tr>
+        <tr>
+          <td>
+            <ul>
+              <li *ngFor="let k of store_collections">
+                {{k.name}}: {{k.price}} €
+              </li>
+            </ul>
+          </td>
+          <td>
+
+            <a [href]="sel_ope.store.prestashop.address" target="store">Voir la boutique</a> / <a [href]="sel_ope.store.prestashop.admin" target="store">Accès admin</a>
+            <br><br>
+            <button type="button" mat-raised-button mat-button
+                    (click)="send_prestashop(sel_ope.id)">
+              Transférer les NFTs
+            </button>
+          </td>
+          <td style="text-align: right;">
+            <button type="button" mat-raised-button mat-button color="primary"
+                    (click)="open_appli(sel_ope.store.application+'?ope='+sel_ope.id+'&toolbar=false','_self')">
+              Tester
+            </button>
+
+            <br>
+            <button type="button" mat-raised-button mat-button
+                    (click)="share_link(sel_ope.store.application+'?ope='+sel_ope.id+'&toolbar=false','la boutique '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
+              Partager
+            </button>
+
+          </td>
+
+
+        </tr>
+      </table>
+
+
+    </mat-expansion-panel>
 
   </div>
 

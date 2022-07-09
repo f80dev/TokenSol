@@ -37,6 +37,7 @@ export interface MetadataExternal {
   attributes:Attribute[]
   collection: {
     name:string
+    family:string | undefined
   }
   properties:{
     files:{uri:string,type:string}[]
@@ -50,6 +51,9 @@ export interface MetadataOnChain {
   key:number | undefined
   updateAuthority:string
   mint:string,
+  primarySaleHappened:number
+  isMutable:number
+  type:string
   data:{
     name:string
     symbol:string
@@ -57,9 +61,6 @@ export interface MetadataOnChain {
     sellerFeeBasisPoints:number
     creators:Creator[]
   }
-  primarySaleHappened:number
-  isMutable:number
-  type:string
 }
 export interface Search {
   collection:string

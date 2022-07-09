@@ -1,3 +1,6 @@
+
+
+
 import base64
 import csv
 import datetime
@@ -6,7 +9,7 @@ import json
 import os
 import ssl
 import sys
-from collections import ChainMap
+
 from copy import copy
 
 from io import BytesIO, StringIO
@@ -24,15 +27,19 @@ from PIL.Image import Image
 from flask import request, jsonify, send_file, Flask, make_response
 from flask_cors import CORS
 from fontTools import ttLib
+from reportlab.graphics import renderPM
+from svglib.svglib import svg2rlg
 
 from werkzeug.datastructures import FileStorage
-from yaml import dump
+from yaml import dump, Dumper
 
 import GitHubStorage
-from ArtEngine import ArtEngine, Layer, Sticker
-from Elrond.Elrond import Elrond
+from ArtEngine import ArtEngine, Layer, Sticker, convert_to_gif
+from Elrond.Elrond import Elrond, ELROND_KEY_DIR
 from GoogleCloudStorageTools import GoogleCloudStorageTools
+from PrestaTools import PrestaTools
 from dao import DAO
+
 from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
 from Tools import hex_to_str, log, filetype, now, is_email, send_mail, open_html_file, encrypt, decrypt
@@ -151,6 +158,8 @@ def test():
   return "Ok",201
 
 
+
+
 @app.route('/api/reset_collection/',methods=["GET"])
 #test http://127.0.0.1:4242/api/test/
 def reset_collection():
@@ -233,11 +242,68 @@ def layers(body=None):
   else:
     return jsonify({"status":200})
 
+@app.route('/api/generate_svg/',methods=["POST"])
+def generate_svg():
+  if "base64" in str(request.data,"utf8"):
+    _data=yaml.load(str(base64.b64decode(str(request.data,"utf8").split("base64,")[1]),"utf8"))
+  else:
+    _data=request.json
+
+  _data=_data["svg"]
+
+  index=0
+  max_index=len(_data["files"])
+  for l in _data["layers"]:
+    if not "unique" in l or not l["unique"]:
+      max_index=max_index*len(l["values"])
+
+  rc=[]
+  histo=[]
+  while True:
+    filename="./temp/"+_data["files"][int(random()*len(_data["files"]))]
+    h=filename
+    with open(filename,"r") as f:
+      svg=" ".join(f.readlines())
+    f.close()
+
+    for l in _data["layers"]:
+      value=l["values"][int(random()*len(l["values"]))]
+      h=h+str(value)
+      svg=svg.replace(l["key"],value)
+
+    if not h in histo:
+      histo.append(h)
+      index=index+1
+      if index==max_index: break
+      if request.args.get("format","json")=="file":
+        pass
+        #renderPM.drawToFile(svg2rlg(svg),"./temp/image"+str(index)+".png",fmt="PNG")
+      else:
+        filename="./temp/temp.svg"
+        f=open(filename,"w")
+        f.write(svg)
+        f.close()
+        image=renderPM.drawToPIL(svg2rlg(filename)).convert("RGBA")
+        newImage = []
+        for item in image.getdata():
+          if item[:3] == (255, 255, 255):
+            newImage.append((255, 255, 255, 0))
+          else:
+            newImage.append(item)
+
+        image.putdata(newImage)
+
+        s=Sticker(image=image.convert("RGBA"))
+        rc.append(s.toBase64())
+        #rc.append("data:image/gif;base64,"+str(base64.b64encode(),"utf8"))
+
+  return jsonify(rc)
+
 
 
 @app.route('/api/collection/')
 #test http://127.0.0.1:4242/api/test/
-def get_collection(limit=100,format=None,seed=0,ext="webp",size=(500,500),quality=100):
+def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
   """
   Generation de la collection des NFTs
   :param limit:
@@ -254,6 +320,7 @@ def get_collection(limit=100,format=None,seed=0,ext="webp",size=(500,500),qualit
     quality=request.args.get("quality",98)
     seed=int(request.args.get("seed","0"))
     ext=request.args.get("image","webp")
+    data=request.args.get("data","")
     nft.name=request.args.get("name","mycollection").replace(".png","")
 
   log("On détermine le nombre d'image maximum générable")
@@ -268,7 +335,9 @@ def get_collection(limit=100,format=None,seed=0,ext="webp",size=(500,500),qualit
                     seed_generator=seed,
                     width=int(size[0]),
                     height=int(size[1]),
-                    quality=quality
+                    quality=quality,
+                    data=str(base64.b64decode(data),"utf8"),
+                    ext=ext
   )
 
   for f in os.listdir("./temp"):
@@ -319,7 +388,7 @@ def get_collection(limit=100,format=None,seed=0,ext="webp",size=(500,500),qualit
 #test http://127.0.0.1:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
 def infos():
-  rc={"Solana":{"keys":len(Solana().get_keys())},
+  rc={"Solana":{"keys":len(Solana().get_keys(with_balance=True))},
       "Elrond":{},
       "Secret":{},
       "Database":{
@@ -337,6 +406,75 @@ def get_nft_from_db():
   id=request.args.get("id")
   return jsonify(dao.get(id))
 
+
+
+@app.route('/api/test/',methods=["GET"])
+#test http://127.0.0.1:4242/api/test/
+#test https://server.f80lab.com:4242/api/test
+def test2():
+  ps_key="SA92LXSJW9MC28NC8G933SPNZPP9MQDZ"
+  _order=requests.get("http://161.97.75.165:8080/api/order_details/1?ws_key="+ps_key+"&io_format=JSON").json()
+  log("Order="+str(_order))
+  _product=requests.get("http://161.97.75.165:8080/api/products/"+_order["order_detail"]["product_id"]+"?ws_key=SA92LXSJW9MC28NC8G933SPNZPP9MQDZ&output_format=JSON").json()
+  log("Product="+str(_product))
+  return jsonify(_product)
+
+
+
+@app.route('/api/export_to_prestashop/',methods=["GET"])
+#test http://127.0.0.1:4242/api/export_to_prestashop/?root_category=1&ope=calvi22_devnet&api
+def export_to_prestashop():
+  _operation=get_operation(request.args.get("ope"))
+  _store_section=_operation["store"]
+  prestashop=PrestaTools(_store_section["prestashop"]["api_key"])
+  root_category=prestashop.find_category(_store_section["prestashop"]["root_category"] or "NFTs")
+  if root_category is None:
+    root_category=prestashop.add_category(_store_section["prestashop"]["root_category"])
+
+  categories=dict()
+  log("Création des collections sous forme de categorie dans Prestashoo")
+  for col in _store_section["collections"]:
+    c=prestashop.find_category(col["name"])
+    if c is None: c=prestashop.add_category(col["name"],root_category["id"])
+    categories[col["name"]]={
+      "price":col["price"],
+      "name":col["name"],
+      "id":c["id"]
+    }
+
+  nfts=get_nfts_from_src(_operation["data"]["sources"])
+  for nft in nfts:
+    if nft["collection"]["name"] in categories:
+      cat=categories[nft["collection"]["name"]]
+      nft["price"]=cat["price"]
+      if "metadataOnchain" in nft and "metadataOffchain" in nft:
+        nft["name"]=nft["metadataOnchain"]["name"]
+        nft["image"]=nft["metadataOffchain"]["image"]
+        nft["description"]=nft["metadataOffchain"]["description"]
+
+      product=prestashop.add_product(nft["name"],cat["id"],nft["symbol"],nft["description"],nft["price"])
+      prestashop.set_product_quantity(product,nft["quantity"])
+      buf_image=convert_to_gif(nft["image"],filename="image.gif")
+      image=prestashop.add_image(product["id"],"./temp/image.gif")
+
+  return jsonify({"message":"ok"})
+
+
+
+
+
+
+
+
+
+#test https://server.f80lab.com/api/mint_from_prestashop/
+@app.route('/api/mint_from_prestashop/<orderid>',methods=["POST","GET"])
+def mint_from_prestashop(orderid:str):
+  _order=requests.get("http://SA92LXSJW9MC28NC8G933SPNZPP9MQDZ@161.97.75.165:8080/api/order_details/"+orderid).json()
+  log("Order="+str(_order))
+  _product=requests.get("http://SA92LXSJW9MC28NC8G933SPNZPP9MQDZ@161.97.75.165:8080/api/products/"+_order["product_id"]).json()
+  log("Product="+str(_product))
+  return jsonify(_product)
 
 
 
@@ -386,6 +524,18 @@ def get_operation(name:str):
   return rc
 
 
+
+
+@app.route('/api/transfer_to/<nft_addr>/<to>/<owner>',methods=["GET"])
+def transfer_to(nft_addr:str,to:str,owner:str):
+  network=request.args.get("network","solana-devnet")
+  solana=Solana(network)
+  if "@" in to:
+    words,to,secret_key,secret_key_ints=solana.create_account(to)
+  if solana.transfer(nft_addr,to,owner):
+    return jsonify({"error":"","message":"NFT transféré"})
+  else:
+    return jsonify({"error":"Le serveur ne dispose pas de la clé du propriétaire pour effectuer le transfert"})
 
 
 @app.route('/api/action_calvi/',methods=["POST"])
@@ -477,7 +627,7 @@ def action():
 
 
 def get_access_code_from_email(email:str):
-  return hashlib.md5((email+SALT).encode()).hexdigest().upper()
+  return hashlib.md5((email+SALT).encode()).hexdigest().upper()[:6]
 
 
 @app.route('/api/operations/',methods=["GET","POST"])
@@ -556,7 +706,7 @@ def open_operation(ope):
   return rc
 
 
-def get_nfts_from_src(srcs,collections=None):
+def get_nfts_from_src(srcs,collections=None,limit=10000):
   """
   Récupération des NFTS depuis différentes sources (#getnftfromsrc)
   :param srcs:
@@ -566,13 +716,19 @@ def get_nfts_from_src(srcs,collections=None):
   nfts=[]
   for src in srcs:
     log("Récupération des nfts depuis "+str(src))
+
     if src["type"] in ["database","db"]:
       try:
         if collections:
           for collection in collections:
-            nfts=nfts+list(DAO(src["connexion"],src["dbname"]).nfts_from_collection(collection))
+            l_nfts=list(DAO(src["connexion"],src["dbname"]).nfts_from_collection(collection,True))
+            nfts=nfts+l_nfts
+            src["ntokens"]=len(l_nfts)
         else:
-          nfts=nfts+list(DAO(src["connexion"],src["dbname"]).nfts_from_collection(None))
+          l_nfts=list(DAO(src["connexion"],src["dbname"]).nfts_from_collection(None,False))
+          nfts=nfts+l_nfts
+
+        src["ntokens"]=len(l_nfts)
       except:
         log("Probleme de lecture de "+src["connexion"])
 
@@ -583,12 +739,28 @@ def get_nfts_from_src(srcs,collections=None):
         if src["connexion"].endswith(".json"):nfts=nfts+json.loads(r.text)
         if src["connexion"].endswith(".yaml"):nfts=nfts+yaml.load(r.text,Loader=yaml.FullLoader)
 
-
     if src["type"]=="json":
       try:
         nfts=nfts+json.load(open(src["connexion"]))
       except:
         log("Probleme de lecture de "+src["connexion"])
+
+    if src["type"]=="network":
+      if src["connexion"].startswith("solana"):
+        solana=Solana(src['connexion'])
+        l_nfts=solana.get_nfts(src["owner"])
+        src["ntokens"]=len(l_nfts)
+        for nft in l_nfts:
+          try:
+            nft["metadataOnchain"]=solana.scan(nft["account"]["data"]["parsed"]["info"]["mint"])
+            nft["metadataOffchain"]=requests.get(nft["metadataOnchain"]["uri"]).json()
+            nft["image"]=nft["metadataOffchain"]["image"]
+            nft["collection"]=nft["metadataOffchain"]["collection"]
+            if not "quantity" in nft:nft["quantity"]=1
+            nfts.append(nft)
+            if len(nfts)==limit: break
+          except:
+            log("Impossible de récupérer le NFT d'adresse="+nft["account"]["data"]["parsed"]["info"]["mint"])
 
     if src["type"]=="config":
       config=configs(src["connexion"],format="dict")
@@ -613,15 +785,20 @@ def get_nfts_from_src(srcs,collections=None):
 
 
 
-@app.route('/api/get_tokens_for_dispenser/<ope>',methods=["GET"])
+
+
+
+@app.route('/api/get_tokens_to_send/<ope>',methods=["GET"])
 #test http://127.0.0.1:4242/api/get_tokens_for_dispenser/calvi22_devnet?limit=10
-def get_tokens_for_dispenser(ope:str):
+def get_tokens_to_send(ope:str):
+  section=request.args.get("section","dispenser")
   _opes=open_operation(ope)
   if _opes is None:return jsonify({"error":"operation unknown"})
 
-  nfts=get_nfts_from_src(_opes["data"]["sources"],_opes["dispenser"]["collections"])
-  limit=int(request.args.get("limit","0"))
+  limit=int(request.args.get("limit","100000"))
+  nfts=get_nfts_from_src(_opes["data"]["sources"],_opes[section]["collections"],limit=limit)
   if limit>0 and len(nfts)>limit: nfts=nfts[:limit]
+
   return jsonify(nfts)
 
 
@@ -632,7 +809,7 @@ def get_tokens_for_dispenser(ope:str):
 #http://127.0.0.1:4200/contest?ope=calvi22
 @app.route('/api/get_new_code/<ope>/<url_appli>',methods=["GET"])
 @app.route('/api/get_new_code/<ope>',methods=["GET"])
-def get_token_for_contest(ope:str,url_appli:str="https://tokensol.nfluent.io"):
+def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io"):
   """
   Retourne un nouveau NFT
   voir get_new_token, get_new_nft
@@ -698,11 +875,18 @@ def nfts_from_operation(ope=""):
   _ope=get_operation(ope)
   if _ope:
     nfts=get_nfts_from_src(_ope["data"]["sources"])
-    return jsonify(nfts)
+    return jsonify({"total":len(nfts),"nfts":nfts,"sources":_ope["data"]["sources"]})
 
   return "No NFT",401
 
 
+
+@app.route('/api/mint_for_prestashop/',methods=["POST"])
+@app.route('/api/mint_for_prestashop',methods=["POST"])
+def mint_for_prestashop():
+  body=request.data
+  log("Réception de "+str(body))
+  return jsonify({"message":"ok"})
 
 
 #http://127.0.0.1:4200/dealermachine/?id=symbol2LesGratuits
@@ -736,28 +920,29 @@ def mint_for_contest(confirmation_code=""):
 
 
   if is_email(account):
+    email=body["account"]
     if "elrond" in network:
       elrond=Elrond(network)
-      _account,pem,words,qrcode=elrond.create_account(account)
+      _account,pem,words,qrcode=elrond.create_account()
       account=_account.address.bech32()
       log("Notification de "+body["account"]+" que son compte "+elrond.getExplorer(account,"account")+" est disponible")
-      send_mail(open_html_file("mail_new_account",{
+      send_mail(open_html_file("mail_new_account_withnft",{
         "wallet_address":account,
         "nft_name":_data["name"],
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
         "words":words,
         "qrcode":"cid:qrcode"
-      }),body["account"],subject="Votre NFT '"+_data["name"]+"' est disponible" ,attach=qrcode,filename="qrcode.png")
+      }),email,subject="Votre NFT '"+_data["name"]+"' est disponible" ,attach=qrcode,filename="qrcode.png")
     else:
       solana=Solana(network)
       words,pubkey,privkey,list_int=solana.create_account()
-      send_mail(open_html_file("mail_new_solana_account",{
+      send_mail(open_html_file("mail_new_solana_account_withnft",{
         "wallet_address":pubkey, #_account.public_key.to_base58(),
         "nft_name":_data["name"],
         "words":words,
         "private_key":privkey, #_account.secret_key.hex(),
         #"private_key_in_list":str([int(x) for x in _account.secret_key])
-      }),body["account"],subject="Votre NFT '"+_data["name"]+"' est disponible")
+      }),email,subject="Votre NFT '"+_data["name"]+"' est disponible")
       account=pubkey
 
     dao.add_histo(_ope["id"],"new_account",account,"","",_ope["network"],"Création d'un compte pour "+body["account"],[body["account"]])
@@ -771,7 +956,7 @@ def mint_for_contest(confirmation_code=""):
                       title=_data["name"],
                       collection=collection_id,
                       properties=elrond.format_offchain(_data)["properties"],
-                          files=elrond.format_offchain(_data)["files"],
+                      files=elrond.format_offchain(_data)["files"],
                       ipfs=Infura(), #IPFS(IPFS_SERVER,IPFS_PORT),
                       quantity=1,
                       royalties=20,
@@ -840,6 +1025,8 @@ def apply_filter():
 
 
 
+
+
 @app.route('/api/save_config/<name>/',methods=["POST"])
 def save_config(name:str):
   log("Demande d'enregistrement de la config "+name)
@@ -847,8 +1034,9 @@ def save_config(name:str):
   filename="./Configs/"+name+(".yaml" if not name.endswith(".yaml") else "")
   log("Ouverture en ecriture du fichier de destination "+filename)
 
-  f=open(filename,"wb")
-  f.write(request.data)
+  s=str(yaml.dump(request.json,Dumper=Dumper,default_flow_style=False,indent=4,encoding="utf8"),"utf8")
+  f=open(filename,"w")
+  f.writelines(s)
   f.close()
 
   log("Fermeture du fichier")
@@ -882,21 +1070,6 @@ def configs(name:str="",format=""):
       if request.method=="DELETE":
         os.remove("./Configs/"+name)
       return jsonify({"error":""})
-
-
-
-
-@app.route('/api/nft_from_ftx_wallet/',methods=["GET"])
-@app.route('/api/test/',methods=["GET"])
-#test http://127.0.0.1:4242/api/test/
-def test2():
-  words,pubkey,privkey,list_int=Solana().create_account()
-  return jsonify({
-    "words":words,
-    "pubkey":pubkey,
-    "privkey":privkey,
-    "list_int":list_int
-  })
 
 
 
@@ -937,7 +1110,7 @@ def ftx_account():
 
 
 @app.route('/api/keys/',methods=["GET"])
-@app.route('/api/keys/<name>',methods=["DELETE","POST"])
+@app.route('/api/keys/<name>/',methods=["DELETE","POST"])
 #https://metaboss.rs/set.html
 #test http://127.0.0.1:9999/api/keys/
 #test https://server.f80lab.com:4242/api/keys/
@@ -946,21 +1119,28 @@ def keys(name:str=""):
 
   if request.method=="GET":
     if "elrond" in network:
-      return jsonify(Elrond(network).get_keys())
+      return jsonify(Elrond(network).get_keys(with_qrcode=True))
     if "solana" in network:
-      rc=Solana(network).get_keys(with_private=(request.args.get("with_private","false")=="true"))
+      rc=Solana(network).get_keys(with_private=(request.args.get("with_private","false")=="true"),with_balance=True,with_qrcode=True)
       return jsonify(rc)
 
-  filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json")
+  filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in network else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
   if request.method=="DELETE":
     os.remove(filename)
 
   if request.method=="POST":
     obj=request.json
 
-    key=obj["key"]
-    if not key.startswith("["):
-      key=str([ord(x) for x in key])
+    if "key" in obj:
+      key=obj["key"]
+      if not key.startswith("["):
+        key=str([ord(x) for x in key])
+    else:
+      email=request.args.get("email","")
+      if "solana" in network:
+        mnemonic,pubkey,privkey,key=Solana(network).create_account(email)
+      else:
+        _u,key,words,qrcode=Elrond(network).create_account(email,network)
 
     f = open(filename, "w")
     f.write(key)
@@ -1048,14 +1228,14 @@ def sign():
 
 def upload_on_platform(data,platform="ipfs",id=None,options={}):
   if platform=="ipfs":
-    ipfs=IPFS(IPFS_SERVER,5001)
+    ipfs=IPFS(IPFS_SERVER)
     cid=ipfs.add(data,removeFile=True)
     rc={"cid":cid["Hash"],"url":ipfs.get_link(cid["Hash"])+("?"+cid["Name"] if "Name" in cid else "")}
 
   if platform=="infura":
     infura=Infura()
     cid=infura.add(data)
-    rc={"cid":cid,"url":infura.get_link(cid)}
+    rc={"cid":cid["Hash"],"url":cid["url"]}
 
   if platform=="mongodb":
     cid=dao.add_dict(data)
@@ -1088,7 +1268,8 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
 
   if platform.startswith("github"):
     repo=options["repository"] if "repository" in options else platform.split("/")[1].strip()
-    rc= GitHubStorage.GithubStorage(repo,"main","nfluentdev",GITHUB_TOKEN).add(data,id,overwrite=True)
+    github_storage=GitHubStorage.GithubStorage(repo,"main","nfluentdev",GITHUB_TOKEN)
+    rc= github_storage.add(data,id,overwrite=False)
 
   return rc
 
@@ -1164,10 +1345,12 @@ def send_email_to_validateur(user=""):
   for validateur in validate_section["users"]:
     if len(user)==0 or user==validateur:
       access_code=get_access_code_from_email(validateur)
-      url=validate_section["application"]+"&access_code="+access_code+"&toolbar=false"
+      url=validate_section["application"]+"&access_code="+access_code+"&ope="+operation["id"]
+      url_help=validate_section["support"]["faq"]
       send_mail(open_html_file("mail_validateur",{
         "title":operation["title"],
         "url_appli":url,
+        "url_help":url_help,
         "access_code":access_code
       }),validateur,subject=operation["title"]+" connexion à l'application de validation")
 
@@ -1188,9 +1371,13 @@ def send_transaction_confirmation(email:str):
 
 
 
+
 @app.route('/api/upload/',methods=["POST"])
-#https://metaboss.rs/mint.html
 def upload():
+  """
+  Chargement des fichiers
+  :return:
+  """
   platform=request.args.get("platform","ipfs")
   if str(request.data,"utf8").startswith("{"):
     body=request.json
@@ -1204,7 +1391,7 @@ def upload():
     }
 
   if body["type"]=="":
-    if body["filename"].startswith("qrcode:"):
+    if "filename" in body and body["filename"].startswith("qrcode:"):
       body["type"]="image/png"
 
       qr=pyqrcode.create(body["filename"].split("qrcode:")[1])
@@ -1218,7 +1405,7 @@ def upload():
       if body["filename"].endswith(".mp4") or body["filename"].endswith(".avi") or body["filename"].endswith(".webm"):
         body["type"]="video/"+body["filename"]
       else:
-        body["type"]="image/"+body["filename"]
+        body["type"]="image/"+body["filename"].split(".")[1]
 
   rc=upload_on_platform(body,platform)
   return jsonify(rc)
@@ -1241,6 +1428,21 @@ def upload():
 #     f.close()
 #   return s
 #
+
+@app.route('/api/upload_metadata/',methods=["POST"])
+def upload_metadata():
+  network=request.args.get("network","solana-devnet")
+
+  _data=request.json
+  id=request.args.get("filename_for_metadata",None)
+  repo=request.args.get("repository","CalviOnTheRocks2022")
+  offchaindata_platform=request.args.get("offchaindata_platform","ipfs").replace(" ","").lower()
+  if "solana" in network.lower():
+    solana=Solana(network)
+    rc=upload_on_platform(solana.prepare_offchain_data(_data),offchaindata_platform,id=id,options={"repository":repo})
+
+  return jsonify(rc)
+
 
 
 
@@ -1277,7 +1479,7 @@ def mint():
                       collection=collection_id,
                       properties=elrond.format_offchain(_data)["properties"],
                       files=elrond.format_offchain(_data)["files"],
-                      ipfs=IPFS(IPFS_SERVER,IPFS_PORT),
+                      ipfs=IPFS(IPFS_SERVER),
                       quantity=1,
                       royalties=_data["seller_fee_basis_points"]/100,  #On ne prend les royalties que pour le premier créator
                       visual=_data["image"]
@@ -1311,10 +1513,13 @@ def mint():
                                     options={"repository":request.args.get("repository","calviontherock")},
                                     )["url"]
     #voir https://metaboss.rs/mint.html
-    rc=solana.mint(_data,miner=keyfile,sign=(request.args.get("sign","False")=="True"),owner=request.args.get("owner",""))
+    #(request.args.get("sign","True")=="True" or request.args.get("sign","all")=="all")
+    rc=solana.mint(_data,miner=keyfile,sign=False,owner=request.args.get("owner",""))
 
     if request.args.get("sign_all","False")=="True" and "result" in rc and "mint" in rc["result"]:
-      solana.sign(rc["result"]["mint"],[x["address"] for x in _data["creators"]])
+      signers=[x["address"] for x in _data["creators"]]
+      #signers.remove(solana.find_address_from_json(keyfile))
+      solana.sign(rc["result"]["mint"],signers)
 
   if "database" in network.lower():
     db_loc=request.args.get("db_loc","cloud")
@@ -1335,7 +1540,8 @@ def mint():
       "out":"",
       "command":"file"
     }
-  if "transaction" in rc["result"]:
+
+  if "result" in rc and "transaction" in rc["result"]:
     dao.add_histo(request.args.get("ope",""),"mint",keyfile,collection_id,rc["result"]["transaction"],network,"Minage")
   return jsonify(rc)
 

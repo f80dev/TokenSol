@@ -5,8 +5,10 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from io import BytesIO
 from os.path import exists
 
+import pyqrcode
 import requests
 from cryptography.fernet import Fernet
 
@@ -167,6 +169,12 @@ def api(url,alternate_domain=""):
   except:
     return data.text
 
+
+
+def get_qrcode(text:str):
+  buffer=BytesIO()
+  pyqrcode.create(text).png(buffer,scale=9)
+  return "data:image/png;base64,"+str(base64.b64encode(buffer.getvalue()),"utf8")
 
 
 

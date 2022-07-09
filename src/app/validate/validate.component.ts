@@ -81,26 +81,28 @@ export class ValidateComponent implements OnInit {
 
     let filters=this.operation.validate.filters;
     this.network.network=detect_network(address)+"-"+detect_type_network(this.operation.network);
-    this.network.get_tokens_from("owner",addr,200,false).then((r:Token[])=>{
-      this._location.replaceState("./validate/?q="+this.query+"&ope="+this.operation.id);
-      for(let t of r){
-        if(t.splTokenInfo?.amount!>0 && t.metadataOffchain){
-          //Application des filtres contenu dans le fichier de configuration
-          let filter_Ok=false;
-          if(filters.collections){
-            for(let filter_name of filters.collections){
-              if(filter_name=="*" || (t.metadataOffchain.hasOwnProperty("collection") && t.metadataOffchain.collection.name.indexOf(filter_name)>-1)){
-                filter_Ok=true;
-                break;
+    this.network.get_tokens_from("owner",addr,10,false).then((r:Token[])=>{
+      //this._location.replaceState("./validate/?q="+this.query+"&ope="+this.operation.id);
+      if(this.message.length>0){
+        for(let t of r){
+          if(t.splTokenInfo?.amount!>0 && t.metadataOffchain){
+            //Application des filtres contenu dans le fichier de configuration
+            let filter_Ok=false;
+            if(filters.collections){
+              for(let filter_name of filters.collections){
+                if(filter_name=="*" || (t.metadataOffchain.hasOwnProperty("collection") && t.metadataOffchain.collection.name.indexOf(filter_name)>-1)){
+                  filter_Ok=true;
+                  break;
+                }
               }
             }
-          }
-          if(filter_Ok){
-            this.tokens.push(t);
+            if(filter_Ok){
+              this.tokens.push(t);
+            }
           }
         }
+        this.message="";
       }
-      this.message="";
       if(this.tokens.length==0)showMessage(this,"Aucun NFT à valider sur ce wallet");
     },(err)=>{
       this.message="";
@@ -109,7 +111,7 @@ export class ValidateComponent implements OnInit {
   }
 
   onflash($event: any) {
-    let addr=$event;
+    let addr=$event.data;
     this.update_token(addr);
   }
 

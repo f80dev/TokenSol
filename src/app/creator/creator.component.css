@@ -19,4 +19,9 @@ table,td {
   padding: 10px;
 }
 
+textarea {
+  background-color: #efefef;
+  padding: 5px;
+}
+
 

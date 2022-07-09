@@ -2,3 +2,7 @@ table,tr {
   width:100%;
   text-align: center;
 }
+
+button {
+  margin: 5px;
+}

@@ -6,6 +6,8 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Location} from "@angular/common";
+import {PromptComponent} from "../prompt/prompt.component";
+import {MatDialog} from "@angular/material/dialog";
 
 @Component({
   selector: 'app-keys',
@@ -19,6 +21,7 @@ export class KeysComponent implements OnInit {
 
   constructor(
     public metaboss:MetabossService,
+    public dialog:MatDialog,
     public clipboard: Clipboard,
     public network:NetworkService,
     public toast:MatSnackBar,
@@ -76,4 +79,24 @@ export class KeysComponent implements OnInit {
         showMessage(this,name+" importé");
       })
     }
+
+  new_key() {
+    this.dialog.open(PromptComponent,{
+      width: 'auto',data:
+        {
+          title: "Recevoir les informations de votre compte via mail",
+          placeholder: "Saisissez votre adresse mail",
+          type: "text",
+          onlyConfirm:false,
+          lbl_ok:"Recevoir par mail",
+          lbl_cancel:"Ne pas recevoir"
+        }
+    }).afterClosed().subscribe(resp => {
+      if(!resp)resp="";
+      this.metaboss.add_key({name:this.name},this.network.network,resp).subscribe((key:any)=>{
+        this.refresh();
+      })
+    });
+
+  }
 }

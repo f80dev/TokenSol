@@ -1,35 +1,15 @@
-from ArtEngine import ArtEngine, Layer, TextElement, VideoElement
+from ArtEngine import convert_to_gif
+from PrestaTools import PrestaTools
+from app import get_operation, get_nfts_from_src
 
+_operation=get_operation("Main_devnet")
+_store_section=_operation["store"]
+prestashop=PrestaTools(_store_section["prestashop"]["api_key"])
 
-def test_reset_collection():
-	assert False
+image="./temp/image.gif"
+product=prestashop.add_product("produit test",15,"","ma description",1)
+prestashop.set_product_quantity(product,10)
+#buf_image=convert_to_gif(image,filename="image.gif")
+#image=prestashop.add_image(product_id,"./temp/image.gif")
 
-def test_concat():
-  engine=ArtEngine("collage")
-  for k in range(4):
-    layer=Layer("layer"+str(k))
-    for i in range(5):
-      layer.add(TextElement("elt_"+str(k)+str(i),"L"+str(k)+"E"+str(i)))
-
-    engine.add(layer)
-
-  rc=engine.generate(TextElement(),limit=10,seed_generator=1)
-  assert rc==['L0E0L1E4L2E3L3E1', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2L0E3L1E0L2E2L3E3', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2L0E3L1E0L2E2L3E3L0E1L1E4L2E4L3E0', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2L0E3L1E0L2E2L3E3L0E1L1E4L2E4L3E0L0E0L1E2L2E4L3E1', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2L0E3L1E0L2E2L3E3L0E1L1E4L2E4L3E0L0E0L1E2L2E4L3E1L0E1L1E2L2E0L3E1', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2L0E3L1E0L2E2L3E3L0E1L1E4L2E4L3E0L0E0L1E2L2E4L3E1L0E1L1E2L2E0L3E1L0E2L1E2L2E1L3E1', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2L0E3L1E0L2E2L3E3L0E1L1E4L2E4L3E0L0E0L1E2L2E4L3E1L0E1L1E2L2E0L3E1L0E2L1E2L2E1L3E1L0E1L1E2L2E1L3E0', 'L0E0L1E4L2E3L3E1L0E2L1E2L2E3L3E3L0E0L1E0L2E4L3E2L0E3L1E0L2E2L3E3L0E1L1E4L2E4L3E0L0E0L1E2L2E4L3E1L0E1L1E2L2E0L3E1L0E2L1E2L2E1L3E1L0E1L1E2L2E1L3E0L0E4L1E2L2E3L3E0']
-
-
-def test_video():
-
-  v1=VideoElement("d:/temp/tornado.mp4")
-  v1.flip("d:/temp/tornado_flip.mp4")
-
-  v2=VideoElement("d:/temp/calvi.mp4")
-  v2.fusion(v1)
-  v2.save()
-
-  # engine=ArtEngine("collage")
-  # layer1=Layer("layer1").add()
-  # layer2=Layer("layer2").add()
-  # engine.add(layer1)
-  # engine.add(layer2)
-  # engine.generate(VideoElement(name="test"),limit=1,seed_generator=1)
-
+pass

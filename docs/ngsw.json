@@ -1,6 +1,6 @@
 {
   "configVersion": 1,
-  "timestamp": 1655971216538,
+  "timestamp": 1657207397016,
   "index": "/index.html",
   "assetGroups": [
     {
@@ -13,11 +13,11 @@
       "urls": [
         "/favicon.ico",
         "/index.html",
-        "/main.e08e4c107c0ab0c9.js",
+        "/main.fb1566bce6b85d51.js",
         "/manifest.webmanifest",
         "/polyfills.7014c2acee6a7c7f.js",
         "/runtime.10cb596ddd43fd10.js",
-        "/styles.ab38ece2139874ac.css"
+        "/styles.dcd29baec945b65f.css"
       ],
       "patterns": []
     },
@@ -29,8 +29,10 @@
         "ignoreVary": true
       },
       "urls": [
+        "/HelveticaInseratLT.50de6e577e819322.ttf",
         "/assets/Assets - Copie.xlsm",
         "/assets/Assets.xlsm",
+        "/assets/HelveticaInseratLT.ttf",
         "/assets/NFT_demo_1.json",
         "/assets/NFT_demo_2.json",
         "/assets/circle1.png",
@@ -38,6 +40,7 @@
         "/assets/circle3.png",
         "/assets/circle4.png",
         "/assets/circle5.png",
+        "/assets/exif-reader.js",
         "/assets/icons/icon-128x128.png",
         "/assets/icons/icon-144x144.png",
         "/assets/icons/icon-152x152.png",
@@ -56,6 +59,7 @@
         "/assets/triangle2.png",
         "/assets/triangle3.png",
         "/assets/triangle4.png",
+        "/assets/xmp.cjs.min.js",
         "/assets/~$Assets.xlsm"
       ],
       "patterns": []
@@ -63,8 +67,10 @@
   ],
   "dataGroups": [],
   "hashTable": {
+    "/HelveticaInseratLT.50de6e577e819322.ttf": "72bdaf283827e7e2c2dfde8c2635fdc1c4500bc3",
     "/assets/Assets - Copie.xlsm": "085c5d67cf6256bd65f562ee91493092dcd20357",
-    "/assets/Assets.xlsm": "41e82a096257670ea4b85a3fa4e2b92532765b24",
+    "/assets/Assets.xlsm": "dd0412be7fde352c8935d4806bf4a611dadfdb4f",
+    "/assets/HelveticaInseratLT.ttf": "72bdaf283827e7e2c2dfde8c2635fdc1c4500bc3",
     "/assets/NFT_demo_1.json": "360320a3dc6d3478e8e95657591b1df898644d64",
     "/assets/NFT_demo_2.json": "af1c811f4e73e2b41f6dd006c8f4642249713547",
     "/assets/circle1.png": "365838b3ab5e42389b73be782b420ccd2c905bed",
@@ -72,6 +78,7 @@
     "/assets/circle3.png": "5815903f660573db9db9432da1dd51949e4ac318",
     "/assets/circle4.png": "6500d16e7c5160b2b459e5a12176b0816c3c8c81",
     "/assets/circle5.png": "e7dce3234f96e3fe563e112b3989dd98a98e78e4",
+    "/assets/exif-reader.js": "cd9df7f0fbe6cffede032fa043c9647f4c7f2a34",
     "/assets/icons/icon-128x128.png": "dae3b6ed49bdaf4327b92531d4b5b4a5d30c7532",
     "/assets/icons/icon-144x144.png": "b0bd89982e08f9bd2b642928f5391915b74799a7",
     "/assets/icons/icon-152x152.png": "7479a9477815dfd9668d60f8b3b2fba709b91310",
@@ -90,14 +97,15 @@
     "/assets/triangle2.png": "0d09a48499aef02e737b8febfe269c0da4bda120",
     "/assets/triangle3.png": "11cd856f8006f4e501123daf0eb6e7c81d8fd333",
     "/assets/triangle4.png": "11cd856f8006f4e501123daf0eb6e7c81d8fd333",
+    "/assets/xmp.cjs.min.js": "262a6ed3bb5f0729ddcabce494039544ec58a977",
     "/assets/~$Assets.xlsm": "b48ae618d652e658e7c8a49db4eb6fd3253f70a6",
     "/favicon.ico": "22f6a4a3bcaafafb0254e0f2fa4ceb89e505e8b2",
-    "/index.html": "020760659439dd4bb52f594005d8c9f35325815c",
-    "/main.e08e4c107c0ab0c9.js": "a63c8df646cd81beb26d5633922e105063d3cb3b",
+    "/index.html": "ddc796c134d4f9caf1fa9f23287abff350668a87",
+    "/main.fb1566bce6b85d51.js": "ebc25f9cd6091439612a40aa72eb289f0ec06037",
     "/manifest.webmanifest": "52e3f3f8b273b8c1dc26ae48e41d9484e32be3ab",
     "/polyfills.7014c2acee6a7c7f.js": "71c12b509fb77535a94d49727a87faeb5ddb03b0",
     "/runtime.10cb596ddd43fd10.js": "4b0cf88c21f2410f6f71ac6db6db4daab6ddf3c0",
-    "/styles.ab38ece2139874ac.css": "fd937c949b6bf02d646eff61a50755e48119b26e"
+    "/styles.dcd29baec945b65f.css": "4b69509736927bfdf0f2972da6487b987fa54570"
   },
   "navigationUrls": [
     {

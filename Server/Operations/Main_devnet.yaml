@@ -5,13 +5,13 @@
 #une fois terminé, ce fichier doit être chargé a l'adresse : https://tokensol.nfluent.io/build
 
 
-id: "calvi22_devnet"          #cet Id doit être cohérent avec le nom du fichier
-title: "Calvi2022_devnet"     #est le titre usuel de l'operation qui apparait pour les validateurs
-description: "Version test de l'opération de distribution de NFT sur le festival CalviOnTheRocks"
-website: "https://www.calviontherocks.com/fr"   #désigne le site concerné par l'opération
+id: "Main_devnet"          #cet Id doit être cohérent avec le nom du fichier
+title: "Opération fictive / Modele principal"     #est le titre usuel de l'operation qui apparait pour les validateurs
+description: "Modèle principal"
+website: "https://nfluent.io"   #désigne le site concerné par l'opération
 version: 0.1
 network: solana-devnet      #Réseau concerné par l'opération
-metadata_storage: github/test4
+metadata_storage: github/test6
 
 database:                 #base de données contenant les historiques
   connexion: cloud
@@ -22,6 +22,14 @@ database:                 #base de données contenant les historiques
 accounts:
   solana:
     paul: Z0FBQUFBQmltR2ZCaDRoMUw2VFdla2hJajh2STNlOV8xQlhUcXgxcGtfUFllX1BVT3gxN0xULXVzTGpCSVF1N29vTzR1OTBuX0lVakY2bjVpNlhNQ0x3WUttWGJnTnRnWEZaVXBiMWNHaHdnTmtyUms1OENOcjB2QkV2ZFJrSkZiZzE4RENtWHBJbVNBYVZZaC1LMnBrbEctSGJvNWsxdHJvbmpTa01GWW1KODFENFlSbTFsRHNWX28wX1Z1ZVc5SjdVdkpqRW8zM1ByQW9GNlB1YXNIUVN4YXdIUFhCS3N2Z2dKQnM0aW9ncGVyTWZmMDF0VzNWYUlaVzNocFh6X1pEQUswMXRjbXEyb3lCRE9UZmxiY2xnX0x4QnhZXzMzM2pZX1ZOQ2VNWHoxSVc2TVByQVBjMWFCTXpJRVZLU05BTkJYUUFZcUpUYjRTZTFoLXZMMXFPZkFlWGFLS3pOYV9mSGpnVklOMU5aM1NUb25hMmFvbXZ5YUU2QXZvSjUyeWtJNDQzMk9XZlRs
+
+
+branding:                     #Utiliser pour uniformiser l'aspect des applications
+  style:
+    background-color: darkgrey
+    color: white
+    font-size: medium
+    text-align: center
 
 
 #Fonctionnement de la section data ______________________________________________________________________________________________________________________________
@@ -36,9 +44,13 @@ accounts:
 
 data:
   sources:
+#    - type: network
+#      connexion: solana-devnet
+#      owner: roger
+
     - type: database
-      connexion: web3      #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
-      dbname: nfluent       #Nom de la base de données contenant les NFTS
+      connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
+      dbname: nfluentdb_2       #Nom de la base de données contenant les NFTS
 
 #    - type: json              #Les NFTs sont contenus dans un fichier json
 #      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
@@ -63,7 +75,7 @@ validate:
   camera: True            #Si possible, utilise la caméra du device
   manual_input: True      #Le validateur peut saisir manuellement l'adresse du NFT du visiteur
 
-  application: "$tokensol$/validate"
+  application: "$nluent_appli$/validate?toolbar=false"
 
   users:                        #Liste des validateurs autorisé à modifier les NFTs
     - "paul.dudule@gmail.com"
@@ -88,10 +100,10 @@ validate:
     #message affiché en cas de dysfonctionnement de l'outil
     warning_process:
       "
-      En cas de dysfonctionnement veuillez adresser un mail à <a href='mailto:support@nfluent.io'>support@nfluent.io</a> en précisant
+      <h2>Procédure dégradée</h2>
+      En cas d'impossibilité de valider le NFT du visiteur, veuillez adresser un mail à <a href='mailto:support@nfluent.io'>support@nfluent.io</a> en précisant
       <ul>
         <li>l'adresse du wallet du client</li>
-        <li>le nombre de passe attribué</li>
       </ul>
       "
 
@@ -150,18 +162,52 @@ validate:
 
 
 
+payment: #Section désignant le réceptionnaire des payment via google pay : https://www.npmjs.com/package/@google-pay/button-angular
+  merchantId: "BCR2DN4TYD4Z5XCR"
+  merchantName: "NFluenT"
+  currencyCode: "EUR"
+  countryCode: "FR"
+  billing: True
+
+
+store:
+  visible: True
+  miner: paul
+  application: '$nfluent_appli$/store'          #Désigne l'application en charge de la vente
+
+  #Collection mise en vente dans le store (parmis les NFT issue de la section data/sources)
+  collections:
+    - name: "NFluenTTest"
+      price: 1
+      limit: 50
+
+  support:      #Section regroupant les différents messages d'aides aux utilisateur
+    buy_message: "Achat en cours"
+
+  #section concernant l'usage de Prestashop comme boutique des NFTs
+  prestashop:
+    server: "http://161.97.75.165/"               #adresse du serveur Prestashop
+    address: "http://161.97.75.165/fr/"           #page de la boutique
+    admin: "http://161.97.75.165:8080/admin4280/" #page d'administration de la boutique
+    api_key: "SA92LXSJW9MC28NC8G933SPNZPP9MQDZ"   #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+    root_category: NFTs                           #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
+    on_sale: True                                 #Mettre en vente ou pas immédiatement les NFT
+
+
 
 #Fonctionnement de la section dispenser ____________________________________________________________________________________________________________________________
 #Section lié à la distribution nominative de NFT
 dispenser:
-  visible: False
-  miner: paul                                       #mineur en charge de la création des tokens
+  visible: True
+  miner: nminer                                       #mineur en charge de la création des tokens
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
 
   collections:                                      #Liste des collections concernée par la distribution
     - name: "BILLET Festival"
       limit: 5                                      #Maximum de NFT distribuable par collection
 
+    - name: "A Madonna Di A Sierra"
+      limit: 10
 
 
 #Fonctionnement de la section lottery ________________________________________________________________________________________________________________________________
@@ -202,15 +248,6 @@ lottery:
     by_day: 50
     by_month: 50
     by_year: 50
-
-  payment:          #Section désignant le réceptionnaire des payment via google pay : https://www.npmjs.com/package/@google-pay/button-angular
-    merchantId: "BCR2DN4TYD4Z5XCR"
-    merchantName: "NFluenT"
-    currencyCode: "EUR"
-    countryCode: "FR"
-
-
-
 
   duration: 100        #durée en seconde d'affichage des NFTs
 

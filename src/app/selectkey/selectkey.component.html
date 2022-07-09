@@ -1,20 +1,24 @@
 <div style="display: inline-block" style="height: fit-content;">
 
   <ng-content></ng-content>&nbsp;&nbsp;
-  <mat-form-field [ngStyle]="{fontsize:fontsize}">
+  <mat-form-field [ngStyle]="{fontsize:fontsize}" style="width: 90px;margin:0px">
     <mat-select  [(value)]="selected" (selectionChange)="refresh($event)" >
       <mat-option *ngFor="let key of keys" [value]="key">
         {{key.name}}
       </mat-option>
     </mat-select>
   </mat-form-field>
-  &nbsp;&nbsp;
-  <mat-icon (click)="informe_copy()"
-            style="margin-top: 10px;font-size: large;"
-            [cdkCopyToClipboard]="selected?.pubkey!">content_copy</mat-icon>
 
-  <mat-icon (click)="refill()"
-            style="margin-top: 10px;font-size: large;">$</mat-icon>
+
+  <div style="margin-left:10px;margin-top: 20px;font-size: large;display: inline-block;">
+    <mat-icon (click)="informe_copy()"
+              [cdkCopyToClipboard]="selected?.pubkey!">
+      content_copy
+    </mat-icon>
+
+    <mat-icon (click)="refill()">local_atm</mat-icon>
+
+  </div>
 
 
 </div>

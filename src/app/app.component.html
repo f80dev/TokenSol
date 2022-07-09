@@ -1,19 +1,20 @@
 <mat-sidenav-container class="sidenav-container">
-  <mat-sidenav #drawer class="sidenav" fixedInViewport
+  <mat-sidenav #drawer class="sidenav sidemenu" fixedInViewport
                [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
                [mode]="(isHandset$ | async) ? 'over' : 'side'"
                [opened]="(isHandset$ | async) === false && toolbar_visible=='true'">
-    <mat-toolbar>
-      <span style="font-size: xx-small" *ngIf="user.connected()">
-        {{user.addr}}
+
+    <mat-toolbar class="mat-body-2" color="primary">
+      <span *ngIf="user.connected()">
+        {{user.addr | alias}}
       </span>
 
       <div style="line-height: 90%" *ngIf="!user.connected()">
         {{title}}<br>
         <small>v{{version}}</small>
       </div>
-
     </mat-toolbar>
+
     <mat-nav-list>
       <a mat-list-item [routerLink]="'creator'">Générateur de collection</a>
       <a mat-list-item [routerLink]="'reload'">Rechargement</a>
@@ -28,8 +29,10 @@
       <a mat-list-item [routerLink]="'about'">A propros</a>
     </mat-nav-list>
   </mat-sidenav>
+
+
   <mat-sidenav-content>
-    <mat-toolbar color="primary" *ngIf="toolbar_visible=='true'" >
+    <mat-toolbar color="primary" class="mat-subheading-1" *ngIf="toolbar_visible=='true'" >
       <button
         type="button"
         mat-icon-button
@@ -38,13 +41,13 @@
         <mat-icon>menu</mat-icon>
       </button>
 
-      <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;">
+      <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-subheading-2">
         <mat-spinner style="display: inline-block;" color="warn" diameter="20"></mat-spinner>&nbsp;{{network_service.waiting}}
       </div>
 
       <span class="example-spacer"></span>
 
-      <mat-form-field>
+      <mat-form-field style="width: 120px">
         <mat-select  [(value)]="network_service.network" (selectionChange)="update_network()">
           <mat-option *ngFor="let network of networks" [value]="network" >
             {{network}}
@@ -52,8 +55,8 @@
         </mat-select>
       </mat-form-field>
 
-      <app-selectkey [keys]="network_service.keys" fontsize="10px" (refresh)="this.refresh()">
-        Signature
+      <app-selectkey [keys]="network_service.keys">
+        Sign:
       </app-selectkey>&nbsp;&nbsp;
 
       <button mat-button

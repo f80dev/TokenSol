@@ -1,0 +1,33 @@
+{
+    "Issuer": "NfluenT for Calvi On The rocks",
+    "creators": [
+        {
+            "address": "CcKHZgqCWYfyJ3E24mwmh3SLD2GgiutXjH8MmpfxMtkU",
+            "share": 10,
+            "verified": false
+        },
+        {
+            "address": "Aee8GX5nzqJWFrg5Tr5N3kwry3ndYxzWjWSfLGzkU4LN",
+            "share": 90,
+            "verified": false
+        },
+        {
+            "address": "6gWV3eagwCxsgGAQeFedyY6f27Z87sVYAHWDvzJdyMJn",
+            "share": 0,
+            "verified": false
+        }
+    ],
+    "description": "Billet Festival / Billet NFT Festival - 1 jour Calvi on the Rocks 2022",
+    "external_url": "",
+    "marketplace": {
+        "duration": "",
+        "initial_price": "73,5",
+        "max_mint": 1,
+        "reservation_price": "",
+        "sell_date": "25/06/2022"
+    },
+    "name": "#78 Billet Festival",
+    "seller_fee_basis_points": 1000,
+    "symbol": "COR22F78",
+    "uri": "https://raw.githubusercontent.com/nfluentdev/CalviOnTheRocks2022/main/BILLETFestival_COR22F78"
+}

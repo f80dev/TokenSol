@@ -4,6 +4,7 @@ import {NetworkService} from "./network.service";
 import {Observable} from "rxjs";
 import {environment} from "../environments/environment";
 import {MetabossKey} from "../tools";
+import {Token} from "./nfts/nfts.component";
 
 @Injectable({
   providedIn: 'root'
@@ -28,8 +29,8 @@ export class MetabossService {
   }
 
 
-  add_key(key:any){
-    return this.httpClient.post(environment.server+"/api/keys/"+key["name"],key);
+  add_key(key:any,network="solana-devnet",email=""){
+    return this.httpClient.post(environment.server+"/api/keys/"+key["name"]+"/?network="+network+"&email="+email,key);
   }
 
 
@@ -37,7 +38,10 @@ export class MetabossService {
     return new Promise((resolve, reject) => {
       network=(network=="") ? this.network.network : "solana-devnet"
       this.network.wait("Minage en cours sur "+network);
-      this.httpClient.post(environment.server+"/api/mint/?keyfile="+this.admin_key?.name+"&sign="+sign+"&platform="+platform+"&network="+network,token).subscribe((r)=>{
+      let data:any=token.metadataOffchain;
+      data.creators=token.metadataOnchain.data.creators;
+      data.symbol=token.metadataOnchain.data.symbol;
+      this.httpClient.post(environment.server+"/api/mint/?keyfile="+this.admin_key?.name+"&sign="+sign+"&platform="+platform+"&network="+network,data).subscribe((r)=>{
         resolve(r);
       },(err)=>{
         reject(err);

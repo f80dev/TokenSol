@@ -1,9 +1,11 @@
 <div class="mainform">
 
+  <div class="mat-display-3 color-primary">Minage des NFTs</div>
+
   <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br>
 
   <div style="width: 300px;display: inline-block;">
-    <input type="file" (change)="onFileSelected($event)" webkitdirectory multiple/><br>
+    <app-upload-file (uploaded)="onFileSelected($event)" extensions=".webp,.png,.gif,.jpeg,.jpg">Charger des visuels</app-upload-file>
   </div>
 
   <mat-form-field style="fontsize:small">
@@ -19,28 +21,53 @@
 
   <table style="padding: 5px;width:100%;text-align: center;">
     <tr>
-      <th>Titre</th><th>Collection</th><th>Symbole</th>
-      <th>Visuel</th><th>Fichiers</th><th>Creator</th><th>Commandes</th>
+      <th>Visuel</th>
+      <th>Titre / Description</th>
+      <th>Collection</th>
+      <th>Symbole</th>
+      <th>Fichiers</th>
+      <th>Attributs</th>
+      <th>Créateurs</th>
+      <th>Commandes</th>
       <th>Validité</th>
     </tr>
     <tr *ngFor="let token of tokens" style="margin: 5px;">
-      <td style="cursor: pointer" (click)="change_name(token)">{{token.name}}</td>
-      <td>{{token.collection.name}} / {{token.collection.family}}</td>
-      <td>{{token.symbol}}</td>
-      <td>
-        <app-link [content]="token.image">
-          <mat-icon>photo</mat-icon>
-        </app-link>
+      <td style="width: fit-content">
+        <div style="width: 100px;height: 100px;display: inline-block;" class="mat-elevation-z4">
+        <img [src]="token.metadataOffchain.image"
+             [title]="token.metadataOffchain.image"
+             alt="En cours de chargement ..." style="width: 100%;"
+              >
+        </div>
       </td>
+      <td style="cursor: pointer">
+          <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.metadataOffchain.name"><br>
+          <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.metadataOffchain.description">
+      </td>
+      <td (click)="set_collection(token)">{{token.metadataOffchain.collection?.name}} / {{token.metadataOffchain.collection?.family}}</td>
+      <td style="max-width: 50px;">
+        <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.metadataOnchain.data.symbol">
+      </td>
+
       <td>
-        <app-link *ngFor="let file of token.properties?.files" [content]="file.uri">
+        <app-link *ngFor="let file of token.metadataOffchain.properties?.files" [content]="file.uri">
           <mat-icon>link</mat-icon>
         </app-link>
       </td>
+
+      <td style="text-align: left;">
+        <ul>
+          <li *ngFor="let a of token.metadataOffchain.attributes">
+            <strong>{{a.trait_type}}:</strong> {{a.value}}
+          </li>
+        </ul>
+      </td>
+
+
       <td>
-        <app-link *ngFor="let creator of token.properties?.creators"
+        <app-link *ngFor="let creator of token.metadataOffchain.properties?.creators"
                   [content]="'https://solscan.io/account/'+creator.address+'?cluster=devnet'">
-          {{find_name(creator)}}&nbsp;({{creator.share}}%)
+          {{(creator.address | alias:network.network).substring(0,10)+'..'}}&nbsp;({{creator?.share}}%)
           <br>
         </app-link>
       </td>
@@ -52,6 +79,7 @@
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <mat-icon style="cursor: pointer" >content_copy</mat-icon>
         <mat-icon style="cursor: pointer" (click)="download(token)">download</mat-icon>
+        <app-upload-file (uploaded)="onUploadXMP($event,token)" extensions=".xmp">Metas</app-upload-file>
       </td>
 
       <td>
@@ -86,6 +114,13 @@
           (click)="add_creator()">
     <mat-icon>add_circle</mat-icon>&nbsp;Créateur
   </button>
+
+  <button type="button"
+          mat-raised-button mat-button
+          (click)="set_collection()">
+    Collection
+  </button>
+
 
   <button type="button"
           mat-raised-button mat-button

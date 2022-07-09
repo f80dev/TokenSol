@@ -17,6 +17,7 @@ class GithubStorage:
     self.branch=branch
     self.login=login
 
+
   def add(self,data:dict,id,overwrite=False):
     r = Github(self.token).get_user(self.login).get_repo(self.repo)
     content=dumps(data)
@@ -36,6 +37,7 @@ class GithubStorage:
     except Exception as inst:
       #log("Probleme de mise a jour / creation "+str(inst.args))
       r.create_file(id,"create",content,self.branch)
+
 
     return {"cid":id,"url":url}
 

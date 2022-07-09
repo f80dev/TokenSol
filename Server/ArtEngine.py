@@ -1,5 +1,8 @@
 import base64
+import io
+import json
 import os
+import platform
 from io import BytesIO
 from os.path import exists
 from random import random,seed
@@ -15,6 +18,35 @@ from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
 
 from Tools import now, log
+
+def convert_to_gif(content:str,storage_platform=None,filename=None):
+  if content.startswith("http"):
+    image:Image=Image.open(io.BytesIO(requests.get(content).content))
+  else:
+    image:Image=Image.open(io.BytesIO(base64.b64decode(content.split("base64,")[1])))
+
+  if filename:
+    buffered=open("./temp/"+filename,"wb")
+  else:
+    buffered =io.BytesIO()
+
+  if image.is_animated:
+    frames = [f.convert("RGBA") for f in ImageSequence.Iterator(image)]
+    frames[0].save(buffered,format="GIF",save_all=True,append_images=frames[1:],optimize=True,quality=90)
+  else:
+    image.save(buffered, format="GIF",quality=90)
+
+  if storage_platform:
+    url=storage_platform.add(bytes(buffered.getvalue()),"image/gif")["url"]
+    return url
+
+  if filename:
+    buffered.close()
+    return "./temp/"+filename
+
+  return buffered
+
+
 
 
 class Element():
@@ -40,8 +72,12 @@ class Sticker(Element):
   frames=[]
   text:dict=None
 
-  def __init__(self,name="",image=None,dimension=None,text:str=None,x:int=None,y:int=None,fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"},ext="PNG"):
+  def __init__(self,name="",image=None,
+               dimension=None,text:str=None,x:int=None,y:int=None,
+               fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"},
+               ext="WEBP",data=""):
     super().__init__(name,ext)
+    self.data=data
 
     if image:
       if type(image)==str:
@@ -172,7 +208,7 @@ class Sticker(Element):
     filename="./temp/temp_merge_"+str(now())+".gif"
     wr=imageio.get_writer(filename,mode="I")
 
-    frames_to_paste = [f.convert("RGBA").resize(base.size) for f in ImageSequence.Iterator(to_paste)]
+    frames_to_paste = [f.resize(base.size).convert("RGBA") for f in ImageSequence.Iterator(to_paste)]
     frame_base=[f.convert("RGBA") for f in ImageSequence.Iterator(base)]
     for i,frame in enumerate(frames_to_paste):
       if i<len(frame_base):
@@ -186,20 +222,40 @@ class Sticker(Element):
 
     wr.close()
     to_paste.close()
-    rc=Image.open(filename)
+    rc=Image.open(filename,"r")
     return rc
+
+
+  def convertImageFormat(self,imgObj, outputFormat=None):
+    newImgObj = imgObj
+    if outputFormat and (imgObj.format != outputFormat):
+      imageBytesIO = BytesIO()
+      imgObj.save(imageBytesIO, outputFormat)
+      newImgObj = Image.open(imageBytesIO)
+
+    return newImgObj
 
 
   def convert_image_to_animated(self,base:Image,n_frames:int):
     filename="./temp/temp_convert_"+str(now())+".gif"
 
-    wr=imageio.get_writer(filename,mode="I")
-    for i in range(n_frames):
-      ndarray=numpy.asarray(base.convert("RGBA"))
-      wr.append_data(ndarray)
-    wr.close()
+    base=self.convertImageFormat(base,"GIF")
+    images=[base]*(n_frames-1)
 
+    images[0].save(filename, save_all=True,append_images=images[1:],disposal=2,loop=0)
     base.close()
+
+    for image in images:
+      image.close()
+
+    # wr=imageio.get_writer(filename,mode="I")
+    # cp=base.convert("RGBA")
+    # ndarray=numpy.asarray(cp)
+    # for i in range(n_frames):
+    #   wr.append_data(ndarray.copy())
+    # wr.close()
+    #
+    # base.close()
     rc= Image.open(filename)
     return rc
 
@@ -217,20 +273,20 @@ class Sticker(Element):
       if self.image and to_concat.image:
         if (to_concat.image.format=="WEBP" or to_concat.image.format=="GIF") and to_concat.image.is_animated:
           if self.image.format is None:
-            #log("Convertion de la base en image animé")
+            log("Convertion de la base en image animé")
             self.image=self.convert_image_to_animated(self.image,to_concat.image.n_frames)
 
-          #log("Collage d'une image animé sur la base")
+          log("Collage d'une image animé sur la base")
           self.image=self.merge_animated_image(self.image,to_concat.image)
           to_concat.image.close()
 
         else:
-          #log("Collage d'une image fixe ...")
+          log("Collage d'une image fixe ...")
           if self.image.format is None:
-            #log("... sur la base fixe")
+            log("... sur la base fixe")
             self.image.alpha_composite(to_concat.image.resize(self.image.size))
           else:
-            #log("... sur une base animé")
+            log("... sur une base animé")
             to_concat.image=self.convert_image_to_animated(to_concat.image,self.image.n_frames)
             self.image=self.merge_animated_image(self.image,to_concat.image)
             to_concat.image.close()
@@ -240,19 +296,39 @@ class Sticker(Element):
 
 
 
-  def save(self,filename,quality=98):
+  def save(self,filename,quality=98,index=0):
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp pour le Webp
+    _data_to_add=self.data
+    for i in range(10):
+      _data_to_add=_data_to_add.replace("__idx__",str(index))
+
+    xmp="<?xpacket begin='' id=''?><x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description rdf:mint='"\
+        +str(base64.b64encode(bytes(_data_to_add,"utf8")),"utf8")\
+        +"' xmlns:dc='http://purl.org/dc/elements/1.1/'></rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end='r'?>"
+
     if self.text and self.text["text"] and "<svg" in self.text["text"]:
       f=open(filename,"w")
       f.writelines(self.text["text"])
       f.close()
     else:
-      if self.image.format=="GIF" or  self.image.format=="WEBP" :
+      if self.image.format=="GIF" or self.image.format=="WEBP" :
+        log("Enregistrement d'un fichier animé")
         frames = [f.convert("RGBA") for f in ImageSequence.Iterator(self.image)]
         self.image.close()
-        frames[0].save(filename,append_images=frames[1:],save_all=True)
+        frames[0].save(filename,append_images=frames[1:],save_all=True,xmp=bytes(xmp,"utf8"))
+        if not filename.endswith("webp"):
+          log("Les metadonnées ne peuvent pas être inséré diretement dans l'image")
+          l_index=filename.rindex(".")
+          xmp_filename=filename[:l_index]+".xmp"
+          with open(xmp_filename,"w") as f:
+            f.write(xmp)
       else:
-        self.image.save(filename,quality=int(quality),method=6,lossless=(quality==100),save_all=True)
+        log("Enregistrement d'un fichier statique")
+        if self.image.format=="JPEG" or self.image.format=="JPG":
+          self.image.save(filename,xmp=bytes(xmp,"utf8"))
+        else:
+          log("... au format WEBP")
+          self.image.save(filename,quality=int(quality),method=6,lossless=(quality==100),save_all=True,xmp=bytes(xmp,"utf8"))
 
 
 
@@ -447,7 +523,7 @@ class ArtEngine:
   def sort(self):
     self.layers=sorted(self.layers,key=lambda x:x.position)
 
-  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp"):
+  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp",data=""):
     if seed_generator>0:seed(seed_generator)
     if len(dir)>0 and not dir.endswith("/"):dir=dir+"/"
     rc=list()
@@ -458,7 +534,7 @@ class ArtEngine:
     index=0
     log("Lancement de la génération de "+str(limit)+" images")
     while index<limit:
-      collage=Sticker("collage",dimension=(width,height),ext=ext)
+      collage=Sticker("collage",dimension=(width,height),ext=ext,data=data)
 
       name=[]
       log("Génération du NFT "+str(index)+"/"+str(limit))
@@ -474,16 +550,12 @@ class ArtEngine:
           break
         else:
           if layer.indexed or layer.unique: name.append(elt.name)
-
-          #log("Ouverture de l'élément à coller")
           elt.open()
 
           collage.fusion(elt,1 if elt.text is None else width/elt.text["dimension"][0])
           if layer.unique: layer.remove(elt)
 
-          #log("Fermeture de l'élélement collé")
           elt.close()
-
 
 
       if not name in histo and index<limit:
@@ -491,19 +563,18 @@ class ArtEngine:
 
         histo.append(name)
         if len(dir)>0:
-          # if index<len(self.filenames):
-          #   filename=dir+self.filenames[index]+"."+collage.ext
-          # else:
           filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "__idx__" in self.name else dir+self.name.replace("__idx__",str(index))+"."+collage.ext
           rc.append(filename)
-          collage.save(filename,quality)
+          if collage.ext.lower()=="gif":
+            rc.append(filename.replace(".gif",".xmp"))
+          collage.save(filename,quality,index)
         else:
-          rc.append(collage.toStr())
+          filename=collage.toStr()
+          rc.append(filename)
 
 
         collage.close()
         collage.delete()
-
 
     return rc
 

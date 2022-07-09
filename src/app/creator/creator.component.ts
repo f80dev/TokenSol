@@ -77,6 +77,7 @@ export class CreatorComponent implements OnInit {
   ) {}
 
 
+
   refresh(){
     this.network.list_config().subscribe((r:any)=>{
       this.configs=r.files;
@@ -92,7 +93,7 @@ export class CreatorComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
+      if(environment.appli.indexOf("127.0.0.1")>-1)this.sel_platform="nfluent_local"
       this.layers=[];
       this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
       this.network.get_palettes().subscribe((p)=>{
@@ -134,9 +135,16 @@ export class CreatorComponent implements OnInit {
       "type":evt.type
     }
 
-    this.network.upload(body,this.sel_platform).subscribe((r:any)=>{
-      layer.elements.push({image:r.url});
-    })
+    if(body.filename.endsWith("yaml")){
+      this.network.generate_svg(evt.file).subscribe((r:any)=>{
+        for(let img of r)
+          layer.elements.push({image:img});
+      })
+    }else{
+      this.network.upload(body,this.sel_platform).subscribe((r:any)=>{
+        layer.elements.push({image:r.url});
+      })
+    }
   }
 
   add_layer() {
@@ -151,15 +159,17 @@ export class CreatorComponent implements OnInit {
           lbl_cancel:"Annuler"
         }
     }).afterClosed().subscribe((name:string) => {
-      this.layers.push({
-        params:{},
-        name:name,
-        elements:[],
-        text:"",
-        unique:false,
-        indexed:true,
-        position:this.layers.length
-      })
+      if(name && name.length>2){
+        this.layers.push({
+          params:{},
+          name:name,
+          elements:[],
+          text:"",
+          unique:false,
+          indexed:true,
+          position:this.layers.length
+        })
+      }
     });
   }
 
@@ -186,14 +196,16 @@ export class CreatorComponent implements OnInit {
           this.network.wait("");
           this.user.connect("create").then((profil:any)=>{
             this.paiement(this.limit,profil).then(()=>{
-              open(environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality,"_blank")
+              let url=environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality;
+              url=url+"&data="+btoa(JSON.stringify(this.data))
+              open(url,"_blank")
             });
           });
         }
 
         if(format=="preview"){
           this.network.wait("Fabrication de la collection en cours ...");
-          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality).subscribe((r:any)=>{
+          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,this.data).subscribe((r:any)=>{
             this.network.wait("");
             this.previews=r;
           },(err)=>{showError(this,err);})
@@ -312,7 +324,7 @@ export class CreatorComponent implements OnInit {
 
 
 
-  build_sample(layers:any[],reset=true) {
+  build_sample(layers:any[],data={},reset=true) {
     if(reset)this.layers=[];
 
     for(let l of layers){
@@ -346,6 +358,8 @@ export class CreatorComponent implements OnInit {
         if(this.layers.length==layers.length)this.sort_layers();
       });
 
+      this.data=data;
+
     }
 
   }
@@ -372,26 +386,31 @@ export class CreatorComponent implements OnInit {
       this.config_name=name;
       this._location.replaceState("./creator?config="+name);
       this.network.load_config(name).subscribe((r:any)=>{
-        for(let l of r.layers){
-          for(let e of l.elements){
-            if(this.sel_platform=="nfluent")e.image=e.image.replace("http://127.0.0.1:4242/","https://server.nfluent.io:4242/");
-            if(this.sel_platform=="nfluent local")e.image=e.image.replace("https://server.nfluent.io:4242/","http://127.0.0.1:4242/");
+        if(r.layers){
+          for(let l of r.layers){
+            for(let e of l.elements){
+              if(this.sel_platform=="nfluent")e.image=e.image.replace("http://127.0.0.1:4242/","https://server.nfluent.io:4242/");
+              if(this.sel_platform=="nfluent local")e.image=e.image.replace("https://server.nfluent.io:4242/","http://127.0.0.1:4242/");
+            }
           }
+
+          this.layers=r.layers;
+          this.data=r.data || {title:"MonTitre",symbol:"token__idx__",description:"madescription",collection:"macollection",family:"mafamille",properties:"propriete=valeur",files:"http://monfichier"};
+          this.col_width=r.width;
+          this.col_height=r.height;
+          this.filename_format=r.filename_format;
+          this.limit=r.limit;
+          this.seed=r.seed || 0;
+          this.position_text.x=r.x || 10;
+          this.text_to_add=r.text_to_add || "";
+          this.position_text.y=r.y || 10;
+          this.sel_platform=r.platform;
+          this.show_collection=true;
+          this.fontsize=r.fontstyle.size;
+          this.font=this.find_font(r.fontstyle.name);
+          this.color=r.fontstyle.color;
         }
-        this.layers=r.layers;
-        this.col_width=r.width;
-        this.col_height=r.height;
-        this.filename_format=r.filename_format;
-        this.limit=r.limit;
-        this.seed=r.seed || 0;
-        this.position_text.x=r.x || 10;
-        this.text_to_add=r.text_to_add || "";
-        this.position_text.y=r.y || 10;
-        this.sel_platform=r.platform;
-        this.show_collection=true;
-        this.fontsize=r.fontstyle.size;
-        this.font=this.find_font(r.fontstyle.name);
-        this.color=r.fontstyle.color;
+
         this.previews=[];
         this.network.wait("");
       },(err=>{
@@ -404,17 +423,10 @@ export class CreatorComponent implements OnInit {
   //https://server.f80lab.com/api/configs/?format=file
   quality=98;
   config_with_image=true;
+  data: any={title:"MonTitre",symbol:"token__idx__",description:"madescription",collection:"macollection",family:"mafamille",properties:"propriete=valeur",files:"http://monfichier"};
 
 
   save_config() {
-    // if(this.config_with_image){
-    //   for(let l of this.layers){
-    //     for(let e of l.elements){
-    //       //TODO: a terminer pour inclure les images dans la config
-    //     }
-    //   }
-    // }
-
     return new Promise((resolve,reject) => {
       let body = {
         layers: this.layers,
@@ -431,7 +443,8 @@ export class CreatorComponent implements OnInit {
           name: this.font.file,
           color: this.color,
           size: this.fontsize
-        }
+        },
+        data: this.data
       }
 
       for (let l of body.layers) {

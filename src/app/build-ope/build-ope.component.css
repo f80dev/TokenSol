@@ -7,6 +7,13 @@ table,tr {
   width:100%;
 }
 
+th {
+  background-color: #d8caea;
+  padding: 6px;
+  font-size: medium;
+  text-align: left;
+}
+
 td {
   text-align: left;
 }
@@ -20,6 +27,10 @@ mat-expansion-panel {
 }
 
 mat-expansion-panel-header {
-  color: blueviolet;
   font-weight: bold;
+}
+
+button {
+  min-width: 120px;
+  margin: 3px;
 }

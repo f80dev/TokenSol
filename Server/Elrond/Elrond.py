@@ -4,11 +4,12 @@ from os import listdir,remove
 from os.path import exists
 import requests
 import pyqrcode
+from Tools import get_qrcode
 
 import textwrap
 from secret import ELROND_PASSWORD
 from nftstorage import NFTStorage
-from Tools import int_to_hex, str_to_hex, log, api
+from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file
 from ipfs import IPFS
 from erdpy import config
 from erdpy.wallet.core import generate_mnemonic
@@ -16,7 +17,7 @@ from erdpy.proxy import ElrondProxy
 from erdpy.transactions import Transaction
 from erdpy.accounts import Account,Address
 from erdpy.wallet import derive_keys
-from PIL import Image
+from PIL import Image,ImageSequence
 
 
 RESULT_SECTION="smartContractResults"
@@ -138,6 +139,12 @@ class Elrond:
 
 
   def format_offchain(self,_data) -> dict:
+    keys=self.get_keys()
+    for c in _data["properties"]["creators"]:
+      for k in keys:
+        if k["name"]==c["address"]:
+          c["address"]=k["pubkey"]
+
     return {
       "properties":{
         "attributes":_data["attributes"],
@@ -276,7 +283,7 @@ class Elrond:
 
 
 
-  def create_account(self,email,seed=""):
+  def create_account(self,email="",seed="",network="elrond-devnet"):
     """
     :param fund:
     :param name:
@@ -302,11 +309,20 @@ class Elrond:
     else:
       qrcode=""
       secret_key, pubkey = derive_keys(seed)
+      words=seed
       address = Address(pubkey).bech32()
       _u = Account(address=address)
       _u.secret_key=secret_key.hex()
 
     log("Création du compte "+self.getExplorer(Address(pubkey).bech32(),"address"))
+
+    if len(email)>0:
+      send_mail(open_html_file("mail_new_account",{
+        "wallet_address":address,
+        "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
+        "words":words,
+        "qrcode":"cid:qrcode"
+      }),email,subject="Votre compte Elrond est disponible" ,attach=qrcode,filename="qrcode.png")
 
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
@@ -405,16 +421,7 @@ class Elrond:
 
 
 
-  def convert_to_jpeg(self,content:str):
-    if content.startswith("http"):
-      image:Image=Image.open(io.BytesIO(requests.get(content).content))
-    else:
-      image:Image=Image.open(io.BytesIO(base64.b64decode(content.split("base64,")[1])))
 
-    buffered =io.BytesIO()
-    image.save(buffered, format="JPEG",quality=90)
-    url=NFTStorage().add(bytes(buffered.getvalue()),"image/jpg","visual.jpeg")["url"]
-    return url
 
 
   def mint(self, miner, title, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", file="", tags=""):
@@ -451,7 +458,8 @@ class Elrond:
     #Exemple : issueSemiFungible@546f757245696666656c@544f555245494646454c@63616e467265657a65@74727565@63616e57697065@74727565@63616e5472616e736665724e4654437265617465526f6c65@74727565
     #Transaction hash 3f002652038ba8aed2876809a9e019451770c740749c1047a5b4d354f5fb217a
 
-    if visual.lower().endswith("webp"):visual=self.convert_to_jpeg(visual)
+    if visual.lower().endswith("webp"):
+      visual=convert_to_gif(visual,NFTStorage())
     cid_metadata=ipfs.add(properties)
     nonce="02"
     s="metadata:"+cid_metadata["Hash"]+"/props.json;tags:"+("" if len(tags)==0 else " ".join(tags))
@@ -467,7 +475,7 @@ class Elrond:
 
     for f in files:
       filename=f["files"]
-      if filename.lower().endswith(".webp"):filename=self.convert_to_jpeg(filename)
+      if filename.lower().endswith(".webp"):filename=convert_to_gif(filename,NFTStorage())
       data=data+"@"+str_to_hex(filename,False)
 
     #Exemple de minage: ESDTNFTCreate@544f5552454946462d323864383938@0a@4c6120746f75722071756920636c69676e6f7465@09c4@516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b@746167733a3b6d657461646174613a516d54713845666d36416634616a35383847694d716b4d44524c475658794133773439315052464e413471546165@68747470733a2f2f697066732e696f2f697066732f516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b
@@ -531,7 +539,10 @@ class Elrond:
               words=""
               for s in txt.split("\n "):
                 if len(s)>1:
-                  words=words+s.split(" ")[1]+" "
+                  if " " in s:
+                    words=words+s.split(" ")[1]+" "
+                  else:
+                    words=words+s
               words=words.replace("\n","").strip()
               secret_key, pubkey = derive_keys(words)
               user=Account(address=Address(pubkey).bech32())
@@ -559,7 +570,7 @@ class Elrond:
   def balance(self,account:Account):
     return self._proxy.get_account_balance(account.address)
 
-  def get_keys(self):
+  def get_keys(self,with_qrcode=False):
     rc=[]
     for f in listdir(ELROND_KEY_DIR):
       log("Lecture de "+f)
@@ -568,6 +579,7 @@ class Elrond:
         rc.append({
           "name":f.replace(".pem","").replace(".json",""),
           "pubkey":_a.address.bech32(),
+          "qrcode": get_qrcode(_a.address.bech32()) if with_qrcode else "",
           "explorer":self.getExplorer(_a.address.bech32(),"address"),
           "balance":self.balance(_a)/1e18,
           "unity":"egld"

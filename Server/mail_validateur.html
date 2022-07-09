@@ -1,23 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Votre nouveau NFT</title>
+  <meta charset="UTF-8">
+  <title>Votre nouveau NFT</title>
 </head>
 <body>
-    Bonjour,<br>
+Bonjour,<br><br>
 
-    <p style="margin-left:10px">
-       vous êtes validateur sur {{title}}.
+<div style="margin-left:10px">
+  Vous êtes en charge de la gestion des billets NFT sur {{title}}.<br><br>
 
-        Pour attribuer les passes aux détenteurs de NFT, vous devez flasher le QRCode de leur wallet à l'aide de l'application
-        <a href="{{url_appli}}">{{appname}}</a> à ouvrir depuis votre téléphone disposant d'une caméra<br>
+  Pour attribuer les bracelets aux détenteurs de NFT, vous devez :
+  <ul>
+    <li>Ouvrir l’application <a href="{{url_appli}}">{{appname}}</a> depuis votre smartphone</li>
+    <li>Flasher le QRCode de leur Wallet</li>
+    <li>Identifier le NFT à l’écran</li>
+    <li>Cliquer sur le bouton Attribuer 1 pass</li>
+    <li>Remettre le bracelet</li>
+  </ul>
 
-      A la connexion, en cas de demande par {{appname}}, votre code d'accès à saisir est <strong>{{access_code}}</strong>
+  Le QRCode est généralement accessible en cliquant sur Déposer dans le Wallet.<br><br>
+  Si le Wallet FTX.US vous est présenté, le QRCode est accessible en cliquant sur Mes NFTS/Dépôt/Solana.<br><br>
 
-    </p>
+  A la connexion, en cas de demande par TokenFactory, votre code d'accès à saisir est  <strong>{{access_code}}</strong> (respecter la casse).<br><br>
 
-    {{signature}}
+  Ce mail est strictement personnel et ne doit pas être transféré vers une autre adresse.<br>
+
+</div>
+<br>
+
+{{signature}}
 
 </body>
 </html>

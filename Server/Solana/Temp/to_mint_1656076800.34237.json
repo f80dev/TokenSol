@@ -1,0 +1,33 @@
+{
+    "Issuer": "NfluenT",
+    "creators": [
+        {
+            "address": "LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr",
+            "share": 10,
+            "verified": false
+        },
+        {
+            "address": "DKS7of5db3NoYWyGLqzvqs3UaN1nPEannsZ8Mo85B7jk",
+            "share": 90,
+            "verified": false
+        },
+        {
+            "address": "DcMWLNyDgfGvguKWzrvUzhm5B4rsbxwiQtotz6Xg4sWG",
+            "share": 0,
+            "verified": false
+        }
+    ],
+    "description": "NFluenT - NFT agency",
+    "external_url": "",
+    "marketplace": {
+        "duration": 408,
+        "initial_price": 1,
+        "max_mint": 1,
+        "reservation_price": 1,
+        "sell_date": ""
+    },
+    "name": "15622_NFluenT #3",
+    "seller_fee_basis_points": 1000,
+    "symbol": "FLU22A3",
+    "uri": "https://raw.githubusercontent.com/nfluentdev/test6/main/NFluenTTest_FLU22A3"
+}

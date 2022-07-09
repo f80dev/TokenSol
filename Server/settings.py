@@ -14,7 +14,7 @@ FTX_API_SECRET="Rge4X3p8KtV3ZJvd0yQXSCqIRiWZDeLEXTLO6O_s"
 INFURA_PROJECT_ID="28bvVmf3lmX8xWj3UlHCaNPD0lQ"
 INFURA_PROJECT_SECRET="8e4ed073cf43c280787c3cf2e7c2176a"
 
-SIGNATURE="L'équipe NFluenT"
+SIGNATURE="L'équipe <a href='https://nfluent.io'>NFluenT</a>"
 APPNAME="TokenFactory"
 
 SMTP_SERVER="ssl0.ovh.net"

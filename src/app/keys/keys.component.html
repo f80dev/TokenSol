@@ -1,4 +1,5 @@
 <div class="mainform">
+  <div class="mat-display-3 color-primary">Gestion des clés hébergées</div>
   <mat-form-field appearance="fill" style="max-width: 320px">
     <mat-label>Coller ici votre clé privée</mat-label>
     <input matInput type="text" maxlength="200" [(ngModel)]="privateKey" >
@@ -18,6 +19,13 @@
     Ajouter
   </button>
 
+  <button
+    type="button" aria-label="Ajouter" mat-raised-button
+    [disabled]="name==''"
+    (click)="new_key()">
+    Nouveau wallet
+  </button>
+
   <app-upload-file extensions=".key,.txt"
                    style="margin:10px;"
                    (uploaded)="onuploaded_key_file($event)">Charger les fichiers de clé
@@ -35,6 +43,7 @@
     <tr style="font-style: italic;font-size: large">
       <th>Alias</th>
       <th>Public Key</th>
+      <th>QRCode</th>
       <th></th>
       <th></th>
       <th>Solde</th>
@@ -44,9 +53,11 @@
         <a [href]="key.explorer" target="_blank"><strong>{{key.name}}</strong></a>
       </td>
       <td style="font-size: small;">
-        {{key.pubkey}}
+        <a [href]="key.explorer">{{key.pubkey}}</a>
       </td>
-
+      <td>
+        <img [src]="key.qrcode" style="width: 100px;">
+      </td>
       <td>
         <button type="button" mat-raised-button mat-button (click)="del_key(key.name)">
           Supprimer

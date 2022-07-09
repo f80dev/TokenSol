@@ -7,9 +7,19 @@ export interface MetabossKey {
   privatekey:string | null
   encrypt:string | null
   balance:number | null
+  qrcode:string | null
   explorer:string | null
   unity:string | null
 }
+
+export function encrypt(s:string) : string {
+  return btoa(s);
+}
+
+export function decrypt(s:string) : string {
+  return atob(s);
+}
+
 
 export function toStringify(obj:any) {
   return JSON.stringify(obj, (key, value) =>
@@ -105,6 +115,14 @@ export function words(objs:any,rc=""){
   return rc;
 }
 
+export function hasWebcam(result:boolean) {
+  navigator.mediaDevices.enumerateDevices().then((devices:any)=>{
+    result=false;
+    for(let device of devices)
+      if(device.kind=="videoinput")result=true;
+  })
+}
+
 
 export function showError(vm:any,err:any=null){
   $$("!Error ",err);
@@ -114,7 +132,15 @@ export function showError(vm:any,err:any=null){
   showMessage(vm,mes);
 }
 
-
+export function base64ToArrayBuffer(base64:string) : ArrayBuffer {
+  var binary_string = atob(base64);
+  var len = binary_string.length;
+  var bytes = new Uint8Array(len);
+  for (var i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
 
 
 export function $$(s: string, obj: any= null) {
@@ -134,6 +160,7 @@ export function $$(s: string, obj: any= null) {
 }
 
 export function detect_network(addr:string){
+  if(addr.length<20 || addr.indexOf("@")>-1)return null;
   if(addr.startsWith("erd"))return "elrond";
   return "solana";
 }
@@ -142,3 +169,4 @@ export function detect_type_network(network:string){
   if(network.indexOf("devnet")>-1)return "devnet";
   return "mainnet";
 }
+

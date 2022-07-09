@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  version: "0.1.20",
+  version: "0.1.4",
   server:"http://127.0.0.1:4242",
   appname:"TokenFactory",
   appli:"http://127.0.0.1:4200"

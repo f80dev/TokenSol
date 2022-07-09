@@ -1,4 +1,4 @@
-<div class="mainform" cdkTrapFocus style="text-align: center;">
+<div class="mainform" [ngStyle]="operation?.branding?.style">
   <div *ngIf="user!.length>0">
     <div *ngIf="operation.validate?.visible && result_message?.length==0">
       <h2>{{operation.title}}</h2>
@@ -25,6 +25,17 @@
 
       <br>
       <app-hourglass [message]="message"></app-hourglass>
+
+      <div *ngIf="message!.length>0 && tokens.length==0">
+        <br><br>
+        <button
+          style="margin: 5px"
+          type="button" mat-raised-button mat-button
+          (click)="message=''">
+          Annuler
+        </button>
+      </div>
+
 
       <div *ngIf="tokens.length>0">
         <div style="width:100%;text-align: center;font-size: small;">
@@ -138,25 +149,30 @@
        style="color:red;font-size: large;text-align: left;width:60%;margin:20%;">
   </div>
 
+
+
   <div style="position: absolute;bottom: 5%;text-align: center;width: 100%;">
-    {{operation.validate.support.contacts.message}}<br>
-    <a *ngIf="operation.validate.support.contacts.mail!=''"
+    {{operation?.validate?.support?.contacts?.message}}<br>
+    <a *ngIf="operation?.validate?.support?.contacts?.mail!=''"
        title="Envoyer un mail"
-       [href]="operation.validate.support.contacts.mail">
+       [href]="operation?.validate?.support?.contacts?.mail">
       <mat-icon>mail</mat-icon>
     </a>
-    <a *ngIf="operation.validate.support.contacts.phone!=''"
+    <a *ngIf="operation?.validate?.support?.contacts?.phone!=''"
        title="Contacter le support téléphonique"
-       [href]="operation.validate.support.contacts.phone"><mat-icon>phone</mat-icon></a>
+       [href]="operation.validate?.support?.contacts?.phone">
+      <mat-icon>phone</mat-icon></a>
 
-    <a *ngIf="operation.validate.support.contacts.telegram!=''"
+    <a *ngIf="operation?.validate?.support?.contacts?.telegram!=''"
        title="Joindre le groupe télégram des utilisateurs"
-       [href]="operation.validate.support.contacts.telegram"><mat-icon>send</mat-icon>
+       [href]="operation?.validate?.support?.contacts?.telegram">
+      <mat-icon>send</mat-icon>
     </a>
 
-    <mat-icon *ngIf="operation.validate.support.warning_process!=''"
+    <mat-icon *ngIf="operation?.validate?.support?.warning_process!=''"
               title="En cas de problème technique, voir le processus de fonctionnement dégradé"
-              (click)="show_warning_process=!show_warning_process" style="cursor: pointer">
+              (click)="show_warning_process=!show_warning_process"
+              style="cursor: pointer;color:black;">
       build
     </mat-icon>
   </div>

@@ -69,6 +69,8 @@ import {GOOGLE_CLIENT_ID} from "../definitions";
 import { FaqsComponent } from './faqs/faqs.component';
 import { DispenserComponent } from './dispenser/dispenser.component';
 import {GooglePayButtonModule} from "@google-pay/button-angular";
+import { StoreComponent } from './store/store.component';
+import { SvgComponent } from './svg/svg.component';
 
 
 @NgModule({
@@ -101,7 +103,9 @@ import {GooglePayButtonModule} from "@google-pay/button-angular";
     DbtableComponent,
     AdminComponent,
     FaqsComponent,
-    DispenserComponent
+    DispenserComponent,
+    StoreComponent,
+    SvgComponent
 
   ],
     imports: [

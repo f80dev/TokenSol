@@ -62,6 +62,7 @@ RUN pip3 -v install svglib
 RUN pip3 -v install pycairo
 RUN pip3 -v install imageio
 RUN pip3 -v install bip_utils
+RUN pip3 -v install matplotlib
 
 WORKDIR /
 RUN mkdir Solana
@@ -84,6 +85,7 @@ COPY ./Fonts/*.ttf $APP_HOME/Fonts
 COPY *.py $APP_HOME
 COPY secret_key $APP_HOME
 COPY *.json $APP_HOME
+COPY *.yaml $APP_HOME
 COPY *.html $APP_HOME
 COPY ./Solana/*.py $APP_HOME/Solana/
 COPY ./Secret/*.py $APP_HOME/Secret/
