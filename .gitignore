@@ -48,3 +48,4 @@ testem.log
 Thumbs.db
 
 /Server/temp/
+/Server/Secret/Keys/

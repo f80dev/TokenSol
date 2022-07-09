@@ -250,10 +250,12 @@ class NFLUENT extends Module
     //Logger::AddLog("hookActionOrderStatusPostUpdate. order_status=".strval($newOrderStatus));
     $products=$order->getCartProducts();
     foreach ($products as $product){
+      $args=array(
+        "email" => $customer->email,
+        "product_name" => $product->name,
+        "product_ref" => $product->reference
+      );
 
-      $args["email"]=$customer->email;
-      $args["product_name"]=$product->name;
-      $args["product_ref"]=$product->reference;
       Logger::AddLog("hookActionOrderStatusPostUpdate. argument=".print_r($args));
       $this->api($args);
     }
