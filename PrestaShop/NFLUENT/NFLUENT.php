@@ -221,67 +221,66 @@ class NFLUENT extends Module
     }
 
 
-    //https://www.php.net/manual/en/curl.examples-basic.php
-    public function api($args){
-      $url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
-
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_HEADER, 1);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-      curl_setopt($ch, CURLINFO_HEADER_OUT, 1);
-      curl_setopt($ch, CURLOPT_URL, $url);
-      curl_setopt($ch, CURLOPT_POST, 1);
-      curl_setopt($ch, CURLOPT_POSTFIELDS, $args);
-      $result = curl_exec($ch);
-      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-      curl_close($ch);
-
-      return $httpCode;
-    }
-
-
-  public function api2($args){
-      $url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
-
-      $content = json_encode($args);
-
-      $curl = curl_init($url);
-      curl_setopt($curl, CURLOPT_HEADER, false);
-      curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-      curl_setopt($curl, CURLOPT_HTTPHEADER,array("Content-type: application/json"));
-      curl_setopt($curl, CURLOPT_POST, true);
-      curl_setopt($curl, CURLOPT_POSTFIELDS, $content);
-
-      $json_response = curl_exec($curl);
-
-      $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-      curl_close($curl);
-
-      return $response = json_decode($json_response, true);
-    }
 
 
 
 
+  public function api($url,$args){
+    $content = json_encode($args);
 
+    $curl = curl_init($url);
+    curl_setopt($curl, CURLOPT_HTTPHEADER,array("Content-type: application/json"));
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, $content);
+
+    $json_response = curl_exec($curl);
+
+    $status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    echo("status=".$status);
+
+    curl_close($curl);
+
+    return $response = json_decode($json_response, true);
+  }
+
+
+
+
+  //Fonction appelant le minage mint_for_prestashop
   public function hookActionOrderStatusPostUpdate($params){
+
     $newOrderStatus = $params['newOrderStatus'];
+
     //La ressource order : https://devdocs.prestashop.com/1.7/webservice/resources/orders/
     $order= new Order($params['id_order']);
+
     //La ressource customer : https://devdocs.prestashop.com/1.7/webservice/resources/customers/
     $customer=new Customer($order->id_customer);
-    //Logger::AddLog("hookActionOrderStatusPostUpdate. order_status=".strval($newOrderStatus));
+
+    //Voir https://devdocs.prestashop.com/1.7/webservice/resources/products/
     $products=$order->getCartProducts();
+
     foreach ($products as $product){
+      $dest=$customer->email;
+
       $args=array(
-        "email" => $customer->email,
-        "product_name" => $product->name,
-        "product_ref" => $product->reference
+        "email" => $dest,
+        "id" => $product->id,
+        "quantity" => 1,
+        "title" => $product->name,
+        "description" => $product->short_description,
+        "properties" => $product->description,
+        "references" => $product->reference,
+        "order_status" => $newOrderStatus,
+        "royalties" => 0,
+        "collection" => $product->associations->categories[0]->id,
+        "network" => "elrond_devnet",
+        "visual" => $product->associations->images[0]->id
       );
 
-      Logger::AddLog("hookActionOrderStatusPostUpdate. argument=".print_r($args));
-      $this->api2($args);
+      //$url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
+      $url='http://127.0.0.1:4242/api/mint_from_prestashop/';
+      $this->api($url,$args);
     }
 
   }

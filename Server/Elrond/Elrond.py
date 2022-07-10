@@ -460,6 +460,7 @@ class Elrond:
 
     if visual.lower().endswith("webp"):
       visual=convert_to_gif(visual,NFTStorage())
+
     cid_metadata=ipfs.add(properties)
     nonce="02"
     s="metadata:"+cid_metadata["Hash"]+"/props.json;tags:"+("" if len(tags)==0 else " ".join(tags))

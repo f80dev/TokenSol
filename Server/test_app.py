@@ -7,8 +7,10 @@ _store_section=_operation["store"]
 prestashop=PrestaTools(_store_section["prestashop"]["api_key"])
 
 image="./temp/image.gif"
-product=prestashop.add_product("produit test",15,"","ma description",1)
-prestashop.set_product_quantity(product,10)
+product=prestashop.add_product("produit test",15,"","ma description",1,properties={"firstname":"david","lastname":"coignet"})
+#prestashop.set_product_quantity(product,10)
+
+
 #buf_image=convert_to_gif(image,filename="image.gif")
 #image=prestashop.add_image(product_id,"./temp/image.gif")
 

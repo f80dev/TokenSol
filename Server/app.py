@@ -452,7 +452,7 @@ def export_to_prestashop():
         nft["image"]=nft["metadataOffchain"]["image"]
         nft["description"]=nft["metadataOffchain"]["description"]
 
-      product=prestashop.add_product(nft["name"],cat["id"],nft["symbol"],nft["description"],nft["price"])
+      product=prestashop.add_product(nft["name"],cat["id"],nft["symbol"],nft["description"],nft["price"],True,nft["attributes"],nft["mint"] if "mint" in nft else "")
       prestashop.set_product_quantity(product,nft["quantity"])
       buf_image=convert_to_gif(nft["image"],filename="image.gif")
       image=prestashop.add_image(product["id"],"./temp/image.gif")
@@ -882,11 +882,20 @@ def nfts_from_operation(ope=""):
 
 
 @app.route('/api/mint_for_prestashop/',methods=["POST"])
-@app.route('/api/mint_for_prestashop',methods=["POST"])
 def mint_for_prestashop():
-  body=request.data
+  body=request.json
   log("Réception de "+str(body))
-  return jsonify({"message":"ok"})
+
+  miner=body["miner"]
+  collection=body["collection"]
+  if "elrond" in body["network"]:
+    elrond=Elrond(body["network"])
+    _account,pem,words,qrcode=elrond.create_account(email=body["email"])
+    collection_id=elrond.add_collection(miner,collection,type="NonFungible")
+    nonce,cid=elrond.mint(miner,body["title"],body["collection"],body["properties"],IPFS(IPFS_SERVER),[],body["quantity"],body["royalties"],body["visual"])
+    elrond.transfer(collection_id,nonce,miner,_account)
+
+  return jsonify({"addr":_account.address.bech32()})
 
 
 #http://127.0.0.1:4200/dealermachine/?id=symbol2LesGratuits
