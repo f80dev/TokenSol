@@ -63,6 +63,7 @@ RUN pip3 -v install pycairo
 RUN pip3 -v install imageio
 RUN pip3 -v install bip_utils
 RUN pip3 -v install matplotlib
+RUN pip3 -v install Unidecode
 
 WORKDIR /
 RUN mkdir Solana

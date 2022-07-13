@@ -2,28 +2,40 @@ import shutil
 
 import requests
 import unidecode
+import xmltodict
+from dicttoxml import dicttoxml
 
 from Tools import log
-from dict2xml import Dict2XML
 
 
 class PrestaTools:
-  def __init__(self, key, server="161.97.75.165", port="8080"):
+  def __init__(self, key, server="http://161.97.75.165:8080/",language=1):
     self.key = key
     self.server = server
-    self.port = port
+    self.language=language
 
   def url(self, service, params=""):
-    url = "http://" + self.server + ":" + self.port + "/api/" + service + "?ws_key=" + self.key + "&io_format=JSON" + "&" + params
+    url =  self.server + "api/" + service + "?ws_key=" + self.key + "&io_format=JSON" + "&" + params
     log("Ouverture de " + url)
     return url
 
-  def toXML(self, _d: dict, root_label: str):
-    return "<prestashop xmlns:xlink=\"http://www.w3.org/1999/xlink\">" + str(
-      Dict2XML(root_label, _d).to_xml_string(xml_declaration=False), "utf8") + "</prestashop>"
+  def toXML(self, _d: dict, root_label: str,entete=True,pretty=True):
+    rc="<prestashop xmlns:xlink=\"http://www.w3.org/1999/xlink\">" if entete else ""
+    _d={root_label:_d}
+    xml=xmltodict.unparse(_d,pretty=pretty,full_document=False)
+    rc=rc+xml
+    if entete:rc=rc+"</prestashop>"
+    return rc
 
   def get_languages(self, label):
-    return {"language": [{"@attributes": {"id": 1}, "@cdata": label}, {"@attributes": {"id": 2}, "@cdata": label}]}
+    if self.language==0:
+      return label
+    else:
+      rc=[]
+      for i in range(1,self.language+1):
+        rc.append({"language":{"@id": i,"#text": label}})
+      return rc
+
 
   def add_image(self, product_id, url="", filename="./temp/image.gif"):
     """"
@@ -54,13 +66,28 @@ class PrestaTools:
       log("Erreur d'upload de l'image " + str(resp))
       return None
 
+
+
   def find_category(self, name):
-    cats = requests.get(self.url("categories", "display=full")).json()
-    for cat in cats["categories"]:
-      if cat["name"][0]["value"] == name: return cat
+    cats = requests.get(self.url("categories", "display=full"))
+    for cat in cats.json()["categories"]:
+      if self.language==1:
+        if cat["name"] == name: return cat
+      else:
+        if cat["name"][0]["value"] == name: return cat
     return None
 
-  def add_category(self, name, parent=None, id=None):
+
+
+  def add_product_category(self,id_product,id_categorie):
+    resp = requests.get(self.url("categories/products/"+str(id_product),"schema=blank"))
+    pass
+
+
+
+
+
+  def add_category(self, name, parent=None,description=""):
     """
       voir https://devdocs.prestashop.com/1.7/webservice/resources/categories/
       :param name:
@@ -68,30 +95,35 @@ class PrestaTools:
       :param id:
       :return:
       """
-    _c = dict()
-    _c["name"] = self.get_languages(name)
-    _c["link_rewrite"] = self.get_languages(name)
+    _c = requests.get(self.url("categories","schema=blank")).json()["category"]
+    del _c["id"]
+
+    if len(description)==0:description=name
+    _c["name"] = self.get_languages(self.normalize(name))
+    _c["description"] = self.get_languages(self.normalize(description))
+    _c["link_rewrite"] = self.get_languages(self.normalize(name))
     _c["active"] = {"@cdata": 1}
-    _c["statut"] = {"@cdata": 1}
-    if id: _c["id"] = {"@cdata": id}
+
     if parent:
       _c["id_parent"] = {"@cdata": parent}
       _c["is_root_category"] = {"@cdata": 0}
     else:
       _c["is_root_category"] = {"@cdata": 1}
 
-    _c["id_shop_default"] = {"@cdata": 1}
-    _c["meta_title"] = self.get_languages(name)
-    _c["meta_keywords"] = self.get_languages("NFT")
+    #_c["description"] = self.get_languages(self.normalize(name))
+    # _c["id_shop_default"] = {"@cdata": 1}
 
-    resp = requests.post(self.url("categories"), data=self.toXML(_c, "category"),
-                         headers={'Content-Type': 'application/xml'}).json()
+    resp = requests.post(self.url("categories"), data=self.toXML(_c, "category")).json()
     return resp["category"]
+
+
 
   def to_cdata(self, _d: dict):
     for k in _d.keys():
       _d[k] = {"@cdata": _d[k]}
     return _d
+
+
 
   def normalize(self, s):
     for i in range(10):
@@ -100,7 +132,25 @@ class PrestaTools:
     return s
 
 
-  def add_product(self, name, category, symbol="", description="", price=0, on_sale=True, properties=dict(),address=""):
+  def get_products(self,id:str=""):
+    if id:id=str(id)
+    rest = requests.get(self.url("products/"+id,"display=full")).json()["products"]
+    if len(id)>0 and len(rest)>0:return rest[0]
+    return rest["products"]
+
+  def get_images(self):
+    rest = requests.get(self.url("images/products/5","display=full")).json()
+    return rest["images"]
+
+  def get_product_categories(self,product_id=""):
+    rest = requests.get(self.url("categories/products/"+product_id,"display=full"))
+    return rest.json()["categories"]
+
+  def cdata(self,txt):
+    return "![CDATA["+str(txt)+"]]"
+
+
+  def add_product(self, name, category, symbol="", description="", price=0, on_sale=True, properties=dict(),features=dict(),tags=list()):
     """
       voir https://devdocs.prestashop.com/1.7/webservice/resources/products/
       :param name:
@@ -115,42 +165,54 @@ class PrestaTools:
     _p = requests.get(self.url("products", "schema=blank")).json()["product"]
     del _p["id"]
     del _p["position_in_category"]
-    _p = self.to_cdata(_p)
+    del _p["associations"]
 
+    _p["description_short"]=self.get_languages(self.normalize(description))
+    _p["reference"]=symbol
+    _p["on_sale"] =1 if on_sale else 0
+    _p["low_stock_alert"]=0
+    _p["is_virtual"] = 0
+    _p["customizable"] = 0
+    _p["active"]= 1
+    _p["available_for_order"]= 1
+    #_p["available_date"]= "2022-01-01"
+    _p["price"] = price
+    _p["id_category_default"] = category
 
-    _p["description_short"]=self.normalize(description)
+    log("Remplissage de l'associations")
+    _p["associations"]={
+      "categories":[{"category":{"id":category}}],
+      "product_features":[]}
+    for feature in features.keys():
+      _feature=self.add_product_feature(feature)
+      _feature_value=self.add_feature_value(None,feature,features[feature])
+      if _feature_value:
+        _p["associations"]["product_features"].append({"product_feature":{"id":_feature["id"],"id_feature_value":_feature_value["id"]}})
 
-    _p["reference"]={"@cdata":symbol}
-
-    _p["on_sale"] = {"@cdata": 1 if on_sale else 0}
-    _p["low_stock_alert"]={"@cdata":0}
-    _p["is_virtual"] = {"@cdata": 1}
-    _p["customizable"] = {"@cdata": 0}
-    _p["active"]= {"@cdata": 1}
-    _p["available_for_order"]= {"@cdata": 1}
-    _p["available_date"]= {"@cdata": "2022-01-01"}
-    _p["price"] = {"@cdata": price}
-    if len(address)>0: _p["location"]={"@cdata": address}
-    _p["id_category_default"] = {"@cdata": category}
-    _p["state"] = {"@cdata": 1}
-    _p["wholesale_price"]={"@cdata":price}
-    _p["show_price"]={"@cdata":1}
+    _p["state"] = 1
+    _p["wholesale_price"]=price
+    _p["show_price"]=1
     _p["name"] = self.get_languages(self.normalize(name))
 
     description=""
     for prop in properties:
       if "value" in prop:
         description=description+prop["trait_type"]+" : "+str(prop["value"])+" - "
-    _p["description"]=self.normalize(description)
+    _p["description"]=self.get_languages(self.normalize(description))
 
     xml = self.toXML(_p, "product")
     resp = requests.post(self.url("products"), data=xml, headers={'Content-Type': 'application/xml'})
+    if resp.status_code==400:
+      log("xml="+xml)
+      log("Probleme de traduction "+resp.text)
     try:
       _product = resp.json()["product"]
+
       return _product
     except:
       log("Erreur de creation")
       return None
+
 
   def add_product_feature(self, name):
     """
@@ -159,10 +221,11 @@ class PrestaTools:
       :param name:
       :return:
       """
-    l_features = requests.get(self.url("product_features", "display=full")).json()["product_features"]
-    for feature in l_features:
-      if feature["name"][0]["value"] == name:
-        return feature
+    l_features = requests.get(self.url("product_features", "display=full")).json()
+    if len(l_features)>0:
+      for feature in l_features["product_features"]:
+        if feature["name"] == name:
+          return feature
 
     _f = requests.get(self.url("product_features", "schema=blank")).json()
     _f = dict()
@@ -170,6 +233,28 @@ class PrestaTools:
     resp = requests.post(self.url("product_features"), data=self.toXML(_f, "product_feature"),
                          headers={'Content-Type': 'application/xml'})
     return resp.json()["product_feature"]
+
+  def add_product_option(self, name):
+    """
+      voir https://devdocs.prestashop.com/1.7/webservice/resources/product_options/
+      et https://devdocs.prestashop.com/1.7/webservice/resources/product_options_values/
+      :param name:
+      :return:
+      """
+    l_features = requests.get(self.url("product_options", "display=full")).json()
+    if len(l_features)>0:
+      for feature in l_features["product_options"]:
+        if feature["name"] == name:
+          return feature
+
+    _f = requests.get(self.url("product_options", "schema=blank")).json()
+    _f["name"] = self.get_languages(name)
+    _f["public_name"]=self.get_languages(name)
+    _f["group_type"]={"@cdata": 0}
+    resp = requests.post(self.url("product_options"), data=self.toXML(_f, "product_option"),
+                         headers={'Content-Type': 'application/xml'})
+    return resp.json()["product_option"]
+
 
   def set_product_quantity(self, product, quantity=1, id_shop=1):
     """
@@ -192,12 +277,62 @@ class PrestaTools:
 
 
 
-  def add_feature_value(self, feature_id, feature_value):
+  def add_feature_value(self,id_product, feature_name,feature_value):
+    """
+    https://devdocs.prestashop.com/1.7/webservice/resources/product_feature_values/
+    :param id_product:
+    :param feature_name:
+    :param feature_value:
+    :return:
+    """
+    if len(feature_value)==0: return None
+
+    feature=self.add_product_feature(feature_name)
     _f = requests.get(self.url("product_feature_values", "schema=blank")).json()["product_feature_value"]
-    _f["custom"] = 0
-    _f["id_feature"]=feature_id
+    _f["custom"] = 1
+    _f["id_feature"]=feature["id"]
     _f["value"]=self.get_languages(feature_value)
-    resp = requests.post(self.url("product_feature_values"), data=self.toXML(_f, "product_feature_value"),
-                         headers={'Content-Type': 'application/xml'})
+    if id_product:
+      resp=requests.post(self.url("product_feature_values/product/"+str(id_product)),data=self.toXML(_f,"product_feature_value"),headers={'Content-Type': 'application/xml'})
+    else:
+      resp=requests.post(self.url("product_feature_values"),data=self.toXML(_f,"product_feature_value"),headers={'Content-Type': 'application/xml'})
     return resp.json()["product_feature_value"]
+
+
+  def add_option_value(self,id_product, option_name,option_value):
+    if len(option_value)==0: return None
+
+    option=self.add_product_option(option_name)
+    _f = requests.get(self.url("product_option_values", "schema=blank")).json()["product_option_value"]
+    _f["custom"] = 0
+    _f["id_option"]=option["id"]
+    _f["value"]=self.get_languages(option_name)
+    resp=requests.post(self.url("product_option_values/products/"+str(id_product)),data=self.toXML(_f,"feature_value"),headers={'Content-Type': 'application/xml'})
+    return resp.json()["product_option_value"]
+
+
+
+
+  def find_category_in_collections(self,category_name , collections):
+    for col_from_op in collections:
+      if col_from_op["name"]==category_name:
+        return col_from_op
+    return None
+
+  def get_categories(self, id_category=None):
+    _cs=requests.get(self.url("categories","display=full")).json()["categories"]
+    if id_category is None: return _cs
+    for _c in _cs:
+      if _c["id"]==int(id_category):
+        return _c
+    return None
+
+  def desc_to_dict(self, description:str):
+    rc=dict()
+    for l in description.split(" - "):
+      rc[l.split(" : ")[0]]=l.split(" : ")[1]
+    return rc
+
+
+
 

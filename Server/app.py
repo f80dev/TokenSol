@@ -62,7 +62,8 @@ IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"
 
 
 def returnError(msg:str=""):
-  return "Ooops ! Petit problème technique. "+msg,500
+  log("Error "+msg)
+  return jsonify({"error":"Ooops ! Petit problème technique. "+msg}),500
 
 
 
@@ -330,14 +331,14 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
       max_item=max_item*len(layer.elements)
 
   files=nft.generate(
-                    dir="./temp/",
-                    limit=min(limit,max_item),
-                    seed_generator=seed,
-                    width=int(size[0]),
-                    height=int(size[1]),
-                    quality=quality,
-                    data=str(base64.b64decode(data),"utf8"),
-                    ext=ext
+    dir="./temp/",
+    limit=min(limit,max_item),
+    seed_generator=seed,
+    width=int(size[0]),
+    height=int(size[1]),
+    quality=quality,
+    data=str(base64.b64decode(data),"utf8"),
+    ext=ext
   )
 
   for f in os.listdir("./temp"):
@@ -424,38 +425,80 @@ def test2():
 @app.route('/api/export_to_prestashop/',methods=["GET"])
 #test http://127.0.0.1:4242/api/export_to_prestashop/?root_category=1&ope=calvi22_devnet&api
 def export_to_prestashop():
+  """
+  htag: transfer_to_prestashop
+  :return:
+  """
   _operation=get_operation(request.args.get("ope"))
   _store_section=_operation["store"]
-  prestashop=PrestaTools(_store_section["prestashop"]["api_key"])
-  root_category=prestashop.find_category(_store_section["prestashop"]["root_category"] or "NFTs")
+  prestashop=PrestaTools(_store_section["prestashop"]["api_key"],_store_section["prestashop"]["server"],_store_section["prestashop"]["language"])
+  root_category=prestashop.find_category(_store_section["prestashop"]["root_category"]["name"] or "NFTs")
   if root_category is None:
-    root_category=prestashop.add_category(_store_section["prestashop"]["root_category"])
+    root_from_operation=_store_section["prestashop"]["root_category"]
+    root_category=prestashop.add_category(
+      root_from_operation["name"],
+      2,
+      root_from_operation["description"],
+      root_from_operation["visual"])
 
   categories=dict()
   log("Création des collections sous forme de categorie dans Prestashoo")
-  for col in _store_section["collections"]:
-    c=prestashop.find_category(col["name"])
-    if c is None: c=prestashop.add_category(col["name"],root_category["id"])
-    categories[col["name"]]={
-      "price":col["price"],
-      "name":col["name"],
-      "id":c["id"]
-    }
 
   nfts=get_nfts_from_src(_operation["data"]["sources"])
+
   for nft in nfts:
-    if nft["collection"]["name"] in categories:
+    if nft["collection"]["name"] not in categories.keys():
+      c=prestashop.find_category(nft["collection"]["name"])
+
+      find_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["collections"])
+      if find_col is None:
+        find_col={"name":nft["collection"]["name"],"description":"","price":0}
+
+      if c is None:
+        c=prestashop.add_category(
+          find_col["name"],
+          root_category["id"],
+          find_col["description"]
+        )
+
+      categories[c["name"]]={
+        "price":find_col["price"] if "price" in c else 0,
+        "name":find_col["name"],
+        "id":c["id"]
+      }
+
+
+  for nft in nfts:
+    if nft["collection"]["name"] in categories.keys():
       cat=categories[nft["collection"]["name"]]
-      nft["price"]=cat["price"]
+      nft["price"]=cat["price"] if not "price" in nft else nft["price"]
       if "metadataOnchain" in nft and "metadataOffchain" in nft:
         nft["name"]=nft["metadataOnchain"]["name"]
         nft["image"]=nft["metadataOffchain"]["image"]
         nft["description"]=nft["metadataOffchain"]["description"]
+        features={
+          "address":nft["mint"] if "mint" in nft else "",
+          "network":nft["network"] if "network" in nft else "elrond-devnet",
+          "operation":_operation["id"],
+          "miner":_store_section["miner"]
+        }
 
-      product=prestashop.add_product(nft["name"],cat["id"],nft["symbol"],nft["description"],nft["price"],True,nft["attributes"],nft["mint"] if "mint" in nft else "")
-      prestashop.set_product_quantity(product,nft["quantity"])
-      buf_image=convert_to_gif(nft["image"],filename="image.gif")
-      image=prestashop.add_image(product["id"],"./temp/image.gif")
+      product=prestashop.add_product(nft["name"],
+                                     cat["id"],
+                                     nft["symbol"] if "symbol" in nft else nft["metadataOnchain"]["symbol"],
+                                     nft["description"],
+                                     nft["price"],
+                                     True,
+                                     nft["attributes"] if 'attributes' in nft else nft["metadataOffchain"]["attributes"],
+                                     features,
+                                     ["NFT"]
+                                     )
+      if product is None:
+        return returnError("Impossible de créer "+nft["name"])
+      else:
+        prestashop.set_product_quantity(product,nft["quantity"])
+        buf_image=convert_to_gif(nft["image"] if "image" in nft else nft["metadataOffchain"]["image"],filename="image.gif")
+        image=prestashop.add_image(product["id"],"./temp/image.gif")
 
   return jsonify({"message":"ok"})
 
@@ -465,16 +508,6 @@ def export_to_prestashop():
 
 
 
-
-
-#test https://server.f80lab.com/api/mint_from_prestashop/
-@app.route('/api/mint_from_prestashop/<orderid>',methods=["POST","GET"])
-def mint_from_prestashop(orderid:str):
-  _order=requests.get("http://SA92LXSJW9MC28NC8G933SPNZPP9MQDZ@161.97.75.165:8080/api/order_details/"+orderid).json()
-  log("Order="+str(_order))
-  _product=requests.get("http://SA92LXSJW9MC28NC8G933SPNZPP9MQDZ@161.97.75.165:8080/api/products/"+_order["product_id"]).json()
-  log("Product="+str(_product))
-  return jsonify(_product)
 
 
 
@@ -717,16 +750,19 @@ def get_nfts_from_src(srcs,collections=None,limit=10000):
   for src in srcs:
     log("Récupération des nfts depuis "+str(src))
 
+    if not "filter" in src:src["filter"]={}
+    if not "limit" in src["filter"]: src["filter"]["limit"]=10000
+
     if src["type"] in ["database","db"]:
       try:
         if collections:
           for collection in collections:
             l_nfts=list(DAO(src["connexion"],src["dbname"]).nfts_from_collection(collection,True))
-            nfts=nfts+l_nfts
+            nfts=nfts+l_nfts[:src["filter"]["limit"]]
             src["ntokens"]=len(l_nfts)
         else:
           l_nfts=list(DAO(src["connexion"],src["dbname"]).nfts_from_collection(None,False))
-          nfts=nfts+l_nfts
+          nfts=nfts+l_nfts[:src["filter"]["limit"]]
 
         src["ntokens"]=len(l_nfts)
       except:
@@ -750,8 +786,10 @@ def get_nfts_from_src(srcs,collections=None,limit=10000):
         solana=Solana(src['connexion'])
         l_nfts=solana.get_nfts(src["owner"])
         src["ntokens"]=len(l_nfts)
-        for nft in l_nfts:
+
+        for nft in l_nfts[:src["filter"]["limit"]]:
           try:
+            nft["network"]=src["connexion"]
             nft["metadataOnchain"]=solana.scan(nft["account"]["data"]["parsed"]["info"]["mint"])
             nft["metadataOffchain"]=requests.get(nft["metadataOnchain"]["uri"]).json()
             nft["image"]=nft["metadataOffchain"]["image"]
@@ -761,6 +799,10 @@ def get_nfts_from_src(srcs,collections=None,limit=10000):
             if len(nfts)==limit: break
           except:
             log("Impossible de récupérer le NFT d'adresse="+nft["account"]["data"]["parsed"]["info"]["mint"])
+
+      if src["connexion"].startswith("elrond"):
+        #TODO a implémenter
+        pass
 
     if src["type"]=="config":
       config=configs(src["connexion"],format="dict")
@@ -881,21 +923,36 @@ def nfts_from_operation(ope=""):
 
 
 
-@app.route('/api/mint_for_prestashop/',methods=["POST"])
+@app.route('/api/mint_from_prestashop/',methods=["POST","GET"])
 def mint_for_prestashop():
   body=request.json
+  if body is None:return jsonify({"error":"method GET not implemented"})
   log("Réception de "+str(body))
 
-  miner=body["miner"]
-  collection=body["collection"]
+  _p=body["product"]
+  miner=_p["mpn"]
+  log("Chargement de l'opération "+_p["reference"])
+  _operation=get_operation(_p["reference"])
+
+  prestashop=PrestaTools(_operation["store"]["prestashop"]["api_key"],_operation["store"]["prestashop"]["server"])
+  _p=prestashop.get_products(_p["id_product"])
+  _c=prestashop.get_categories(int(_p["associations"]["categories"][0]["id"]))
+
+  collection=_c["name"]
+  id_image=_p["associations"]["images"][0]["id"]
+  visual=_operation["store"]["prestashop"]["server"]+"api/images/products/"+id_image+"/"+id_image+"?ws_key="+_operation["store"]["prestashop"]["api_key"]
   if "elrond" in body["network"]:
     elrond=Elrond(body["network"])
+    royalties=body["royalties"] if "royalties" in body else 0
     _account,pem,words,qrcode=elrond.create_account(email=body["email"])
+
+    properties=prestashop.desc_to_dict(_p["description"])
+
     collection_id=elrond.add_collection(miner,collection,type="NonFungible")
-    nonce,cid=elrond.mint(miner,body["title"],body["collection"],body["properties"],IPFS(IPFS_SERVER),[],body["quantity"],body["royalties"],body["visual"])
+    nonce,cid=elrond.mint(miner,_p["name"],collection,properties,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
     elrond.transfer(collection_id,nonce,miner,_account)
 
-  return jsonify({"addr":_account.address.bech32()})
+  return jsonify({"result":"ok","address":_account.address.bech32(),"mint":nonce})
 
 
 #http://127.0.0.1:4200/dealermachine/?id=symbol2LesGratuits
@@ -962,15 +1019,15 @@ def mint_for_contest(confirmation_code=""):
     collection_id=elrond.add_collection(miner,_data["collection"]["name"],type="NonFungible")
     solde=elrond.get_account(miner)["amount"]
     nonce,cid=elrond.mint(miner,
-                      title=_data["name"],
-                      collection=collection_id,
-                      properties=elrond.format_offchain(_data)["properties"],
-                      files=elrond.format_offchain(_data)["files"],
-                      ipfs=Infura(), #IPFS(IPFS_SERVER,IPFS_PORT),
-                      quantity=1,
-                      royalties=20,
-                      visual=_data["image"]
-                      )
+                          title=_data["name"],
+                          collection=collection_id,
+                          properties=elrond.format_offchain(_data)["properties"],
+                          files=elrond.format_offchain(_data)["files"],
+                          ipfs=Infura(), #IPFS(IPFS_SERVER,IPFS_PORT),
+                          quantity=1,
+                          royalties=20,
+                          visual=_data["image"]
+                          )
 
     if nonce:
       token_id=hex_to_str(collection_id)+"-"+nonce
@@ -1484,15 +1541,15 @@ def mint():
     elrond=Elrond(network)
     collection_id=elrond.add_collection(keyfile,_data["collection"]["name"],type="NonFungible")
     nonce,cid=elrond.mint(keyfile,
-                      title=_data["name"],
-                      collection=collection_id,
-                      properties=elrond.format_offchain(_data)["properties"],
-                      files=elrond.format_offchain(_data)["files"],
-                      ipfs=IPFS(IPFS_SERVER),
-                      quantity=1,
-                      royalties=_data["seller_fee_basis_points"]/100,  #On ne prend les royalties que pour le premier créator
-                      visual=_data["image"]
-                      )
+                          title=_data["name"],
+                          collection=collection_id,
+                          properties=elrond.format_offchain(_data)["properties"],
+                          files=elrond.format_offchain(_data)["files"],
+                          ipfs=IPFS(IPFS_SERVER),
+                          quantity=1,
+                          royalties=_data["seller_fee_basis_points"]/100,  #On ne prend les royalties que pour le premier créator
+                          visual=_data["image"]
+                          )
 
     if nonce is None:
       rc={"error":"Probleme de création"}

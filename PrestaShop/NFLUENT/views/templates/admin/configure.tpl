@@ -26,10 +26,10 @@
 <div class="panel">
 	<div class="row moduleconfig-header">
 		<div class="col-xs-5 text-right">
-			<img src="{$module_dir|escape:'html':'UTF-8'}views/img/logo.jpg" />
+			<img src="{$module_dir|escape:'html':'UTF-8'}views/img/logo-nfluent-purple.svg" />
 		</div>
 		<div class="col-xs-7 text-left">
-			<h2>{l s='Lorem' mod='NFLUENT'}</h2>
+			<h2>{l s='NFT' mod='NFLUENT'}</h2>
 			<h4>{l s='Lorem ipsum dolor' mod='NFLUENT'}</h4>
 		</div>
 	</div>

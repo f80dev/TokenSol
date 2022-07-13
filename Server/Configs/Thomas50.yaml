@@ -2,14 +2,14 @@ data:
     collection: anniversaire
     description: NFT exclusif pour les 50 ans
     family: nfluent
-    files: http://monfichier
-    properties: 'prenom=thomas
+    files: ''
+    properties: 'prenom=Thomas
 
-        nom=lafourcade
+        nom=Lafourcade
 
         date_anniv=11-juillet'
-    symbol: anniv01
-    title: AnniversaireDeThomas
+    symbol: anniv02
+    title: Thomas50
 filename_format: image
 fontstyle:
     color: '#FFFFFF'
@@ -18,22 +18,22 @@ fontstyle:
 height: 500
 layers:
 -   elements:
-    -   image: http://127.0.0.1:4242/api/images/0x282219c031ede81d.webp?format=image/gif
-    indexed: true
-    name: layer1
-    params: {}
-    position: 1
-    text: ''
-    unique: false
--   elements:
-    -   image: http://127.0.0.1:4242/api/images/-0x7424416c0e53a449.png?format=image/png
+    -   image: http://127.0.0.1:4242/api/images/-0x64f398ef3cdc87d4.webp?format=image/webp
     indexed: true
     name: layer2
     params: {}
-    position: 1
+    position: 0
     text: ''
     unique: false
-limit: 10
+-   elements:
+    -   image: http://127.0.0.1:4242/api/images/-0x39fcc0083c076133.png?format=image/png
+    indexed: true
+    name: layer1
+    params: {}
+    position: 2
+    text: ''
+    unique: false
+limit: 1
 platform: nfluent
 seed: 0
 text_to_add: '50'

@@ -171,6 +171,8 @@ class Elrond:
     """
     _from=self.toAccount(_from)
     _to=self.toAccount(_to)
+    if _from.address.bech32()==_to.address.bech32(): return False
+
     log("Transfert de "+collection_id+"-"+nonce+" de "+_from.address.bech32()+" a "+_to.address.bech32())
     data = "ESDTNFTTransfer@" + str_to_hex(collection_id,False) \
            + "@" + nonce \

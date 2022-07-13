@@ -80,7 +80,7 @@
         <td style="font-size: large;">
            {{sel_ope.network}}<br>
           {{sel_ope.version}}<br>
-          {{sel_ope.metadata_storage}}
+          {{sel_ope.metadatastorage}}
         </td>
       </tr>
 
@@ -136,7 +136,7 @@
             </td>
             <td>
               <ul>
-                <li *ngFor="let col of sel_ope.dispenser.collections">
+                <li *ngFor="let col of sel_ope.dispenser!.collections!">
                   {{col.name}} < {{col.limit}}
                 </li>
               </ul>
@@ -223,12 +223,12 @@
           </tr>
           <tr style="vertical-align: top;">
             <td>
-              <strong>Update:</strong> {{sel_ope.validate.method.update_authority}}<br>
-              <strong>Storage:</strong> {{sel_ope.validate.method.storage}} / {{sel_ope.validate.method.repository}}
+              <strong>Update:</strong> {{sel_ope.validate!.method!.update_authority}}<br>
+              <strong>Storage:</strong> {{sel_ope.validate!.method!.storage}} / {{sel_ope.validate!.method!.repository}}
             </td>
             <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
               <ul>
-                <li *ngFor="let prop of sel_ope.validate.properties">
+                <li *ngFor="let prop of sel_ope.validate!.properties">
                   {{prop}}
                 </li>
               </ul>
@@ -236,7 +236,7 @@
             <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
 
               <ul>
-                <li *ngFor="let user of sel_ope.validate.users">
+                <li *ngFor="let user of sel_ope.validate!.users">
                   <mat-icon (click)="send_mail(user)"
                             style="cursor: pointer;font-size: medium;"
                             [title]="'notifier '+user">notifications</mat-icon>
@@ -249,7 +249,7 @@
             </td>
             <td>
               <ul>
-                <li *ngFor="let col of sel_ope.validate.filters.collections">
+                <li *ngFor="let col of sel_ope.validate!.filters!.collections">
                   {{col}}
                 </li>
               </ul>
@@ -257,13 +257,13 @@
 
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli(sel_ope.validate.application,'_self')">
+                      (click)="open_appli(sel_ope.validate!.application,'_self')">
                  Tester
               </button>
               <br>
 
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="share_link(sel_ope.validate.application,'validation '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
+                      (click)="share_link(sel_ope.validate!.application,'validation '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
                 Partager
               </button>
 
@@ -292,8 +292,10 @@
             </ul>
           </td>
           <td>
-
-            <a [href]="sel_ope.store.prestashop.address" target="store">Voir la boutique</a> / <a [href]="sel_ope.store.prestashop.admin" target="store">Accès admin</a>
+            Serveur: {{sel_ope.store!.prestashop!.server}}<br>
+            <a [href]="sel_ope.store!.prestashop!.address.replace('$server$',sel_ope.store!.prestashop!.server)" target="store">Voir la boutique</a>
+            /
+            <a [href]="sel_ope.store!.prestashop!.admin.replace('$server$',sel_ope.store!.prestashop!.server)" target="store">Accès admin</a>
             <br><br>
             <button type="button" mat-raised-button mat-button
                     (click)="send_prestashop(sel_ope.id)">
@@ -302,23 +304,17 @@
           </td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="open_appli(sel_ope.store.application+'?ope='+sel_ope.id+'&toolbar=false','_self')">
+                    (click)="open_appli(sel_ope.store!.application+'?ope='+sel_ope.id+'&toolbar=false','_self')">
               Tester
             </button>
-
             <br>
             <button type="button" mat-raised-button mat-button
-                    (click)="share_link(sel_ope.store.application+'?ope='+sel_ope.id+'&toolbar=false','la boutique '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
+                    (click)="share_link(sel_ope.store!.application+'?ope='+sel_ope.id+'&toolbar=false','la boutique '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
               Partager
             </button>
-
           </td>
-
-
         </tr>
       </table>
-
-
     </mat-expansion-panel>
 
   </div>

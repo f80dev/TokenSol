@@ -13,6 +13,40 @@ version: 0.1
 network: solana-devnet      #Réseau concerné par l'opération
 metadata_storage: github/test6
 
+
+#Caractéristiques des collections utilisées par les NFT
+collections:
+  - name: NFluenTTest
+    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
+    description: La collection des NFT by Influent
+    creator: nfluent
+    price: 1
+
+  - name: PASS VIP
+    visual:  https://static.ftx.com/nfts/3e6de159-be4c-44ae-961d-8f9d575d0d95.png
+    description: Acces au Calvi On The Rocks en VIP
+    creator: calvi
+    price: 380
+    currency: $
+
+  - name: PASS FESTIVAL
+    visual:  https://static.ftx.com/nfts/3e6de159-be4c-44ae-961d-8f9d575d0d95.png
+    description: Acces au Calvi On The Rocks en VIP
+    creator: calvi
+    price: 294
+    currency: $
+
+  - name: BILLET VIP
+    visual:  https://static.ftx.com/nfts/3e6de159-be4c-44ae-961d-8f9d575d0d95.png
+    description: Acces au Calvi On The Rocks en VIP
+    creator: calvi
+    price: 100
+    currency: $
+
+
+
+
+
 database:                 #base de données contenant les historiques
   connexion: cloud
   dbname: nfluent
@@ -44,13 +78,17 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 
 data:
   sources:
-#    - type: network
-#      connexion: solana-devnet
-#      owner: roger
+    - type: network
+      connexion: solana-mainnet
+      filter:
+        limit: 20
+      owner: BbDq7xeUzpj8bXfd9N7dh1tw43Ss7xbYpyjoNuwDSrzq
 
     - type: database
       connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
       dbname: nfluentdb_2       #Nom de la base de données contenant les NFTS
+      filter:
+        limit: 20
 
 #    - type: json              #Les NFTs sont contenus dans un fichier json
 #      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
@@ -178,21 +216,29 @@ store:
   #Collection mise en vente dans le store (parmis les NFT issue de la section data/sources)
   collections:
     - name: "NFluenTTest"
-      price: 1
+      price: 1              #Si le prix n'est pas fixé on utilise le prix de la section collection (voir au dessus)
       limit: 50
+
+    - name: "BILLET VIP"
+    - name: "PASS VIP"
 
   support:      #Section regroupant les différents messages d'aides aux utilisateur
     buy_message: "Achat en cours"
 
-  #section concernant l'usage de Prestashop comme boutique des NFTs
-  prestashop:
-    server: "http://161.97.75.165/"               #adresse du serveur Prestashop
-    address: "http://161.97.75.165/fr/"           #page de la boutique
-    admin: "http://161.97.75.165:8080/admin4280/" #page d'administration de la boutique
-    api_key: "SA92LXSJW9MC28NC8G933SPNZPP9MQDZ"   #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
-    root_category: NFTs                           #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
-    on_sale: True                                 #Mettre en vente ou pas immédiatement les NFT
 
+  prestashop:
+    server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
+    address: "$server$/fr/"                         #page de la boutique
+    admin: "$server$/admin4280/"                    #page d'administration de la boutique
+    api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+
+    root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
+      name: NFTs                                      #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
+      description: Nos collections de NFT
+      visual: ""
+
+    on_sale: True                                     #Mettre en vente ou pas immédiatement les NFT
+    language: 1
 
 
 #Fonctionnement de la section dispenser ____________________________________________________________________________________________________________________________

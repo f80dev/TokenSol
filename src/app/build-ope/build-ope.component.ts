@@ -8,6 +8,7 @@ import {UserService} from "../user.service";
 import {Location} from "@angular/common";
 import { NgNavigatorShareService } from 'ng-navigator-share';
 import {Clipboard} from "@angular/cdk/clipboard";
+import {Collection, find_collection, Operation} from "../../operation";
 
 @Component({
   selector: 'app-build-ope',
@@ -15,9 +16,9 @@ import {Clipboard} from "@angular/cdk/clipboard";
   styleUrls: ['./build-ope.component.css']
 })
 export class BuildOpeComponent implements OnInit {
-  sel_ope: any=null;
+  sel_ope: Operation | null=null;
   url: string = "";
-  opes: any[]=[];
+  opes: Operation[]=[];
   iframe_code: string="";
   image_code: string="";
   url_ope: string="";
@@ -57,7 +58,7 @@ export class BuildOpeComponent implements OnInit {
           }else{
             this.sel_ope=r[r.length-1];
           }
-          this.url_store=environment.appli+"/store?toolbar=false&ope="+this.sel_ope.id;
+          if(this.sel_ope)this.url_store=environment.appli+"/store?toolbar=false&ope="+this.sel_ope.id;
           this.refresh_ope({value:this.sel_ope});
         }
       })
@@ -66,6 +67,8 @@ export class BuildOpeComponent implements OnInit {
 
   refresh_ope($event: any) {
     let ope=$event.value.id;
+    if(!this.sel_ope)return;
+
     let url=this.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
     this.sel_ope.lottery.application=url;
     this.network.wait("Récupération des NFTs issue des sources");
@@ -82,12 +85,25 @@ export class BuildOpeComponent implements OnInit {
           this.collections[k]=this.collections[k]+nft["quantity"];
         }
       }
+
+      if(this.sel_ope){
+        if(this.sel_ope.dispenser)this.url_dispenser_app=this.sel_ope.dispenser.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
+        this.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";
+        this.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
+
+        if(this.sel_ope.validate)this.sel_ope.validate.application=this.sel_ope.validate.application.replace("$tokenfactory$",environment.appli)+"?ope="+ope;
+
+        this.store_collections=[];
+        let _c:any=null;
+        for(_c of $event.value.store.collections){
+          if(!_c.hasOwnProperty("price"))_c.price=find_collection(this.sel_ope,_c.name)?.price; //On va chercher le prix
+          this.store_collections.push(_c);
+        }
+      }
+
+
     });
-    this.url_dispenser_app=this.sel_ope.dispenser.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
-    this.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";
-    this.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
-    this.sel_ope.validate.application=this.sel_ope.validate.application.replace("$tokenfactory$",environment.appli)+"?ope="+ope;
-    this.store_collections=$event.value.store.collections;
+
   }
 
 
@@ -103,10 +119,8 @@ export class BuildOpeComponent implements OnInit {
   }
 
   delete_ope() {
-    open(environment.server+"/api/operations/"+this.sel_ope.id+"?format=file","_blanck");
-    // this.network.delete_operation(this.sel_ope.code).subscribe(()=>{
-    //   this.refresh();
-    // });
+    if(this.sel_ope)
+      open(environment.server+"/api/operations/"+this.sel_ope.id+"?format=file","_blanck");
   }
 
   send_mail(user="") {
@@ -116,7 +130,6 @@ export class BuildOpeComponent implements OnInit {
   }
 
   update_url_ope(evt:any) {
-    this.sel_ope={};
     this.url=environment.appli+"/validate?toolbar=false&ope=b64:"+btoa(this.url_ope);
     this.network.get_operations(this.url_ope).subscribe((ope:any)=>{
       this.sel_ope=ope;
@@ -125,7 +138,8 @@ export class BuildOpeComponent implements OnInit {
   }
 
   download_ope() {
-    open(environment.server+"/api/operations/"+this.sel_ope.id,"download");
+    if(this.sel_ope)
+      open(environment.server+"/api/operations/"+this.sel_ope.id,"download");
   }
 
 
@@ -144,13 +158,17 @@ export class BuildOpeComponent implements OnInit {
   }
 
   open_appli(href: string, target: string) {
-    href=href.replace("$nfluent_appli$",environment.appli).replace("https://tokenfactory.nfluent.io",environment.appli)+"&ope="+this.sel_ope.id;
-    open(href,target);
+    if(this.sel_ope){
+      href=href.replace("$nfluent_appli$",environment.appli).replace("https://tokenfactory.nfluent.io",environment.appli)+"&ope="+this.sel_ope.id;
+      open(href,target);
+    }
   }
 
   edit_ope() {
-    let url="https://codebeautify.org/yaml-editor-online?url="+encodeURI(environment.server+"/api/getyaml/"+this.sel_ope.id+"/txt/?dir=./Operations");
-    open(url,"editor");
+    if(this.sel_ope){
+      let url="https://codebeautify.org/yaml-editor-online?url="+encodeURI(environment.server+"/api/getyaml/"+this.sel_ope.id+"/txt/?dir=./Operations");
+      open(url,"editor");
+    }
   }
 
   send_prestashop(id:string) {
