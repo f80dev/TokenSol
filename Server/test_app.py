@@ -10,15 +10,15 @@ prestashop=PrestaTools(_store_section["prestashop"]["api_key"])
 image="./temp/image.gif"
 #_i=prestashop.get_images()
 #_c=prestashop.get_product_categories("18")
-#_p=prestashop.get_products(42)
+_p=prestashop.get_products(136)
 
-import xmltodict
+
 
 # _d={"language":{"@id":1,"#text":"test"}}
 # xml=xmltodict.unparse(_d,pretty=False)
+# prestashop.add_category("NFTs",2,"Collections de NFTs")
 
-
-_p=prestashop.add_product("produit_test",12,"symbol","description",1,True,{"test":"oui"},{"address":"paul"})
+#_p=prestashop.add_product("produit_test","NFTs","symbol","description",1,True,{"test":"oui"},{"address":"paul"})
 #
 # ipfs=IPFS(IPFS_SERVER)
 # res=ipfs.add(prestashop.desc_to_dict(_p["description"]))

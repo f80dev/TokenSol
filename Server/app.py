@@ -448,24 +448,27 @@ def export_to_prestashop():
 
   for nft in nfts:
     if nft["collection"]["name"] not in categories.keys():
-      c=prestashop.find_category(nft["collection"]["name"])
 
-      find_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["collections"])
-      if find_col is None:
-        find_col={"name":nft["collection"]["name"],"description":"","price":0}
 
-      if c is None:
-        c=prestashop.add_category(
-          find_col["name"],
-          root_category["id"],
-          find_col["description"]
-        )
+      ref_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["collections"])
+      store_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["store"]["collections"])
+      if ref_col is None:
+        ref_col={"name":nft["collection"]["name"],"description":"","price":0}
 
-      categories[c["name"]]={
-        "price":find_col["price"] if "price" in c else 0,
-        "name":find_col["name"],
-        "id":c["id"]
-      }
+      if not store_col is None:
+        c=prestashop.find_category(nft["collection"]["name"])
+        if c is None:
+          c=prestashop.add_category(
+            ref_col["name"],
+            root_category["id"],
+            ref_col["description"]
+          )
+
+        categories[c["name"]]={
+          "price":store_col["price"] if "price" in store_col else ref_col["price"],
+          "name":ref_col["name"],
+          "id":c["id"]
+        }
 
 
   for nft in nfts:
@@ -476,16 +479,18 @@ def export_to_prestashop():
         nft["name"]=nft["metadataOnchain"]["name"]
         nft["image"]=nft["metadataOffchain"]["image"]
         nft["description"]=nft["metadataOffchain"]["description"]
-        features={
-          "address":nft["mint"] if "mint" in nft else "",
-          "network":nft["network"] if "network" in nft else "elrond-devnet",
-          "operation":_operation["id"],
-          "miner":_store_section["miner"]
-        }
+
+      features={
+        "address":nft["mint"] if "mint" in nft else "",
+        "network":nft["network"] if "network" in nft else "elrond-devnet",
+        "operation":_operation["id"],
+        "miner":_store_section["miner"]
+      }
+      reference=nft["symbol"] if "symbol" in nft else nft["metadataOnchain"]["symbol"]
 
       product=prestashop.add_product(nft["name"],
-                                     cat["id"],
-                                     nft["symbol"] if "symbol" in nft else nft["metadataOnchain"]["symbol"],
+                                     cat["name"],
+                                     _operation["id"]+" / "+reference,
                                      nft["description"],
                                      nft["price"],
                                      True,
@@ -930,26 +935,38 @@ def mint_for_prestashop():
   log("Réception de "+str(body))
 
   _p=body["product"]
-  miner=_p["mpn"]
+
   log("Chargement de l'opération "+_p["reference"])
-  _operation=get_operation(_p["reference"])
+  _operation=get_operation(_p["reference"].split(" / ")[0])
 
   prestashop=PrestaTools(_operation["store"]["prestashop"]["api_key"],_operation["store"]["prestashop"]["server"])
   _p=prestashop.get_products(_p["id_product"])
   _c=prestashop.get_categories(int(_p["associations"]["categories"][0]["id"]))
 
+  for feature in _p["associations"]["product_features"]:
+    obj=prestashop.get_product_feature(feature["id"],feature["id_feature_value"])
+    body[obj[0]]=obj[1]
+
+
+
   collection=_c["name"]
   id_image=_p["associations"]["images"][0]["id"]
+  miner=body["miner"]
+
   visual=_operation["store"]["prestashop"]["server"]+"api/images/products/"+id_image+"/"+id_image+"?ws_key="+_operation["store"]["prestashop"]["api_key"]
   if "elrond" in body["network"]:
     elrond=Elrond(body["network"])
     royalties=body["royalties"] if "royalties" in body else 0
-    _account,pem,words,qrcode=elrond.create_account(email=body["email"])
 
-    properties=prestashop.desc_to_dict(_p["description"])
+    if not "address" in body:
+      _account,pem,words,qrcode=elrond.create_account(email=body["email"])
+      properties=prestashop.desc_to_dict(_p["description"])
+      collection_id=elrond.add_collection(miner,collection,type="NonFungible")
+      nonce,cid=elrond.mint(miner,_p["name"],collection,properties,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
+    else:
+      #TODO: a completer
+      collection_id=elrond.get_account(body["address"])
 
-    collection_id=elrond.add_collection(miner,collection,type="NonFungible")
-    nonce,cid=elrond.mint(miner,_p["name"],collection,properties,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
     elrond.transfer(collection_id,nonce,miner,_account)
 
   return jsonify({"result":"ok","address":_account.address.bech32(),"mint":nonce})

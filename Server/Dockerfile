@@ -64,6 +64,7 @@ RUN pip3 -v install imageio
 RUN pip3 -v install bip_utils
 RUN pip3 -v install matplotlib
 RUN pip3 -v install Unidecode
+RUN pip3 -v install xmltodict
 
 WORKDIR /
 RUN mkdir Solana

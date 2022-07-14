@@ -397,9 +397,9 @@ export class NetworkService {
     return rc;
   }
 
-  wait(message: string) {
+  wait(message: string,durationInSec=1000) {
     this.waiting=message;
-    setTimeout(()=>{this.waiting=""},10000);
+    setTimeout(()=>{this.waiting=""},durationInSec*1000);
   }
 
   isElrond() {

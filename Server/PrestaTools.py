@@ -3,7 +3,6 @@ import shutil
 import requests
 import unidecode
 import xmltodict
-from dicttoxml import dicttoxml
 
 from Tools import log
 
@@ -84,7 +83,13 @@ class PrestaTools:
     pass
 
 
-
+  def add_product_to_category(self, name, products):
+    _c=self.find_category(name)
+    if not "associations" in _c: _c["associations"]={"products":[]}
+    for product in products:
+      _c["associations"]["products"].append({"product":{"id":product}})
+    resp = requests.put(self.url("categories"), data=self.toXML(_c, "category")).json()
+    return resp["category"]
 
 
   def add_category(self, name, parent=None,description=""):
@@ -102,13 +107,13 @@ class PrestaTools:
     _c["name"] = self.get_languages(self.normalize(name))
     _c["description"] = self.get_languages(self.normalize(description))
     _c["link_rewrite"] = self.get_languages(self.normalize(name))
-    _c["active"] = {"@cdata": 1}
+    _c["active"] = 1
 
     if parent:
-      _c["id_parent"] = {"@cdata": parent}
-      _c["is_root_category"] = {"@cdata": 0}
+      _c["id_parent"] = parent
+      _c["is_root_category"] = 0
     else:
-      _c["is_root_category"] = {"@cdata": 1}
+      _c["is_root_category"] = 1
 
     #_c["description"] = self.get_languages(self.normalize(name))
     # _c["id_shop_default"] = {"@cdata": 1}
@@ -127,7 +132,7 @@ class PrestaTools:
 
   def normalize(self, s):
     for i in range(10):
-      s = s.replace("#", " ")
+      s = s.replace("#", "n")
     s=unidecode.unidecode(s)
     return s
 
@@ -148,6 +153,15 @@ class PrestaTools:
 
   def cdata(self,txt):
     return "![CDATA["+str(txt)+"]]"
+
+
+  def get_product_feature(self,id_feature,id_feature_value):
+    for feature in requests.get(self.url("product_features", "display=full")).json()["product_features"]:
+      if feature["id"]==int(id_feature):
+        for feature_value in requests.get(self.url("product_feature_values", "display=full")).json()["product_feature_values"]:
+          if feature_value["id"]==int(id_feature_value):
+            return (feature["name"],feature_value["value"])
+    return None
 
 
   def add_product(self, name, category, symbol="", description="", price=0, on_sale=True, properties=dict(),features=dict(),tags=list()):
@@ -177,17 +191,21 @@ class PrestaTools:
     _p["available_for_order"]= 1
     #_p["available_date"]= "2022-01-01"
     _p["price"] = price
-    _p["id_category_default"] = category
+
+    _category=self.find_category(category)
+    _p["id_category_default"] = _category["id"]
 
     log("Remplissage de l'associations")
     _p["associations"]={
-      "categories":[{"category":{"id":category}}],
-      "product_features":[]}
+      "product_features":[]
+    }
+    l_features=[]
     for feature in features.keys():
       _feature=self.add_product_feature(feature)
       _feature_value=self.add_feature_value(None,feature,features[feature])
       if _feature_value:
-        _p["associations"]["product_features"].append({"product_feature":{"id":_feature["id"],"id_feature_value":_feature_value["id"]}})
+        l_features.append({"id":_feature["id"],"id_feature_value":int(_feature_value["id"])})
+    _p["associations"]["product_features"]={"product_feature":l_features}
 
     _p["state"] = 1
     _p["wholesale_price"]=price
@@ -207,7 +225,7 @@ class PrestaTools:
       log("Probleme de traduction "+resp.text)
     try:
       _product = resp.json()["product"]
-
+      #self.add_product_to_category(category,[_product["id"]])
       return _product
     except:
       log("Erreur de creation")
@@ -288,6 +306,11 @@ class PrestaTools:
     if len(feature_value)==0: return None
 
     feature=self.add_product_feature(feature_name)
+    _fs = requests.get(self.url("product_feature_values", "display=full")).json()["product_feature_values"]
+    for _f in _fs:
+      if int(_f["id_feature"])==feature["id"] and _f["value"]==feature_value:
+        return _f
+
     _f = requests.get(self.url("product_feature_values", "schema=blank")).json()["product_feature_value"]
     _f["custom"] = 1
     _f["id_feature"]=feature["id"]

@@ -71,7 +71,7 @@ export class BuildOpeComponent implements OnInit {
 
     let url=this.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
     this.sel_ope.lottery.application=url;
-    this.network.wait("Récupération des NFTs issue des sources");
+    this.network.wait("Récupération des NFTs issue des sources",50);
     this.network.get_nfts_from_operation(this.sel_ope.id).subscribe((r:any)=>{
       this.network.wait("")
       this.nfts=[]
@@ -172,7 +172,9 @@ export class BuildOpeComponent implements OnInit {
   }
 
   send_prestashop(id:string) {
+    this.network.wait("Transfert vers prestashop",60);
     this.network.export_to_prestashop(id).subscribe((r:any)=>{
+      this.network.wait("");
       showMessage(this,"NFTs transférés")
     });
   }

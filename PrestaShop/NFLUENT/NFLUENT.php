@@ -285,8 +285,7 @@ class NFLUENT extends Module
           "email" => $dest,
           "quantity" => 1,
           "order_status" => $newOrderStatus->name,
-          "network" => "elrond_devnet",
-          "product" => $product
+          "product" => $product,
         );
         Logger::AddLog("Envoi des arguments=".implode(" ",$args));
 
