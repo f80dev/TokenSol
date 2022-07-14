@@ -1,0 +1,33 @@
+{
+    "Issuer": "NfluenT",
+    "creators": [
+        {
+            "address": "CcKHZgqCWYfyJ3E24mwmh3SLD2GgiutXjH8MmpfxMtkU",
+            "share": 10,
+            "verified": false
+        },
+        {
+            "address": "Aee8GX5nzqJWFrg5Tr5N3kwry3ndYxzWjWSfLGzkU4LN",
+            "share": 90,
+            "verified": false
+        },
+        {
+            "address": "6gWV3eagwCxsgGAQeFedyY6f27Z87sVYAHWDvzJdyMJn",
+            "share": 0,
+            "verified": false
+        }
+    ],
+    "description": "The Private Island Club : networking & party / Pass NFT All Access - 1 \u00e9dition Calvi on the Rocks 2022",
+    "external_url": "",
+    "marketplace": {
+        "duration": 216,
+        "initial_price": 800,
+        "max_mint": 1,
+        "reservation_price": 800,
+        "sell_date": "25/06/2022"
+    },
+    "name": "15622_NFluenT #1",
+    "seller_fee_basis_points": 1000,
+    "symbol": "FLU22A1",
+    "uri": "https://raw.githubusercontent.com/nfluentdev/test4/main/NFluenTTest_FLU22A1"
+}

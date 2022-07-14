@@ -1,0 +1,42 @@
+data:
+    collection: anniversaire
+    description: NFT exclusif pour les 52 ans
+    family: nfluent
+    files: ''
+    properties: 'prenom=David-Christophe
+
+        nom=Coignet
+
+        date_anniv=7-juillet'
+    symbol: anniv01
+    title: David52
+filename_format: image
+fontstyle:
+    color: '#FFFFFF'
+    name: AGENCYB.TTF
+    size: 32.8
+height: 500
+layers:
+-   elements:
+    -   image: http://127.0.0.1:4242/api/images/-0x64f398ef3cdc87d4.webp?format=image/webp
+    indexed: true
+    name: layer2
+    params: {}
+    position: 0
+    text: ''
+    unique: false
+-   elements:
+    -   image: http://127.0.0.1:4242/api/images/0x331b7e81e5b1ccdd.png?format=image/png
+    indexed: true
+    name: layer1
+    params: {}
+    position: 2
+    text: ''
+    unique: false
+limit: 1
+platform: nfluent
+seed: 0
+text_to_add: '50'
+width: 500
+x: 5
+y: 26
