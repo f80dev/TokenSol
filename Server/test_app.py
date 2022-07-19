@@ -5,12 +5,14 @@ from app import get_operation
 
 _operation=get_operation("Main_devnet")
 _store_section=_operation["store"]
-prestashop=PrestaTools(_store_section["prestashop"]["api_key"])
+prestashop=PrestaTools(_store_section["prestashop"]["api_key"],_store_section["prestashop"]["server"])
 
 image="./temp/image.gif"
 #_i=prestashop.get_images()
 #_c=prestashop.get_product_categories("18")
-_p=prestashop.get_products(136)
+#_p=prestashop.get_products(136)
+
+prestashop.edit_customer(2,"note","coucou")
 
 
 

@@ -174,12 +174,16 @@ class Elrond:
     if _from.address.bech32()==_to.address.bech32(): return False
 
     log("Transfert de "+collection_id+"-"+nonce+" de "+_from.address.bech32()+" a "+_to.address.bech32())
-    data = "ESDTNFTTransfer@" + str_to_hex(collection_id,False) \
+    data = "ESDTNFTTransfer" \
+           + "@" + str_to_hex(collection_id,False) \
            + "@" + nonce \
            + "@" + int_to_hex(1) \
            + "@" + _to.address.hex()
     t = self.send_transaction(_from, _from, _from, 0, data)
-    return t
+    if t["status"]!="success":
+      return None
+    else:
+      return t
 
 
 
@@ -203,7 +207,7 @@ class Elrond:
     collection_id=None
     for col in self.get_collections(owner):
       if col["name"]==collection:
-        collection_id=str_to_hex(col["collection"],False)
+        collection_id=col["collection"]
         break
 
     if collection_id is None:
@@ -322,6 +326,7 @@ class Elrond:
       send_mail(open_html_file("mail_new_account",{
         "wallet_address":address,
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
+        "url_explorer":("https://explorer.elrond.com" if "mainnet" in network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
         "words":words,
         "qrcode":"cid:qrcode"
       }),email,subject="Votre compte Elrond est disponible" ,attach=qrcode,filename="qrcode.png")
@@ -464,10 +469,11 @@ class Elrond:
       visual=convert_to_gif(visual,NFTStorage())
 
     cid_metadata=ipfs.add(properties)
-    nonce="02"
+
     s="metadata:"+cid_metadata["Hash"]+"/props.json;tags:"+("" if len(tags)==0 else " ".join(tags))
 
-    data = "ESDTNFTCreate@" + collection \
+    data = "ESDTNFTCreate" \
+           + "@" + str_to_hex(collection,False) \
            + "@" + int_to_hex(quantity,2) \
            + "@" + str_to_hex(title, False) \
            + "@" + int_to_hex(royalties*100,4) \
@@ -501,11 +507,13 @@ class Elrond:
     t = self.send_transaction(miner, miner, miner, 0, data)
     if t is None: return None
 
+    if t["status"]!="success":return None,None
     if "logs" in t:
       nonce = t["logs"]["events"][0]
       nonce = int_to_hex(base64.b64decode(nonce["topics"][1])[0],2)
+      return nonce,cid_metadata
 
-    return nonce,cid_metadata
+    return None,None
 
 
   def getRoleForToken(self,collection):

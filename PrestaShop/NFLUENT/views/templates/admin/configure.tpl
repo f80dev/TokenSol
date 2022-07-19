@@ -30,7 +30,7 @@
 		</div>
 		<div class="col-xs-7 text-left">
 			<h2>{l s='NFT' mod='NFLUENT'}</h2>
-			<h4>{l s='Lorem ipsum dolor' mod='NFLUENT'}</h4>
+			<h4>{l s='Vendez des NFTs depuis votre boutique Prestashop' mod='NFLUENT'}</h4>
 		</div>
 	</div>
 
@@ -40,22 +40,42 @@
 		<div class="row">
 			<div class="col-xs-12">
 				<p>
-					<h4>{l s='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor' mod='NFLUENT'}</h4>
-					<ul class="ul-spaced">
-						<li><strong>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</strong></li>
-						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>
-						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>
-						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>
-						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>
-					</ul>
+					<h4>{l s='Serveur NFLUENT' mod='NFLUENT'}</h4>
+{*					<ul class="ul-spaced">*}
+{*						<li><strong>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</strong></li>*}
+{*						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>*}
+{*						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>*}
+{*						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>*}
+{*						<li>{l s='Lorem ipsum dolor sit amet' mod='NFLUENT'}</li>*}
+{*					</ul>*}
+
+        <div class="form-group">
+          <form action="ServerConfigForm?action=submit" method="post">
+            <table style="width: 100%;">
+              <tr>
+                <td>
+                  <label class="control-label col-lg-4 required">Server address:</label>
+                </td>
+                <td>
+                  <input type="text" name="SERVER_ADDR" id="SERVER_ADDR" size="40" value="https://server.f80lab.com:4242">
+                </td>
+                <td>
+                  <input class="btn btn-default" type="submit" value="Save">
+                </td>
+              </tr>
+            </table>
+          </form>
+        </div>
+
+
 				</p>
 
 				<br />
 
 				<p class="text-center">
 					<strong>
-						<a href="http://www.prestashop.com" target="_blank" title="Lorem ipsum dolor">
-							{l s='Lorem ipsum dolor' mod='NFLUENT' }
+						<a href="https://tokenfactory.nfluent.io" target="TokenFactory" title="Token Factory">
+							{l s='Token Factory' mod='NFLUENT' }
 						</a>
 					</strong>
 				</p>

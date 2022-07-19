@@ -32,6 +32,8 @@ class NFLUENT extends Module
 {
   protected $config_form = false;
 
+
+
   public function __construct()
   {
     $this->name = 'NFLUENT';
@@ -47,7 +49,7 @@ class NFLUENT extends Module
 
     parent::__construct();
 
-    $this->displayName = $this->l('NFT vendor module');
+    $this->displayName = $this->l('NFT module');
     $this->description = $this->l('Vendez des NFT directement depuis votre boutique');
 
     $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
@@ -77,6 +79,8 @@ class NFLUENT extends Module
     return parent::uninstall();
   }
 
+
+
   /**
    * Load the configuration form
    */
@@ -85,7 +89,7 @@ class NFLUENT extends Module
     /**
      * If values have been submitted in the form, process.
      */
-    if (((bool)Tools::isSubmit('submitNFLUENTModule')) == true) {
+    if (((bool)Tools::isSubmit('ServerConfigForm')) == true) {
       $this->postProcess();
     }
 
@@ -181,9 +185,12 @@ class NFLUENT extends Module
    */
   protected function getConfigFormValues()
   {
+    $server_addr=(string) Tools::getValue('SERVER_ADDR');
+    Logger::AddLog("Enregistrement de ".$server_addr);
     return array(
       'NFLUENT_LIVE_MODE' => Configuration::get('NFLUENT_LIVE_MODE', true),
-      'NFLUENT_ACCOUNT_EMAIL' => Configuration::get('NFLUENT_ACCOUNT_EMAIL', 'contact@prestashop.com'),
+      'NFLUENT_ACCOUNT_EMAIL' => Configuration::get('NFLUENT_ACCOUNT_EMAIL', 'contact@nfluent.io'),
+      'NFLUENT_SERVER_ADDRESS' => $server_addr,
       'NFLUENT_ACCOUNT_PASSWORD' => Configuration::get('NFLUENT_ACCOUNT_PASSWORD', null),
     );
   }
@@ -286,17 +293,22 @@ class NFLUENT extends Module
           "quantity" => 1,
           "order_status" => $newOrderStatus->name,
           "product" => $product,
+          "address" => $customer->note,
+          "customer" => $customer->id,
         );
         Logger::AddLog("Envoi des arguments=".implode(" ",$args));
 
         $url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
-        //$url='http://127.0.0.1:4242/api/mint_from_prestashop/';
+//        $url='http://host.docker.internal:4242/api/mint_from_prestashop/';  #host.docker.internal designe le localhost
         $resp=$this->api($url,$args);
         if($resp->result=="ok"){
           Logger::AddLog("Changement de statut pour livré");
           $history = new OrderHistory();
           $history->id_order = $params['id_order'];
           $history->changeIdOrderState('5', $params['id_order']);
+
+          //Voir
+          Logger::AddLog("Ecriture de l'adresse ".$resp->address." dans le compte client");
 
           //TODO faire la mise a jour du client avec son adresse blockchain
           //TODO faire la mise a jour de l'order avec l'adresse de mint

@@ -14,7 +14,7 @@ network: solana-devnet      #Réseau concerné par l'opération
 metadata_storage: github/test6
 
 
-#Caractéristiques des collections utilisées par les NFT
+#Caractéristiques détaides collections utilisées par les NFT
 collections:
   - name: NFluenTTest
     visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
@@ -42,8 +42,6 @@ collections:
     creator: calvi
     price: 100
     currency: $
-
-
 
 
 
@@ -79,16 +77,16 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 data:
   sources:
     - type: network
-      connexion: solana-mainnet
+      connexion: solana-devnet
       filter:
-        limit: 20
+        limit: 3
       owner: BbDq7xeUzpj8bXfd9N7dh1tw43Ss7xbYpyjoNuwDSrzq
 
-    - type: database
-      connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
-      dbname: nfluentdb_2       #Nom de la base de données contenant les NFTS
-      filter:
-        limit: 20
+#    - type: database
+#      connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
+#      dbname: nfluentdb_2       #Nom de la base de données contenant les NFTS
+#      filter:
+#        limit: 20
 
 #    - type: json              #Les NFTs sont contenus dans un fichier json
 #      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
@@ -227,10 +225,12 @@ store:
 
 
   prestashop:
-    server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
+    server: "http://127.0.0.1:8080/"              #adresse du serveur Prestashop
+#    server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
     address: "$server$/fr/"                         #page de la boutique
     admin: "$server$/admin4280/"                    #page d'administration de la boutique
-    api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+#    api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+    api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
 
     root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
       name: NFTs                                      #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie

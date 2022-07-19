@@ -28,6 +28,7 @@ from flask import request, jsonify, send_file, Flask, make_response
 from flask_cors import CORS
 from fontTools import ttLib
 from reportlab.graphics import renderPM
+from solana.account import Account
 from svglib.svglib import svg2rlg
 
 from werkzeug.datastructures import FileStorage
@@ -61,9 +62,10 @@ IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"
 
 
 
-def returnError(msg:str=""):
+def returnError(msg:str="",_d=dict()):
   log("Error "+msg)
-  return jsonify({"error":"Ooops ! Petit problème technique. "+msg}),500
+  _d["error"]="Ooops ! Petit problème technique. "+msg
+  return jsonify(_d),500
 
 
 
@@ -438,8 +440,7 @@ def export_to_prestashop():
     root_category=prestashop.add_category(
       root_from_operation["name"],
       2,
-      root_from_operation["description"],
-      root_from_operation["visual"])
+      root_from_operation["description"])
 
   categories=dict()
   log("Création des collections sous forme de categorie dans Prestashoo")
@@ -448,8 +449,6 @@ def export_to_prestashop():
 
   for nft in nfts:
     if nft["collection"]["name"] not in categories.keys():
-
-
       ref_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["collections"])
       store_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["store"]["collections"])
       if ref_col is None:
@@ -480,12 +479,20 @@ def export_to_prestashop():
         nft["image"]=nft["metadataOffchain"]["image"]
         nft["description"]=nft["metadataOffchain"]["description"]
 
+      mint_addr=nft["mint"] if "mint" in nft else ""
+
+
+
       features={
-        "address":nft["mint"] if "mint" in nft else "",
+        "address":mint_addr,
         "network":nft["network"] if "network" in nft else "elrond-devnet",
         "operation":_operation["id"],
-        "miner":_store_section["miner"]
+        "miner":_store_section["miner"],
+        "royalties":str(nft["metadataOffchain"]["seller_fee_basis_points"]),
+        "visual":nft["metadataOffchain"]["image"],
+        "creators":" ".join([_c["address"]+"_"+str(_c["share"]) for _c in nft["metadataOffchain"]["properties"]["creators"]])
       }
+
       reference=nft["symbol"] if "symbol" in nft else nft["metadataOnchain"]["symbol"]
 
       product=prestashop.add_product(nft["name"],
@@ -945,31 +952,75 @@ def mint_for_prestashop():
 
   for feature in _p["associations"]["product_features"]:
     obj=prestashop.get_product_feature(feature["id"],feature["id_feature_value"])
-    body[obj[0]]=obj[1]
-
-
+    _p[obj[0]]=obj[1]
 
   collection=_c["name"]
   id_image=_p["associations"]["images"][0]["id"]
-  miner=body["miner"]
+  miner=body["miner"] if "miner" in body else _operation["store"]["miner"]
 
   visual=_operation["store"]["prestashop"]["server"]+"api/images/products/"+id_image+"/"+id_image+"?ws_key="+_operation["store"]["prestashop"]["api_key"]
-  if "elrond" in body["network"]:
-    elrond=Elrond(body["network"])
+
+  if not "network" in _p:_p["network"]="elrond-devnet"
+  addresses=dict()
+  if "address" in body and not body["address"] is None:
+    addresses=yaml.load(body["address"]) or dict()
+
+  properties=prestashop.desc_to_dict(_p["description"])
+
+  if "elrond" in _p["network"]:
+    elrond=Elrond(_p["network"])
     royalties=body["royalties"] if "royalties" in body else 0
 
-    if not "address" in body:
+    if not "elrond" in addresses:
       _account,pem,words,qrcode=elrond.create_account(email=body["email"])
-      properties=prestashop.desc_to_dict(_p["description"])
-      collection_id=elrond.add_collection(miner,collection,type="NonFungible")
-      nonce,cid=elrond.mint(miner,_p["name"],collection,properties,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
+      addresses["elrond"]=_account.address.bech32()
+      prestashop.edit_customer(body["customer"],"note",yaml.dump(addresses))
     else:
-      #TODO: a completer
-      collection_id=elrond.get_account(body["address"])
+      _account=elrond.toAccount(addresses["elrond"])
 
-    elrond.transfer(collection_id,nonce,miner,_account)
+    if not "address" in _p or _p["address"] is None or _p["address"]=="":
+      collection_id=elrond.add_collection(miner,collection,type="NonFungible")
+      nonce,cid=elrond.mint(miner,_p["name"],collection_id,properties,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
+    else:
+      collection_id,nonce=elrond.get_nft(_p["address"])
 
-  return jsonify({"result":"ok","address":_account.address.bech32(),"mint":nonce})
+    t=elrond.transfer(collection_id,nonce,miner,_account)
+    account_addr=_account.address.bech32()
+    if t is None:
+      return returnError("Impossible de transférer le NFT",{"address":_account.address.bech32()})
+
+  if "solana" in _p["network"]:
+    solana=Solana(_p["network"])
+    if not "solana" in addresses:
+      words,pubkey,privkey,integers_private_key=solana.create_account(body["email"])
+      addresses["solana"]=pubkey
+      prestashop.edit_customer(body["customer"],"note",yaml.dump(addresses))
+    else:
+      pubkey=addresses["solana"]
+
+    if not "address" in _p or len(_p["address"])==0:
+      _data=solana.prepare_offchain_data({
+        "attributes":properties,
+        "category":"image",
+        "properties":{"creators":[{"address":c.split("_")[0],"share":int(c.split("_")[1])} for c in _p["creators"].split(" ")]},
+        "seller_fee_basis_points":int(_p["royalties"]),
+        "image":_p["visual"],
+        "name":_p["name"],
+        "symbol":_p["reference"].split(" / ")[1],
+        "description":_p["description"],
+        "collection":collection
+      })
+      rc=solana.mint(_data,miner=miner,sign=True,owner=pubkey)
+    else:
+      result=solana.transfer(_p["address"],pubkey,_p["miner"])
+      if not result:
+        return returnError("Probléme de transfert",{"address":pubkey})
+    account_addr=pubkey
+
+
+
+
+  return jsonify({"result":"ok","address":account_addr,"mint":nonce})
 
 
 #http://127.0.0.1:4200/dealermachine/?id=symbol2LesGratuits
@@ -1047,10 +1098,10 @@ def mint_for_contest(confirmation_code=""):
                           )
 
     if nonce:
-      token_id=hex_to_str(collection_id)+"-"+nonce
+      token_id=collection_id+"-"+nonce
       dao.delete(id)
       if miner!=account:
-        rc=elrond.transfer(hex_to_str(collection_id),nonce,miner,account)
+        rc=elrond.transfer(collection_id,nonce,miner,account)
 
       cost=elrond.get_account(miner)["amount"]-solde
       log("Cout de l'operation "+str(cost)+" egld")
@@ -1077,10 +1128,7 @@ def mint_for_contest(confirmation_code=""):
   else:
     solana=Solana("solana-"+body["type_network"])
     if not "uri" in _data or len(_data["uri"])==0:
-      _data["uri"]=upload_on_platform(
-        solana.prepare_offchain_data(_data),
-        metadata_storage
-      )["url"]
+      _data["uri"]=upload_on_platform(solana.prepare_offchain_data(_data),metadata_storage)["url"]
     rc=solana.mint(_data,miner=miner,sign=True,owner=account)
     if len(rc["error"])>0:
       return jsonify({"error":rc["error"]})

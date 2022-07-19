@@ -15,7 +15,7 @@ class PrestaTools:
 
   def url(self, service, params=""):
     url =  self.server + "api/" + service + "?ws_key=" + self.key + "&io_format=JSON" + "&" + params
-    log("Ouverture de " + url)
+    #log("Ouverture de " + url)
     return url
 
   def toXML(self, _d: dict, root_label: str,entete=True,pretty=True):
@@ -185,7 +185,8 @@ class PrestaTools:
     _p["reference"]=symbol
     _p["on_sale"] =1 if on_sale else 0
     _p["low_stock_alert"]=0
-    _p["is_virtual"] = 0
+    _p["minimal_quantity"]=1
+    _p["is_virtual"] = 1
     _p["customizable"] = 0
     _p["active"]= 1
     _p["available_for_order"]= 1
@@ -201,6 +202,7 @@ class PrestaTools:
     }
     l_features=[]
     for feature in features.keys():
+      log("Insertion de "+feature)
       _feature=self.add_product_feature(feature)
       _feature_value=self.add_feature_value(None,feature,features[feature])
       if _feature_value:
@@ -306,10 +308,11 @@ class PrestaTools:
     if len(feature_value)==0: return None
 
     feature=self.add_product_feature(feature_name)
-    _fs = requests.get(self.url("product_feature_values", "display=full")).json()["product_feature_values"]
-    for _f in _fs:
-      if int(_f["id_feature"])==feature["id"] and _f["value"]==feature_value:
-        return _f
+    _fs = requests.get(self.url("product_feature_values", "display=full")).json()
+    if len(_fs)>0:
+      for _f in _fs["product_feature_values"]:
+        if int(_f["id_feature"])==feature["id"] and _f["value"]==feature_value:
+          return _f
 
     _f = requests.get(self.url("product_feature_values", "schema=blank")).json()["product_feature_value"]
     _f["custom"] = 1
@@ -355,6 +358,21 @@ class PrestaTools:
     for l in description.split(" - "):
       rc[l.split(" : ")[0]]=l.split(" : ")[1]
     return rc
+
+  def edit_customer(self, customer_id, field, value):
+    customers=requests.get(self.url("customers/"+str(customer_id),"display=full")).json()["customers"]
+    if len(customers)>0:
+      _c=customers[0]
+      _c[field]=value
+      #_c["id"]=str(customer_id)
+      _c["associations"]["groups"]={"group":_c["associations"]["groups"]}
+      xml=self.toXML(_c,"customer",True,False)
+
+      resp=requests.put(self.url("customers/"+str(customer_id)),xml)
+      return (resp.status_code==200)
+    else:
+      return False
+
 
 
 

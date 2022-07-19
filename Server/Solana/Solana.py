@@ -206,7 +206,11 @@ class Solana:
     pubkey=self.find_address_from_json(name)
     token_account_opts=TokenAccountOpts(mint=None,program_id=TOKEN_PROGRAM_ID,encoding="jsonParsed")
     rc=self.client.get_token_accounts_by_owner(PublicKey(pubkey),token_account_opts,Confirmed)
-    tokens=rc["result"]["value"]
+    tokens=[]
+    for token in rc["result"]["value"]:
+      token["mint"]=token["account"]["data"]["parsed"]["info"]["mint"]
+      token["owner"]=token["account"]["data"]["parsed"]["info"]["owner"]
+      tokens.append(token)
     return tokens
 
 
@@ -322,7 +326,7 @@ class Solana:
     bip44_mst_ctx =Bip44.FromSeed(seed_bytes, Bip44Coins.SOLANA)
     bip44_acc_ctx  = bip44_mst_ctx.Purpose().Coin().Account(0)
     if wallet_name=="solflare": bip44_acc_ctx = bip44_acc_ctx.Change(Bip44Changes.CHAIN_EXT)
-    integers=[int(x) for x in bytes(bip44_acc_ctx.PrivateKey().Raw())]+[int(x) for x in bytes(bip44_acc_ctx.PublicKey().RawCompressed())]
+    integers_private_key=[int(x) for x in bytes(bip44_acc_ctx.PrivateKey().Raw())]+[int(x) for x in bytes(bip44_acc_ctx.PublicKey().RawCompressed())]
     pubkey=bip44_acc_ctx.PublicKey().ToAddress()
     privkey=bytes(bip44_acc_ctx.PrivateKey().Raw()).hex()
     if len(email)>0:
@@ -333,7 +337,7 @@ class Solana:
         #"private_key_in_list":str([int(x) for x in _account.secret_key])
       }),email,subject="Votre compte Solana est disponible")
 
-    return mnemonic,pubkey,privkey,str(integers)
+    return mnemonic,pubkey,privkey,str(integers_private_key)
 
   def getExplorer(self, addr):
     return "https://solscan.io/account/"+addr+"?cluster="+self.network
@@ -341,17 +345,19 @@ class Solana:
   def transfer(self, nft_addr, to,owner):
     recent_blockhash=self.client.get_recent_blockhash(Confirmed)["result"]["value"]["blockhash"]
 
-    txn=Transaction(recent_blockhash=recent_blockhash,fee_payer=PublicKey(owner))
-    txn.add(transfer(TransferParams(TOKEN_PROGRAM_ID,PublicKey(nft_addr),PublicKey(to),PublicKey(owner),1,[PublicKey(owner)])))
+    to=self.find_address_from_json(to)
 
-    account=self.find_json_from_address(owner)
+    account=self.find_address_from_json(owner)
+    txn=Transaction(recent_blockhash=recent_blockhash,fee_payer=PublicKey(account))
+    txn.add(transfer(TransferParams(TOKEN_PROGRAM_ID,PublicKey(nft_addr),PublicKey(to),PublicKey(account),1,[PublicKey(account)])))
 
-    filename=SOLANA_KEY_DIR+account+".json"
+    filename=SOLANA_KEY_DIR+(owner+".json").replace(".json.json",".json")
     if exists(filename):
       f=open(filename,"r")
       key=f.readlines()
       f.close()
-      self.client.send_transaction(txn,Keypair(key))
+      l_int=[int(x) for x in key[0][1:len(key[0])-1].split(",")]
+      t=self.client.send_transaction(txn,Keypair(bytes(l_int)[32:]))
       return True
     else:
       log("Signature inconnue")
