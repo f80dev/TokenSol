@@ -10,8 +10,14 @@ title: "Opération fictive / Modele principal"     #est le titre usuel de l'oper
 description: "Modèle principal"
 website: "https://nfluent.io"   #désigne le site concerné par l'opération
 version: 0.1
-network: solana-devnet      #Réseau concerné par l'opération
-metadata_storage: github/test6
+network: elrond-devnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
+
+#Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
+lazy_mining:
+  metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
+  content_storage: NFTstorage         #plateforme de destibation des images
+  network: elrond-devnet
+  miner: paul
 
 
 #Caractéristiques détaides collections utilisées par les NFT
@@ -21,6 +27,13 @@ collections:
     description: La collection des NFT by Influent
     creator: nfluent
     price: 1
+
+
+  - name: A Madonna Di A Sierra
+    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
+    description: La collection des NFT by Influent
+    creator: nfluent
+    price: 10
 
   - name: PASS VIP
     visual:  https://static.ftx.com/nfts/3e6de159-be4c-44ae-961d-8f9d575d0d95.png
@@ -77,29 +90,34 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 data:
   sources:
     - type: network
+      active: True
       connexion: solana-devnet
       filter:
-        limit: 3
-      owner: BbDq7xeUzpj8bXfd9N7dh1tw43Ss7xbYpyjoNuwDSrzq
+        limit: 5
+      owner: paul
 
-#    - type: database
-#      connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
-#      dbname: nfluentdb_2       #Nom de la base de données contenant les NFTS
-#      filter:
-#        limit: 20
+    - type: database
+      active: False
+      connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
+      dbname: nfluentdb_2       #Nom de la base de données contenant les NFTS
+      filter:
+        limit: 20
 
-#    - type: json              #Les NFTs sont contenus dans un fichier json
-#      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+    - type: json              #Les NFTs sont contenus dans un fichier json
+      active: False
+      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
 
-#    - type: web              #Les NFTs sont contenus dans un fichier json
-#      connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+    - type: web              #Les NFTs sont contenus dans un fichier json
+      active: False
+      connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
 
-#    - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
-#      connexion: "Exemple.yaml"
-#      seed: 10                          #Permet de générer toujours la même séquence
-#      limit: 5                          #Nombre de nft à générer
-#      creators:                         #Compte à utiliser comme créateurs
-#        - "paul"
+    - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
+      active: False
+      connexion: "Exemple.yaml"
+      seed: 10                          #Permet de générer toujours la même séquence
+      limit: 5                          #Nombre de nft à générer
+      creators:                         #Compte à utiliser comme créateurs
+        - "paul"
 
 
 
@@ -111,7 +129,7 @@ validate:
   camera: True            #Si possible, utilise la caméra du device
   manual_input: True      #Le validateur peut saisir manuellement l'adresse du NFT du visiteur
 
-  application: "$nluent_appli$/validate?toolbar=false"
+  application: "$nfluent_appli$/validate?toolbar=false"
 
   users:                        #Liste des validateurs autorisé à modifier les NFTs
     - "paul.dudule@gmail.com"
@@ -120,18 +138,11 @@ validate:
     - "thomas@nfluent.io"
 
   support:
-
     #message affiché aux validateurs pour la détection du wallet
-    message_search:
-      "
-      Veuillez flasher le QRCode du wallet FTX des visiteurs
-      "
+    message_search: "Veuillez flasher le QRCode du wallet FTX des visiteurs"
 
     #message affiché aux validateurs pour l'attribution des passes
-    message_action:
-      "
-      Veuillez attribuer le nombre de passes souhaitez en fonction du solde restant sur le NFT
-      "
+    message_action: "Veuillez attribuer le nombre de passes souhaitez en fonction du solde restant sur le NFT"
 
     #message affiché en cas de dysfonctionnement de l'outil
     warning_process:
@@ -206,10 +217,10 @@ payment: #Section désignant le réceptionnaire des payment via google pay : htt
   billing: True
 
 
-store:
+
+store:              #Cette section regroupe l'ensemble des propriétés liés à la vente des NFTs via des stores dédiés
   visible: True
-  miner: paul
-  application: '$nfluent_appli$/store'          #Désigne l'application en charge de la vente
+  application: '$nfluent_appli$/store'    #Désigne l'application en charge de la vente
 
   #Collection mise en vente dans le store (parmis les NFT issue de la section data/sources)
   collections:
@@ -217,14 +228,15 @@ store:
       price: 1              #Si le prix n'est pas fixé on utilise le prix de la section collection (voir au dessus)
       limit: 50
 
-    - name: "BILLET VIP"
-    - name: "PASS VIP"
+    - name: "A Madonna Di A Sierra"
+
+
 
   support:      #Section regroupant les différents messages d'aides aux utilisateur
     buy_message: "Achat en cours"
 
 
-  prestashop:
+  prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
     server: "http://127.0.0.1:8080/"              #adresse du serveur Prestashop
 #    server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
     address: "$server$/fr/"                         #page de la boutique
@@ -253,6 +265,9 @@ dispenser:
       limit: 5                                      #Maximum de NFT distribuable par collection
 
     - name: "A Madonna Di A Sierra"
+      limit: 10
+
+    - name: "NFluenTTest"
       limit: 10
 
 

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import {encrypt, showError, showMessage} from "../../tools";
+import {encrypt, setParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {PromptComponent} from "../prompt/prompt.component";
@@ -57,7 +57,12 @@ export class DispenserComponent implements OnInit {
     }
 
     nft.price=0;
-    this.router.navigate(["dealermachine"],{queryParams:{param:encrypt(this.operation.id+"&&&"+btoa(JSON.stringify(nft))+"&&&false")}})
+    this.router.navigate(["dealermachine"],{queryParams:{param:setParams({
+          token:nft,
+          price:0,
+          selfWalletConnexion:false,
+          mining:this.operation.lazy_mining
+        })}})
 
       // if(this.dest){
       //   this.alias.transform(this.dest,"pubkey")

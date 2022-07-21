@@ -1,5 +1,5 @@
 import {environment} from "./environments/environment";
-import {stringify} from "querystring";
+import {ActivatedRoute} from "@angular/router";
 
 export interface MetabossKey {
   name: string
@@ -16,8 +16,45 @@ export function encrypt(s:string) : string {
   return btoa(s);
 }
 
-export function decrypt(s:string) : string {
-  return atob(s);
+export function setParams(_d:any,prefix="") : string {
+  let rc=[];
+  for(let k of Object.keys(_d)){
+    if(typeof(_d[k])=="object")_d[k]="b64:"+btoa(JSON.stringify(_d[k]));
+    rc.push(k+"="+_d[k]);
+  }
+  return encrypt(prefix+rc.join("&"));
+}
+
+export function getParams(routes:ActivatedRoute,param:string,value:any=null) : any {
+  if(routes.snapshot.queryParamMap.has("param")){
+    let _params=decrypt(routes.snapshot.queryParamMap.get("param")).split("&");
+    for(let _param of _params){
+      if(_param.split("=")[0]==param){
+        $$("Récupération de "+_param);
+        value=_param.split("=")[1];
+        if(value.startsWith("b64:"))value=JSON.parse(atob(value.replace("b64:","")));
+        if(value=="false")value=false;
+        if(value=="true")value=true;
+        return value;
+      }
+    }
+    return value;
+
+  } else {
+    if(routes.snapshot.queryParamMap.has(param)){
+      return routes.snapshot.queryParamMap.get(param)
+    }
+    else {
+      return value;
+    }
+  }
+}
+
+export function decrypt(s:string | any) : string {
+  if(s)
+    return atob(s);
+
+  return "";
 }
 
 

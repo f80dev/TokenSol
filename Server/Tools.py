@@ -1,5 +1,6 @@
 import base64
 import datetime as datetime
+import json
 import smtplib
 from email import encoders
 from email.mime.base import MIMEBase
@@ -20,6 +21,18 @@ def is_email(addr):
   if addr is None:return False
   if len(addr)==0 or not "@" in addr:return False
   return True
+
+
+def setParams(_d:dict,prefix="param="):
+  rc=[]
+  for k in _d.keys():
+    value=_d[k]
+    if type(value)==bool: value=str(value).lower() #<= compatibilité avec javascript
+    if type(value)==dict: value=str(base64.b64encode(bytes(json.dump(value),"utf8")),"utf8")
+
+    rc.append(k+"="+value)
+  return prefix+str(base64.b64encode(bytes("&".join(rc),"utf8")),"utf8")
+
 
 
 

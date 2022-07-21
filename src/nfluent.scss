@@ -8,6 +8,8 @@
         src: url("assets/HelveticaInseratLT.ttf") format("ttf");
 }
 
+
+
 html {font-size: 0.8vw;}
 
 @media(max-width: 1500px) {
@@ -17,6 +19,7 @@ html {font-size: 0.8vw;}
 @media(max-width: 1000px) {
         html {font-size: 1.4vw;}
 }
+
 
 @media(max-width: 500px) {
         html {font-size: 2vw;}
@@ -33,17 +36,17 @@ html {font-size: 0.8vw;}
  */
 $nfluent-typography: mat.define-typography-config(
         $display-4: mat.define-typography-level(4rem, 4rem, 800, Helvetica, $letter-spacing: -0.07em),
-        $display-3: mat.define-typography-level(3rem, 3rem, 800, Helvetica, $letter-spacing: -0.08em),       //H2
-        $display-2: mat.define-typography-level(2.5rem, 2.5rem, 800, Helvetica, $letter-spacing: -0.07em), //H3
-        $display-1: mat.define-typography-level(2rem, 2rem, 600,Helvetica),
-        $headline:  mat.define-typography-level(1.5rem, 1.5rem, 500, $font-family: Helvetica),
-        $title:  mat.define-typography-level(1.4rem, 1.4rem, 500, $font-family: Helvetica),
-        $subheading-2:  mat.define-typography-level(1.2rem, 1.2rem, 600, $font-family: Robotto),
-        $subheading-1:  mat.define-typography-level(1.2rem, 1.2rem, 500,$font-family: Robotto),
-        $body-2: mat.define-typography-level(16px, 16px, 400, $font-family: Robotto),
-        $body-1: mat.define-typography-level(14px, 14px, 400, $font-family: Robotto),
-        $button: mat.define-typography-level(16px, 16px, 500, Helvetica, $letter-spacing: -0.07em),
-        $caption: mat.define-typography-level(12px, 12px, 500, Helvetica, $letter-spacing: -0.07em),
+        $display-3: mat.define-typography-level(3.8rem, 3.8rem, 800, Helvetica, $letter-spacing: -0.08em),       //H2
+        $display-2: mat.define-typography-level(2.8rem, 3rem, 800, Helvetica, $letter-spacing: -0.07em), //H3
+        $display-1: mat.define-typography-level(2.5rem, 2.5rem, 600,Helvetica, $letter-spacing: -0.07em),
+        $headline:  mat.define-typography-level(2rem, 2rem, 500, $font-family: Helvetica, $letter-spacing: -0.07em),
+        $title:  mat.define-typography-level(1.6rem, 1.6rem, 500, $font-family: Helvetica, $letter-spacing: -0.04em),
+        $subheading-2:  mat.define-typography-level(1.4rem, 1.6rem, 500, $font-family: Helvetica,$letter-spacing: -0.03em),
+        $subheading-1:  mat.define-typography-level(1.2rem, 1.2rem, 400,$font-family: Helvetica,$letter-spacing: -0.03em),
+        $body-2: mat.define-typography-level(16px, 16px, 400, $font-family: Helvetica,$letter-spacing: -0.03em),
+        $body-1: mat.define-typography-level(14px, 14px, 400, $font-family: Helvetica,$letter-spacing: -0.03em),
+        $button: mat.define-typography-level(16px, 16px, 500, Helvetica, $letter-spacing: -0.03em),
+        $caption: mat.define-typography-level(12px, 12px, 500, Helvetica, $letter-spacing: -0.03em),
 );
 
 
@@ -99,6 +102,7 @@ $nfluent-green-palette :(
 );
 
 
+
 $nfluent-primary-color: mat.define-palette($nfluent-indigo-palette, 700);
 $nfluent-accent-color:mat.define-palette($nfluent-green-palette, 500);
 $nfluent-warn-color:mat.define-palette(mat.$red-palette, A200, A100, A400);
@@ -114,6 +118,20 @@ $nfluent-theme: mat.define-light-theme((
         typography: $nfluent-typography
 ));
 
+
+ul {
+  list-style: none; /* Remove default bullets */
+}
+
+
+ul li::before {
+  content: "\2022";
+  font-weight: bold; /* If you want it to be bold */
+  display: inline-block; /* Needed to add space between the bullet and the text */
+  width: 1em; /* Also needed for space (tweak if needed) */
+  margin-left: -1em;
+  color: #00e726;
+}
 
 $nfluent-dark-theme: mat.define-dark-theme((
         color: (
@@ -143,6 +161,8 @@ a {
 }
 
 body,html {
+        margin: 0;
+        padding: 0;
         color: mat.get-color-from-palette($nfluent-primary-color, 700);
 }
 

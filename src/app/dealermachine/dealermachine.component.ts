@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {$$, decrypt, hasWebcam, showMessage} from "../../tools";
+import {$$, decrypt, getParams, hasWebcam, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
@@ -17,8 +17,9 @@ export class DealermachineComponent implements OnInit {
   wallet_link: string="";
   nft:any={};
   final_message="";
-  ope: any={};
+  ope: any=null;
   webcam: boolean=true;
+  mining: any={};
 
   constructor(
     public routes:ActivatedRoute,
@@ -33,36 +34,31 @@ export class DealermachineComponent implements OnInit {
 
   ngOnInit(): void {
     hasWebcam(this.webcam);
-    let id=this.routes.snapshot.queryParamMap.get("id") || "";
-    let ope=this.routes.snapshot.queryParamMap.get("ope") || "";
-    let param=this.routes.snapshot.queryParamMap.get("param") || "";
-    let token=this.routes.snapshot.queryParamMap.get("token") || "";
-    let pay=true;
-    if(param!=""){
-      let _param=decrypt(param).split("&&&");
-      ope=_param[0];
-      token=JSON.parse(atob(_param[1]))
-      pay=_param[2]=="true";
+
+    let ope=getParams(this.routes,"ope");
+    this.nft=getParams(this.routes,"token",{});
+    this.price=getParams(this.routes,"price",this.nft.marketplace.initial_price);
+    this.mining=getParams(this.routes,"mining");
+
+    this.selfWalletConnexion=getParams(this.routes,"selfWalletConnexion",false);
+
+    if(ope){
+      this.network.get_operations(ope).subscribe((ope:any)=>{
+        this.ope=ope;
+        this.mining=getParams(this.routes,"mining",this.ope.lazy_mining);
+
+        if(this.nft=={}){
+          let id=getParams(this.routes,"id","");
+          this.network.get_nft_from_db(id).subscribe((nft:any)=>{
+            this.nft=nft || {};
+            if(!nft){
+              this.lost()
+            }
+          });
+        }
+      })
     }
 
-
-    this.network.get_operations(ope).subscribe((ope:any)=>{
-      this.ope=ope;
-      if(token.length>0){
-        this.nft=JSON.parse(atob(token));
-        this.price=""+this.nft.marketplace.initial_price;
-      }else{
-        this.network.get_nft_from_db(id).subscribe((nft:any)=>{
-          this.nft=nft || {};
-          if(!nft){
-            this.lost()
-          } else {
-            this.price=""+nft.marketplace.initial_price;
-          }
-        });
-      }
-
-    })
   }
 
   //http://127.0.0.1:4200/dealermachine/?ope=calvi2022
@@ -70,10 +66,11 @@ export class DealermachineComponent implements OnInit {
   price: string="";
   hasWebcam=true;
   billing_address="";
+  selfWalletConnexion: boolean=false;
 
   lost(){
     $$("Lost")
-    if(this.ope.lottery.hasOwnProperty("end_process")){
+    if(this.ope && this.ope.lottery.hasOwnProperty("end_process")){
       this.end_process(this.ope.lottery.end_process.looser.message,this.ope.lottery.end_process.looser.redirection)
     } else {
       this.end_process("Ce NFT vous a échapé");
@@ -82,7 +79,7 @@ export class DealermachineComponent implements OnInit {
 
   win(){
     $$("Win")
-    if(this.ope.lottery.hasOwnProperty("end_process")){
+    if(this.ope && this.ope.lottery.hasOwnProperty("end_process")){
       this.end_process(this.ope.lottery.end_process.winner.message,this.ope.lottery.end_process.winner.redirection)
     } else {
       this.end_process("Ce NFT est le votre.");
@@ -102,15 +99,13 @@ export class DealermachineComponent implements OnInit {
 
 
   valide() {
-    let _token:any={}
-    let token=this.routes.snapshot.queryParamMap.get("token") || "";
-    if(token.length>0)_token=JSON.parse(atob(token));
 
     let addr=this.alias.transform(this.address,"pubkey");
-    if(_token.hasOwnProperty("id")){
-        let id=_token["id"];
-        this.message=this.ope.store.support.buy_message;
-        this.network.mint_for_contest(addr,id,this.ope,this.ope.lottery.miner,this.ope.metadata_storage).subscribe((r:any)=>{
+    if(this.nft.hasOwnProperty("id")){
+      $$("Ce token est issue d'une base de données, donc non miné");
+        let id=this.nft["id"];
+        if(this.ope)this.message=this.ope.store.support.buy_message;
+        this.network.mint_for_contest(addr,id,this.ope,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft).subscribe((r:any)=>{
           this.nft=null;
           this.message="";
           if(r.error.length>0){
@@ -124,9 +119,11 @@ export class DealermachineComponent implements OnInit {
           this.lost();
         })
     }else{
-        if(_token.hasOwnProperty("account")){
-          let mint_addr=_token["account"]["data"]["parsed"]["info"]["mint"]
-          let owner=_token["account"]["data"]["parsed"]["info"]["owner"]
+
+        if(this.nft.hasOwnProperty("account")){
+          $$("Ce token est déjà miné, on se contente de le transférer");
+          let mint_addr=this.nft["account"]["data"]["parsed"]["info"]["mint"]
+          let owner=this.nft["account"]["data"]["parsed"]["info"]["owner"]
           if(mint_addr.length>0){
             this.network.transfer_to(mint_addr,addr,owner).subscribe(()=>{
               showMessage(this,"Transféré");

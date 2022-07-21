@@ -309,7 +309,7 @@ export class NetworkService {
                   this.solscan_info(t.solMintAddress).then((dt:any)=>{
                     token.metadataOnchain=dt.data.metadata
                     rc.push(token);
-                    if(rc.length==tokens.length)resolve(rc);
+                    resolve(rc);
                   })
                 } else {
                   rc.push(token);
@@ -510,13 +510,14 @@ export class NetworkService {
     return this.httpClient.get(url_api);
   }
 
-  mint_for_contest(addr: string,tokenid:string,ope:any,miner:string,metadata_storage:string){
+  mint_for_contest(addr: string,tokenid:string,ope:any,miner:string,metadata_storage:string,network:string,nft:any={}){
     let body:any={
       account:addr,
       tokenid:tokenid,
-      network:ope.network,
+      token: nft,
+      network:network,
       miner:miner,
-      ope:ope.id,
+      ope:ope,
       metadata_storage:metadata_storage
     };
 

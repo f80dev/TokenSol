@@ -119,8 +119,27 @@
     </mat-expansion-panel>
 
 
+    <mat-expansion-panel *ngIf="sel_ope.lazy_mining">
+      <mat-expansion-panel-header  class="color-primary">Minage</mat-expansion-panel-header>
+      <table>
+        <tr>
+          <th>Stockage</th>
+          <th>Mineur</th>
+        </tr>
+        <tr>
+        <td>
+          Content: {{sel_ope.lazy_mining.content_storage}}<br>
+          Metadata: {{sel_ope.lazy_mining.metadata_storage}}<br>
+        </td>
+          <td>
+            Miner: {{sel_ope.lazy_mining.miner}}<br>
+            Target: {{sel_ope.lazy_mining.network}}
+          </td>
+        </tr>
+      </table>
+    </mat-expansion-panel>
 
-
+      <!-- Section lié au dispenser / a la distribution -->
       <mat-expansion-panel *ngIf="sel_ope.dispenser?.visible">
         <mat-expansion-panel-header  class="color-primary">Distribution</mat-expansion-panel-header>
         <table>

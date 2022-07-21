@@ -1,13 +1,21 @@
 <mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)">
-  <mat-tab label="Light">
-    <app-nfts [nfts]="nfts" format="obj" (refresh)="refresh()">
+  <mat-tab label="NFTs">
+    <app-nfts [nfts]="nfts" format="image" (refresh)="refresh()">
     </app-nfts>
   </mat-tab>
 
-  <mat-tab label="Detail">
+  <mat-tab label="Detail" *ngIf="showDetail">
     <app-nfts [nfts]="nfts" format="json">
     </app-nfts>
   </mat-tab>
+
+  <mat-tab label="Accès">
+    <div style="width:100%;  text-align: center;">
+      <img [src]="url_key" style="width: 90%;margin-left: 5%;">
+    </div>
+  </mat-tab>
+
+
 
 </mat-tab-group>
 

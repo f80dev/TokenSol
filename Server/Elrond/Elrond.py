@@ -9,7 +9,7 @@ from Tools import get_qrcode
 import textwrap
 from secret import ELROND_PASSWORD
 from nftstorage import NFTStorage
-from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file
+from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file,setParams
 from ipfs import IPFS
 from erdpy import config
 from erdpy.wallet.core import generate_mnemonic
@@ -17,7 +17,7 @@ from erdpy.proxy import ElrondProxy
 from erdpy.transactions import Transaction
 from erdpy.accounts import Account,Address
 from erdpy.wallet import derive_keys
-from PIL import Image,ImageSequence
+from ArtEngine import convert_to_gif
 
 
 RESULT_SECTION="smartContractResults"
@@ -137,6 +137,12 @@ class Elrond:
 
     return rc
 
+  def get_collection(self,collection_id):
+    url=self._proxy.url+"/collections/"+collection_id
+    rc=requests.get(url)
+    if rc.status_code==200: return rc.json()
+    return None
+
 
   def format_offchain(self,_data) -> dict:
     keys=self.get_keys()
@@ -173,7 +179,7 @@ class Elrond:
     _to=self.toAccount(_to)
     if _from.address.bech32()==_to.address.bech32(): return False
 
-    log("Transfert de "+collection_id+"-"+nonce+" de "+_from.address.bech32()+" a "+_to.address.bech32())
+    log("Transfert de "+collection_id+"-"+str(nonce)+" de "+_from.address.bech32()+" a "+_to.address.bech32())
     data = "ESDTNFTTransfer" \
            + "@" + str_to_hex(collection_id,False) \
            + "@" + nonce \
@@ -289,7 +295,7 @@ class Elrond:
 
 
 
-  def create_account(self,email="",seed="",network="elrond-devnet"):
+  def create_account(self,email="",seed="",network="elrond-devnet",domain_appli=""):
     """
     :param fund:
     :param name:
@@ -325,11 +331,12 @@ class Elrond:
     if len(email)>0:
       send_mail(open_html_file("mail_new_account",{
         "wallet_address":address,
+        "mini_wallet":"wallet?"+setParams({"toolbar":"false","network":network,"addr":address}),
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
         "url_explorer":("https://explorer.elrond.com" if "mainnet" in network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
         "words":words,
         "qrcode":"cid:qrcode"
-      }),email,subject="Votre compte Elrond est disponible" ,attach=qrcode,filename="qrcode.png")
+      },domain_appli=domain_appli),email,subject="Votre compte Elrond est disponible" ,attach=qrcode,filename="qrcode.png")
 
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
@@ -347,11 +354,13 @@ class Elrond:
           nft["attributes"]=str(base64.b64decode(nft["attributes"]),"utf8")
           nft["tags"]=nft["attributes"].split("tags:")[1].split(";")[0]
           cid=nft["attributes"].split("metadata:")[1].split("/")[0]
+
           _data=requests.get("https://ipfs.io/ipfs/"+cid).json()
-          collection=nft["tokenIdentifier"].replace("-"+nft["tokenIdentifier"].split("-")[2],"")
+
+          collection=self.get_collection(nft["tokenIdentifier"].replace("-"+nft["tokenIdentifier"].split("-")[2],""))
           nft["metadataOffchain"]={
-            "attributes":_data["attributes"],
-            "collection":{"name":_data["collection"]},
+            "attributes":_data,
+            "collection":{"name":collection["name"]},
             "image":str(base64.b64decode(nft["uris"][0]),"utf8")
           }
           nft["id"]=nft["tokenIdentifier"]
@@ -368,7 +377,7 @@ class Elrond:
               "symbol":nft["tokenIdentifier"].split("-")[1]
             }
           }
-          for role in self.getRoleForToken(collection):
+          for role in self.getRoleForToken(collection["collection"]):
             if "ESDTRoleNFTUpdateAttributes" in role["roles"]:nft["metadataOnchain"]["updateAuthority"].append(role["account"])
           nft["metadataOnchain"]["updateAuthority"]=",".join(nft["metadataOnchain"]["updateAuthority"])
 

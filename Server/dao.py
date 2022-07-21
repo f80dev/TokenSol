@@ -79,6 +79,12 @@ class DAO:
       del nft["_id"]
       nft["id"]=nft["collection"]["name"]+"_"+nft["symbol"]
       nft["dbname"]=self.dbname
+      nft["metadataOffchain"]={
+        "name":nft["name"],
+        "seller_fee_basis_points":nft["seller_fee_basis_points"],
+        "image":nft["image"],
+        "properties":nft["properties"]
+      }
       nft["domain"]=self.domain
       if not withQuantity or nft["quantity"]>0: rc.append(nft)
     return rc

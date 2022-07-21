@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import {UserService} from "../user.service";
 import {NetworkService} from "../network.service";
-import {removeBigInt, showError} from "../../tools";
+import {getParams, removeBigInt, showError, showMessage} from "../../tools";
+import {ActivatedRoute} from "@angular/router";
+import {environment} from "../../environments/environment";
+import {MatSnackBar} from "@angular/material/snack-bar";
 
+
+//Test : http://localhost:4200/wallet?addr=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr&toolbar=false
 @Component({
   selector: 'app-mywallet',
   templateUrl: './mywallet.component.html',
@@ -11,32 +16,32 @@ import {removeBigInt, showError} from "../../tools";
 export class MywalletComponent implements OnInit {
   nfts: any;
   indexTab: number=0;
+  addr:any="";
+  url_key: any="";
+  showDetail=false;
 
-  constructor(public user:UserService,public network:NetworkService) { }
+  constructor(public user:UserService,
+              public routes:ActivatedRoute,
+              public toast:MatSnackBar,
+              public network:NetworkService) { }
+
 
   ngOnInit(): void {
-      this.refresh();
+    this.addr=getParams(this.routes,"addr")
+    if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
+    this.showDetail=getParams(this.routes,"show_detail",false);
+    this.network.network=getParams(this.routes,"network",this.addr.startsWith("erd") ? "elrond-devnet" : "solana-devnet");
+    this.url_key=environment.server+"/api/key/"+this.addr+"?format=qrcode";
+    this.refresh();
   }
 
   refresh(index:number=0) {
-    this.network.wait("Chargement de vos NFTs");
-    this.network.get_tokens_from("owner",this.user.wallet.publicKey!.toBase58()).then((r:any[])=>{
-      this.network.wait("");
-      this.nfts=[];
-      for(let t of r){
-        if(index==0){
-          this.nfts.push({
-            offchain:t.offchain,
-            mint:t.accountInfo.mint,
-            owner:t.accountInfo.owner,
-            updateAuthority:t.solscan.metadata.updateAuthority,
-            mintAuthority:t.layoutInfo.mintAuthority,
-            freezeAuthority:t.layoutInfo.freezeAuthority
-          });
-        } else {
-          this.nfts.push(removeBigInt(t));
-        }
-      }
-    }).catch(err=>{showError(this,err)});
+    if(index==0){
+      this.network.wait("Chargement de vos NFTs");
+      this.network.get_tokens_from("owner",this.addr).then((r:any[])=>{
+        this.network.wait("");
+        this.nfts=r;
+      }).catch(err=>{showError(this,err)});
+    }
   }
 }

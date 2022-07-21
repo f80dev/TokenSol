@@ -86,6 +86,11 @@
 
     <div *ngIf="format=='html'" [innerHTML]="nft" style="display: inline-block;"></div>
 
+    <div *ngIf="format=='image' || format=='img'" style="display: inline-block;width: 200px;text-align: center;">
+      {{nft.metadataOffchain.name}}<br>
+      <img [src]="nft.metadataOffchain.image" style="width: 100%;" [title]="nft.metadataOffchain.description">
+    </div>
+
   </div>
 
 

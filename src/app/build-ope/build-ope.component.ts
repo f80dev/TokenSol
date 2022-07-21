@@ -159,7 +159,7 @@ export class BuildOpeComponent implements OnInit {
 
   open_appli(href: string, target: string) {
     if(this.sel_ope){
-      href=href.replace("$nfluent_appli$",environment.appli).replace("https://tokenfactory.nfluent.io",environment.appli)+"&ope="+this.sel_ope.id;
+      href=href.replace("$nfluent_appli$",environment.appli).replace("https://tokenfactory.nfluent.io",environment.appli);
       open(href,target);
     }
   }

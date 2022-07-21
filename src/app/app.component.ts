@@ -8,6 +8,7 @@ import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
 import {MetabossService} from "./metaboss.service";
+import {getParams} from "../tools";
 
 @Component({
   selector: 'app-root',
@@ -39,7 +40,7 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.user.disconnect();
     setTimeout(()=>{
-      this.toolbar_visible=this.routes.snapshot.queryParamMap.get('toolbar') || "true";
+      this.toolbar_visible=getParams(this.routes,"toolbar","true");
       this.update_network();
     },500);
   }

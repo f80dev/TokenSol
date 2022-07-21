@@ -34,6 +34,13 @@ export interface Operation {
     }[]
   }
 
+  lazy_mining :{
+    metadata_storage: string
+    content_storage: string
+    network: string
+    miner: string
+  }
+
   validate:{
     title: string
     visible: boolean
@@ -80,7 +87,6 @@ export interface Operation {
 
   store: {
     visible: boolean
-    miner: string
     application: string
 
     collections:{

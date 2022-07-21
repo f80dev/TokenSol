@@ -21,7 +21,7 @@ from solana.transaction import Transaction
 from spl.token.constants import TOKEN_PROGRAM_ID
 from spl.token.instructions import transfer,TransferParams
 
-from Tools import log, send_mail, open_html_file, get_qrcode
+from Tools import log, send_mail, open_html_file, get_qrcode, setParams
 
 SOLANA_KEY_DIR="./Solana/Keys/"
 METABOSS_DIR="./Solana/"
@@ -193,7 +193,7 @@ class Solana:
     name=name.replace(SOLANA_KEY_DIR,"").replace(".json","")
     if len(name)>40:return name
     for k in self.get_keys(dir=dir):
-      if k["name"]==name:
+      if k["name"]==name.lower():
         if len(field)>0:
           return k[field]
         else:
@@ -203,14 +203,18 @@ class Solana:
 
   #http://127.0.0.1:4242/api/nfts/
   def get_nfts(self, name):
-    pubkey=self.find_address_from_json(name)
-    token_account_opts=TokenAccountOpts(mint=None,program_id=TOKEN_PROGRAM_ID,encoding="jsonParsed")
-    rc=self.client.get_token_accounts_by_owner(PublicKey(pubkey),token_account_opts,Confirmed)
     tokens=[]
-    for token in rc["result"]["value"]:
-      token["mint"]=token["account"]["data"]["parsed"]["info"]["mint"]
-      token["owner"]=token["account"]["data"]["parsed"]["info"]["owner"]
-      tokens.append(token)
+    pubkey=self.find_address_from_json(name)
+    if pubkey is None:
+      log("Impossible d'identifier "+name)
+    else:
+      token_account_opts=TokenAccountOpts(mint=None,program_id=TOKEN_PROGRAM_ID,encoding="jsonParsed")
+      rc=self.client.get_token_accounts_by_owner(PublicKey(pubkey),token_account_opts,Confirmed)
+
+      for token in rc["result"]["value"]:
+        token["mint"]=token["account"]["data"]["parsed"]["info"]["mint"]
+        token["owner"]=token["account"]["data"]["parsed"]["info"]["owner"]
+        tokens.append(token)
     return tokens
 
 
@@ -313,7 +317,7 @@ class Solana:
 
 
 
-  def create_account(self,email="",wallet_name="solflare"):
+  def create_account(self,email="",wallet_name="solflare",domain_appli="",network="solana-devnet"):
     """
     Ouvre un compte sur Solana
     :param wallet_name:
@@ -333,16 +337,18 @@ class Solana:
       send_mail(open_html_file("mail_new_solana_account",{
         "wallet_address":pubkey, #_account.public_key.to_base58(),
         "words":mnemonic,
+        "mini_wallet":"wallet?"+setParams({"toolbar":"false","network":network,"addr":pubkey}),
         "private_key":privkey, #_account.secret_key.hex(),
         #"private_key_in_list":str([int(x) for x in _account.secret_key])
-      }),email,subject="Votre compte Solana est disponible")
+      },domain_appli=domain_appli),email,subject="Votre compte Solana est disponible")
 
     return mnemonic,pubkey,privkey,str(integers_private_key)
 
-  def getExplorer(self, addr):
-    return "https://solscan.io/account/"+addr+"?cluster="+self.network
+  def getExplorer(self, addr,type="account"):
+    return "https://solscan.io/"+type+"/"+addr+"?cluster="+self.network
 
   def transfer(self, nft_addr, to,owner):
+    log("Demande de transfert de "+self.getExplorer(nft_addr,"token"))
     recent_blockhash=self.client.get_recent_blockhash(Confirmed)["result"]["value"]["blockhash"]
 
     to=self.find_address_from_json(to)
