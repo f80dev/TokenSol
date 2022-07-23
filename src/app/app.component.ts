@@ -59,8 +59,6 @@ export class AppComponent implements OnInit {
 
 
   update_network() {
-      this.metaboss.keys(this.network_service.network).subscribe((keys)=>{
-        this.network_service.keys=keys;
-      });
+      this.metaboss.init_keys(this.network_service.network);
   }
 }

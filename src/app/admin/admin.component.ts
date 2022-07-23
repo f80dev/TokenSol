@@ -14,7 +14,7 @@ export class AdminComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.user.connect();
+    this.user.login();
   }
 
 }

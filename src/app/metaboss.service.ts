@@ -3,8 +3,7 @@ import {HttpClient} from "@angular/common/http";
 import {NetworkService} from "./network.service";
 import {Observable} from "rxjs";
 import {environment} from "../environments/environment";
-import {MetabossKey} from "../tools";
-import {Token} from "./nfts/nfts.component";
+import {$$, MetabossKey} from "../tools";
 
 @Injectable({
   providedIn: 'root'
@@ -12,20 +11,26 @@ import {Token} from "./nfts/nfts.component";
 export class MetabossService {
 
   admin_key:MetabossKey | undefined;
+  public keys:MetabossKey[]=[];
 
   constructor(
     private httpClient : HttpClient,
     private network:NetworkService
-  ) {
-    // this.keys(this.network.network).subscribe((r)=>{
-    //   this.admin_key=r[0];
-    // })
-  }
+  )
+  {}
 
 
   //http://localhost:4200/keys
-  keys(network="solana-devnet"): Observable<MetabossKey[]> {
-    return this.httpClient.get<MetabossKey[]>(environment.server+"/api/keys/?network="+network+"&with_private=true");
+  init_keys(network="solana-devnet") {
+    return new Promise((resolve, reject) => {
+      this.httpClient.get<MetabossKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance=true").subscribe((r: MetabossKey[]) => {
+        this.keys = r;
+        resolve(r);
+      },()=>{
+        $$("Probleme de chargement");
+        reject();
+      });
+    });
   }
 
 
@@ -76,7 +81,7 @@ export class MetabossService {
 
 
 
-  burn(nft_addr:string,network="solana-devnet",delay=1) {
+  burn(nft_addr:string | undefined,network="solana-devnet",delay=1) {
     return new Promise((resolve, reject) => {
       this.network.wait("En cours de destruction");
       this.httpClient.get(environment.server+"/api/burn?&delay="+delay+"&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
@@ -94,9 +99,8 @@ export class MetabossService {
 
   sel_key(account: string) {
     return new Promise((resolve, reject) => {
-      this.keys().subscribe((r) => {
         let bc=false;
-        for (let k of r) {
+        for (let k of this.keys) {
           if (k.name == account) {
             this.admin_key = k;
             bc=true;
@@ -105,7 +109,6 @@ export class MetabossService {
         }
         if(!bc)reject(new Error(account + " not found"));
       })
-    });
   }
 
 

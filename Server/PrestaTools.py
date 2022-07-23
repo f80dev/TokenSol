@@ -4,6 +4,7 @@ import requests
 import unidecode
 import xmltodict
 
+from NFT import NFT
 from Tools import log
 
 
@@ -164,7 +165,7 @@ class PrestaTools:
     return None
 
 
-  def add_product(self, name, category, symbol="", description="", price=0, on_sale=True, properties=dict(),features=dict(),tags=list()):
+  def add_product(self, nft:NFT,on_sale=True,operation_id="",features=dict(),tags=list()):
     """
       voir https://devdocs.prestashop.com/1.7/webservice/resources/products/
       :param name:
@@ -181,8 +182,8 @@ class PrestaTools:
     del _p["position_in_category"]
     del _p["associations"]
 
-    _p["description_short"]=self.get_languages(self.normalize(description))
-    _p["reference"]=symbol
+    _p["description_short"]=self.get_languages(self.normalize(nft.description))
+    _p["reference"]=operation_id+" / "+nft.symbol
     _p["on_sale"] =1 if on_sale else 0
     _p["low_stock_alert"]=0
     _p["minimal_quantity"]=1
@@ -191,9 +192,10 @@ class PrestaTools:
     _p["active"]= 1
     _p["available_for_order"]= 1
     #_p["available_date"]= "2022-01-01"
-    _p["price"] = price
+    _p["price"] = nft.get_price()
+    _p["wholesale_price"]=_p["price"]
 
-    _category=self.find_category(category)
+    _category=self.find_category(nft.collection["name"])
     _p["id_category_default"] = _category["id"]
 
     log("Remplissage de l'associations")
@@ -210,12 +212,12 @@ class PrestaTools:
     _p["associations"]["product_features"]={"product_feature":l_features}
 
     _p["state"] = 1
-    _p["wholesale_price"]=price
+
     _p["show_price"]=1
-    _p["name"] = self.get_languages(self.normalize(name))
+    _p["name"] = self.get_languages(self.normalize(nft.name))
 
     description=""
-    for prop in properties:
+    for prop in nft.attributes:
       if "value" in prop:
         description=description+prop["trait_type"]+" : "+str(prop["value"])+" - "
     _p["description"]=self.get_languages(self.normalize(description))
@@ -355,8 +357,9 @@ class PrestaTools:
 
   def desc_to_dict(self, description:str):
     rc=dict()
-    for l in description.split(" - "):
-      rc[l.split(" : ")[0]]=l.split(" : ")[1]
+    if " - " in description:
+      for l in description.split(" - "):
+        rc[l.split(" : ")[0]]=l.split(" : ")[1]
     return rc
 
   def edit_customer(self, customer_id, field, value):

@@ -40,7 +40,11 @@ export class MywalletComponent implements OnInit {
       this.network.wait("Chargement de vos NFTs");
       this.network.get_tokens_from("owner",this.addr).then((r:any[])=>{
         this.network.wait("");
-        this.nfts=r;
+        this.nfts=[]
+        for(let nft of r){
+          if(nft.metadataOffchain.image && nft.metadataOffchain.image.length>5)this.nfts.push(nft);
+        }
+        if(r.length==0)showMessage(this,"Vous n'avez aucun NFT pour l'instant")
       }).catch(err=>{showError(this,err)});
     }
   }

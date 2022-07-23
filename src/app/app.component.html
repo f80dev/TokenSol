@@ -5,9 +5,12 @@
                [opened]="(isHandset$ | async) === false && toolbar_visible=='true'">
 
     <mat-toolbar class="mat-body-2" color="primary">
-      <span *ngIf="user.connected()">
+      <div *ngIf="user.connected()">
         {{user.addr | alias}}
-      </span>
+        {{user.email}}
+      </div>
+
+
 
       <div style="line-height: 90%" *ngIf="!user.connected()">
         {{title}}<br>
@@ -55,7 +58,7 @@
         </mat-select>
       </mat-form-field>
 
-      <app-selectkey [keys]="network_service.keys">
+      <app-selectkey [keys]="metaboss.keys">
         Sign:
       </app-selectkey>&nbsp;&nbsp;
 

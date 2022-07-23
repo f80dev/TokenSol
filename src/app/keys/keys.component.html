@@ -48,7 +48,7 @@
       <th></th>
       <th>Solde</th>
     </tr>
-    <tr *ngFor="let key of keys">
+    <tr *ngFor="let key of metaboss.keys">
       <td>
         <a [href]="key.explorer" target="_blank"><strong>{{key.name}}</strong></a>
       </td>
@@ -62,12 +62,14 @@
         <button type="button" mat-raised-button mat-button (click)="del_key(key.name)">
           Supprimer
         </button>
-      </td>
-      <td>
         <button type="button" mat-raised-button mat-button (click)="encrypt(key)">
           Encrypter
         </button>
+        <button type="button" mat-raised-button mat-button (click)="open_wallet(key)">
+          Wallet
+        </button>
       </td>
+      <td></td>
       <td>
         {{key.balance}} {{key.unity}}
       </td>

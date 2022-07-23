@@ -24,6 +24,8 @@
  *  International Registered Trademark & Property of PrestaShop SA
  */
 
+global $smarty;
+
 if (!defined('_PS_VERSION_')) {
   exit;
 }
@@ -298,8 +300,13 @@ class NFLUENT extends Module
         );
         Logger::AddLog("Envoi des arguments=".implode(" ",$args));
 
+        $store_addr=$smarty->tpl_vars['base_dir']->value;
+        Logger::AddLog("Address de la boutique = ".$store_addr);
+
         $url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
-//        $url='http://host.docker.internal:4242/api/mint_from_prestashop/';  #host.docker.internal designe le localhost
+//        if($store_addr.strpos("127.0.0.1")>0)
+        //$url='http://host.docker.internal:4242/api/mint_from_prestashop/';  #host.docker.internal designe le localhost
+
         $resp=$this->api($url,$args);
         if($resp->result=="ok"){
           Logger::AddLog("Changement de statut pour livré");

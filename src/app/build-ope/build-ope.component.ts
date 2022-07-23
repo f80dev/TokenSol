@@ -9,6 +9,7 @@ import {Location} from "@angular/common";
 import { NgNavigatorShareService } from 'ng-navigator-share';
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Collection, find_collection, Operation} from "../../operation";
+import {NFT} from "../nfts/nfts.component";
 
 @Component({
   selector: 'app-build-ope',
@@ -24,7 +25,7 @@ export class BuildOpeComponent implements OnInit {
   url_ope: string="";
   url_dispenser_app: string="";
   collections_lottery: any[]=[];
-  nfts: any=[];
+  nfts: NFT[]=[];
   collections: any={};
   collection_keys:string[]=[];
   url_store="";
@@ -42,11 +43,14 @@ export class BuildOpeComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.refresh();
+    if(this.user.isConnected()){
+      this.refresh();
+    } else {
+      this.user.login();
+    }
   }
 
   refresh(){
-    this.user.connect("create").then((addr)=>{
       this.network.get_operations().subscribe((r:any)=>{
         this.opes=r;
         if(!this.sel_ope){
@@ -62,7 +66,7 @@ export class BuildOpeComponent implements OnInit {
           this.refresh_ope({value:this.sel_ope});
         }
       })
-    })
+
   }
 
   refresh_ope($event: any) {
@@ -77,12 +81,13 @@ export class BuildOpeComponent implements OnInit {
       this.nfts=[]
       this.collection_keys=[];
       this.sources=r.sources;
-      for(let nft of r.nfts){
+      for(let _nft of r.nfts){
+        let nft:NFT=_nft;
         let k=nft.collection.name;
-        if(k && nft.quantity>0){
+        if(k && nft.marketplace.quantity>0){
           if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
           if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
-          this.collections[k]=this.collections[k]+nft["quantity"];
+          this.collections[k]=this.collections[k]+nft.marketplace.quantity;
         }
       }
 
@@ -100,10 +105,7 @@ export class BuildOpeComponent implements OnInit {
           this.store_collections.push(_c);
         }
       }
-
-
     });
-
   }
 
 

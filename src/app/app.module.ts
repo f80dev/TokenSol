@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-// import { GoogleLoginProvider } from 'angularx-social-login';
-// import {
-//   SocialLoginModule,
-//   SocialAuthServiceConfig,
-// } from 'angularx-social-login';
+import { GoogleLoginProvider } from 'angularx-social-login';
+import {
+  SocialLoginModule,
+  SocialAuthServiceConfig,
+} from 'angularx-social-login';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {SolWalletsModule} from "angular-sol-wallets";
@@ -71,6 +71,7 @@ import { DispenserComponent } from './dispenser/dispenser.component';
 import {GooglePayButtonModule} from "@google-pay/button-angular";
 import { StoreComponent } from './store/store.component';
 import { SvgComponent } from './svg/svg.component';
+import { LoginComponent } from './login/login.component';
 
 
 @NgModule({
@@ -105,11 +106,12 @@ import { SvgComponent } from './svg/svg.component';
     FaqsComponent,
     DispenserComponent,
     StoreComponent,
-    SvgComponent
-
+    SvgComponent,
+    LoginComponent
   ],
     imports: [
         BrowserModule,
+      SocialLoginModule,
         BrowserAnimationsModule,
         SolWalletsModule,
         ColorPickerModule,
@@ -151,17 +153,17 @@ import { SvgComponent } from './svg/svg.component';
     FilterPipe,AliasPipe,SafePipe,OrderPipe,
     {provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}},
 
+    {provide: 'SocialAuthServiceConfig',
+      useValue: {
+        autoLogin: true,
+        providers: [{
+          id: GoogleLoginProvider.PROVIDER_ID,
+          provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
+        }],
+      } as SocialAuthServiceConfig}
   ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
 
 
-// {provide: 'SocialAuthServiceConfig',
-//   useValue: {
-//   autoLogin: false,
-//     providers: [{
-//     id: GoogleLoginProvider.PROVIDER_ID,
-//     provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
-//   }],
-// } as SocialAuthServiceConfig}

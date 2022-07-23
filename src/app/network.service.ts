@@ -11,10 +11,10 @@ import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {$$,MetabossKey,words} from "../tools";
+import {$$,words} from "../tools";
 import {environment} from "../environments/environment";
 
-import {Creator, SplTokenInfo, Token} from "./nfts/nfts.component";
+import {SplTokenInfo, NFT, SolanaToken} from "./nfts/nfts.component";
 import {Layer} from "./creator/creator.component";
 import {retry, timeout} from "rxjs";
 import {AliasPipe} from "./alias.pipe";
@@ -32,7 +32,6 @@ export class NetworkService {
   private _network:string="solana-devnet";
   private _connection: Connection=new Connection(clusterApiUrl("devnet"), 'confirmed');
   waiting: string="";
-  keys:MetabossKey[]=[];
 
   constructor(
     private httpClient : HttpClient
@@ -110,8 +109,8 @@ export class NetworkService {
   }
 
 
-  create_token(offchain:any,mintAuthority:string,mintAddress:string,data_sup:any,splMintInfo:any,splTokenInfo:SplTokenInfo) {
-    let token:Token = {
+  create_token(offchain:any,mintAuthority:string,mintAddress:string,data_sup:any,splMintInfo:any,splTokenInfo:SplTokenInfo):SolanaToken {
+    let token:SolanaToken = {
       search:{collection:"",metadata:""},
       address: mintAddress,
       network:this.network,
@@ -154,7 +153,7 @@ export class NetworkService {
   }
 
 
-  build_token_from_solscan(mintAddress:string):Promise<Token> {
+  build_token_from_solscan(mintAddress:string):Promise<SolanaToken> {
     return new Promise((resolve, reject) => {
       this.solscan_info(mintAddress).then((dt:any)=>{
         if(!dt.data?.hasOwnProperty("metadata")){
@@ -241,11 +240,11 @@ export class NetworkService {
   }
 
 
-  build_token_from_ftx(t:any) : Token {
+  build_token_from_ftx(t:any) : SolanaToken {
     let l_attributes=t.attributesList;
     l_attributes.push({trait_type:"redeemable",value:t.redeemable});
     l_attributes.push({trait_type:"redeemed",value:t.redeemed});
-    let token:Token={
+    let token:SolanaToken={
       splMintInfo: undefined,
       splTokenInfo: undefined,
       mint:t.solMintAddress,
@@ -302,9 +301,9 @@ export class NetworkService {
 
           if(type_addr=="FTX_account"){
             this.get_tokens_from_ftx(addr).then((tokens:any)=>{
-              let rc:Token[]=[];
+              let rc:SolanaToken[]=[];
               for(let t of tokens){
-                let token:Token=this.build_token_from_ftx(t);
+                let token:SolanaToken=this.build_token_from_ftx(t);
                 if(tokens.length<10){
                   this.solscan_info(t.solMintAddress).then((dt:any)=>{
                     token.metadataOnchain=dt.data.metadata
@@ -346,7 +345,7 @@ export class NetworkService {
           }
 
           if(type_addr=="token"){
-            this.build_token_from_solscan(addr).then((token:Token)=>{
+            this.build_token_from_solscan(addr).then((token:SolanaToken)=>{
               resolve([token]);
             }).catch((err)=>{
               reject(err);
@@ -397,7 +396,7 @@ export class NetworkService {
     return rc;
   }
 
-  wait(message: string,durationInSec=1000) {
+  wait(message: string="",durationInSec=1000) {
     this.waiting=message;
     setTimeout(()=>{this.waiting=""},durationInSec*1000);
   }
@@ -467,7 +466,6 @@ export class NetworkService {
 
   //recoit un objet aux propriétés filename & content
   upload(file: any ,platform="nftstorage",type="image/png"){
-    this.wait("Chargement du fichier");
     return this.httpClient.post(environment.server+"/api/upload/?platform="+platform+"&type="+type,file);
   }
 
@@ -543,7 +541,7 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/get_nft_from_db/?id="+id);
   }
 
-  validate(action:any, t:Token,user_addr:string,operateur:string,operation_name:string,mint_addr:string) {
+  validate(action:any, t:NFT,user_addr:string,operateur:string,operation_name:string) {
     let url=action.api.replace("$nfluent_server$",environment.server);
     $$("Appel de "+url+" suite a validation");
     return this.httpClient.post(url,{
@@ -552,8 +550,7 @@ export class NetworkService {
       operation:operation_name,
       network:t.network,
       token:t.address,
-      uri:t.metadataOnchain.data.uri,
-      offchain:t.metadataOffchain
+      attributes:t.attributes
     });
   }
 
@@ -594,8 +591,8 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/get_tokens_to_send/"+ope+"?limit="+limit+"&section="+section);
   }
 
-  get_nfts_from_operation(ope:string) {
-    return this.httpClient.get(environment.server+"/api/nfts_from_operation/"+ope);
+  get_nfts_from_operation(ope:string){
+    return this.httpClient.get<NFT[]>(environment.server+"/api/nfts_from_operation/"+ope);
   }
 
   transfer_to(mint_addr: string, to_addr: string,owner:string) {

@@ -1,7 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import {MatSnackBar} from "@angular/material/snack-bar";
 import {MetabossService} from "./metaboss.service";
-import {NetworkService} from "./network.service";
+
 
 @Pipe({
   name: 'alias'
@@ -9,7 +8,7 @@ import {NetworkService} from "./network.service";
 export class AliasPipe implements PipeTransform {
 
   constructor(
-      public network:NetworkService
+      public metaboss:MetabossService
   ){}
 
   transform(value: string | undefined, ...args: unknown[]): string {
@@ -17,7 +16,7 @@ export class AliasPipe implements PipeTransform {
     let comp_value=value;
     if(typeof value=="string")
       comp_value=value.toLowerCase();
-    for(let k of this.network.keys){
+    for(let k of this.metaboss.keys){
       if(args.length>0 && args[0]=="pubkey"){
         if(k.name.toLowerCase()==comp_value)return k.pubkey;
       }else{

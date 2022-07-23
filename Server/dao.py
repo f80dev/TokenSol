@@ -2,6 +2,7 @@ import pymongo
 from bson import ObjectId
 from pymongo import mongo_client, database
 
+from NFT import NFT
 from Tools import log, now
 from secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING, \
   MONGO_CLUSTER_CONNECTION_STRING_2, WEB3_PASSWORD
@@ -68,7 +69,7 @@ class DAO:
     }
     return rc
 
-  def nfts_from_collection(self, col, withQuantity=True):
+  def nfts_from_collection(self, col):
     rc=[]
     if col:
       nfts=self.db["nfts"].find(filter={"collection.name":col["name"]})
@@ -76,17 +77,10 @@ class DAO:
       nfts=self.db["nfts"].find()
 
     for nft in nfts:
-      del nft["_id"]
-      nft["id"]=nft["collection"]["name"]+"_"+nft["symbol"]
-      nft["dbname"]=self.dbname
-      nft["metadataOffchain"]={
-        "name":nft["name"],
-        "seller_fee_basis_points":nft["seller_fee_basis_points"],
-        "image":nft["image"],
-        "properties":nft["properties"]
-      }
-      nft["domain"]=self.domain
-      if not withQuantity or nft["quantity"]>0: rc.append(nft)
+      _nft=NFT(object=nft)
+      if "max_mint" in nft.marketplace :_nft.marketplace["quantity"]=nft.marketplace["max_mint"]
+      rc.append(_nft.__dict__)
+
     return rc
 
 

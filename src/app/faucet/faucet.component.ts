@@ -22,7 +22,7 @@ export class FaucetComponent implements OnInit {
 
   ngOnInit(): void {
     if(this.network.isSolana())
-      this.user.connect().then((addr)=>{this.refresh();});
+      this.user.login();
   }
 
   refresh(){

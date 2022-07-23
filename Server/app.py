@@ -38,12 +38,14 @@ import GitHubStorage
 from ArtEngine import ArtEngine, Layer, Sticker, convert_to_gif
 from Elrond.Elrond import Elrond, ELROND_KEY_DIR
 from GoogleCloudStorageTools import GoogleCloudStorageTools
+from NFT import NFT
 from PrestaTools import PrestaTools
 from dao import DAO
 
 from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
-from Tools import hex_to_str, log, filetype, now, is_email, send_mail, open_html_file, encrypt, decrypt, setParams
+from Tools import hex_to_str, log, filetype, now, is_email, send_mail, open_html_file, encrypt, decrypt, setParams, \
+  str_to_hex
 from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
@@ -445,17 +447,18 @@ def export_to_prestashop():
   categories=dict()
   log("Création des collections sous forme de categorie dans Prestashoo")
 
-  nfts=get_nfts_from_src(_operation["data"]["sources"])
+  nfts=get_nfts_from_src(_operation["data"]["sources"],with_attributes=True)
 
   for nft in nfts:
-    if nft["collection"]["name"] not in categories.keys():
-      ref_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["collections"])
-      store_col=prestashop.find_category_in_collections(nft["collection"]["name"],_operation["store"]["collections"])
+    log("Traitement de la collection "+nft.collection["name"])
+    if nft.collection["name"] not in categories.keys():
+      ref_col=prestashop.find_category_in_collections(nft.collection["name"],_operation["collections"])
+      store_col=prestashop.find_category_in_collections(nft.collection["name"],_operation["store"]["collections"])
       if ref_col is None:
-        ref_col={"name":nft["collection"]["name"],"description":"","price":0}
+        ref_col={"name":nft.collection["name"],"description":"","price":0}
 
-      if not store_col is None:
-        c=prestashop.find_category(nft["collection"]["name"])
+      if not store_col is None: #cette collection n'est pas dans les collections à inclure dans la boutique
+        c=prestashop.find_category(nft.collection["name"])
         if c is None:
           c=prestashop.add_category(
             ref_col["name"],
@@ -471,46 +474,30 @@ def export_to_prestashop():
 
 
   for nft in nfts:
-    if nft["collection"]["name"] in categories.keys():
-      cat=categories[nft["collection"]["name"]]
-      nft["price"]=cat["price"] if not "price" in nft else nft["price"]
-      if "metadataOnchain" in nft and "metadataOffchain" in nft:
-        nft["name"]=nft["metadataOnchain"]["name"]
-        nft["image"]=nft["metadataOffchain"]["image"]
-        nft["description"]=nft["metadataOffchain"]["description"]
-
-      mint_addr=nft["mint"] if "mint" in nft else ""
-
-
+    if nft.collection["name"] in categories.keys():
 
       features={
-        "address":mint_addr,
-        "network":nft["network"] if "network" in nft else "elrond-devnet",
+        "address":nft.address,
+        "network":nft.network,
         "operation":_operation["id"],
         "miner":_operation["lazy_mining"]["miner"],
-        "royalties":str(nft["metadataOffchain"]["seller_fee_basis_points"]),
-        "visual":nft["metadataOffchain"]["image"],
-        "creators":" ".join([_c["address"]+"_"+str(_c["share"]) for _c in nft["metadataOffchain"]["properties"]["creators"]])
+        "owner":nft.owner,
+        "royalties":str(nft.royalties),
+        "visual":nft.visual,
+        "creators":" ".join([_c["address"]+"_"+str(_c["share"]) for _c in nft.creators])
       }
 
-      reference=nft["symbol"] if "symbol" in nft else nft["metadataOnchain"]["symbol"]
-
-      product=prestashop.add_product(nft["name"],
-                                     cat["name"],
-                                     _operation["id"]+" / "+reference,
-                                     nft["description"],
-                                     nft["price"],
-                                     True,
-                                     nft["attributes"] if 'attributes' in nft else nft["metadataOffchain"]["attributes"],
-                                     features,
-                                     ["NFT"]
+      product=prestashop.add_product(nft=nft,on_sale=True,
+                                     operation_id=_operation["id"],
+                                     features=features,
+                                     tags=["NFT"]
                                      )
       if product is None:
-        return returnError("Impossible de créer "+nft["name"])
+        return returnError("Impossible de créer "+nft.toString())
       else:
-        prestashop.set_product_quantity(product,nft["quantity"])
+        prestashop.set_product_quantity(product,nft.get_quantity())
         try:
-          buf_image=convert_to_gif(nft["image"] if "image" in nft else nft["metadataOffchain"]["image"],filename="image.gif")
+          buf_image=convert_to_gif(nft.visual,filename="image.gif")
           image=prestashop.add_image(product["id"],"./temp/image.gif")
         except:
           log("Impossible de convertire l'image")
@@ -756,7 +743,7 @@ def open_operation(ope):
   return rc
 
 
-def get_nfts_from_src(srcs,collections=None,limit=10000):
+def get_nfts_from_src(srcs,collections=None,limit=10000,with_attributes=False) -> list[NFT]:
   """
   Récupération des NFTS depuis différentes sources (#getnftfromsrc)
   :param srcs:
@@ -819,8 +806,9 @@ def get_nfts_from_src(srcs,collections=None,limit=10000):
               log("Impossible de récupérer le NFT d'adresse="+nft["account"]["data"]["parsed"]["info"]["mint"])
 
         if src["connexion"].startswith("elrond"):
-          #TODO a implémenter
-          pass
+          elrond=Elrond(src['connexion'])
+          nfts=elrond.get_nfts(src["owner"],limit=src["filter"]["limit"],with_attr=with_attributes)
+          src["ntokens"]=len(nfts)
 
       if src["type"]=="config":
         config=configs(src["connexion"],format="dict")
@@ -900,7 +888,7 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
   lottery=_opes["lottery"]
 
   #chargement des NFTs
-  nfts=get_nfts_from_src(_opes["data"]["sources"],lottery["collections"])
+  nfts=get_nfts_from_src(_opes["data"]["sources"],lottery["collections"],with_attributes=True)
   if len(nfts)==0:
     log("Aucun NFT n'est disponible")
     return "Aucun NFT",404
@@ -951,14 +939,15 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
 def nfts_from_operation(ope=""):
   _ope=get_operation(ope)
   if _ope:
-    nfts=get_nfts_from_src(_ope["data"]["sources"])
+    nfts=get_nfts_from_src(_ope["data"]["sources"],False)
 
     sources=[]
     for s in _ope["data"]["sources"]:
       if s["active"]: sources.append(s)
 
+
     return jsonify({"total":len(nfts),
-                    "nfts":nfts,
+                    "nfts":[x.__dict__ for x in nfts],
                     "sources":sources
                     })
 
@@ -996,7 +985,7 @@ def mint_for_prestashop():
   if "address" in body and not body["address"] is None:
     addresses=yaml.load(body["address"]) or dict()
 
-  properties=prestashop.desc_to_dict(_p["description"])
+  attributes=prestashop.desc_to_dict(_p["description"])
 
   if "elrond" in _p["network"]:
     elrond=Elrond(_p["network"])
@@ -1009,13 +998,16 @@ def mint_for_prestashop():
     else:
       _account=elrond.toAccount(addresses["elrond"])
 
+
     if not "address" in _p or _p["address"] is None or _p["address"]=="":
       collection_id=elrond.add_collection(miner,collection,type="NonFungible")
-      nonce,cid=elrond.mint(miner,_p["name"],collection_id,properties,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
+      nonce,cid=elrond.mint(miner,_p["name"],collection_id,attributes,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
+      t=elrond.transfer(collection_id,nonce,miner,_account)
     else:
-      collection_id,nonce=elrond.get_nft(_p["address"])
+      collection_id,nonce=elrond.extract_from_tokenid(_p["address"])
+      t=elrond.transfer(collection_id,nonce,_p["owner"],_account)
 
-    t=elrond.transfer(collection_id,nonce,miner,_account)
+
     account_addr=_account.address.bech32()
     if t is None:
       return returnError("Impossible de transférer le NFT",{"address":_account.address.bech32()})
@@ -1031,7 +1023,7 @@ def mint_for_prestashop():
 
     if not "address" in _p or len(_p["address"])==0:
       _data=solana.prepare_offchain_data({
-        "attributes":properties,
+        "attributes":attributes,
         "category":"image",
         "properties":{"creators":[{"address":c.split("_")[0],"share":int(c.split("_")[1])} for c in _p["creators"].split(" ")]},
         "seller_fee_basis_points":int(_p["royalties"]),
@@ -1079,7 +1071,7 @@ def mint_for_contest(confirmation_code=""):
     _data=body["token"]
   else:
     _data=None
-    nfts=get_nfts_from_src(_ope["data"]["sources"])
+    nfts=get_nfts_from_src(_ope["data"]["sources"],with_attributes=True)
     for nft in nfts:
       if nft["id"]==id and nft["quantity"]>0:
         _data=nft
@@ -1449,10 +1441,11 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
 def nfts():
   network=request.args.get("network","solana-devnet")
   account=request.args.get("account","paul").lower()
-  limit=request.args.get("limit","30")
+  with_attr="with_attr" in request.args
+  limit=request.args.get("limit","200")
   rc=[]
   if "elrond" in network:
-    rc=rc+Elrond(network).get_nfts(account,int(limit))
+    rc=rc+Elrond(network).get_nfts(account,int(limit),with_attr=with_attr)
   else:
     rc=rc+Solana(network).get_nfts(account)
   return jsonify(rc)
@@ -1659,7 +1652,7 @@ def mint():
     else:
       _data["uri"]=cid["url"]
       infos=elrond.get_account(keyfile)
-      token_id=hex_to_str(collection_id)+"-"+nonce
+      token_id=collection_id+"-"+nonce
       rc={"command":"ESDTCreate",
           "error":"",
           "link":elrond.getExplorer(token_id,"nfts"),

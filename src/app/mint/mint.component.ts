@@ -6,8 +6,9 @@ import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {PLATFORMS} from "../../definitions";
 import {NetworkService} from "../network.service";
-import {  Token} from "../nfts/nfts.component";
+import {  NFT} from "../nfts/nfts.component";
 import ExifReader from 'exifreader';
+import {UserService} from "../user.service";
 
 
 @Component({
@@ -21,26 +22,30 @@ export class MintComponent implements OnInit {
   key: string="";
   formData: FormData=new FormData();
   sign: boolean=false;
-  tokens: Token[]=[];
-  keys: MetabossKey[]=[];
+  tokens: NFT[]=[];
   platforms=PLATFORMS;
-  sel_platform: string=this.platforms[1].value;
+  sel_platform: string=this.platforms[0].value;
 
 
   constructor(
     public toast:MatSnackBar,
     public network:NetworkService,
     public dialog:MatDialog,
+    public user:UserService,
     public metaboss:MetabossService
   ) { }
 
   ngOnInit(): void {
-    this.metaboss.keys().subscribe((keys)=>{this.keys=keys;})
-    let tmp=localStorage.getItem("tokenstoimport");
-    if(tmp)this.tokens=JSON.parse(tmp)
+    if(this.user.isConnected()){
+      let tmp=localStorage.getItem("tokenstoimport");
+      if(tmp)this.tokens=JSON.parse(tmp)
+    } else this.user.login("Le minage nécessite une authentification");
+
   }
 
-  get_token_from_xmp(_infos:any,url:string) {
+
+
+  get_token_from_xmp(_infos:any,url:string):NFT {
     let creators:any[]=[];
     if(this.metaboss.admin_key){
       creators.push(
@@ -52,7 +57,7 @@ export class MintComponent implements OnInit {
       )
     }
 
-    let attributes=[];
+    let attributes:any[]=[];
     let collection:any={};
 
     if(_infos.hasOwnProperty("properties")){
@@ -65,48 +70,24 @@ export class MintComponent implements OnInit {
       collection={name:_infos.collection,family:_infos.family}
     }
 
-    return(
-    {
-      address: "",
-        metadataPDA: undefined,
-      mint: "",
+
+    let rc:NFT={
+      address: undefined,
+      attributes: attributes,
+      collection: collection,
+      creators: creators,
+      description: "",
+      files: [],
+      marketplace: undefined,
+      name: _infos.title,
       network: this.network.network,
-      search: {collection:"",metadata:""},
-      splMintInfo: undefined,
-        splTokenInfo: undefined,
-      metadataOnchain: {
-      key:0,
-        updateAuthority:this.metaboss.admin_key?.pubkey.toString()!,
-        mint:"",
-        primarySaleHappened:0,
-        isMutable:1,
-        type:"tokenforge",
-        data : {
-        name:_infos.title,
-          uri:"",
-          sellerFeeBasisPoints:0,
-          creators:creators,
-          symbol: _infos.symbol
-      }
-    },
-      metadataOffchain: {
-        description:"",
-          external_url:"",
+      owner: undefined,
+      royalties: 0,
+      symbol: "",
+      visual: url
+    }
 
-          seller_fee_basis_points: 100,
-          attributes:attributes,
-          collection: collection,
-          properties:{
-          files:[],
-            caterogy:"token",
-            creators:creators
-        },
-        issuer:"",
-
-          image: url,
-          name: _infos.title,
-      }
-    });
+    return(rc);
   }
 
 
@@ -145,10 +126,14 @@ export class MintComponent implements OnInit {
     }
   }
 
-  mint(){
-    for(let _t of this.tokens) {
-      this.miner(_t);
-    }
+  mint(index=0){
+    let _t=this.tokens[index];
+    showMessage(this,"Lancement du minage de "+_t.name);
+    this.miner(_t).then((t)=>{
+      if(this.tokens.length>index){
+        this.mint(index+1);
+      }
+    });
   }
 
 
@@ -165,56 +150,60 @@ export class MintComponent implements OnInit {
   upload_file(file:any){
     return new Promise((resolve, reject) => {
 
-        let obj = {
-          filename: file.filename,
-          content: file.content,
-          type:""
-        }
-        this.network.upload(obj,this.sel_platform).subscribe((r: any) => {
-          localStorage.removeItem("attach_file_" + file.uri);
-          resolve(r.url)
-          showMessage(this, "upload ok");
-          this.local_save();
-        },(err) => {
-          showError(err);
-          reject(err);
-        })
+      let obj = {
+        filename: file.filename,
+        content: file.content,
+        type:""
+      }
+      this.network.upload(obj,this.sel_platform).subscribe((r: any) => {
+        localStorage.removeItem("attach_file_" + file.uri);
+        resolve(r.url)
+        showMessage(this, "upload ok");
+        this.local_save();
+      },(err) => {
+        showError(err);
+        reject(err);
+      })
     });
   }
 
 
-  upload_token(token: Token) {
-    for(let file of token.metadataOffchain.properties.files){
+  upload_token(token: NFT) {
+    for(let file of token.files){
       this.upload_file(file).then((r:any)=>{file.uri=r;})
     }
-    this.upload_file({content:token.metadataOffchain.image,type:""}).then((r:any)=>{token.metadataOffchain.image=r;});
+    this.upload_file({content:token.visual,type:""}).then((r:any)=>{token.visual=r;});
     setTimeout(()=>{this.local_save();},10000);
   }
 
 
   upload_all_tokens() {
     for(let token of this.tokens)
-        this.upload_token(token);
+      this.upload_token(token);
     this.local_save();
   }
 
 
 
-  miner(token: Token) {
-    if(this.isValide(token)==""){
-      this.metaboss.mint(token,this.sign,this.sel_platform).then(()=>{
-        showMessage(this,"Token miné");
-      }).catch((err)=>{
-        showError(err);
-      })
-    } else {
-      showMessage(this,"Minage impossible: "+this.isValide(token));
-    }
+  miner(token: NFT) {
+    return new Promise((resolve, reject) => {
+      if(this.isValide(token)==""){
+        this.metaboss.mint(token,this.sign,this.sel_platform).then(()=>{
+          showMessage(this,"Token miné");
+          resolve(token);
+        }).catch((err)=>{
+          showError(err);
+        })
+      } else {
+        reject(token);
+        showMessage(this,"Minage impossible: "+this.isValide(token));
+      }
+    });
   }
 
 
   find_name(creator: any): string {
-    for(let k of this.keys)if(k.pubkey==creator.address)return(k.name);
+    for(let k of this.metaboss.keys)if(k.pubkey==creator.address)return(k.name);
     return creator.address;
   }
 
@@ -253,17 +242,17 @@ export class MintComponent implements OnInit {
           lbl_cancel:"Annuler"
         }
     }).afterClosed().subscribe((new_addr:string) => {
-      if (new_addr){
-        for(let t of this.tokens){
-          t.metadataOffchain.properties.creators.push({
-            verified: 0,
-            address:new_addr,
-            share:0
-          });
+        if (new_addr){
+          for(let t of this.tokens){
+            t.creators.push({
+              verified: 0,
+              address:new_addr,
+              share:0
+            });
+          }
+          this.local_save();
         }
-        this.local_save();
       }
-    }
     );
   }
 
@@ -308,8 +297,8 @@ export class MintComponent implements OnInit {
         let family=collection.indexOf("/")>-1 ? collection.split("/")[1].trim() : "";
         if(!token){
           for(let token of this.tokens){
-            if(!token.metadataOffchain.collection){
-              token.metadataOffchain.collection={name:name,family:family}
+            if(!token.collection){
+              token.collection={name:name,family:family}
             }
           }
         } else {
@@ -319,12 +308,12 @@ export class MintComponent implements OnInit {
     })
   }
 
-  onUploadXMP(file: any, token: Token) {
+  onUploadXMP(file: any, token: NFT) {
     let pos=this.tokens.indexOf(token);
     let xmp_data=atob(file.file.split("base64,")[1]).split("mint=")[1]
     xmp_data=xmp_data.substring(1).split("'")[0]
     let _infos=JSON.parse(atob(xmp_data))
-    token=this.get_token_from_xmp(_infos,token.metadataOffchain.image);
+    token=this.get_token_from_xmp(_infos,token.visual);
     this.tokens[pos]=token;
   }
 }

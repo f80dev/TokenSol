@@ -21,12 +21,24 @@ export class UserService {
 
   private _wallet: Wallet | undefined;
   amount: number=0;
+  email: string="";
+  name:string="";
 
   constructor(
     private solWalletS : SolWalletsService,
     private httpClient : HttpClient,
     public router:Router
   ) {
+    if(environment.appli.indexOf("127.0.0.1"))this.email="hhoareau@gmail.com";
+  }
+
+  isConnected() {
+    return this.connected();
+  }
+
+  login(message="") {
+    if(!this.isConnected())
+      this.router.navigate(["login"],{queryParams:{message:message}});
   }
 
 
@@ -49,7 +61,8 @@ export class UserService {
 
 
   connected() {
-    return this.addr && this.addr.length>0;
+
+    return (this.addr && this.addr.length>0) || this.email.length>0;
   }
 
 
@@ -74,27 +87,7 @@ export class UserService {
 
   connect(requis:string="",network="solana"){
     return new Promise((resolve, reject) => {
-      if(network=="elrond"){
-        // @ts-ignore
-        open("wallet.elrond.com","walletElrond")
-      }else{
-        // @ts-ignore
-        if(window.solflare || window.phantom){
-          this.solWalletS.connect().then( (wallet:Wallet) => {
-            this.init(wallet).then((profil:any)=>{
-              if(requis.length>0){
-                if(profil.perms.indexOf("*")==-1 && profil.perms.indexOf(requis)==-1)
-                  this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
-              }
-              resolve(profil);
-            }).catch(()=>{reject();});
-          }).catch(err => {
-            console.log("Error connecting wallet", err );
-            this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
-            reject(err);
-          })
-        }
-      }
+
     });
   }
 

@@ -17,7 +17,7 @@ lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
   network: elrond-devnet
-  miner: paul
+  miner: herve
 
 
 #Caractéristiques détaides collections utilisées par les NFT
@@ -27,6 +27,12 @@ collections:
     description: La collection des NFT by Influent
     creator: nfluent
     price: 1
+
+  - name: nfluenteam
+    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
+    description: La collection des NFT by Influent
+    creator: herve
+    price: 0
 
 
   - name: A Madonna Di A Sierra
@@ -91,10 +97,10 @@ data:
   sources:
     - type: network
       active: True
-      connexion: solana-devnet
+      connexion: elrond-devnet
       filter:
-        limit: 5
-      owner: paul
+        limit: 20
+      owner: herve
 
     - type: database
       active: False
@@ -226,10 +232,8 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
   collections:
     - name: "NFluenTTest"
       price: 1              #Si le prix n'est pas fixé on utilise le prix de la section collection (voir au dessus)
-      limit: 50
-
     - name: "A Madonna Di A Sierra"
-
+    - name: "nfluenteam"
 
 
   support:      #Section regroupant les différents messages d'aides aux utilisateur
@@ -238,10 +242,10 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
     server: "http://127.0.0.1:8080/"              #adresse du serveur Prestashop
-#    server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
+    #server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
     address: "$server$/fr/"                         #page de la boutique
     admin: "$server$/admin4280/"                    #page d'administration de la boutique
-#    api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+    #api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
     api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
 
     root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie

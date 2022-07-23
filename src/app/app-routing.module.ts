@@ -18,6 +18,7 @@ import {AdminComponent} from "./admin/admin.component";
 import {FaqsComponent} from "./faqs/faqs.component";
 import {DispenserComponent} from "./dispenser/dispenser.component";
 import {StoreComponent} from "./store/store.component";
+import {LoginComponent} from "./login/login.component";
 
 
 const routes: Routes = [
@@ -32,6 +33,7 @@ const routes: Routes = [
   { path: 'dispenser', component: DispenserComponent },
   { path: 'creator', component: CreatorComponent },
   { path: 'store', component: StoreComponent },
+  { path: 'login', component: LoginComponent },
   { path: 'manage', component: ManageComponent },
   { path: 'dealermachine', component:DealermachineComponent },
   { path: 'dm', component:DealermachineComponent },

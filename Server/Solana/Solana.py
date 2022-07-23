@@ -214,6 +214,9 @@ class Solana:
       for token in rc["result"]["value"]:
         token["mint"]=token["account"]["data"]["parsed"]["info"]["mint"]
         token["owner"]=token["account"]["data"]["parsed"]["info"]["owner"]
+
+        #_nft=NFT(rc["name"])
+
         tokens.append(token)
     return tokens
 

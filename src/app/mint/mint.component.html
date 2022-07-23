@@ -34,38 +34,38 @@
     <tr *ngFor="let token of tokens" style="margin: 5px;">
       <td style="width: fit-content">
         <div style="width: 100px;height: 100px;display: inline-block;" class="mat-elevation-z4">
-        <img [src]="token.metadataOffchain.image"
-             [title]="token.metadataOffchain.image"
+        <img [src]="token.visual"
+             [title]="token.visual"
              alt="En cours de chargement ..." style="width: 100%;"
               >
         </div>
       </td>
       <td style="cursor: pointer">
-          <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.metadataOffchain.name"><br>
-          <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.metadataOffchain.description">
+          <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.name"><br>
+          <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.description">
       </td>
-      <td (click)="set_collection(token)">{{token.metadataOffchain.collection?.name}} / {{token.metadataOffchain.collection?.family}}</td>
+      <td (click)="set_collection(token)">{{token.collection?.name}} / {{token.collection?.family}}</td>
       <td style="max-width: 50px;">
-        <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.metadataOnchain.data.symbol">
+        <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.symbol">
       </td>
 
       <td>
-        <app-link *ngFor="let file of token.metadataOffchain.properties?.files" [content]="file.uri">
+        <app-link *ngFor="let file of token.files" [content]="file.uri">
           <mat-icon>link</mat-icon>
         </app-link>
       </td>
 
       <td style="text-align: left;">
         <ul>
-          <li *ngFor="let a of token.metadataOffchain.attributes">
-            <strong>{{a.trait_type}}:</strong> {{a.value}}
+          <li *ngFor="let a of token.attributes">
+            <strong>{{a['trait_type']}}:</strong> {{a.value}}
           </li>
         </ul>
       </td>
 
 
       <td>
-        <app-link *ngFor="let creator of token.metadataOffchain.properties?.creators"
+        <app-link *ngFor="let creator of token.creators"
                   [content]="'https://solscan.io/account/'+creator.address+'?cluster=devnet'">
           {{(creator.address | alias:network.network).substring(0,10)+'..'}}&nbsp;({{creator?.share}}%)
           <br>

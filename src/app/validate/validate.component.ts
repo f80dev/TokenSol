@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {Token} from "../nfts/nfts.component";
+import {NFT} from "../nfts/nfts.component";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
 import {detect_network, detect_type_network, getExplorer, showError, showMessage} from "../../tools";
@@ -17,7 +17,7 @@ export class ValidateComponent implements OnInit {
 
   status:string="";
   query: string="";
-  tokens:Token[]=[];
+  tokens:NFT[]=[];
   message="";
   operation: any={};
   attributes_to_show: any[]=[];
@@ -81,16 +81,16 @@ export class ValidateComponent implements OnInit {
 
     let filters=this.operation.validate.filters;
     this.network.network=detect_network(address)+"-"+detect_type_network(this.operation.network);
-    this.network.get_tokens_from("owner",addr,10,false).then((r:Token[])=>{
+    this.network.get_tokens_from("owner",addr,10,false).then((r:NFT[])=>{
       //this._location.replaceState("./validate/?q="+this.query+"&ope="+this.operation.id);
       if(this.message.length>0){
         for(let t of r){
-          if(t.splTokenInfo?.amount!>0 && t.metadataOffchain){
+          if(t.marketplace.quantity!>0){
             //Application des filtres contenu dans le fichier de configuration
             let filter_Ok=false;
             if(filters.collections){
               for(let filter_name of filters.collections){
-                if(filter_name=="*" || (t.metadataOffchain.hasOwnProperty("collection") && t.metadataOffchain.collection.name.indexOf(filter_name)>-1)){
+                if(filter_name=="*" || (t.hasOwnProperty("collection") && t.collection.name.indexOf(filter_name)>-1)){
                   filter_Ok=true;
                   break;
                 }
@@ -115,10 +115,10 @@ export class ValidateComponent implements OnInit {
     this.update_token(addr);
   }
 
-  validate(t:Token,action:any) {
+  validate(t:NFT,action:any) {
     this.last_action={action:action,token:t};
     this.message="Validation en cours";
-    this.network.validate(action,t,this.query,this.access_code,this.operation.id,t.mint).subscribe((traitement:any)=>{
+    this.network.validate(action,t,this.query,this.access_code,this.operation.id).subscribe((traitement:any)=>{
       showMessage(this,traitement.message);
       this.result_message=traitement.message;
       this.message="";
@@ -169,20 +169,20 @@ export class ValidateComponent implements OnInit {
     this.query="";
   }
 
-  open_token(t: Token) {
+  open_token(t: NFT) {
     open("https://solscan.io/token/"+t.address,"open");
   }
 
-  show_attribute(t: Token, idx: string) {
+  show_attribute(t: NFT, idx: string) {
     let k=0;
-    for(let a of t.metadataOffchain.attributes)
+    for(let a of t.attributes)
       if(a.trait_type==idx){
         break;
       } else {
         k=k+1;
       }
-    if(t.metadataOffchain.attributes[k] && t.metadataOffchain.attributes[k].trait_type==idx){
-      return t.metadataOffchain.attributes[k].value;
+    if(t.attributes[k] && t.attributes[k].trait_type==idx){
+      return t.attributes[k].value;
     }
     return "";
   }

@@ -20,7 +20,7 @@ export const PLATFORMS=[
   {label:"nFluent Local Server",value:"nfluent_local"}
 ]
 
-export const GOOGLE_CLIENT_ID="1047581333959-f7rub1f23lkhuts4ig50pabhv3cakf6u.apps.googleusercontent.com"
+export const GOOGLE_CLIENT_ID="167299914377-p8vuf2f6npqnigl5kpqrh34cqjd81eko.apps.googleusercontent.com"
 export const GOOGLE_SECRET_ID="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"
 
 export const SALT="sel"

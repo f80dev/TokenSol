@@ -5,7 +5,7 @@ from os.path import exists
 import requests
 import pyqrcode
 from Tools import get_qrcode
-
+from NFT import NFT
 import textwrap
 from secret import ELROND_PASSWORD
 from nftstorage import NFTStorage
@@ -66,7 +66,6 @@ class Elrond:
   def __init__(self,network="elrond_devnet"):
     self.network_name="devnet" if "devnet" in network else "mainnet"
     self._proxy=ElrondProxy(NETWORKS[self.network_name]["proxy"])
-
 
 
 
@@ -175,7 +174,15 @@ class Elrond:
     :param _to:
     :return:
     """
+
     _from=self.toAccount(_from)
+    _key=self.find_key_from_address(_from.address.bech32())
+    if _key:
+      _from=self.toAccount(_key["name"])
+    else:
+      log("La clé du propriétaire doit être hébergée sur la plateforme")
+      return None
+
     _to=self.toAccount(_to)
     if _from.address.bech32()==_to.address.bech32(): return False
 
@@ -341,48 +348,60 @@ class Elrond:
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
 
+  def get_nft(self,address:Account,collection_id:str,nonce:str):
+    result=requests.get(self._proxy.url+"/address/"+self.toAccount(address).address.bech32()+"/nft/"+collection_id+"/nonce/"+nonce)
+    if result.status_code==200:
+      return result.json()
+    else:
+      return None
 
-
-  def get_nfts(self,_user:Account,limit=20):
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False):
+    """
+    https://docs.elrond.com/developers/nft-tokens/
+    :param _user:
+    :param limit:
+    :param with_attr:
+    :return:
+    """
     _user=self.toAccount(_user)
     rc=list()
     nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
     if nfts:
-      for nft in list(nfts["data"]["esdts"].values()):
+      for nft in list(nfts["data"]["esdts"].values())[:limit]:
         if "attributes" in nft:
           log("Analyse de "+str(nft))
-          nft["attributes"]=str(base64.b64decode(nft["attributes"]),"utf8")
-          nft["tags"]=nft["attributes"].split("tags:")[1].split(";")[0]
-          cid=nft["attributes"].split("metadata:")[1].split("/")[0]
-
-          _data=requests.get("https://ipfs.io/ipfs/"+cid).json()
+          try:
+            nft["attributes"]=str(base64.b64decode(nft["attributes"]),"utf8")
+            nft["tags"]=nft["attributes"].split("tags:")[1].split(";")[0] if "tags:" in nft["attributes"] else ""
+            cid=nft["attributes"].split("metadata:")[1].split("/")[0]  if "metadata:" in nft["attributes"] else ""
+            _data=requests.get("https://ipfs.io/ipfs/"+cid,timeout=60000).json() if with_attr else {}
+          except:
+            nft["attributes"]=""
+            nft["tags"]=""
+            _data={}
 
           collection=self.get_collection(nft["tokenIdentifier"].replace("-"+nft["tokenIdentifier"].split("-")[2],""))
-          nft["metadataOffchain"]={
-            "attributes":_data,
-            "collection":{"name":collection["name"]},
-            "image":str(base64.b64decode(nft["uris"][0]),"utf8")
-          }
-          nft["id"]=nft["tokenIdentifier"]
-          nft["address"]=nft["tokenIdentifier"]
-          nft["network"]="elrond-"+self.network_name
-          nft["accountInfo"]={"mint":_user.address.bech32()}
-          nft["splTokenInfo"]={"owner":_user.address.bech32(),"amount":int(nft["balance"])}
 
-          nft["metadataOnchain"]={
-            "updateAuthority":[],
-            "data":{
-              "creators":[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
-              "name":nft["name"],
-              "symbol":nft["tokenIdentifier"].split("-")[1]
-            }
-          }
-          for role in self.getRoleForToken(collection["collection"]):
-            if "ESDTRoleNFTUpdateAttributes" in role["roles"]:nft["metadataOnchain"]["updateAuthority"].append(role["account"])
-          nft["metadataOnchain"]["updateAuthority"]=",".join(nft["metadataOnchain"]["updateAuthority"])
+          _nft=NFT(
+            nft["name"],
+            nft["tokenIdentifier"].split("-")[1],
+            {"name":collection["name"]},
+            _data["attributes"] if 'attributes' in _data else [],
+            _data["description"] if "description" in _data else "",
+            str(base64.b64decode(nft["uris"][0]),"utf8"),
+            [{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
+            nft["tokenIdentifier"],
+            int(nft["royalties"]),
+            {"quantity":1}
+          )
+          _nft.network="elrond-"+self.network_name
+          _nft.owner=_user.address.bech32()
 
+          # for role in self.getRoleForToken(collection["collection"]):
+          #   if "ESDTRoleNFTUpdateAttributes" in role["roles"]:nft["metadataOnchain"]["updateAuthority"].append(role["account"])
+          # nft["metadataOnchain"]["updateAuthority"]=",".join(nft["metadataOnchain"]["updateAuthority"])
 
-          rc.append(nft)
+          rc.append(_nft)
           if len(rc)>limit:break
     return rc
 
@@ -569,13 +588,7 @@ class Elrond:
               user.secret_key=secret_key.hex()
         else:
           keystore_file="./Elrond/PEM/"+user+(".json" if not user.endswith('.json') else '')
-          pass_file="./Elrond/PEM/"+user+"_pass"
-          if not exists(pass_file):
-            f=open(pass_file,"w")
-            f.writelines(ELROND_PASSWORD)
-            f.close()
-          user=Account(key_file=keystore_file,pass_file=pass_file)
-          remove(pass_file)
+          user=Account(key_file=keystore_file,password=ELROND_PASSWORD)
 
     return user
 
@@ -590,7 +603,7 @@ class Elrond:
   def balance(self,account:Account):
     return self._proxy.get_account_balance(account.address)
 
-  def get_keys(self,with_qrcode=False):
+  def get_keys(self,with_qrcode=False,with_balance=False):
     rc=[]
     for f in listdir(ELROND_KEY_DIR):
       log("Lecture de "+f)
@@ -601,9 +614,14 @@ class Elrond:
           "pubkey":_a.address.bech32(),
           "qrcode": get_qrcode(_a.address.bech32()) if with_qrcode else "",
           "explorer":self.getExplorer(_a.address.bech32(),"address"),
-          "balance":self.balance(_a)/1e18,
+          "balance":self.balance(_a)/1e18 if with_balance else 0,
           "unity":"egld"
         })
 
     return rc
 
+
+  def find_key_from_address(self,address):
+    for k in self.get_keys():
+      if k["pubkey"]==address:
+        return k

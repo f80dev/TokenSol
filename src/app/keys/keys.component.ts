@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import {Clipboard} from '@angular/cdk/clipboard';
 import {MetabossService} from "../metaboss.service";
-import {$$, MetabossKey, showMessage} from "../../tools";
+import {$$, MetabossKey, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Location} from "@angular/common";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
+import {Router} from "@angular/router";
 
 @Component({
   selector: 'app-keys',
@@ -17,12 +18,12 @@ import {MatDialog} from "@angular/material/dialog";
 export class KeysComponent implements OnInit {
   privateKey: string="";
   name: string="";
-  keys: MetabossKey[] = [];
 
   constructor(
     public metaboss:MetabossService,
     public dialog:MatDialog,
     public clipboard: Clipboard,
+    public router:Router,
     public network:NetworkService,
     public toast:MatSnackBar,
     public user:UserService,
@@ -30,18 +31,17 @@ export class KeysComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-
+    if(this.user.isConnected()){
       this.refresh();
-
+    } else {
+      this.user.login();
+    }
   }
 
   refresh(){
+    this.network.wait("Chargement des clés");
     this.user.connect("keys").then((profil)=> {
-      this.network.wait("Chargement des comptes");
-      this.metaboss.keys(this.network.network).subscribe((r) => {
-        this.network.wait("");
-        this.keys = r;
-      })
+      this.metaboss.init_keys(this.network.network).then(()=>{this.network.wait();});
     });
   }
 
@@ -98,5 +98,9 @@ export class KeysComponent implements OnInit {
       })
     });
 
+  }
+
+  open_wallet(key: MetabossKey) {
+    this.router.navigate(["wallet"],{queryParams:{param:setParams({addr:key.pubkey})}});
   }
 }

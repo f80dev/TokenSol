@@ -66,7 +66,24 @@ export interface Search {
   collection:string
   metadata:string
 }
-export interface Token {
+
+export interface NFT {
+  collection:any
+  symbol:string
+  network: string | undefined
+  attributes:any[]
+  name:string
+  description:string
+  visual:string
+  creators:any[]
+  address:string | undefined
+  royalties:number
+  owner:string | undefined
+  marketplace:any | undefined
+  files:any[]
+}
+
+export interface SolanaToken {
   mint:string,
   network: string
   address: string,
@@ -85,7 +102,7 @@ export interface Token {
 })
 export class NftsComponent implements OnInit {
 
-  @Input("nfts") nfts: Token[]=[];
+  @Input("nfts") nfts: any[]=[];
   @Input("user") user: string | undefined;
   @Input("format") format: string="str";
   @Output('refresh') onrefresh: EventEmitter<any>=new EventEmitter();
@@ -160,7 +177,7 @@ export class NftsComponent implements OnInit {
   }
 
 
-  burn(nft:Token) {
+  burn(nft:any) {
     if(nft.metadataOnchain.isMutable==0){
       showMessage(this,"Ce NFT n'est plus modifiable");
       return;
@@ -174,7 +191,7 @@ export class NftsComponent implements OnInit {
 
 
 
-  update_field(attr: any, nft: Token) {
+  update_field(attr: any, nft: any) {
 
     if(nft.metadataOnchain?.isMutable==0){
       showMessage(this,"Ce NFT n'est plus modifiable");
@@ -207,7 +224,7 @@ export class NftsComponent implements OnInit {
     return getExplorer(id,this.network.network);
   }
 
-  use_token(nft:Token){
+  use_token(nft:any){
     this.network.wait("Utilisation en cours");
     this.metaboss.use(nft.address,this.network.network).then(()=>{
       showMessage(this,nft.metadataOnchain.data.name+" utilisé. Mise a jour de la blockchain en cours");
@@ -215,7 +232,7 @@ export class NftsComponent implements OnInit {
     });
   }
 
-  sign_token(nft: Token,creator:Creator) {
+  sign_token(nft: any,creator:Creator) {
     this.network.wait("Signature en cours");
     this.metaboss.sign(nft.address,creator.address,this.network.network).then(()=>{
       showMessage(this,nft.metadataOnchain.data.name+" signé. Mise a jour de la blockchain en cours");
@@ -227,11 +244,7 @@ export class NftsComponent implements OnInit {
 
 
   ngOnInit(): void {
-    if(this.network.keys.length==0){
-      this.metaboss.keys(this.network.network).subscribe((keys)=>{
-        this.network.keys=keys;
-      })
-    }
+
   }
 
 

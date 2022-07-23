@@ -5,7 +5,7 @@ import {ActivatedRoute} from "@angular/router";
 import {Location} from "@angular/common"
 import {$$, showError, showMessage} from "../../tools";
 import {FilterPipe} from "../filter.pipe";
-import {Token} from "../nfts/nfts.component";
+import {NFT} from "../nfts/nfts.component";
 import {AliasPipe} from "../alias.pipe";
 import {MatSelectChange} from "@angular/material/select";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -92,7 +92,7 @@ export class ManageComponent implements OnInit {
               this.nfts.push(nft);
           }
 
-          this.nfts.sort((a:Token, b:Token) => (a.splTokenInfo!.amount < b.splTokenInfo!.amount) ? 1 : -1)
+          this.nfts.sort((a:NFT, b:NFT) => (a.marketplace.quantity < b.marketplace.quantity) ? 1 : -1)
         }).catch(err=>{this.network.wait("");showError(this,err);});
       }
     }
@@ -101,7 +101,7 @@ export class ManageComponent implements OnInit {
 
 
   burn_all() {
-    let nfts:Token[]=this.filterPipe.transform(this.nfts,['search_collection',this.search_collection]);
+    let nfts:NFT[]=this.filterPipe.transform(this.nfts,['search_collection',this.search_collection]);
     nfts=this.filterPipe.transform(nfts,['search_metadata',this.search_metadata]);
     let i=0;
     for(let nft of nfts){

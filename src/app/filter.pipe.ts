@@ -1,12 +1,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import {Token} from "./nfts/nfts.component";
+import {NFT} from "./nfts/nfts.component";
 
 @Pipe({
   name: 'filter'
 })
 export class FilterPipe implements PipeTransform {
 
-  transform(items: Token[], args: any[]): any {
+  transform(items: NFT[], args: any[]): any {
     if(!items)return null;
     if(args.length==1){
       if(args[0]=="" || args[0]=="*")return items;
