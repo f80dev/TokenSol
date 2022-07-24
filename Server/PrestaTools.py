@@ -189,7 +189,7 @@ class PrestaTools:
     _p["minimal_quantity"]=1
     _p["is_virtual"] = 1
     _p["customizable"] = 0
-    _p["active"]= 1
+    _p["active"]= 0
     _p["available_for_order"]= 1
     #_p["available_date"]= "2022-01-01"
     _p["price"] = nft.get_price()

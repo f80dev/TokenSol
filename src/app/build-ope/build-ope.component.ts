@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {environment} from "../../environments/environment";
 import {NetworkService} from "../network.service";
 import {showMessage} from "../../tools";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {UserService} from "../user.service";
 import {Location} from "@angular/common";
@@ -39,6 +39,7 @@ export class BuildOpeComponent implements OnInit {
     public user:UserService,
     public clipboardService:Clipboard,
     public _location:Location,
+    public router:Router,
     public ngNavigatorShareService: NgNavigatorShareService
   ) { }
 
@@ -75,7 +76,7 @@ export class BuildOpeComponent implements OnInit {
 
     let url=this.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
     this.sel_ope.lottery.application=url;
-    this.network.wait("Récupération des NFTs issue des sources",50);
+    this.network.wait("Récupération des NFTs issue des sources",500);
     this.network.get_nfts_from_operation(this.sel_ope.id).subscribe((r:any)=>{
       this.network.wait("")
       this.nfts=[]
@@ -179,5 +180,9 @@ export class BuildOpeComponent implements OnInit {
       this.network.wait("");
       showMessage(this,"NFTs transférés")
     });
+  }
+
+  open_miner() {
+    this.router.navigate(["miner"],{queryParams:{ope:this.sel_ope?.id}})
   }
 }

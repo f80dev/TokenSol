@@ -385,10 +385,6 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
 
 
 
-
-
-
-
 @app.route('/api/infos/')
 #test http://127.0.0.1:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
@@ -426,7 +422,7 @@ def test2():
 
 
 
-@app.route('/api/export_to_prestashop/',methods=["GET"])
+@app.route('/api/export_to_prestashop/',methods=["GET",'POST'])
 #test http://127.0.0.1:4242/api/export_to_prestashop/?root_category=1&ope=calvi22_devnet&api
 def export_to_prestashop():
   """
@@ -447,11 +443,17 @@ def export_to_prestashop():
   categories=dict()
   log("Création des collections sous forme de categorie dans Prestashoo")
 
-  nfts=get_nfts_from_src(_operation["data"]["sources"],with_attributes=True)
+  if request.method=="GET":
+    nfts=get_nfts_from_src(_operation["data"]["sources"],with_attributes=True)
+  else:
+    nfts=[]
+    for nft in request.json:
+      _nft=NFT(object=nft)
+      nfts.append(_nft)
 
   for nft in nfts:
-    log("Traitement de la collection "+nft.collection["name"])
-    if nft.collection["name"] not in categories.keys():
+    if "name" in nft.collection and nft.collection["name"] not in categories.keys():
+      log("Traitement de la collection "+nft.collection["name"])
       ref_col=prestashop.find_category_in_collections(nft.collection["name"],_operation["collections"])
       store_col=prestashop.find_category_in_collections(nft.collection["name"],_operation["store"]["collections"])
       if ref_col is None:
@@ -788,22 +790,9 @@ def get_nfts_from_src(srcs,collections=None,limit=10000,with_attributes=False) -
 
       if src["type"]=="network":
         if src["connexion"].startswith("solana"):
-          solana=Solana(src['connexion'])
-          l_nfts=solana.get_nfts(src["owner"])
+          l_nfts=Solana(src['connexion']).get_nfts(src["owner"],limit=src["filter"]["limit"])
+          nfts=nfts+l_nfts
           src["ntokens"]=len(l_nfts)
-
-          for nft in l_nfts[:src["filter"]["limit"]]:
-            try:
-              nft["network"]=src["connexion"]
-              nft["metadataOnchain"]=solana.scan(nft["account"]["data"]["parsed"]["info"]["mint"])
-              nft["metadataOffchain"]=requests.get(nft["metadataOnchain"]["uri"]).json()
-              nft["image"]=nft["metadataOffchain"]["image"]
-              nft["collection"]=nft["metadataOffchain"]["collection"]
-              if not "quantity" in nft:nft["quantity"]=1
-              nfts.append(nft)
-              if len(nfts)==limit: break
-            except:
-              log("Impossible de récupérer le NFT d'adresse="+nft["account"]["data"]["parsed"]["info"]["mint"])
 
         if src["connexion"].startswith("elrond"):
           elrond=Elrond(src['connexion'])
@@ -1026,7 +1015,7 @@ def mint_for_prestashop():
         "attributes":attributes,
         "category":"image",
         "properties":{"creators":[{"address":c.split("_")[0],"share":int(c.split("_")[1])} for c in _p["creators"].split(" ")]},
-        "seller_fee_basis_points":int(_p["royalties"]),
+        "seller_fee_basis_points":int(_p["royalties"]) if "royalties" in _p else 0,
         "image":_p["visual"],
         "name":_p["name"],
         "symbol":_p["reference"].split(" / ")[1],
@@ -1035,7 +1024,7 @@ def mint_for_prestashop():
       })
       rc=solana.mint(_data,miner=miner,sign=True,owner=pubkey)
     else:
-      result=solana.transfer(_p["address"],pubkey,_p["miner"])
+      result=solana.transfer(_p["address"],pubkey,_p["owner"])
       if not result:
         return returnError("Probléme de transfert",{"address":pubkey})
     account_addr=pubkey

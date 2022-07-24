@@ -1,0 +1,24 @@
+{
+    "creators": [
+        {
+            "address": "CcKHZgqCWYfyJ3E24mwmh3SLD2GgiutXjH8MmpfxMtkU",
+            "share": 10,
+            "verified": false
+        },
+        {
+            "address": "Aee8GX5nzqJWFrg5Tr5N3kwry3ndYxzWjWSfLGzkU4LN",
+            "share": 90,
+            "verified": false
+        },
+        {
+            "address": "6gWV3eagwCxsgGAQeFedyY6f27Z87sVYAHWDvzJdyMJn",
+            "share": 0,
+            "verified": false
+        }
+    ],
+    "description": "Pass festival &amp; Avantages : pour une (1) personne - Edition1 : 1 - avantage1 : entree coupe-file au festival - avantage2 : acces a l'espace Pro/VIP (dans la limite des places disponibles) -",
+    "external_url": "",
+    "name": "n 16 Billet VIP",
+    "seller_fee_basis_points": 1000,
+    "symbol": "COR22D16"
+}

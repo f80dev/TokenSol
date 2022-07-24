@@ -50,7 +50,7 @@
 
       <span class="example-spacer"></span>
 
-      <mat-form-field style="width: 120px">
+      <mat-form-field style="min-width: 150px;width: 10%;">
         <mat-select  [(value)]="network_service.network" (selectionChange)="update_network()">
           <mat-option *ngFor="let network of networks" [value]="network" >
             {{network}}

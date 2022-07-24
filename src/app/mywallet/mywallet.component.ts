@@ -5,6 +5,7 @@ import {getParams, removeBigInt, showError, showMessage} from "../../tools";
 import {ActivatedRoute} from "@angular/router";
 import {environment} from "../../environments/environment";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {NFT} from "../nfts/nfts.component";
 
 
 //Test : http://localhost:4200/wallet?addr=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr&toolbar=false
@@ -14,7 +15,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
   styleUrls: ['./mywallet.component.css']
 })
 export class MywalletComponent implements OnInit {
-  nfts: any;
+  nfts: NFT[]=[];
   indexTab: number=0;
   addr:any="";
   url_key: any="";
@@ -38,12 +39,9 @@ export class MywalletComponent implements OnInit {
   refresh(index:number=0) {
     if(index==0){
       this.network.wait("Chargement de vos NFTs");
-      this.network.get_tokens_from("owner",this.addr).then((r:any[])=>{
+      this.network.get_tokens_from("owner",this.addr).then((r:NFT[])=>{
         this.network.wait("");
-        this.nfts=[]
-        for(let nft of r){
-          if(nft.metadataOffchain.image && nft.metadataOffchain.image.length>5)this.nfts.push(nft);
-        }
+        this.nfts=r;
         if(r.length==0)showMessage(this,"Vous n'avez aucun NFT pour l'instant")
       }).catch(err=>{showError(this,err)});
     }

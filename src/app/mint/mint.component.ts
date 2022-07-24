@@ -9,6 +9,8 @@ import {NetworkService} from "../network.service";
 import {  NFT} from "../nfts/nfts.component";
 import ExifReader from 'exifreader';
 import {UserService} from "../user.service";
+import {ActivatedRoute} from "@angular/router";
+import {Operation} from "../../operation";
 
 
 @Component({
@@ -21,10 +23,14 @@ export class MintComponent implements OnInit {
   fileName: string="";
   key: string="";
   formData: FormData=new FormData();
+  sel_ope:any;
   sign: boolean=false;
   tokens: NFT[]=[];
   platforms=PLATFORMS;
   sel_platform: string=this.platforms[0].value;
+  price: any=0;
+  quantity: any=1;
+  seller_fee_basis_points: any=0;
 
 
   constructor(
@@ -32,13 +38,19 @@ export class MintComponent implements OnInit {
     public network:NetworkService,
     public dialog:MatDialog,
     public user:UserService,
-    public metaboss:MetabossService
+    public metaboss:MetabossService,
+    public routes:ActivatedRoute,
   ) { }
+
+
 
   ngOnInit(): void {
     if(this.user.isConnected()){
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp)
+      this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((r:any)=>{
+        this.sel_ope=r;
+      })
     } else this.user.login("Le minage nécessite une authentification");
 
   }
@@ -78,7 +90,7 @@ export class MintComponent implements OnInit {
       creators: creators,
       description: "",
       files: [],
-      marketplace: undefined,
+      marketplace: {price:this.price,quantity:this.quantity},
       name: _infos.title,
       network: this.network.network,
       owner: undefined,
@@ -126,6 +138,7 @@ export class MintComponent implements OnInit {
     }
   }
 
+
   mint(index=0){
     let _t=this.tokens[index];
     showMessage(this,"Lancement du minage de "+_t.name);
@@ -142,6 +155,8 @@ export class MintComponent implements OnInit {
     this.tokens=[];
     this.local_save();
   }
+
+
 
   local_save(){
     localStorage.setItem("tokenstoimport",JSON.stringify(this.tokens));
@@ -315,5 +330,21 @@ export class MintComponent implements OnInit {
     let _infos=JSON.parse(atob(xmp_data))
     token=this.get_token_from_xmp(_infos,token.visual);
     this.tokens[pos]=token;
+  }
+
+  prestashop() {
+    this.network.wait("Envoi des NFTs");
+    let idx=0;
+    for(let token of this.tokens){
+      idx=idx+1;
+      token.royalties=this.seller_fee_basis_points*100;
+      token.network=this.network.network;
+      if(token.symbol.length==0)token.symbol="NFT"+idx.toString(16);
+      token.marketplace={price:this.price,quantity:this.quantity}
+    }
+    this.network.export_to_prestashop(this.sel_ope.id,this.tokens).subscribe(()=>{
+      this.network.wait();
+      showMessage(this,"NFT transmis");
+    })
   }
 }

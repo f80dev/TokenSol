@@ -176,12 +176,13 @@ class Elrond:
     """
 
     _from=self.toAccount(_from)
-    _key=self.find_key_from_address(_from.address.bech32())
-    if _key:
-      _from=self.toAccount(_key["name"])
-    else:
-      log("La clé du propriétaire doit être hébergée sur la plateforme")
-      return None
+    if len(_from.secret_key)==0:
+      _key=self.find_key_from_address(_from.address.bech32())
+      if _key:
+        _from=self.toAccount(_key["name"])
+      else:
+        log("La clé du propriétaire doit être hébergée sur la plateforme")
+        return None
 
     _to=self.toAccount(_to)
     if _from.address.bech32()==_to.address.bech32(): return False
@@ -611,7 +612,7 @@ class Elrond:
         _a=self.toAccount(f)
         rc.append({
           "name":f.replace(".pem","").replace(".json",""),
-          "pubkey":_a.address.bech32(),
+          "pubkey":_a.address.bech32() if type(_a)==Account else _a,
           "qrcode": get_qrcode(_a.address.bech32()) if with_qrcode else "",
           "explorer":self.getExplorer(_a.address.bech32(),"address"),
           "balance":self.balance(_a)/1e18 if with_balance else 0,

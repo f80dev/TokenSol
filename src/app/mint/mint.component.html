@@ -17,6 +17,81 @@
     </mat-select>
   </mat-form-field>
 
+
+  <div style="display: inline-block">
+
+    <mat-form-field appearance="fill" style="max-width: 80px">
+      <mat-label>Prix (€)</mat-label>
+      <input matInput type="number" min="0" [(ngModel)]="price" >
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="max-width: 80px">
+      <mat-label>Quantité</mat-label>
+      <input matInput type="number" min="1" [(ngModel)]="quantity" >
+    </mat-form-field>
+
+    <mat-form-field appearance="fill" style="max-width: 80px">
+      <mat-label>Royalties</mat-label>
+      <input matInput type="number" min="0" max="99" [(ngModel)]="seller_fee_basis_points" >
+    </mat-form-field>
+
+  </div>
+
+  <div id="command_panel" style="display: inline-block;margin:10px;">
+    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>
+
+    <br>
+    <br>
+
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="upload_all_tokens()">
+      Mise en ligne
+    </button>
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="mint()">
+      Tout miner
+    </button>
+
+    <button type="button"
+            *ngIf="sel_ope && sel_ope.store && sel_ope.store.prestashop"
+            mat-raised-button mat-button
+            (click)="prestashop()">
+      Export Prestashop
+    </button>
+
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="add_creator()">
+      <mat-icon>add_circle</mat-icon>&nbsp;Créateur
+    </button>
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="set_collection()">
+      Collection
+    </button>
+
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="download_all()">
+      Enregistrer
+    </button>
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="clear()">
+      Effacer
+    </button>
+
+  </div>
+
+
   <br><br>
 
   <table style="padding: 5px;width:100%;text-align: center;">
@@ -91,46 +166,5 @@
   </table>
 
 
-  <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>
 
-  <br>
-  <br>
-
-
-  <button type="button"
-          mat-raised-button mat-button
-          (click)="upload_all_tokens()">
-    Mise en ligne
-  </button>
-
-  <button type="button"
-          mat-raised-button mat-button
-          (click)="mint()">
-    Tout miner
-  </button>
-
-  <button type="button"
-          mat-raised-button mat-button
-          (click)="add_creator()">
-    <mat-icon>add_circle</mat-icon>&nbsp;Créateur
-  </button>
-
-  <button type="button"
-          mat-raised-button mat-button
-          (click)="set_collection()">
-    Collection
-  </button>
-
-
-  <button type="button"
-          mat-raised-button mat-button
-          (click)="download_all()">
-    Enregistrer
-  </button>
-
-  <button type="button"
-          mat-raised-button mat-button
-          (click)="clear()">
-    Effacer
-  </button>
 </div>

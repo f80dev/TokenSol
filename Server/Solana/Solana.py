@@ -7,6 +7,7 @@ from os import listdir
 from os.path import exists
 from time import sleep
 
+import requests
 from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages, Bip39SeedGenerator, SolAddrEncoder, Bip44, \
   Bip44Coins, Bip44Changes
 from solana.publickey import PublicKey
@@ -21,6 +22,7 @@ from solana.transaction import Transaction
 from spl.token.constants import TOKEN_PROGRAM_ID
 from spl.token.instructions import transfer,TransferParams
 
+from NFT import NFT
 from Tools import log, send_mail, open_html_file, get_qrcode, setParams
 
 SOLANA_KEY_DIR="./Solana/Keys/"
@@ -189,6 +191,15 @@ class Solana:
     return addr
 
 
+  def find_secretkey_from_json(self,filename):
+    if exists(filename):
+      f=open(filename,"r")
+      key=f.readlines()
+      f.close()
+      rc=[int(x) for x in key[0][1:len(key[0])-2].split(",")]
+      return bytes(rc)[32:]
+    return None
+
   def find_address_from_json(self,name:str,field="pubkey",dir=SOLANA_KEY_DIR):
     name=name.replace(SOLANA_KEY_DIR,"").replace(".json","")
     if len(name)>40:return name
@@ -202,7 +213,7 @@ class Solana:
     return None
 
   #http://127.0.0.1:4242/api/nfts/
-  def get_nfts(self, name):
+  def get_nfts(self, name,offset=0,limit=2000):
     tokens=[]
     pubkey=self.find_address_from_json(name)
     if pubkey is None:
@@ -211,13 +222,30 @@ class Solana:
       token_account_opts=TokenAccountOpts(mint=None,program_id=TOKEN_PROGRAM_ID,encoding="jsonParsed")
       rc=self.client.get_token_accounts_by_owner(PublicKey(pubkey),token_account_opts,Confirmed)
 
-      for token in rc["result"]["value"]:
+      for token in rc["result"]["value"][offset:offset+limit]:
         token["mint"]=token["account"]["data"]["parsed"]["info"]["mint"]
         token["owner"]=token["account"]["data"]["parsed"]["info"]["owner"]
+        infos=self.scan(token["mint"])
+        if "uri" in infos:
+          try:
+            offchain=requests.get(infos["uri"],timeout=5)
+          except:
+            log("Timeout sur la récupération des datas de "+str(infos))
+            offchain=None
 
-        #_nft=NFT(rc["name"])
+          if offchain and offchain.status_code==200:
+            data=offchain.json()
+            data["marketplace"]={"quantity":int(token["account"]["data"]["parsed"]["info"]["tokenAmount"]["amount"])}
+            data["mint"]=token["mint"]
+            data["network"]="solana-"+self.network
+            data["creators"]=data["properties"]["creators"]
+            data["files"]=data["properties"]["files"]
+            data["owner"]=pubkey
+            data["other"]={"owner_program":token["account"]["owner"]}
+            log("Récupération de "+str(data))
+            _nft=NFT(object=data)
+            tokens.append(_nft)
 
-        tokens.append(token)
     return tokens
 
 
@@ -350,23 +378,23 @@ class Solana:
   def getExplorer(self, addr,type="account"):
     return "https://solscan.io/"+type+"/"+addr+"?cluster="+self.network
 
+  def get_keypair(self,addr):
+    addr=self.find_address_from_json(addr)
+
   def transfer(self, nft_addr, to,owner):
     log("Demande de transfert de "+self.getExplorer(nft_addr,"token"))
     recent_blockhash=self.client.get_recent_blockhash(Confirmed)["result"]["value"]["blockhash"]
 
     to=self.find_address_from_json(to)
 
-    account=self.find_address_from_json(owner)
-    txn=Transaction(recent_blockhash=recent_blockhash,fee_payer=PublicKey(account))
-    txn.add(transfer(TransferParams(TOKEN_PROGRAM_ID,PublicKey(nft_addr),PublicKey(to),PublicKey(account),1,[PublicKey(account)])))
+    addr=self.find_address_from_json(owner)
+    jsonfile=self.find_json_from_address(addr)
 
-    filename=SOLANA_KEY_DIR+(owner+".json").replace(".json.json",".json")
-    if exists(filename):
-      f=open(filename,"r")
-      key=f.readlines()
-      f.close()
-      l_int=[int(x) for x in key[0][1:len(key[0])-1].split(",")]
-      t=self.client.send_transaction(txn,Keypair(bytes(l_int)[32:]))
+    txn=Transaction(recent_blockhash=recent_blockhash)
+    txn.add(transfer(TransferParams(TOKEN_PROGRAM_ID,PublicKey(nft_addr),PublicKey(to),PublicKey(addr),1)))
+    secret=self.find_secretkey_from_json(jsonfile)
+    if secret:
+      t=self.client.send_transaction(txn,Keypair(secret))
       return True
     else:
       log("Signature inconnue")

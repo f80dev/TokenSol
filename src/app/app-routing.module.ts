@@ -27,6 +27,7 @@ const routes: Routes = [
   { path: 'reload', component: FaucetComponent },
   { path: 'faqs', component: FaqsComponent },
   { path: 'mint', component: MintComponent },
+  { path: 'miner', component: MintComponent },
   { path: 'keys', component: KeysComponent },
   { path: 'admin', component: AdminComponent },
   { path: 'contest', component: ContestComponent },

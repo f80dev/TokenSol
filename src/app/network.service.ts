@@ -606,9 +606,10 @@ export class NetworkService {
   // create_account(network: string, alias: string) {
   //   return this.httpClient.get(environment.server+"/api/create_account/"+network+"/"+alias+"/");
   // }
-  export_to_prestashop(id:string) {
-    return this.httpClient.get(environment.server+"/api/export_to_prestashop/?ope="+id);
-
-
+  export_to_prestashop(id:string,nfts:any=[]) {
+    if(nfts.length==0)
+      return this.httpClient.get(environment.server+"/api/export_to_prestashop/?ope="+id);
+    else
+      return this.httpClient.post(environment.server+"/api/export_to_prestashop/?ope="+id,nfts);
   }
 }

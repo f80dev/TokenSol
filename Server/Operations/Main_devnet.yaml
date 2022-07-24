@@ -97,10 +97,10 @@ data:
   sources:
     - type: network
       active: True
-      connexion: elrond-devnet
+      connexion: solana-devnet
       filter:
         limit: 20
-      owner: herve
+      owner: thomas
 
     - type: database
       active: False
