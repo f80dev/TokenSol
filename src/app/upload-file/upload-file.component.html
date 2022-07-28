@@ -4,8 +4,14 @@
        (change)="import($event)"
        [accept]="extensions"/>
 
+<mat-icon *ngIf="icon.length>0" (click)="csvInput.click()"
+          style="cursor: pointer;">
+          {{icon}}
+</mat-icon>
+
 <button mat-raised-button
         mat-button style="width: fit-content;display: inline-block;"
+        *ngIf="icon.length==0"
         [title]="title"
         (click)="csvInput.click()">
   <ng-content></ng-content>

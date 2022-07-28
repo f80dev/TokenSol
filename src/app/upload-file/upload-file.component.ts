@@ -13,6 +13,7 @@ export class UploadFileComponent implements OnInit {
   filename:string="";
   @Input("filter") filter:any={};
   @Input("title") title:string="";
+  @Input("icon") icon:string="";
   @Input("send_file") send_file:boolean=false;
   @Input("encode") encode=true;
   @Input("maxsize") maxsize:number=10000000000000;

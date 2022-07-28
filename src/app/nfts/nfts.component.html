@@ -14,16 +14,16 @@
 
         <tr>
           <td></td>
-          <td><a [href]="nft.metadataOnchain?.data?.uri" target="_blank">Fichier attaché</a></td>
+          <td></td>
         </tr>
 
       </table>
 
       <div style="width: 100%;height: fit-content;">
         <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;">
-          <a [href]="nft.metadataOffchain?.image" target="visual"><img style="object-fit: contain;width: 100%;" [src]="nft.metadataOffchain?.image"></a>
+          <a [href]="nft.visual" target="visual"><img style="object-fit: contain;width: 100%;" [src]="nft.visual"></a>
         </div>
-        <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;" *ngFor="let file of nft.metadataOffchain?.properties?.files">
+        <div style="margin:5px;width:100px;height:100px;display: inline-block;overflow: hidden;" *ngFor="let file of nft.files">
           <a [href]="file?.uri" target="_blank">
             <img style="object-fit: contain;width: 100%;" [src]="file?.uri" *ngIf="file.type && file.type.indexOf('image')>-1">
             <mat-icon *ngIf="!file.type || file.type.indexOf('image')==-1" style="font-size: xx-large;">link</mat-icon>
@@ -34,7 +34,7 @@
       <table style="font-size: xx-small;width:100%;line-height: 85%;">
         <tr><td><strong>Créateurs</strong></td></tr>
         <tr><th>Adresse</th><th>Vérifié</th><th>Royalties</th></tr>
-        <tr *ngFor="let creator of nft.metadataOnchain?.data?.creators" style="text-align: center;">
+        <tr *ngFor="let creator of nft.creators" style="text-align: center;">
           <td style="padding:0px;width:60%;height:20px;vertical-align:text-top !important;text-align: left;">
             <a [href]="getSolanaExplorer(creator.address)" target="_blank"><mat-icon>person</mat-icon></a>
             <div style="display: inline-block;">{{creator.address | alias}}</div>
@@ -49,20 +49,20 @@
 
       <br>
       <strong>OnChain</strong>
-      <table style="font-size: x-small;line-height: 90%;" *ngIf="nft.metadataOnchain">
-        <tr><td>Update authority</td><td><a [href]="getSolanaExplorer(nft.metadataOnchain.updateAuthority)" target="_blank">{{nft.metadataOnchain?.updateAuthority | alias}}</a></td>
-        <tr *ngIf="network.isSolana()"><td>Primaray sale</td><td>{{nft.metadataOnchain?.primarySaleHappened}}</td></tr>
-        <tr *ngIf="network.isSolana()"><td>Mutable</td><td>{{nft.metadataOnchain?.isMutable}}</td></tr>
+      <table style="font-size: x-small;line-height: 90%;" *ngIf="nft.solana">
+        <tr><td>Update authority</td><td><a [href]="getSolanaExplorer(nft.solana.updateAuthority)" target="_blank">{{nft.solana.updateAuthority | alias}}</a></td>
+        <tr *ngIf="network.isSolana()"><td>Primaray sale</td><td>{{nft.solana?.primarySaleHappened}}</td></tr>
+        <tr *ngIf="network.isSolana()"><td>Mutable</td><td>{{nft.solana?.isMutable}}</td></tr>
 <!--        <tr><td>Mint authority</td><td><a [href]="getSolanaExplorer(nft.splMintInfo?.mintAuthority)" target="_blank">{{nft.splMintInfo?.mintAuthority | alias}}</a></td></tr>-->
-        <tr><td>Owner</td><td><a [href]="getSolanaExplorer(nft.splTokenInfo?.owner)" target="_blank">{{nft.splTokenInfo?.owner | alias}}</a></td></tr>
-        <tr><td>Quantite</td><td>{{nft.splTokenInfo?.amount}}</td></tr>
+        <tr><td>Owner</td><td><a [href]="getSolanaExplorer(nft.owner)" target="_blank">{{nft.owner | alias}}</a></td></tr>
+        <tr><td>Quantite</td><td>{{nft.marketplace.quantity}}</td></tr>
       </table>
 
       <button
               type="button" mat-icon-button
               title="Supprimer le NFT"
               (click)="burn(nft)"
-              *ngIf="format=='obj' && ((nft.metadataOnchain?.isMutable==1 && nft.metadataOnchain?.updateAuthority==user) || network.isElrond())">
+              *ngIf="format=='obj' && ((nft.solana?.isMutable==1 && nft.solana.updateAuthority==user) || network.isElrond())">
         <mat-icon>delete</mat-icon>
       </button>
 
@@ -80,15 +80,15 @@
     <span *ngIf="format=='str'">{{nft}}</span>
 
     <div *ngIf="format=='json'" class="mat-elevation-z4" style="padding: 10px;">
-      {{nft.metadataOffchain?.name}}<br>
+      {{nft.name}}<br>
       <ngx-json-viewer [json]="nft" [expanded]="false"></ngx-json-viewer>
     </div>
 
     <div *ngIf="format=='html'" [innerHTML]="nft" style="display: inline-block;"></div>
 
     <div *ngIf="format=='image' || format=='img'" style="display: inline-block;width: 200px;text-align: center;">
-      {{nft.metadataOffchain.name}}<br>
-      <img [src]="nft.metadataOffchain.image" style="width: 100%;" [title]="nft.metadataOffchain.description">
+      {{nft.name}}<br>
+      <img [src]="nft.visual" style="width: 100%;" [title]="nft.description">
     </div>
 
   </div>

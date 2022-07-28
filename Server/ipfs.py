@@ -28,7 +28,7 @@ class IPFS:
 
     def add(self,body,removeFile=False,temp_dir="./Solana/Temp/"):
         f=None
-        if type(body)==dict:
+        if type(body)==dict or type(body)==list:
           if "filename" in body:
             f=open(temp_dir+body["filename"],"wb")
             f.write(base64.b64decode(body["content"].split(";base64,")[1]))

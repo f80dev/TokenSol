@@ -145,7 +145,7 @@ class Elrond:
 
   def format_offchain(self,_data) -> dict:
     keys=self.get_keys()
-    for c in _data["properties"]["creators"]:
+    for c in _data["creators"]:
       for k in keys:
         if k["name"]==c["address"]:
           c["address"]=k["pubkey"]
@@ -194,7 +194,7 @@ class Elrond:
            + "@" + int_to_hex(1) \
            + "@" + _to.address.hex()
     t = self.send_transaction(_from, _from, _from, 0, data)
-    if t["status"]!="success":
+    if t is None or t["status"]!="success":
       return None
     else:
       return t
@@ -382,6 +382,8 @@ class Elrond:
             _data={}
 
           collection=self.get_collection(nft["tokenIdentifier"].replace("-"+nft["tokenIdentifier"].split("-")[2],""))
+          if collection is None:collection={"name":""}
+
 
           _nft=NFT(
             nft["name"],
@@ -534,7 +536,7 @@ class Elrond:
       # data = data + "@" + str_to_hex(visual, False)
 
     t = self.send_transaction(miner, miner, miner, 0, data)
-    if t is None: return None
+    if t is None: return None,None
 
     if t["status"]!="success":return None,None
     if "logs" in t:

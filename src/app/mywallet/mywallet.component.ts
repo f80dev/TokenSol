@@ -37,13 +37,29 @@ export class MywalletComponent implements OnInit {
   }
 
   refresh(index:number=0) {
-    if(index==0){
+    if(index==0 && this.nfts.length==0){
       this.network.wait("Chargement de vos NFTs");
-      this.network.get_tokens_from("owner",this.addr).then((r:NFT[])=>{
-        this.network.wait("");
-        this.nfts=r;
-        if(r.length==0)showMessage(this,"Vous n'avez aucun NFT pour l'instant")
-      }).catch(err=>{showError(this,err)});
+      for(let arg of [[0,2],[2,6],[6,10],[10,1000]]){
+        let offset=arg[0];
+        let limit=arg[1];
+        setTimeout(()=>{
+          this.network.get_tokens_from("owner",this.addr,limit,false,null,offset).then((r:NFT[])=>{
+
+            for(let nft of r){
+              if(nft.visual)
+                this.nfts.push(nft);
+            }
+            if(r.length==0) {
+              if (arg[0] == 0)
+                showMessage(this, "Vous n'avez aucun NFT pour l'instant")
+              else
+                this.network.wait("");
+
+            }
+
+          }).catch(err=>{showError(this,err)});
+        },offset*500);
+      }
     }
   }
 }

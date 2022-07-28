@@ -21,7 +21,7 @@ export class MetabossService {
 
 
   //http://localhost:4200/keys
-  init_keys(network="solana-devnet") {
+  init_keys(network="elrond-devnet") {
     return new Promise((resolve, reject) => {
       this.httpClient.get<MetabossKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance=true").subscribe((r: MetabossKey[]) => {
         this.keys = r;
@@ -34,21 +34,20 @@ export class MetabossService {
   }
 
 
-  add_key(key:any,network="solana-devnet",email=""){
+  add_key(key:any,network="elrond-devnet",email=""){
     return this.httpClient.post(environment.server+"/api/keys/"+key["name"]+"/?network="+network+"&email="+email,key);
   }
 
 
   mint(token:any,sign=false,platform="nftstorage",network=""){
     return new Promise((resolve, reject) => {
-      network=(network=="") ? this.network.network : "solana-devnet"
+      network=(network=="") ? this.network.network : "elrond-devnet"
       this.network.wait("Minage en cours sur "+network);
-      let data:any=token.metadataOffchain;
-      data.creators=token.metadataOnchain.data.creators;
-      data.symbol=token.metadataOnchain.data.symbol;
-      this.httpClient.post(environment.server+"/api/mint/?keyfile="+this.admin_key?.name+"&sign="+sign+"&platform="+platform+"&network="+network,data).subscribe((r)=>{
+      this.httpClient.post(environment.server+"/api/mint/?keyfile="+this.admin_key?.name+"&sign="+sign+"&platform="+platform+"&network="+network,token).subscribe((r)=>{
+        this.network.wait();
         resolve(r);
       },(err)=>{
+        this.network.wait();
         reject(err);
       })
     });
@@ -57,7 +56,7 @@ export class MetabossService {
 
 
 
-  update(nft_addr:string,new_value:string,field="uri",network="solana-devnet") {
+  update(nft_addr:string,new_value:string,field="uri",network="elrond-devnet") {
     return new Promise((resolve, reject) => {
       if(field=='uri'){
         this.httpClient.get(environment.server+"/api/update?url="+new_value+"&account="+this.admin_key+"&network="+network).subscribe((r:any)=>{
@@ -68,7 +67,7 @@ export class MetabossService {
   }
 
 
-  update_obj(nft_addr:string,data:any,network="solana-devnet") {
+  update_obj(nft_addr:string,data:any,network="elrond-devnet") {
     return new Promise((resolve, reject) => {
       this.httpClient.post(environment.server+"/api/update_obj/?account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network,data).subscribe((r:any)=>{
         if(r.result=="error")
@@ -81,7 +80,7 @@ export class MetabossService {
 
 
 
-  burn(nft_addr:string | undefined,network="solana-devnet",delay=1) {
+  burn(nft_addr:string | undefined,network="elrond-devnet",delay=1) {
     return new Promise((resolve, reject) => {
       this.network.wait("En cours de destruction");
       this.httpClient.get(environment.server+"/api/burn?&delay="+delay+"&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
@@ -126,7 +125,7 @@ export class MetabossService {
 
 
 
-  sign(nft_addr:string,creator_addr:string,network="solana-devnet") {
+  sign(nft_addr:string,creator_addr:string,network="elrond-devnet") {
     return new Promise((resolve, reject) => {
       this.httpClient.get(environment.server+"/api/sign?creator="+creator_addr+"&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
         resolve(r);

@@ -11,6 +11,7 @@ import ExifReader from 'exifreader';
 import {UserService} from "../user.service";
 import {ActivatedRoute} from "@angular/router";
 import {Operation} from "../../operation";
+import {NUMPAD_NINE} from "@angular/cdk/keycodes";
 
 
 @Component({
@@ -85,6 +86,7 @@ export class MintComponent implements OnInit {
 
     let rc:NFT={
       address: undefined,
+      message:"",
       attributes: attributes,
       collection: collection,
       creators: creators,
@@ -96,7 +98,8 @@ export class MintComponent implements OnInit {
       owner: undefined,
       royalties: 0,
       symbol: "",
-      visual: url
+      visual: url,
+      solana:null
     }
 
     return(rc);
@@ -139,13 +142,38 @@ export class MintComponent implements OnInit {
   }
 
 
+  confirm_mint(){
+    this.dialog.open(PromptComponent,{
+      width: 'auto',data:
+        {
+          title: "Confirmer le minage",
+          question: "html:... de "+this.tokens.length+" NFTs sur le réseau "+this.network.network+" par le compte <strong>"+this.metaboss.admin_key?.name+"</strong> ?",
+          onlyConfirm:true,
+          lbl_ok:"Ok",
+          lbl_cancel:"Annuler"
+        }
+    }).afterClosed().subscribe((rep:string) => {
+      if(rep=="yes"){
+        showMessage(this,"Lancement du processus de minage");
+        this.mint(0);
+      }
+    });
+  }
+
+
   mint(index=0){
-    let _t=this.tokens[index];
-    showMessage(this,"Lancement du minage de "+_t.name);
+    let _t:NFT=this.tokens[index];
+    _t.marketplace={price:this.price,quantity:this.quantity,royalties:this.seller_fee_basis_points*100}
+    _t.message="hourglass:Minage";
+    showMessage(this,"Minage de "+_t.name);
     this.miner(_t).then((t)=>{
+      _t.message="Miné";
       if(this.tokens.length>index){
         this.mint(index+1);
       }
+    }).catch(()=>{
+      _t.message="Anomalie";
+
     });
   }
 
@@ -243,6 +271,43 @@ export class MintComponent implements OnInit {
         if(r)open(r,"_blank");
       })
     }
+  }
+
+  add_miner_to_creator(){
+    this.dialog.open(PromptComponent,{
+      width: 'auto',data:
+        {
+          title: "Royalties pour "+this.metaboss.admin_key?.name,
+          type: "number",
+          onlyConfirm:false,
+          lbl_ok:"Ok",
+          lbl_cancel:"Annuler"
+        }
+    }).afterClosed().subscribe((royalties) => {
+      if(royalties){
+        for(let t of this.tokens){
+          if(t.creators.length>0){
+            t.creators[0].share=t.creators[0].share-Number(royalties);
+            t.creators.push({
+              verified: 0,
+              address:this.metaboss.admin_key?.pubkey,
+              share:Number(royalties)
+            });
+          } else {
+            t.creators.push({
+              verified: 0,
+              address:this.metaboss.admin_key?.pubkey,
+              share:100
+            });
+          }
+
+        }
+        this.local_save();
+      }
+
+    });
+
+
   }
 
   add_creator() {
@@ -346,5 +411,21 @@ export class MintComponent implements OnInit {
       this.network.wait();
       showMessage(this,"NFT transmis");
     })
+  }
+
+  set_network() {
+    for(let nft of this.tokens)
+      nft.network=this.network.network;
+    showMessage(this,"Network changed")
+  }
+
+  reset_creator() {
+    for(let t of this.tokens){
+      t.creators=[{
+        verified: 0,
+        address:this.metaboss.admin_key?.pubkey,
+        share:100
+      }];
+    }
   }
 }

@@ -17,7 +17,7 @@ import {ClipboardModule} from "@angular/cdk/clipboard";
   styleUrls: ['./manage.component.css']
 })
 export class ManageComponent implements OnInit {
-  nfts: any;
+  nfts: NFT[]=[];
   pubkey: string="";
   search_metadata: string = "";
   search_collection:string="";
@@ -50,6 +50,7 @@ export class ManageComponent implements OnInit {
     let account=this.routes.snapshot.queryParamMap.get("account") || "";
     this.type_addr=this.routes.snapshot.queryParamMap.get("search") || "owner";
     this.pubkey=this.routes.snapshot.queryParamMap.get("view") || "";
+    this.network.network=this.routes.snapshot.queryParamMap.get("network") || "elrond-devnet";
     setTimeout(()=>{
       this.metaboss.sel_key(account).then(()=>{
         this.refresh();
@@ -88,7 +89,7 @@ export class ManageComponent implements OnInit {
           this.network.wait("")
           this.nfts=[];
           for(let nft of r){
-            if(nft.mint && nft.mint.length>0)
+            if(nft.address && nft.address.length>0)
               this.nfts.push(nft);
           }
 
@@ -99,24 +100,37 @@ export class ManageComponent implements OnInit {
   }
 
 
-
-  burn_all() {
+  mass_treatment(func:Function,delay=1){
     let nfts:NFT[]=this.filterPipe.transform(this.nfts,['search_collection',this.search_collection]);
     nfts=this.filterPipe.transform(nfts,['search_metadata',this.search_metadata]);
     let i=0;
     for(let nft of nfts){
       i=i+1;
       setTimeout(()=>{
-        $$("Destruction de "+nft.address)
-        this.metaboss.burn(nft.address,this.network.network,1).then(success=>{
-          if(i==nfts.length){
-            showMessage(this,"détruit");
-          }
-        }).catch(err => {showError(this,err)})
-      },i*1000)
-
+        $$("Traitement de "+nft.address)
+        func(nft);
+        if(i==nfts.length){
+          showMessage(this,"Opération terminée");
+        }
+      },delay*i*1000)
     }
+  }
 
+
+  burn_all() {
+    this.mass_treatment((nft:NFT)=>{
+      this.metaboss.burn(nft.address,this.network.network,1).then(success=>{}).catch(err => {showError(this,err)})
+    })
+  }
+
+  transfer_all() {
+    this.mass_treatment((nft:NFT)=>{
+      if(nft.address && this.metaboss.admin_key){
+        this.network.transfer_to(nft.address,this.metaboss.admin_key.pubkey,this.pubkey,this.network.network).subscribe(()=>{
+          showMessage(this,nft.address+" transféré");
+        })
+      }
+    },5)
   }
 
   onkeypress($event: KeyboardEvent) {
@@ -144,4 +158,6 @@ export class ManageComponent implements OnInit {
       this.refresh();
     }
   }
+
+
 }

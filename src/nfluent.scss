@@ -1,4 +1,5 @@
 //lire https://blog.thoughtram.io/angular/2017/05/23/custom-themes-with-angular-material.html
+//version 0.1
 
 @use 'sass:map';
 @use './node_modules/@angular/material' as mat;
@@ -12,17 +13,21 @@
 
 html {font-size: 0.8vw;}
 
+
 @media(max-width: 1500px) {
-        html {font-size: 1vw;}
+  html {font-size: 1vw;}
+
+
 }
 
 @media(max-width: 1000px) {
-        html {font-size: 1.4vw;}
+  html {font-size: 1.4vw;}
+
+
 }
 
-
-@media(max-width: 500px) {
-        html {font-size: 2vw;}
+@media(max-width: 600px) {
+  html {font-size: 2vw;}
 }
 
 
@@ -34,20 +39,23 @@ html {font-size: 0.8vw;}
   $font-family: null,
   $letter-spacing: normal
  */
+
+
 $nfluent-typography: mat.define-typography-config(
-        $display-4: mat.define-typography-level(4rem, 4rem, 800, Helvetica, $letter-spacing: -0.07em),
-        $display-3: mat.define-typography-level(3.8rem, 3.8rem, 800, Helvetica, $letter-spacing: -0.08em),       //H2
-        $display-2: mat.define-typography-level(2.8rem, 3rem, 800, Helvetica, $letter-spacing: -0.07em), //H3
-        $display-1: mat.define-typography-level(2.5rem, 2.5rem, 600,Helvetica, $letter-spacing: -0.07em),
-        $headline:  mat.define-typography-level(2rem, 2rem, 500, $font-family: Helvetica, $letter-spacing: -0.07em),
-        $title:  mat.define-typography-level(1.6rem, 1.6rem, 500, $font-family: Helvetica, $letter-spacing: -0.04em),
-        $subheading-2:  mat.define-typography-level(1.4rem, 1.6rem, 500, $font-family: Helvetica,$letter-spacing: -0.03em),
-        $subheading-1:  mat.define-typography-level(1.2rem, 1.2rem, 400,$font-family: Helvetica,$letter-spacing: -0.03em),
-        $body-2: mat.define-typography-level(16px, 16px, 400, $font-family: Helvetica,$letter-spacing: -0.03em),
-        $body-1: mat.define-typography-level(14px, 14px, 400, $font-family: Helvetica,$letter-spacing: -0.03em),
-        $button: mat.define-typography-level(16px, 16px, 500, Helvetica, $letter-spacing: -0.03em),
-        $caption: mat.define-typography-level(12px, 12px, 500, Helvetica, $letter-spacing: -0.03em),
+        $display-4: mat.define-typography-level(4.2rem, 4.2rem, 600, mediasans-bold, $letter-spacing: 0.01em),
+        $display-3: mat.define-typography-level(3.8rem, 3.8rem, 500, mediasans-bold, $letter-spacing: 0.03em),       //H2
+        $display-2: mat.define-typography-level(2.8rem, 3rem, 700, mediasans-regular, $letter-spacing: 0.03em), //H3
+        $display-1: mat.define-typography-level(2.5rem, 2.5rem, 600,mediasans-regular, $letter-spacing: 0.03em),
+        $headline:  mat.define-typography-level(2rem, 2rem, 500, $font-family: mediasans-regular, $letter-spacing: 0.03em),
+        $title:  mat.define-typography-level(1.8rem, 1.8rem, 300, $font-family: mediasans-regular, $letter-spacing: 0.03em),
+        $subheading-2:  mat.define-typography-level(1.6rem, 1.6rem, 600, $font-family: GilroyRegular,$letter-spacing: -0.01em),
+        $subheading-1:  mat.define-typography-level(1.2rem, 1.2rem, 500,$font-family: GilroyRegular,$letter-spacing: -0.01em),
+        $body-2: mat.define-typography-level(16px, 16px, 400, $font-family: GilroyRegular,$letter-spacing: -0.03em),
+        $body-1: mat.define-typography-level(14px, 14px, 400, $font-family: GilroyRegular,$letter-spacing: -0.03em),
+        $button: mat.define-typography-level(16px, 16px, 500, GilroyRegular, $letter-spacing: -0.03em),
+        $caption: mat.define-typography-level(12px, 12px, 500, GilroyRegular, $letter-spacing: -0.03em),
 );
+
 
 
 //voir https://material.angular.io/guide/theming#palettes
@@ -131,6 +139,17 @@ ul li::before {
   width: 1em; /* Also needed for space (tweak if needed) */
   margin-left: -1em;
   color: #00e726;
+}
+
+
+
+.greenline {
+  z-index: -1;
+  width: 100%;
+  height: 22px;
+  margin-top: -16px;
+  display: block;
+  background-color: #00e726 !important;
 }
 
 $nfluent-dark-theme: mat.define-dark-theme((

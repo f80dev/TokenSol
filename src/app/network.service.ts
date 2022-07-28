@@ -29,7 +29,7 @@ export enum type_addr {
 })
 export class NetworkService {
 
-  private _network:string="solana-devnet";
+  private _network:string="elrond-devnet";
   private _connection: Connection=new Connection(clusterApiUrl("devnet"), 'confirmed');
   waiting: string="";
 
@@ -289,7 +289,7 @@ export class NetworkService {
   }
 
 
-  get_tokens_from(type_addr:string,addr:string,limit=100,short=false,filter:any=null) : Promise<any[]> {
+  get_tokens_from(type_addr:string,addr:string,limit=100,short=false,filter:any=null,offset=0) : Promise<any[]> {
 
     $$("Recherche de token par "+type_addr)
     return new Promise((resolve,reject) => {
@@ -299,49 +299,52 @@ export class NetworkService {
         if(this.network.indexOf("solana")>-1){
           let func:any=null;
 
-          if(type_addr=="FTX_account"){
-            this.get_tokens_from_ftx(addr).then((tokens:any)=>{
-              let rc:SolanaToken[]=[];
-              for(let t of tokens){
-                let token:SolanaToken=this.build_token_from_ftx(t);
-                if(tokens.length<10){
-                  this.solscan_info(t.solMintAddress).then((dt:any)=>{
-                    token.metadataOnchain=dt.data.metadata
-                    rc.push(token);
-                    resolve(rc);
-                  })
-                } else {
-                  rc.push(token);
-                }
-              }
-              if(tokens.length>10)resolve(rc);
-            });
-          }
+          // if(type_addr=="FTX_account"){
+          //   this.get_tokens_from_ftx(addr).then((tokens:any)=>{
+          //     let rc:SolanaToken[]=[];
+          //     for(let t of tokens){
+          //       let token:SolanaToken=this.build_token_from_ftx(t);
+          //       if(tokens.length<10){
+          //         this.solscan_info(t.solMintAddress).then((dt:any)=>{
+          //           token.metadataOnchain=dt.data.metadata
+          //           rc.push(token);
+          //           resolve(rc);
+          //         })
+          //       } else {
+          //         rc.push(token);
+          //       }
+          //     }
+          //     if(tokens.length>10)resolve(rc);
+          //   });
+          // }
 
           if(type_addr=="owner"){
-            this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed").then((result:any)=> {
-              let values=result.value;
-              $$(values.length+" nfts trouvés");
-              values=values.slice(0,limit);
-              if(values.length==0)resolve(values);
+            this.httpClient.get(environment.server+"/api/nfts/?limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
+              resolve(r);
+            })
 
-              let completed_token=0;
-              for(let k=0;k<values.length;k++){
-                this.complete_token(addr,values[k],filter,short).then(token => {
-                  completed_token++;
-                  values[k]=token;
-                  if(completed_token==values.length){
-                    resolve(values);
-                  }
-                }).catch((err)=>{
-                  $$("Anomalie, tous les NFTs ne sont pas analysé");
-                  resolve(values);
-                })
-
-              }
-
-            }).catch((err:any)=>{reject(err);
-            });
+            // this.connection.getTokenAccountsByOwner(new PublicKey(addr),{programId: TOKEN_PROGRAM_ID},"confirmed").then((result:any)=> {
+            //   let values=result.value;
+            //   $$(values.length+" nfts trouvés");
+            //   values=values.slice(offset,limit);
+            //   if(values.length==0)resolve(values);
+            //
+            //   let completed_token=0;
+            //   for(let k=0;k<values.length;k++){
+            //     this.complete_token(addr,values[k],filter,short).then(token => {
+            //       completed_token++;
+            //       values[k]=token;
+            //       if(completed_token==values.length){
+            //         resolve(values);
+            //       }
+            //     }).catch((err)=>{
+            //       $$("Anomalie, tous les NFTs ne sont pas analysé");
+            //       resolve(values);
+            //     })
+            //
+            //   }
+            //
+            // }).catch((err:any)=>{reject(err);});
           }
 
           if(type_addr=="token"){
@@ -356,7 +359,7 @@ export class NetworkService {
         }
 
         if(this.network.indexOf("elrond")>-1){
-          this.httpClient.get(environment.server+"/api/nfts/?limit=40&account="+addr+"&network="+this.network).subscribe((r:any)=>{
+          this.httpClient.get(environment.server+"/api/nfts/?limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
             resolve(r);
           })
         }
@@ -595,8 +598,9 @@ export class NetworkService {
     return this.httpClient.get<NFT[]>(environment.server+"/api/nfts_from_operation/"+ope);
   }
 
-  transfer_to(mint_addr: string, to_addr: string,owner:string) {
-    return this.httpClient.get(environment.server+"/api/transfer_to/"+mint_addr+"/"+to_addr+"/"+owner);
+  transfer_to(mint_addr: string, to_addr: string,owner:string,network="") {
+    if(network.length==0)network=this.network;
+    return this.httpClient.get(environment.server+"/api/transfer_to/"+mint_addr+"/"+to_addr+"/"+owner+"?network="+network);
   }
 
   generate_svg(data:string) {

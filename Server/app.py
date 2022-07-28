@@ -566,13 +566,24 @@ def get_operation(name:str):
 @app.route('/api/transfer_to/<nft_addr>/<to>/<owner>',methods=["GET"])
 def transfer_to(nft_addr:str,to:str,owner:str):
   network=request.args.get("network","solana-devnet")
-  solana=Solana(network)
-  if "@" in to:
-    words,to,secret_key,secret_key_ints=solana.create_account(to,domain_appli=app.config["DOMAIN_APPLI"],network=network)
-  if solana.transfer(nft_addr,to,owner):
+  if "solana" in network:
+    solana=Solana(network)
+    if "@" in to:
+      words,to,secret_key,secret_key_ints=solana.create_account(to,domain_appli=app.config["DOMAIN_APPLI"],network=network)
+    rc=solana.transfer(nft_addr,to,owner)
+
+  if "elrond" in network:
+    elrond=Elrond(network)
+    collection_id,nonce=elrond.extract_from_tokenid(nft_addr)
+    t=elrond.transfer(collection_id,nonce,owner,to)
+    rc=(not t is None)
+
+  if rc:
     return jsonify({"error":"","message":"NFT transféré"})
   else:
-    return jsonify({"error":"Le serveur ne dispose pas de la clé du propriétaire pour effectuer le transfert"})
+    return returnError("Probleme de transfert")
+
+
 
 
 @app.route('/api/action_calvi/',methods=["POST"])
@@ -1105,12 +1116,12 @@ def mint_for_contest(confirmation_code=""):
     nonce,cid=elrond.mint(miner,
                           title=_data["name"],
                           collection=collection_id,
-                          properties=elrond.format_offchain(_data)["properties"],
-                          files=elrond.format_offchain(_data)["files"],
+                          properties=_data["attributes"],
+                          files=_data["files"],
                           ipfs=Infura(), #IPFS(IPFS_SERVER,IPFS_PORT),
                           quantity=1,
                           royalties=20,
-                          visual=_data["image"]
+                          visual=_data["visual"]
                           )
 
     if nonce:
@@ -1438,15 +1449,24 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
 @app.route('/api/nfts/',methods=["GET"])
 def nfts():
   network=request.args.get("network","solana-devnet")
-  account=request.args.get("account","paul").lower()
+  account=request.args.get("account","paul")
   with_attr="with_attr" in request.args
-  limit=request.args.get("limit","200")
+  limit=int(request.args.get("limit","2000"))
+  offset=int(request.args.get("offset","0"))
+
+  log("Récupération de "+str(limit)+" nfts sur "+network+" à partir de "+str(offset))
+
   rc=[]
   if "elrond" in network:
-    rc=rc+Elrond(network).get_nfts(account,int(limit),with_attr=with_attr)
+    rc=rc+Elrond(network).get_nfts(account,limit,with_attr=with_attr)
   else:
-    rc=rc+Solana(network).get_nfts(account)
-  return jsonify(rc)
+    rc=rc+Solana(network).get_nfts(account,offset,limit)
+
+  nfts=[]
+  for nft in rc:
+    nfts.append(nft.__dict__)
+
+  return jsonify(nfts)
 
 
 
@@ -1613,36 +1633,25 @@ def mint():
   :return:
   """
   keyfile=request.args.get("keyfile","paul").lower()
-  network=request.args.get("network","solana-devnet")
+  network=request.args.get("network","elrond-devnet")
   offchaindata_platform=request.args.get("offchaindata_platform","ipfs").replace(" ","").lower()
-  _data=request.json
-  if _data is None:
-    text=str(request.data,"utf8").replace('\x00','')
-    _data=json.loads(text)
+  _data=NFT(object=request.json)
 
-  if _data is None:
-    s=str(request.data,"utf8")
-    for i in range(200): s=s.replace("\r\n","")
-    _data=json.loads(s)
-
-  if not _data["image"].startswith("http"):
+  if not _data.visual.startswith("http"):
     return jsonify({"error":"Vous devez uploader les images avant le minage"})
-
-  log("Minage avec les metadata "+str(_data))
-  collection_id=_data["collection"]["name"] if "collection" in _data else ""
 
   if "elrond" in network.lower():
     elrond=Elrond(network)
-    collection_id=elrond.add_collection(keyfile,_data["collection"]["name"],type="NonFungible")
+    collection_id=elrond.add_collection(keyfile,_data.collection["name"],type="NonFungible")
     nonce,cid=elrond.mint(keyfile,
-                          title=_data["name"],
-                          collection=collection_id,
-                          properties=elrond.format_offchain(_data)["properties"],
-                          files=elrond.format_offchain(_data)["files"],
+                          title=_data.name,
+                          collection=_data.collection["name"],
+                          properties=_data.attributes,
+                          files=_data.files,
                           ipfs=IPFS(IPFS_SERVER),
                           quantity=1,
-                          royalties=_data["seller_fee_basis_points"]/100,  #On ne prend les royalties que pour le premier créator
-                          visual=_data["image"]
+                          royalties=_data.royalties/100,  #On ne prend les royalties que pour le premier créator
+                          visual=_data.visual
                           )
 
     if nonce is None:

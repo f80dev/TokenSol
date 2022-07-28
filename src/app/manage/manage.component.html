@@ -68,8 +68,14 @@
     Reset
   </button>
 
+  <button type="button" mat-raised-button mat-button
+          [disabled]="nfts?.length==0"
+          (click)="transfer_all()">
+    Transfert vers {{metaboss.admin_key?.name}}
+  </button>
+
   <br>
-  <div *ngIf="nfts?.length>0">{{nfts.length}} NFT trouvé(s)<br></div>
+  <div *ngIf="nfts!.length>0">{{nfts.length}} NFT trouvé(s)<br></div>
   <app-nfts [nfts]="nfts | filter: ['collection',search_collection] | filter: ['metadata',search_metadata]" format="obj"
             (refresh)="refresh()"
             [user]="metaboss.admin_key?.pubkey">

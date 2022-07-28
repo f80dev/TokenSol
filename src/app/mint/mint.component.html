@@ -52,7 +52,7 @@
 
     <button type="button"
             mat-raised-button mat-button
-            (click)="mint()">
+            (click)="confirm_mint()">
       Tout miner
     </button>
 
@@ -98,13 +98,19 @@
     <tr>
       <th>Visuel</th>
       <th>Titre / Description</th>
+      <th>Network
+        <mat-icon (click)="set_network()" style="cursor: pointer;font-size: medium;">edit</mat-icon>
+      </th>
       <th>Collection</th>
       <th>Symbole</th>
       <th>Fichiers</th>
       <th>Attributs</th>
-      <th>Créateurs</th>
+      <th>Créateurs
+        <mat-icon (click)="add_miner_to_creator()" style="cursor: pointer;font-size: medium;">add</mat-icon>
+        <mat-icon (click)="reset_creator()" style="cursor: pointer;font-size: medium;">cancel</mat-icon>
+      </th>
       <th>Commandes</th>
-      <th>Validité</th>
+      <th>Message</th>
     </tr>
     <tr *ngFor="let token of tokens" style="margin: 5px;">
       <td style="width: fit-content">
@@ -118,6 +124,9 @@
       <td style="cursor: pointer">
           <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.name"><br>
           <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.description">
+      </td>
+      <td>
+        {{token.network}}
       </td>
       <td (click)="set_collection(token)">{{token.collection?.name}} / {{token.collection?.family}}</td>
       <td style="max-width: 50px;">
@@ -142,7 +151,7 @@
       <td>
         <app-link *ngFor="let creator of token.creators"
                   [content]="'https://solscan.io/account/'+creator.address+'?cluster=devnet'">
-          {{(creator.address | alias:network.network).substring(0,10)+'..'}}&nbsp;({{creator?.share}}%)
+          {{(creator.address | alias:network.network).substring(0,15)+'..'}}&nbsp;({{creator?.share}}%)
           <br>
         </app-link>
       </td>
@@ -154,12 +163,15 @@
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <mat-icon style="cursor: pointer" >content_copy</mat-icon>
         <mat-icon style="cursor: pointer" (click)="download(token)">download</mat-icon>
-        <app-upload-file (uploaded)="onUploadXMP($event,token)" extensions=".xmp">Metas</app-upload-file>
+        <app-upload-file (uploaded)="onUploadXMP($event,token)" extensions=".xmp" icon="note">
+        </app-upload-file>
       </td>
 
-      <td>
-        <mat-icon *ngIf="isValide(token)==''">checkmark</mat-icon>
-        <mat-icon [title]="isValide(token)" *ngIf="isValide(token)!=''">cancel</mat-icon>
+      <td style="width: 50px;" *ngIf="token.message">
+        <app-hourglass *ngIf="token.message.startsWith('hourglass')" [message]="token.message.substring(10) || ''"></app-hourglass>
+        <span *ngIf="!token.message.startsWith('hourglass')">{{token.message}}</span>
+<!--        <mat-icon *ngIf="isValide(token)==''">checkmark</mat-icon>-->
+<!--        <mat-icon [title]="isValide(token)" *ngIf="isValide(token)!=''">cancel</mat-icon>-->
       </td>
 
     </tr>

@@ -81,6 +81,8 @@ export interface NFT {
   owner:string | undefined
   marketplace:any | undefined
   files:any[]
+  solana: any | undefined
+  message: string | undefined
 }
 
 export interface SolanaToken {
@@ -102,7 +104,7 @@ export interface SolanaToken {
 })
 export class NftsComponent implements OnInit {
 
-  @Input("nfts") nfts: any[]=[];
+  @Input("nfts") nfts: NFT[]=[];
   @Input("user") user: string | undefined;
   @Input("format") format: string="str";
   @Output('refresh') onrefresh: EventEmitter<any>=new EventEmitter();

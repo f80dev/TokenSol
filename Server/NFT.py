@@ -43,15 +43,15 @@ class NFT:
       self.name=object["name"]
       self.symbol=object["symbol"]
       self.description=object["description"]
-      self.visual=object["image"] if "image" in object else ""
+      self.visual=object["visual"] if "visual" in object else object["image"]
       if self.visual=="": self.visual=object["visual"] if "visual" in object else ""
 
       self.creators=object["creators"]
       self.files=object["files"] if "files" in object else []
       self.attributes=object["attributes"]
       self.collection=object["collection"] if "collection" in object else {name:""}
-      self.marketplace=object["marketplace"]
-      self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else 0
+      self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1}
+      self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)
       self.address=object["mint"] if "mint" in object else ""
       self.network=object["network"]
       self.owner=object["owner"] if "owner" in object else ""
