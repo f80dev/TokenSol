@@ -303,9 +303,9 @@ class NFLUENT extends Module
         $store_addr=$smarty->tpl_vars['base_dir']->value;
         Logger::AddLog("Address de la boutique = ".$store_addr);
 
-        $url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
-//        if($store_addr.strpos("127.0.0.1")>0)
-        //$url='http://host.docker.internal:4242/api/mint_from_prestashop/';  #host.docker.internal designe le localhost
+        //$url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
+        //if($store_addr.strpos("127.0.0.1")>0)
+        $url='http://host.docker.internal:4242/api/mint_from_prestashop/';  #host.docker.internal designe le localhost
 
         $resp=$this->api($url,$args);
         if($resp->result=="ok"){

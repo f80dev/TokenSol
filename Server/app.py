@@ -1882,7 +1882,7 @@ if __name__ == '__main__':
     "UPDLOAD_FOLDER":"./Temp/"
   })
 
-  _port=int(app.config["DOMAIN_SERVER"].split(":")[1])
+  _port=int(app.config["DOMAIN_SERVER"][app.config["DOMAIN_SERVER"].rindex(":")+1:])
 
   if "debug" in sys.argv:
     app.run(debug=True,port=_port)
