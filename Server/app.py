@@ -28,7 +28,6 @@ from flask import request, jsonify, send_file, Flask, make_response
 from flask_cors import CORS
 from fontTools import ttLib
 from reportlab.graphics import renderPM
-from solana.account import Account
 from svglib.svglib import svg2rlg
 
 from werkzeug.datastructures import FileStorage
@@ -1335,15 +1334,25 @@ def use():
 @app.route('/api/images/<cid>',methods=["GET","DELETE"])
 @app.route('/api/images/',methods=["GET","DELETE"])
 def get_image(cid:str=""):
+  """
+  note: l'upload des images se fait via l'api upload
+  :param cid:
+  :return:
+  """
   if request.method=="GET":
     if len(cid)==0:
       return jsonify({"files":os.listdir("./temp")})
     else:
-      f=open("./temp/"+cid,"r" if cid.endswith(".svg") else "rb")
-      format="image/svg+xml" if cid.endswith(".svg") else "image/webp"
-      response = make_response(f.read())
-      response.headers.set('Content-Type', format)
-      return response
+      filename="./temp/"+cid
+      if exists(filename):
+        f=open(filename,"r" if cid.endswith(".svg") else "rb")
+        format="image/svg+xml" if cid.endswith(".svg") else "image/webp"
+        response = make_response(f.read())
+        response.headers.set('Content-Type', format)
+        return response
+      else:
+        return returnError("Fichier inexistant")
+
 
   if request.method=="DELETE":
     if "/api/images/" in cid:cid=cid.split("/api/images/")[1].split("?")[0]
@@ -1873,7 +1882,7 @@ if __name__ == '__main__':
     "UPDLOAD_FOLDER":"./Temp/"
   })
 
-  _port=int(app.config["DOMAIN_SERVER"].split(":")[2])
+  _port=int(app.config["DOMAIN_SERVER"].split(":")[1])
 
   if "debug" in sys.argv:
     app.run(debug=True,port=_port)

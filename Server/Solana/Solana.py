@@ -8,8 +8,7 @@ from os.path import exists
 from time import sleep
 
 import requests
-from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages, Bip39SeedGenerator, SolAddrEncoder, Bip44, \
-  Bip44Coins, Bip44Changes
+from bip_utils import Bip39MnemonicGenerator, Bip39WordsNum, Bip39Languages, Bip39SeedGenerator, SolAddrEncoder, Bip44, Bip44Coins, Bip44Changes
 from solana.publickey import PublicKey
 from solana.rpc.api import Client
 

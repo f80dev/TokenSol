@@ -297,12 +297,15 @@ class Sticker(Element):
   def save(self,filename,quality=98,index=0):
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp pour le Webp
     _data_to_add=self.data
-    for i in range(10):
-      _data_to_add=_data_to_add.replace("__idx__",str(index))
+    if len(self.data)>0:
+      for i in range(10):
+        _data_to_add=_data_to_add.replace("__idx__",str(index))
 
-    xmp="<?xpacket begin='' id=''?><x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description rdf:mint='"\
-        +str(base64.b64encode(bytes(_data_to_add,"utf8")),"utf8")\
-        +"' xmlns:dc='http://purl.org/dc/elements/1.1/'></rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end='r'?>"
+      xmp="<?xpacket begin='' id=''?><x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description rdf:mint='"\
+          +str(base64.b64encode(bytes(_data_to_add,"utf8")),"utf8")\
+          +"' xmlns:dc='http://purl.org/dc/elements/1.1/'></rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end='r'?>"
+    else:
+      xmp=""
 
     if self.text and self.text["text"] and "<svg" in self.text["text"]:
       f=open(filename,"w")
@@ -323,7 +326,10 @@ class Sticker(Element):
       else:
         log("Enregistrement d'un fichier statique")
         if self.image.format=="JPEG" or self.image.format=="JPG":
-          self.image.save(filename,xmp=bytes(xmp,"utf8"))
+          if len(xmp)>0:
+            self.image.save(filename,xmp=bytes(xmp,"utf8"))
+          else:
+            self.image.save(filename)
         else:
           log("... au format WEBP")
           self.image.save(filename,quality=int(quality),method=6,lossless=(quality==100),save_all=True,xmp=bytes(xmp,"utf8"))
