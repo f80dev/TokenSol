@@ -1,0 +1,116 @@
+{
+  "name": "NFT_demo_1",
+  "symbol": "symbol1",
+  "description": "description1",
+  "seller_fee_basis_points": 5000,
+  "image": "https://bafybeibhu5eaksjtx5fdo7plinzlqmamwitlnvkdqdnyj3u4gozqyamu7u.ipfs.nftstorage.link?visual1.png",
+  "Issuer": "paul",
+  "external_url": "",
+  "attributes": [
+    {
+      "trait_type": "Pass festival",
+      "value": "pour deux(2) personnes"
+    },
+    {
+      "trait_type": "avantage1",
+      "value": "acc\u00e8s pour deux (2) personnes \u00e0 un (1) \u00e9v\u00e9nement partenaire officiel de Calvi on the Rocks"
+    },
+    {
+      "trait_type": "avantage2",
+      "value": "invitation \u00e0 la 'Soir\u00e9e off' r\u00e9serv\u00e9e aux membres NFT pour deux (2) personnes"
+    },
+    {
+      "trait_type": "avantage3",
+      "value": "acc\u00e8s membre pour les after party officielles pour deux (2) personnes"
+    },
+    {
+      "trait_type": "avantage4",
+      "value": "acc\u00e8s prioritaire et bar d\u00e9di\u00e9 (consommation \u00e0 la charge du festivalier) - tables r\u00e9serv\u00e9es \u00e0 l'avance pour les \u00ab NFT member \u00bb pour deux (2) personnes"
+    },
+    {
+      "trait_type": "avantage5",
+      "value": "1 affiche d\u00e9dicac\u00e9e et num\u00e9rot\u00e9e"
+    },
+    {
+      "trait_type": "nombre de Pass2022",
+      "value": 2
+    },
+    {
+      "trait_type": "nombre de Pass2023",
+      "value": 2
+    },
+    {
+      "trait_type": "nombre de Pass2024",
+      "value": 2
+    },
+    {
+      "trait_type": "Validation",
+      "value": "http://127.0.0.1:4200?s=symbol1&platform=ftx"
+    },
+    {
+      "trait_type": "Pass festival",
+      "value": "pour deux(2) personnes"
+    },
+    {
+      "trait_type": "avantage1",
+      "value": "acc\u00e8s pour deux (2) personnes \u00e0 un (1) \u00e9v\u00e9nement partenaire officiel de Calvi on the Rocks"
+    },
+    {
+      "trait_type": "avantage2",
+      "value": "invitation \u00e0 la 'Soir\u00e9e off' r\u00e9serv\u00e9e aux membres NFT pour deux (2) personnes"
+    },
+    {
+      "trait_type": "avantage3",
+      "value": "acc\u00e8s membre pour les after party officielles pour deux (2) personnes"
+    },
+    {
+      "trait_type": "avantage4",
+      "value": "acc\u00e8s prioritaire et bar d\u00e9di\u00e9 (consommation \u00e0 la charge du festivalier) - tables r\u00e9serv\u00e9es \u00e0 l'avance pour les \u00ab NFT member \u00bb pour deux (2) personnes"
+    },
+    {
+      "trait_type": "avantage5",
+      "value": "1 affiche d\u00e9dicac\u00e9e et num\u00e9rot\u00e9e"
+    },
+    {
+      "trait_type": "nombre de Pass2022",
+      "value": 2
+    },
+    {
+      "trait_type": "nombre de Pass2023",
+      "value": 2
+    },
+    {
+      "trait_type": "nombre de Pass2024",
+      "value": 2
+    },
+    {
+      "trait_type": "Validation"
+    }
+  ],
+  "properties": {
+    "creators": [
+      {
+        "address": "paul",
+        "share": 10
+      },
+      {
+        "address": "sophie",
+        "share": 60
+      },
+      {
+        "address": "roger",
+        "share": 30
+      }
+    ],
+    "files": [
+      {
+        "files": "https://bafybeibhu5eaksjtx5fdo7plinzlqmamwitlnvkdqdnyj3u4gozqyamu7u.ipfs.nftstorage.link?visual1.png",
+        "type": "image/png"
+      }
+    ]
+  },
+  "collection": {
+    "name": "LesGratuits",
+    "family": "AirVCollection"
+  }
+}
