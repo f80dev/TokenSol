@@ -454,8 +454,8 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/layers/?preview="+preview,  _l);
   }
 
-  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98,data={}) {
-    let url=environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format=preview&limit="+limit+"&quality="+quality;
+  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98,target="preview",data={},platform="nftstorage") {
+    let url=environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format="+target+"&limit="+limit+"&quality="+quality+"&platform="+platform;
     url=url+"&data="+btoa(JSON.stringify(data));
     return this.httpClient.get(
       url,

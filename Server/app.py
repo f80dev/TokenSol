@@ -316,6 +316,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
   :param size:
   :return:
   """
+  rc=[]
   if format!="list": #Dans le cas de format = list cette fonction est appelé depuis le serveur (pas depuis une api)
     limit=int(request.args.get("limit",10))
     size=request.args.get("size","500,500").split(",")
@@ -350,7 +351,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
       pass
 
   if format=="zip":
-    archive_file="./temp/Collection.7z"
+    archive_file="./temp/Collection.zip"
     with py7zr.SevenZipFile(archive_file, 'w') as archive:
       for f in files:
         archive.write(f)
@@ -358,18 +359,25 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
     for f in files:
       os.remove(f)
 
-    return send_file(archive_file,attachment_filename="Collection.7z")
+    return send_file(archive_file,attachment_filename="Collection.zip")
 
   if format=="list":
     return files
 
   if format=="upload":
-    platform=request.args.get("platform","ipfs")
-    for f in files:
-      upload_on_platform(f,platform)
+    platform=request.args.get("platform","nftstorage")
+    for filename in files:
+      _f=open(filename,"rb")
+      only_filename=filename[filename.rindex("/")+1:]
+      obj={
+        "content":"data:image/jpeg;base64,"+str(base64.b64encode(_f.read()),"utf8"),
+        "type":"image/"+ext,
+        "filename":only_filename
+      }
+      rc.append(upload_on_platform(obj,platform))
+      _f.close()
 
   if format=="preview":
-    rc=[]
     for filename in files:
       f=open(filename,"rb")
       only_filename=filename[filename.rindex("/")+1:]
@@ -377,7 +385,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
       f.close()
       os.remove(filename)
 
-    return jsonify(rc)
+  return jsonify(rc)
 
 
 
@@ -1422,14 +1430,20 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
     rc={"cid":cid,"url":app.config["DOMAIN_APPLI"]+"/api/json/"+cid}
 
   if platform.startswith("nfluent"):
-    b=base64.b64decode(data["content"].split("base64,")[1])
     ext=data["type"].split("/")[1].split("+")[0]
+
+    if "filename" in data and exists(data["filename"]):
+      log("Le fichier est déjà présent sur le serveur")
+      cid=data["filename"][data["filename"].rindex("/")+1:]
+      return {"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+cid+"?"+ext}
+
+    b=base64.b64decode(data["content"].split("base64,")[1])
     if ext=="gif" or ext=="png": ext="webp"
     cid=hex(hash(data["content"]))+"."+ext
     filename="./temp/"+cid
 
     if ext=="svg":
-      s=Sticker(cid,text=str(base64.b64decode(data["content"].split("base64,")[1]),"utf8"))
+      s=Sticker(cid,text=str(b,"utf8"))
     else:
       s=Sticker(cid,data["content"])
 
@@ -1595,12 +1609,26 @@ def upload():
       body["filename"]="qrcode.png"
 
     else:
-      if body["filename"].endswith(".mp4") or body["filename"].endswith(".avi") or body["filename"].endswith(".webm"):
-        body["type"]="video/"+body["filename"]
-      else:
-        body["type"]="image/"+body["filename"].split(".")[1]
+      if body["type"]=="":
+        if body["filename"].endswith(".mp4") or body["filename"].endswith(".avi") or body["filename"].endswith(".webm"):
+          body["type"]="video/"+body["filename"]
+        else:
+          body["type"]="image/"+body["filename"].split(".")[1]
 
-  rc=upload_on_platform(body,platform)
+  if "zip" in body["type"]:
+    rc=[]
+    b=BytesIO(base64.b64decode(body["content"].split("base64,")[1]))
+    with py7zr.SevenZipFile(b, 'r') as zip:
+      zip.extractall(".")
+      for fname in zip.getnames():
+        rc.append(upload_on_platform({
+          "filename":fname,
+          "type":"image/"+fname[fname.rindex('.')+1:]
+        },platform))
+
+  else:
+    rc=upload_on_platform(body,platform)
+
   return jsonify(rc)
 
 

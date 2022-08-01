@@ -1,0 +1,46 @@
+data:
+    collection: anniversaire
+    description: NFT exclusif pour les 50 ans
+    family: nfluent
+    files: ''
+    properties: 'prenom=Thomas
+
+        nom=Lafourcade
+
+        date_anniv=11-juillet'
+    symbol: anniv02
+    title: Thomas50
+filename_format: image
+fontstyle:
+    color: '#FFFFFF'
+    name: AGENCYB.TTF
+    size: 32.8
+height: 500
+layers:
+-   elements:
+    -   image: http://127.0.0.1:4242/api/images/-0x737096dd37ce2bd.webp?webp
+    -   image: http://127.0.0.1:4242/api/images/0x6ddf2a09897594c1.webp?webp
+    indexed: true
+    name: layer1
+    params: {}
+    position: 1
+    text: ''
+    unique: false
+-   elements:
+    -   image: http://127.0.0.1:4242/api/images/-0x23bf9b7c9834121c.webp?webp
+    -   image: http://127.0.0.1:4242/api/images/-0x7a7a2d4663c44287.webp?webp
+    -   image: http://127.0.0.1:4242/api/images/-0xa7f05de01ab0f4e.webp?webp
+    -   image: http://127.0.0.1:4242/api/images/0x26a6ce877d37f072.webp?webp
+    indexed: true
+    name: layer2
+    params: {}
+    position: 1
+    text: ''
+    unique: false
+limit: 1
+platform: nfluent_local
+seed: 0
+text_to_add: '50'
+width: 500
+x: 5
+y: 26

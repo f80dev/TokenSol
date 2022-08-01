@@ -1,6 +1,15 @@
 import {Component,  OnInit} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
-import {$$, base64ToArrayBuffer, isLocal, MetabossKey, showError, showMessage, syntaxHighlight} from "../../tools";
+import {
+  $$,
+  base64ToArrayBuffer,
+  getParams,
+  isLocal,
+  MetabossKey,
+  showError,
+  showMessage,
+  syntaxHighlight
+} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
@@ -50,9 +59,23 @@ export class MintComponent implements OnInit {
     if(this.user.isConnected()){
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp)
-      this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((r:any)=>{
-        this.sel_ope=r;
+
+      getParams(this.routes).then((params:any)=>{
+        if(params.hasOwnProperty("files")){
+          let files=[];
+          for(let f of params["files"]){
+            files.push({filename:f});
+          }
+          this.onFileSelected(files);
+        }
+
+        this.network.get_operations(params["ope"] || "").subscribe((r:any)=>{
+          this.sel_ope=r;
+        })
+
       })
+
+
     } else this.user.login("Le minage nécessite une authentification");
     if(isLocal(environment.server))this.sel_platform="nfluent_local";
   }
@@ -110,9 +133,17 @@ export class MintComponent implements OnInit {
 
 
   onFileSelected(files: any) {
-    if(typeof files=="object")files=[files];
+    if(files.hasOwnProperty("filename"))files=[files]
     let index=0;
     for(let f of files) {
+      if(f.filename.startsWith("http")){
+        fetch(f.filename).then((resp) => {
+          resp.arrayBuffer().then((data)=>{
+            //this.tokens.push();
+          })
+        })
+      }
+
       if(f.filename.endsWith(".json")){
         const fr = new FileReader();
         fr.onload = () => {
@@ -137,7 +168,7 @@ export class MintComponent implements OnInit {
             _infos= JSON.parse(atob(tags.mint.value));
           }
           this.tokens.push(this.get_token_from_xmp(_infos,url))
-        })
+        });
 
       }
     }
@@ -197,13 +228,7 @@ export class MintComponent implements OnInit {
 
   upload_file(file:any){
     return new Promise((resolve, reject) => {
-
-      let obj = {
-        filename: file.filename,
-        content: file.content,
-        type:""
-      }
-      this.network.upload(obj,this.sel_platform).subscribe((r: any) => {
+      this.network.upload(file,this.sel_platform,file.type).subscribe((r: any) => {
         localStorage.removeItem("attach_file_" + file.uri);
         resolve(r.url)
         showMessage(this, "upload ok");

@@ -4,7 +4,7 @@ import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
-import {$$, showError, showMessage} from "../../tools";
+import {$$, setParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PLATFORMS, PRICE_PER_TOKEN, TOKEN_FACTORY_WALLET} from "../../definitions";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -46,6 +46,7 @@ export class CreatorComponent implements OnInit {
   palette_names: string[]=[];
   usePalette: boolean=false;
   sel_colors: any[]=[];
+  upload_files=[];
 
 
   text_to_add: string="Texte ici";
@@ -208,7 +209,7 @@ export class CreatorComponent implements OnInit {
 
         if(format=="preview"){
           this.network.wait("Fabrication de la collection en cours ...");
-          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,this.data).subscribe((r:any)=>{
+          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"preview",this.data).subscribe((r:any)=>{
             this.network.wait("");
             this.previews=r;
           },(err)=>{showError(this,err);})
@@ -216,7 +217,14 @@ export class CreatorComponent implements OnInit {
 
         if(format=="upload"){
           this.network.wait("");
-          open(environment.server+"/api/collection/?format=upload&platform="+this.sel_platform+"&limit="+this.limit,"_blank")
+          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"upload",this.data,this.sel_platform).subscribe((r:any) => {
+            this.upload_files=[];
+            for(let item of r){
+              // @ts-ignore
+              this.upload_files.push(item['url']);
+            }
+          });
+
         }
       });
     },(err)=>{showError(this,err);})
@@ -319,7 +327,7 @@ export class CreatorComponent implements OnInit {
     }).afterClosed().subscribe((urls: string) => {
       if (urls) {
         for(let url of urls.split(",")){
-          layer.elements.push(url);
+          layer.elements.push({image:url});
         }
       }
     });
@@ -665,5 +673,9 @@ export class CreatorComponent implements OnInit {
       }
 
     });
+  }
+
+  miner() {
+    this.router.navigate(["miner"],{queryParams:{param:setParams({files:this.upload_files})}})
   }
 }
