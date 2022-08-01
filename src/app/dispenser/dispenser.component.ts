@@ -6,6 +6,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
+import {NFT} from "../nfts/nfts.component";
 
 @Component({
   selector: 'app-dispenser',
@@ -13,7 +14,7 @@ import {MatDialog} from "@angular/material/dialog";
   styleUrls: ['./dispenser.component.css']
 })
 export class DispenserComponent implements OnInit {
-  nfts: any[]=[];
+  nfts: NFT[]=[];
   message="";
   operation: any;
   dest="";
@@ -38,10 +39,10 @@ export class DispenserComponent implements OnInit {
         this.nfts=[];
         this.message="";
         for(let nft of nfts){
-          if(nft.quantity>0){
-            nft.opacity==1;
+          if(nft.marketplace.quantity>0){
+            nft.style={opacity:1};
           } else {
-            nft.opacity=0.3;
+            nft.style={opacity:0.3};
           }
 
           this.nfts.push(nft);

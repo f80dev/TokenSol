@@ -72,7 +72,7 @@
 
     <button type="button"
             mat-raised-button mat-button
-            (click)="set_collection()">
+            (click)="set_collection(null)">
       Collection
     </button>
 
@@ -104,6 +104,7 @@
       <th>Collection</th>
       <th>Symbole</th>
       <th>Fichiers</th>
+      <th>Price / Quantity</th>
       <th>Attributs</th>
       <th>Créateurs
         <mat-icon (click)="add_miner_to_creator()" style="cursor: pointer;font-size: medium;">add</mat-icon>
@@ -121,15 +122,15 @@
               >
         </div>
       </td>
-      <td style="cursor: pointer">
+      <td style="cursor: pointer;width: 140px;">
           <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.name"><br>
           <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.description">
       </td>
-      <td>
-        {{token.network}}
+      <td style="width:50px">
+        {{token.network!.replace('-',' ')}}
       </td>
-      <td (click)="set_collection(token)">{{token.collection?.name}} / {{token.collection?.family}}</td>
-      <td style="max-width: 50px;">
+      <td (click)="set_collection(token)" style="width:60px">{{token.collection?.name}} / {{token.collection?.family}}</td>
+      <td style="max-width: 40px;">
         <input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.symbol">
       </td>
 
@@ -137,6 +138,11 @@
         <app-link *ngFor="let file of token.files" [content]="file.uri">
           <mat-icon>link</mat-icon>
         </app-link>
+      </td>
+
+      <td>
+        {{token.marketplace['price']}} / {{token.marketplace['quantity']}}
+        <mat-icon (click)="set_marketplace(token)" style="cursor:pointer;font-size: small;">edit</mat-icon>
       </td>
 
       <td style="text-align: left;">
@@ -161,6 +167,7 @@
         <mat-icon style="cursor: pointer" (click)="miner(token)">build</mat-icon>
         <mat-icon style="cursor: pointer" [title]="to_string(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
+        <br>
         <mat-icon style="cursor: pointer" >content_copy</mat-icon>
         <mat-icon style="cursor: pointer" (click)="download(token)">download</mat-icon>
         <app-upload-file (uploaded)="onUploadXMP($event,token)" extensions=".xmp" icon="note">

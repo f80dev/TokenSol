@@ -511,10 +511,9 @@ export class NetworkService {
     return this.httpClient.get(url_api);
   }
 
-  mint_for_contest(addr: string,tokenid:string,ope:any,miner:string,metadata_storage:string,network:string,nft:any={}){
+  mint_for_contest(addr: string,ope:any,miner:string,metadata_storage:string,network:string,nft:NFT){
     let body:any={
       account:addr,
-      tokenid:tokenid,
       token: nft,
       network:network,
       miner:miner,

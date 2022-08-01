@@ -28,6 +28,8 @@ export class ContestComponent implements OnInit,OnDestroy {
     public network:NetworkService
   ) { }
 
+
+
   ask_token(ope:string){
     if(ope!=''){
       this.network.get_new_token(ope,environment.appli).subscribe((r:any)=>{
@@ -41,8 +43,11 @@ export class ContestComponent implements OnInit,OnDestroy {
     }
   }
 
+
+
   ngOnInit(): void {
-    this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((ope:any)=>{
+    let ope=this.routes.snapshot.queryParamMap.get("ope") || "";
+    this.network.get_operations(ope).subscribe((ope:any)=>{
       this.operation=ope;
 
       this.handle=setInterval(()=>{
@@ -57,6 +62,9 @@ export class ContestComponent implements OnInit,OnDestroy {
         },1000);
     })
   }
+
+
+
 
   ngOnDestroy(): void {
     clearInterval(this.handle);

@@ -1,5 +1,5 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import { Component, OnInit} from '@angular/core';
+import {AfterContentInit, AfterViewInit, Component, OnInit} from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -8,7 +8,7 @@ import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
 import {MetabossService} from "./metaboss.service";
-import {getParams} from "../tools";
+import {$$, getParams} from "../tools";
 
 @Component({
   selector: 'app-root',
@@ -37,13 +37,14 @@ export class AppComponent implements OnInit {
     public metaboss:MetabossService
   ) {}
 
+  //test: https://tokenfactory.nfluent.io/contest?ope=
   ngOnInit(): void {
-    this.user.disconnect();
-    setTimeout(()=>{
-      this.toolbar_visible=getParams(this.routes,"toolbar","true");
-      this.update_network();
-    },500);
+    getParams(this.routes).then((params:any)=>{
+      this.toolbar_visible=params["toolbar"] || "true";
+    });
+    //  this.update_network();
   }
+
 
   logout(){
     this.user.disconnect();
@@ -52,13 +53,13 @@ export class AppComponent implements OnInit {
 
 
   login() {
-    this.user.connect().then((addr)=>{
-      this.router.navigate(["wallet"]);
-    })
+    this.user.connect().then((addr)=>{this.router.navigate(["wallet"]);})
   }
 
 
   update_network() {
       this.metaboss.init_keys(this.network_service.network);
   }
+
+
 }

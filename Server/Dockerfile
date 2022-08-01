@@ -44,7 +44,7 @@ RUN pip3 install pyopenssl
 RUN pip3 -v install solana
 RUN pip3 -v install base58
 RUN pip3 -v install ipfshttpclient
-RUN pip3 -v install erdpy==1.4.0
+RUN pip3 -v install erdpy
 RUN pip3 -v install ansi
 RUN pip3 -v install -U secret-sdk
 RUN pip3 -v install pyqrcode
@@ -65,6 +65,7 @@ RUN pip3 -v install bip_utils
 RUN pip3 -v install matplotlib
 RUN pip3 -v install Unidecode
 RUN pip3 -v install xmltodict
+RUN pip3 -v install pypng
 
 WORKDIR /
 RUN mkdir Solana
@@ -103,4 +104,4 @@ RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 WORKDIR $APP_HOME/
 
-CMD ["python3", "app.py","4242","https://server.f80lab.com","ssl"]
+CMD ["python3", "app.py","https://server.f80lab.com:4242","https://tokenfactory.nfluent.io","ssl"]

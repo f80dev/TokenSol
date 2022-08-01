@@ -83,6 +83,7 @@ export interface NFT {
   files:any[]
   solana: any | undefined
   message: string | undefined
+  style: any | undefined
 }
 
 export interface SolanaToken {

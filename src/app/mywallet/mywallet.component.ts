@@ -28,12 +28,14 @@ export class MywalletComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.addr=getParams(this.routes,"addr")
-    if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
-    this.showDetail=getParams(this.routes,"show_detail",false);
-    this.network.network=getParams(this.routes,"network",this.addr.startsWith("erd") ? "elrond-devnet" : "solana-devnet");
-    this.url_key=environment.server+"/api/key/"+this.addr+"?format=qrcode";
-    this.refresh();
+    getParams(this.routes).then((params:any)=>{
+      this.addr=params["addr"];
+      if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
+      this.showDetail=params["show_detail"] || false;
+      this.network.network=params["network"] || this.addr.startsWith("erd") ? "elrond-devnet" : "solana-devnet";
+      this.url_key=environment.server+"/api/key/"+this.addr+"?format=qrcode";
+      this.refresh();
+    });
   }
 
   refresh(index:number=0) {

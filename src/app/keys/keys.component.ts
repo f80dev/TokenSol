@@ -39,8 +39,7 @@ export class KeysComponent implements OnInit {
   }
 
   refresh(){
-    this.network.wait("Chargement des clés");
-    this.user.connect("keys").then((profil)=> {
+    this.user.connect().then((profil)=> {
       this.metaboss.init_keys(this.network.network).then(()=>{this.network.wait();});
     });
   }

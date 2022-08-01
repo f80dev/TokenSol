@@ -259,6 +259,10 @@
       Télécharger
     </button>
 
+    <a [href]="url_collection" *ngIf="url_collection.length>0" download="collection.zip">
+      <mat-icon>download</mat-icon>
+    </a>
+
     <mat-form-field appearance="fill" style="max-width: 200px">
       <mat-label>Nom des fichiers téléchargés</mat-label>
       <input matInput type="text" [(ngModel)]="filename_format" >

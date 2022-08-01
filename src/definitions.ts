@@ -9,7 +9,7 @@ export const NFT_STORAGE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiO
 
 export const QUOTA=800000
 
-export const NETWORKS=["solana-devnet","solana-mainnet","elrond-devnet","elrond-mainnet","FTX","database"]
+export const NETWORKS=["solana-devnet","solana-mainnet","elrond-devnet","elrond-mainnet","database"]
 
 
 export const PLATFORMS=[

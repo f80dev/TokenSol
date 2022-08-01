@@ -97,10 +97,10 @@ data:
   sources:
     - type: network
       active: True
-      connexion: solana-devnet
+      connexion: elrond-devnet
       filter:
-        limit: 20
-      owner: thomas
+        limit: 200
+      owner: herve
 
     - type: database
       active: False
@@ -241,12 +241,12 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
 
   prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
-    server: "http://127.0.0.1:8080/"              #adresse du serveur Prestashop
-    #server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
+    #server: "http://127.0.0.1:8080/"              #adresse du serveur Prestashop
+    server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
     address: "$server$/fr/"                         #page de la boutique
     admin: "$server$/admin4280/"                    #page d'administration de la boutique
-    #api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
-    api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
+    api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+    #api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
 
     root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
       name: NFTs                                      #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
@@ -261,33 +261,27 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 #Section lié à la distribution nominative de NFT
 dispenser:
   visible: True
-  miner: nminer                                       #mineur en charge de la création des tokens
+  miner: nminer                                       #mineur en charge de la création des tokens pour les non minés
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
 
   collections:                                      #Liste des collections concernée par la distribution
-    - name: "BILLET Festival"
-      limit: 5                                      #Maximum de NFT distribuable par collection
-
-    - name: "A Madonna Di A Sierra"
-      limit: 10
-
-    - name: "NFluenTTest"
+    - name: "nfluenteam"
       limit: 10
 
 
 #Fonctionnement de la section lottery ________________________________________________________________________________________________________________________________
 #Section destinée la distribution de NFT gratuitement
 lottery:
-  visible: False     #Rends la section visible ou pas en production
+  visible: True     #Rends la section visible ou pas en production
   miner: paul
 
   #Ensemble d'attribues pour la présentation de l'écran
   screen:
     background_style: {"background-color":"#494975FF","font-weight":"lighter","color":"white","height":"100vh","text-align":"center"}           #Style appliqué au fond de l'écran
-    qrcode_size: 80%                             #taille du qrcode
+    qrcode_size: 70%                             #taille du qrcode
     visual_size: 80%                             #taille du visuel
     title: "Gagnez des NFTs exclusifs"             #titre en haut de la fenêtre
-    bottom_title: "Calvi On The Rocks"              #titre en bas de la fenêtre
+    bottom_title: "The NFluent NFT Candy-Machine"              #titre en bas de la fenêtre
     title_style: {"font-size":"x-large","margin":"10px"}   #style du titre
     showVisual: True                        #Affiche le visuel
 
@@ -303,10 +297,7 @@ lottery:
   application: "$nfluent_appli$/contest"
 
   collections: #Définie les limites sur le nombre de nft miner
-    - name: "A Madonna Di A Sierra"
-      limit: 50
-
-    - name: "La Citadella"
+    - name: "nfluenteams"
       limit: 50
 
   limits:     #définis les quotas de minages toutes collections confondus

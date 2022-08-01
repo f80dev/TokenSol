@@ -258,11 +258,8 @@ class NFLUENT extends Module
     Logger::AddLog("reponse ".print_r($json_response));
     $response = json_decode($json_response, true);
 
-
     return $response;
   }
-
-
 
 
 
@@ -300,12 +297,12 @@ class NFLUENT extends Module
         );
         Logger::AddLog("Envoi des arguments=".implode(" ",$args));
 
-        $store_addr=$smarty->tpl_vars['base_dir']->value;
-        Logger::AddLog("Address de la boutique = ".$store_addr);
+        //$store_addr=$smarty->tpl_vars['base_dir']->value;
+        //Logger::AddLog("Address de la boutique = ".$store_addr);
 
-        //$url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
+        $url='https://server.f80lab.com:4242/api/mint_from_prestashop/';
         //if($store_addr.strpos("127.0.0.1")>0)
-        $url='http://host.docker.internal:4242/api/mint_from_prestashop/';  #host.docker.internal designe le localhost
+        //$url='http://host.docker.internal:4242/api/mint_from_prestashop/';  #host.docker.internal designe le localhost
 
         $resp=$this->api($url,$args);
         if($resp->result=="ok"){

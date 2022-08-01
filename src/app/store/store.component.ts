@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
-import {showMessage} from "../../tools";
+import {setParams, showMessage} from "../../tools";
+import {NFT} from "../nfts/nfts.component";
 
 @Component({
   selector: 'app-store',
@@ -11,7 +12,7 @@ import {showMessage} from "../../tools";
 })
 export class StoreComponent implements OnInit {
   operation: any;
-  nfts: any;
+  nfts: NFT[]=[];
   message: string="";
   title:string="";
   bgcolor: string="white";
@@ -32,9 +33,9 @@ export class StoreComponent implements OnInit {
       this.network.get_tokens_to_send(ope.id,"store",50).subscribe((nfts:any) => {
         this.nfts=[];
         for(let nft of nfts){
-          nft.marketplace={initial_price:"0"};
+          nft.marketplace={price:0,quantity:1};
           for(let c of this.operation.store.collections || []){
-            if(c.name==nft.collection.name)nft.marketplace={initial_price:c.price};
+            if(c.name==nft.collection.name)nft.marketplace={price:c.price,quantity:nft.balance};
           }
           this.nfts.push(nft);
         }
@@ -45,7 +46,13 @@ export class StoreComponent implements OnInit {
     })
   }
 
-  buy(nft: any) {
-    this.router.navigate(["dealermachine"],{queryParams:{ope:this.operation.id,token:btoa(JSON.stringify(nft))}});
+  buy(nft: NFT) {
+    let param=setParams({
+      token:nft,
+      ope:this.operation.id,
+      selfWalletConnexion:false,
+      mining:this.operation.store.miner
+    })
+    this.router.navigate(["dealermachine"],{queryParams:{param:param}});
   }
 }

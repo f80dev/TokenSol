@@ -25,29 +25,29 @@ export function setParams(_d:any,prefix="") : string {
   return encrypt(prefix+rc.join("&"));
 }
 
-export function getParams(routes:ActivatedRoute,param:string,value:any=null) : any {
-  if(routes.snapshot.queryParamMap.has("param")){
-    let _params=decrypt(routes.snapshot.queryParamMap.get("param")).split("&");
-    for(let _param of _params){
-      if(_param.split("=")[0]==param){
-        $$("Récupération de "+_param);
-        value=_param.split("=")[1];
-        if(value.startsWith("b64:"))value=JSON.parse(atob(value.replace("b64:","")));
-        if(value=="false")value=false;
-        if(value=="true")value=true;
-        return value;
-      }
-    }
-    return value;
+export function getParams(routes:ActivatedRoute) {
+  return new Promise((resolve, reject) => {
+    routes.queryParams.subscribe(params => {
+      if(params.hasOwnProperty("param")){
+        let _params=decrypt(params["param"]).split("&");
+        let rc:any={};
+        for(let _param of _params){
+          let key=_param.split("=")[0];
+          let value=_param.split("=")[1];
 
-  } else {
-    if(routes.snapshot.queryParamMap.has(param)){
-      return routes.snapshot.queryParamMap.get(param)
-    }
-    else {
-      return value;
-    }
-  }
+            $$("Récupération de "+_param);
+
+            if(value.startsWith("b64:"))value=JSON.parse(atob(value.replace("b64:","")));
+            if(value=="false")resolve(false);
+            if(value=="true")resolve(true);
+            rc[key]=value;
+        }
+        resolve(rc);
+      } else {
+          resolve(params);
+      }
+    },(err)=>{reject(err);})
+  });
 }
 
 export function decrypt(s:string | any) : string {
@@ -137,6 +137,10 @@ export function showMessage(vm:any,s:string="",duration=4000,func:any= null,labe
     }
   }
   return true;
+}
+
+export function isLocal(domain:string) : boolean {
+  return(domain.indexOf("localhost")>-1 || domain.indexOf("127.0.0.1")>-1);
 }
 
 

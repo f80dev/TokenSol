@@ -23,8 +23,10 @@ export class MetabossService {
   //http://localhost:4200/keys
   init_keys(network="elrond-devnet") {
     return new Promise((resolve, reject) => {
+      this.network.wait("Chargement des clés");
       this.httpClient.get<MetabossKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance=true").subscribe((r: MetabossKey[]) => {
         this.keys = r;
+        this.network.wait();
         resolve(r);
       },()=>{
         $$("Probleme de chargement");

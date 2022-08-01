@@ -100,17 +100,18 @@ class DAO:
     return self.db["dicts"].find_one(filter={"_id":ObjectId(id)})
 
   def add_histo(self, ope,command,account, collection_id,transaction_id,network="",comment="",params=list()):
-	  self.db["histo"].insert_one({
-      "operation":ope,
-      "command":command,
-      "addr":account,
-      "collection":collection_id,
-      "ts":now(),
-      "transaction":transaction_id,
-      "network":network,
-      "comment":comment,
-      "params":params
-    })
+    if not self.db is None:
+      self.db["histo"].insert_one({
+        "operation":ope,
+        "command":command,
+        "addr":account,
+        "collection":collection_id,
+        "ts":now(),
+        "transaction":transaction_id,
+        "network":network,
+        "comment":comment,
+        "params":params
+      })
 
   def update(self, _data,field="quantity"):
     """

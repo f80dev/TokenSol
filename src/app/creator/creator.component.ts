@@ -92,8 +92,10 @@ export class CreatorComponent implements OnInit {
     })
   }
 
+
+
   ngOnInit(): void {
-      if(environment.appli.indexOf("127.0.0.1")>-1)this.sel_platform="nfluent_local"
+      if(environment.appli.indexOf("127.0.0.1")>-1 || environment.appli.indexOf("localhost")>-1)this.sel_platform="nfluent_local"
       this.layers=[];
       this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
       this.network.get_palettes().subscribe((p)=>{
@@ -186,21 +188,22 @@ export class CreatorComponent implements OnInit {
     },(err)=>{showError(this,err)});
   }
 
-
+  url_collection="";
   generate_collection(format="zip") {
     let i=0;
     this.show_collection=false;
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
+
+
         if(format=="zip"){
           this.network.wait("");
-          this.user.connect("create").then((profil:any)=>{
-            this.paiement(this.limit,profil).then(()=>{
-              let url=environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality;
-              url=url+"&data="+btoa(JSON.stringify(this.data))
-              open(url,"_blank")
-            });
-          });
+          //this.user.connect().then((profil:any)=>{
+            //this.paiement(this.limit,profil).then(()=>{
+              this.url_collection=environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality;
+              this.url_collection=this.url_collection+"&data="+btoa(JSON.stringify(this.data))
+            //});
+          //});
         }
 
         if(format=="preview"){

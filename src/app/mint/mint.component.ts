@@ -1,6 +1,6 @@
 import {Component,  OnInit} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
-import {$$, base64ToArrayBuffer, MetabossKey, showError, showMessage, syntaxHighlight} from "../../tools";
+import {$$, base64ToArrayBuffer, isLocal, MetabossKey, showError, showMessage, syntaxHighlight} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
@@ -12,6 +12,7 @@ import {UserService} from "../user.service";
 import {ActivatedRoute} from "@angular/router";
 import {Operation} from "../../operation";
 import {NUMPAD_NINE} from "@angular/cdk/keycodes";
+import {environment} from "../../environments/environment";
 
 
 @Component({
@@ -53,7 +54,7 @@ export class MintComponent implements OnInit {
         this.sel_ope=r;
       })
     } else this.user.login("Le minage nécessite une authentification");
-
+    if(isLocal(environment.server))this.sel_platform="nfluent_local";
   }
 
 
@@ -90,16 +91,17 @@ export class MintComponent implements OnInit {
       attributes: attributes,
       collection: collection,
       creators: creators,
-      description: "",
+      description: _infos.description,
+      symbol: _infos.symbol,
       files: [],
       marketplace: {price:this.price,quantity:this.quantity},
       name: _infos.title,
       network: this.network.network,
       owner: undefined,
       royalties: 0,
-      symbol: "",
       visual: url,
-      solana:null
+      solana:null,
+      style:{}
     }
 
     return(rc);
@@ -166,14 +168,17 @@ export class MintComponent implements OnInit {
     _t.marketplace={price:this.price,quantity:this.quantity,royalties:this.seller_fee_basis_points*100}
     _t.message="hourglass:Minage";
     showMessage(this,"Minage de "+_t.name);
-    this.miner(_t).then((t)=>{
-      _t.message="Miné";
-      if(this.tokens.length>index){
-        this.mint(index+1);
+    this.miner(_t).then((result:any)=>{
+      if(result.hasOwnProperty('error') && result.error.length>0){
+        _t.message="Erreur: "+result.error;
+      } else {
+        _t.message="Miné";
+        if(this.tokens.length>index){
+          this.mint(index+1);
+        }
       }
-    }).catch(()=>{
-      _t.message="Anomalie";
-
+    }).catch((message:string)=>{
+      _t.message="Anomalie: "+message;
     });
   }
 
@@ -231,9 +236,13 @@ export class MintComponent implements OnInit {
   miner(token: NFT) {
     return new Promise((resolve, reject) => {
       if(this.isValide(token)==""){
-        this.metaboss.mint(token,this.sign,this.sel_platform).then(()=>{
-          showMessage(this,"Token miné");
-          resolve(token);
+        this.metaboss.mint(token,this.sign,this.sel_platform).then((result:any)=>{
+          if(!result.error || result.error==""){
+            showMessage(this,"Token miné");
+            resolve(token);
+          } else {
+            reject(result.error);
+          }
         }).catch((err)=>{
           showError(err);
         })
@@ -304,9 +313,7 @@ export class MintComponent implements OnInit {
         }
         this.local_save();
       }
-
     });
-
 
   }
 
@@ -342,6 +349,8 @@ export class MintComponent implements OnInit {
     this.local_save();
   }
 
+
+
   isValide(token: any):string {
     $$("Vérifier la validiter du token pour le minage");
     if(token.properties){
@@ -360,13 +369,15 @@ export class MintComponent implements OnInit {
 
 
 
-  set_collection(token:any=null) {
+  set_collection(token:any) {
+    let result="macollection/mafamille";
+    if(token)result=token.collection["name"]+"/"+token.collection["family"];
     this.dialog.open(PromptComponent,{
       width: 'auto',data:
         {
           title: "Nom de la collection et de la famille (separé par /)",
           type: "text",
-          result:"macollection/mafamille",
+          result:result,
           onlyConfirm:false,
           lbl_ok:"Ok",
           lbl_cancel:"Annuler"
@@ -375,15 +386,9 @@ export class MintComponent implements OnInit {
       if(collection){
         let name=collection.trim().split("/")[0].trim();
         let family=collection.indexOf("/")>-1 ? collection.split("/")[1].trim() : "";
-        if(!token){
-          for(let token of this.tokens){
-            if(!token.collection){
-              token.collection={name:name,family:family}
-            }
-          }
-        } else {
-          token.collection={name:name,family:family}
-        }
+        let tokens=token ? [token] : this.tokens;
+        for(let _t of tokens)
+          _t.collection={name:name,family:family}
       }
     })
   }
@@ -413,11 +418,15 @@ export class MintComponent implements OnInit {
     })
   }
 
+
+
   set_network() {
     for(let nft of this.tokens)
       nft.network=this.network.network;
     showMessage(this,"Network changed")
   }
+
+
 
   reset_creator() {
     for(let t of this.tokens){
@@ -427,5 +436,10 @@ export class MintComponent implements OnInit {
         share:100
       }];
     }
+  }
+
+  set_marketplace(token: NFT) {
+    token.marketplace["price"]=this.price;
+    token.marketplace["quantity"]=this.quantity;
   }
 }

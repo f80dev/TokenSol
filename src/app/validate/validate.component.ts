@@ -6,7 +6,6 @@ import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
 import {detect_network, detect_type_network, getExplorer, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {SALT} from "../../definitions";
 
 @Component({
   selector: 'app-validate',

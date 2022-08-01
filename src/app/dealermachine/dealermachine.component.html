@@ -2,8 +2,8 @@
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
-    <div class="mat-display-2">Acquérir ce NFT pour {{price}}€</div>
-    <img [src]="nft?.image" *ngIf="nft?.image"
+    <div class="mat-display-2">Acquérir ce NFT pour {{nft.marketplace.price}}€</div>
+    <img [src]="nft?.visual" *ngIf="nft?.visual"
          style="max-width: 400px;width:80%;margin-bottom: 20px;"
          class="mat-elevation-z4">
     <br>
@@ -15,7 +15,7 @@
       <mat-hint>Après acquisition, le NFT sera immédiatement transférer</mat-hint>
     </mat-form-field>
 
-    <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;" *ngIf="ope?.payment?.billing && price!='0' && address.length>0 && address.indexOf('@')==-1">
+    <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;" *ngIf="ope?.payment?.billing && nft.marketplace.price>0 && address.length>0 && address.indexOf('@')==-1">
       <mat-label>Indiquez une adresse mail pour recevoir une facture</mat-label>
       <input matInput type="text" [(ngModel)]="billing_address">
       <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
@@ -48,9 +48,9 @@
 
 
     <div *ngIf="address.length>20 || (address.length>5 && address.indexOf('@')>-1)">
-      <div *ngIf="price!='0'">
+      <div *ngIf="nft.marketplace.price>0">
         <br>
-        Acheter maintenant ce NFT pour <strong>{{price}}€</strong><br>
+        Acheter maintenant ce NFT pour <strong>{{nft.marketplace.price}}€</strong><br>
 
         <google-pay-button
           environment="TEST"
@@ -69,14 +69,14 @@
          }
         ],
       merchantInfo: {merchantId: ope.payment.merchantId,merchantName: ope.payment.merchantName},
-      transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: price,currencyCode: ope.payment.currencyCode,countryCode: ope.payment.countryCode}}"
+      transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: nft.marketplace.price,currencyCode: ope.payment.currencyCode,countryCode: ope.payment.countryCode}}"
           (loadpaymentdata)="onLoadPaymentData($event)">
 
         </google-pay-button>
 
       </div>
 
-      <button type="button" mat-raised-button mat-button *ngIf="price=='0'" color="primary"
+      <button type="button" mat-raised-button mat-button *ngIf="nft.marketplace.price==0" color="primary"
               (click)="valide()">
         Envoyer
       </button>

@@ -43,8 +43,7 @@ from dao import DAO
 
 from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
-from Tools import hex_to_str, log, filetype, now, is_email, send_mail, open_html_file, encrypt, decrypt, setParams, \
-  str_to_hex
+from Tools import log, now, is_email, send_mail, open_html_file, encrypt, setParams
 from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
@@ -575,6 +574,9 @@ def transfer_to(nft_addr:str,to:str,owner:str):
   if "elrond" in network:
     elrond=Elrond(network)
     collection_id,nonce=elrond.extract_from_tokenid(nft_addr)
+    if "@" in to:
+      to,pem,words,qrcode=elrond.create_account(to,domain_appli=app.config["DOMAIN_APPLI"],network=network)
+
     t=elrond.transfer(collection_id,nonce,owner,to)
     rc=(not t is None)
 
@@ -844,9 +846,9 @@ def get_tokens_to_send(ope:str):
 
   limit=int(request.args.get("limit","100000"))
   nfts=get_nfts_from_src(_opes["data"]["sources"],_opes[section]["collections"],limit=limit)
-  if limit>0 and len(nfts)>limit: nfts=nfts[:limit]
+  nfts=nfts[:limit]
 
-  return jsonify(nfts)
+  return jsonify([nft.__dict__ for nft in nfts])
 
 
 @app.route('/api/key/<code>',methods=["GET"])
@@ -893,22 +895,29 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
     return "Aucun NFT",404
 
   #vérification de la possibilité d'emettre
-  rc=DAO(ope=_opes).db["histo"].aggregate([{"$match":{"command":"mint"}},{"$group":{"_id":"$operation","count": { "$sum": 1 }}}])
-  for e in rc:
-    if e["_id"]==_opes["id"]:
-      if "limits" in lottery and lottery["limits"]["by_year"]<e["count"]:
-        nfts=[]
+  dao=DAO(ope=_opes)
+  if dao.db:
+    rc=dao.db["histo"].aggregate([{"$match":{"command":"mint"}},{"$group":{"_id":"$operation","count": { "$sum": 1 }}}])
+    for e in rc:
+      if e["_id"]==_opes["id"]:
+        if "limits" in lottery and lottery["limits"]["by_year"]<e["count"]:
+          nfts=[]
 
 
   if not "dtStart" in lottery or lottery["dtStart"]=="now":
     nft=None
     while True:
       nft=nfts[int(random()*len(nfts))]
-      if nft["quantity"]>0:break
+      if nft.marketplace["quantity"]>0:break
 
-    visual=nft["image"] if "image" in nft and lottery["screen"]["showVisual"] else ""
+    visual=nft.visual if lottery["screen"]["showVisual"] else ""
 
-    url=str(base64.b64decode(url_appli),"utf8")+"/dm/?toolbar=false&id="+nft["id"]+"&ope="+_opes["id"]
+    url=str(base64.b64decode(url_appli),"utf8")+"/dm/?"+setParams({
+      "toolbar":"false",
+      "address":nft.address,
+      "symbol":nft.symbol,
+      "ope":_opes["id"]
+    })
 
     buffer=BytesIO()
     pyqrcode.create(url).png(buffer,scale=9)
@@ -1342,6 +1351,7 @@ def use():
 
 
 #https://server.f80lab.com:4242/api/images
+#http://localhost:4242/api/images/
 @app.route('/api/images/<cid>',methods=["GET","DELETE"])
 @app.route('/api/images/',methods=["GET","DELETE"])
 def get_image(cid:str=""):
@@ -1425,7 +1435,7 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
 
     s.save(filename)
 
-    rc={"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+cid+"?format="+data["type"]}
+    rc={"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+cid+"?"+ext}
 
   if platform=="nftstorage":
     if "content" in data:
@@ -1458,10 +1468,13 @@ def nfts():
 
   rc=[]
   if "elrond" in network:
-    rc=rc+Elrond(network).get_nfts(account,limit,with_attr=with_attr)
+    l_nfts=Elrond(network).get_nfts(account,limit,with_attr=with_attr,offset=offset)
   else:
-    rc=rc+Solana(network).get_nfts(account,offset,limit)
+    l_nfts=Solana(network).get_nfts(account,offset,limit)
 
+  log(str(len(l_nfts))+" NFT identifiés")
+
+  rc=rc+l_nfts
   nfts=[]
   for nft in rc:
     nfts.append(nft.__dict__)
@@ -1645,11 +1658,11 @@ def mint():
     collection_id=elrond.add_collection(keyfile,_data.collection["name"],type="NonFungible")
     nonce,cid=elrond.mint(keyfile,
                           title=_data.name,
-                          collection=_data.collection["name"],
+                          collection=collection_id,
                           properties=_data.attributes,
                           files=_data.files,
                           ipfs=IPFS(IPFS_SERVER),
-                          quantity=1,
+                          quantity=_data.marketplace["quantity"],
                           royalties=_data.royalties/100,  #On ne prend les royalties que pour le premier créator
                           visual=_data.visual
                           )
@@ -1657,13 +1670,12 @@ def mint():
     if nonce is None:
       rc={"error":"Probleme de création"}
     else:
-      _data["uri"]=cid["url"]
       infos=elrond.get_account(keyfile)
       token_id=collection_id+"-"+nonce
       rc={"command":"ESDTCreate",
           "error":"",
           "link":elrond.getExplorer(token_id,"nfts"),
-          "uri":_data["uri"],
+          "uri":cid["url"],
           "out":"",
           "result":{
             "transaction":token_id,

@@ -6,6 +6,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
 import {UserService} from "../user.service";
+import {NFT} from "../nfts/nfts.component";
 
 @Component({
   selector: 'app-dealermachine',
@@ -15,7 +16,7 @@ import {UserService} from "../user.service";
 export class DealermachineComponent implements OnInit {
   address: string="";
   wallet_link: string="";
-  nft:any={};
+  nft:NFT | null=null;
   final_message="";
   ope: any=null;
   webcam: boolean=true;
@@ -35,35 +36,38 @@ export class DealermachineComponent implements OnInit {
   ngOnInit(): void {
     hasWebcam(this.webcam);
 
-    let ope=getParams(this.routes,"ope");
-    this.nft=getParams(this.routes,"token",{});
-    this.price=getParams(this.routes,"price",this.nft.marketplace.initial_price);
-    this.mining=getParams(this.routes,"mining");
+    getParams(this.routes).then((params:any)=>{
+      this.nft=params["token"];
+      let ope=params["ope"];
+      if(!this.nft){
+        let address=params["address"] || "";
+        let symbol=params["symbol"] || "";
+        this.network.get_nfts_from_operation(ope).subscribe((r:any)=>{
+          for(let nft of r["nfts"]){
+            if((nft.address==address && address.length>0) || (nft.symbol==symbol && nft.address?.length==0))this.nft=nft;
+          }
+        })
+      }
 
-    this.selfWalletConnexion=getParams(this.routes,"selfWalletConnexion",false);
+      this.mining=params["mining"];
 
-    if(ope){
-      this.network.get_operations(ope).subscribe((ope:any)=>{
-        this.ope=ope;
-        this.mining=getParams(this.routes,"mining",this.ope.lazy_mining);
+      this.selfWalletConnexion=params["selfWalletConnexion"] || false;
 
-        if(this.nft=={}){
-          let id=getParams(this.routes,"id","");
-          this.network.get_nft_from_db(id).subscribe((nft:any)=>{
-            this.nft=nft || {};
-            if(!nft){
-              this.lost()
-            }
-          });
-        }
-      })
-    }
+      if(ope){
+        this.network.get_operations(ope).subscribe((ope:any)=>{
+          this.ope=ope;
+          this.mining=params["mining"] || this.ope.lazy_mining;
+        })
+      }
+
+    })
+
+
 
   }
 
   //http://127.0.0.1:4200/dealermachine/?ope=calvi2022
   message: string="";
-  price: string="";
   hasWebcam=true;
   billing_address="";
   selfWalletConnexion: boolean=false;
@@ -101,12 +105,10 @@ export class DealermachineComponent implements OnInit {
   valide() {
 
     let addr=this.alias.transform(this.address,"pubkey");
-    if(this.nft.hasOwnProperty("id")){
-      $$("Ce token est issue d'une base de données, donc non miné");
-        let id=this.nft["id"];
+    if(this.nft!.address==""){
+      $$("Ce token est issue d'une base de données, donc non miné");;
         if(this.ope)this.message=this.ope.store.support.buy_message;
-        this.network.mint_for_contest(addr,id,this.ope,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft).subscribe((r:any)=>{
-          this.nft=null;
+        this.network.mint_for_contest(addr,this.ope,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft!).subscribe((r:any)=>{;
           this.message="";
           if(r.error.length>0){
             this.message=r.error+". ";
@@ -120,15 +122,15 @@ export class DealermachineComponent implements OnInit {
         })
     }else{
 
-        if(this.nft.hasOwnProperty("account")){
+        if(this.nft!.address!=""){
           $$("Ce token est déjà miné, on se contente de le transférer");
-          let mint_addr=this.nft["account"]["data"]["parsed"]["info"]["mint"]
-          let owner=this.nft["account"]["data"]["parsed"]["info"]["owner"]
-          if(mint_addr.length>0){
-            this.network.transfer_to(mint_addr,addr,owner).subscribe(()=>{
-              showMessage(this,"Transféré");
-            })
-          }
+          let mint_addr=this.nft!.address || "";
+          let owner=this.nft!.owner || "";
+          this.message="Envoi en cours";
+          this.network.transfer_to(mint_addr,addr,owner).subscribe(()=>{
+            this.message="";
+            showMessage(this,"Transféré");
+          })
         }
       }
   }

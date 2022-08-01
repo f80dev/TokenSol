@@ -60,3 +60,5 @@ PERMS={
     "perms":["reload"]
   }
 }
+
+ELROND_PASSWORD="hh4271!!"

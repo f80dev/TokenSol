@@ -85,9 +85,9 @@ export class UserService {
   }
 
 
-  connect(requis:string="",network="solana"){
+  connect(requis:string="",network="elrond"){
     return new Promise((resolve, reject) => {
-
+      resolve({});
     });
   }
 

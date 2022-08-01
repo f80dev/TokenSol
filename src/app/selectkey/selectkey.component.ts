@@ -1,9 +1,10 @@
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
 import {MatSelectChange} from "@angular/material/select";
-import {MetabossKey, showMessage} from "../../tools";
+import {MetabossKey, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
+import {environment} from "../../environments/environment";
 
 @Component({
   selector: 'app-selectkey',
@@ -46,5 +47,10 @@ export class SelectkeyComponent implements OnInit, OnChanges {
 
   refill() {
     this.metaboss.airdrop(2);
+  }
+
+  open_wallet() {
+    let url=environment.appli+"/wallet?param="+setParams({addr:this.selected?.pubkey});
+    open(url,"wallet");
   }
 }

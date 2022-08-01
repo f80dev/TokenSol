@@ -7,7 +7,7 @@ import pyqrcode
 from Tools import get_qrcode
 from NFT import NFT
 import textwrap
-from secret import ELROND_PASSWORD
+
 from nftstorage import NFTStorage
 from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file,setParams
 from ipfs import IPFS
@@ -175,14 +175,11 @@ class Elrond:
     :return:
     """
 
-    _from=self.toAccount(_from)
-    if len(_from.secret_key)==0:
-      _key=self.find_key_from_address(_from.address.bech32())
-      if _key:
-        _from=self.toAccount(_key["name"])
-      else:
-        log("La clé du propriétaire doit être hébergée sur la plateforme")
-        return None
+    _from=self.find_key_from_address(_from)
+    if type(_from)==dict:
+      _from=self.toAccount(_from["name"])
+    else:
+      return {"error":"Impossible de trouver la clé privée du propriétaire pour faire le transfert"}
 
     _to=self.toAccount(_to)
     if _from.address.bech32()==_to.address.bech32(): return False
@@ -195,7 +192,7 @@ class Elrond:
            + "@" + _to.address.hex()
     t = self.send_transaction(_from, _from, _from, 0, data)
     if t is None or t["status"]!="success":
-      return None
+      return {"error":"Echec du transfert"}
     else:
       return t
 
@@ -220,7 +217,7 @@ class Elrond:
 
     collection_id=None
     for col in self.get_collections(owner):
-      if col["name"]==collection:
+      if col["name"]==collection and owner.address.bech32()==col["owner"]:
         collection_id=col["collection"]
         break
 
@@ -308,7 +305,7 @@ class Elrond:
     :param fund:
     :param name:
     :param seed_phrase:
-    :return:
+    :return: Account, PEM,words,qrcode
     """
     log("Création d'un nouveau compte")
 
@@ -356,7 +353,7 @@ class Elrond:
     else:
       return None
 
-  def get_nfts(self,_user:Account,limit=2000,with_attr=False):
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0):
     """
     https://docs.elrond.com/developers/nft-tokens/
     :param _user:
@@ -367,8 +364,11 @@ class Elrond:
     _user=self.toAccount(_user)
     rc=list()
     nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
+    nfts=list(nfts["data"]["esdts"].values())
+    if len(nfts)<offset:return []
+
     if nfts:
-      for nft in list(nfts["data"]["esdts"].values())[:limit]:
+      for nft in nfts[offset:limit]:
         if "attributes" in nft:
           log("Analyse de "+str(nft))
           try:
@@ -395,7 +395,7 @@ class Elrond:
             [{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
             nft["tokenIdentifier"],
             int(nft["royalties"]),
-            {"quantity":1}
+            {"quantity":int(nft["balance"])}
           )
           _nft.network="elrond-"+self.network_name
           _nft.owner=_user.address.bech32()
@@ -589,9 +589,9 @@ class Elrond:
               secret_key, pubkey = derive_keys(words)
               user=Account(address=Address(pubkey).bech32())
               user.secret_key=secret_key.hex()
-        else:
-          keystore_file="./Elrond/PEM/"+user+(".json" if not user.endswith('.json') else '')
-          user=Account(key_file=keystore_file,password=ELROND_PASSWORD)
+        # else:
+        #   keystore_file="./Elrond/PEM/"+user+(".json" if not user.endswith('.json') else '')
+        #   user=Account(key_file=keystore_file,password=ELROND_PASSWORD)
 
     return user
 
@@ -610,7 +610,7 @@ class Elrond:
     rc=[]
     for f in listdir(ELROND_KEY_DIR):
       log("Lecture de "+f)
-      if f.endswith(".pem") or f.endswith(".json"):
+      if f.endswith(".pem"): #or f.endswith(".json"):
         _a=self.toAccount(f)
         rc.append({
           "name":f.replace(".pem","").replace(".json",""),

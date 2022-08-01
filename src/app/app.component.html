@@ -10,8 +10,6 @@
         {{user.email}}
       </div>
 
-
-
       <div style="line-height: 90%" *ngIf="!user.connected()">
         {{title}}<br>
         <small>v{{version}}</small>
@@ -63,6 +61,7 @@
       </app-selectkey>&nbsp;&nbsp;
 
       <button mat-button
+              title="se connecter"
               *ngIf="!user.connected()"
               mat-icon-button
               (click)="login()">
@@ -74,6 +73,7 @@
               *ngIf="user.connected()"
               aria-label="Connexion"
               mat-icon-button
+              title="Se déconnecter"
               (click)="logout()">
         <mat-icon>logout</mat-icon>
       </button>
