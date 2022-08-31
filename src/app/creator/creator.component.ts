@@ -585,6 +585,7 @@ export class CreatorComponent implements OnInit {
     this.save_config().then(()=>{
       this.layers=[]
       this.config_name=""
+      this._location.replaceState("/creator");
     });
   }
 

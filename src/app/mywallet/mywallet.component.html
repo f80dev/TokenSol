@@ -1,4 +1,5 @@
-<mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)">
+<mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)"
+               style="padding: 10px;width:100%;  text-align: center;">
   <mat-tab label="NFTs">
     <app-nfts [nfts]="nfts" format="image" (refresh)="refresh()">
     </app-nfts>
@@ -10,11 +11,46 @@
   </mat-tab>
 
   <mat-tab label="Accès">
-    <div style="width:100%;  text-align: center;">
       <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;">
       <br>
       <small>{{addr}}</small>
+  </mat-tab>
+
+  <mat-tab label="NFT Photos" *ngIf="takePhoto">
+    Prendre une photo pour fabriquer un NFT lié à l'événement
+    <br>
+    <div *ngIf="photo_to_send.length==0">
+      <webcam
+        [height]="300"
+        [width]="300"
+        [trigger]="triggerObservable"
+        [allowCameraSwitch]="false"
+        [imageQuality]="0.85"
+        [captureImageData]="true"
+        imageType="image/jpeg"
+        (imageCapture)="handleImage($event)">
+      </webcam>
+
+
+      <br>
+
+      <button type="button" mat-raised-button mat-button (click)="photo()">
+        Prendre
+      </button>
+
     </div>
+
+
+    <div *ngIf="photo_to_send.length>0">
+      <img [src]="photo_to_send" style="width:80%;">
+      <br>
+
+      <button type="button" mat-raised-button mat-button (click)="send()">
+        Fabriquer
+      </button>
+
+    </div>
+
   </mat-tab>
 
 

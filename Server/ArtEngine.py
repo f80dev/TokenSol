@@ -316,7 +316,11 @@ class Sticker(Element):
         log("Enregistrement d'un fichier animé")
         frames = [f.convert("RGBA") for f in ImageSequence.Iterator(self.image)]
         self.image.close()
-        frames[0].save(filename,append_images=frames[1:],save_all=True,xmp=bytes(xmp,"utf8"))
+        if len(xmp)>0:
+          frames[0].save(filename,append_images=frames[1:],save_all=True,xmp=bytes(xmp,"utf8"))
+        else:
+          frames[0].save(filename,append_images=frames[1:],save_all=True)
+
         if not filename.endswith("webp"):
           log("Les metadonnées ne peuvent pas être inséré diretement dans l'image")
           l_index=filename.rindex(".")

@@ -100,6 +100,9 @@ export class KeysComponent implements OnInit {
   }
 
   open_wallet(key: MetabossKey) {
-    this.router.navigate(["wallet"],{queryParams:{param:setParams({addr:key.pubkey})}});
+    this.router.navigate(
+      ["wallet"],
+      {queryParams:{param:setParams({addr:key.pubkey,toolbar:false,takePhoto:true})}}
+    );
   }
 }

@@ -18,7 +18,7 @@ fontstyle:
 height: 500
 layers:
 -   elements:
-    -   image: http://127.0.0.1:4242/api/images/-0x64f398ef3cdc87d4.webp?format=image/webp
+    -   image: https://server.nfluent.io:4242/api/images/-0x64f398ef3cdc87d4.webp?format=image/webp
     indexed: true
     name: layer2
     params: {}
@@ -26,7 +26,7 @@ layers:
     text: ''
     unique: false
 -   elements:
-    -   image: http://127.0.0.1:4242/api/images/0x331b7e81e5b1ccdd.png?format=image/png
+    -   image: https://server.nfluent.io:4242/api/images/0x331b7e81e5b1ccdd.png?format=image/png
     indexed: true
     name: layer1
     params: {}
@@ -34,7 +34,7 @@ layers:
     text: ''
     unique: false
 limit: 1
-platform: nfluent
+platform: nfluent_local
 seed: 0
 text_to_add: '50'
 width: 500

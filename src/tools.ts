@@ -33,17 +33,17 @@ export function getParams(routes:ActivatedRoute) {
         let rc:any={};
         for(let _param of _params){
           let key=_param.split("=")[0];
-          let value=_param.split("=")[1];
+          let value:any=_param.split("=")[1];
 
-            $$("Récupération de "+_param);
-
-            if(value.startsWith("b64:"))value=JSON.parse(atob(value.replace("b64:","")));
-            if(value=="false")resolve(false);
-            if(value=="true")resolve(true);
-            rc[key]=value;
+          $$("Récupération de "+_param);
+          if(value.startsWith("b64:"))value=JSON.parse(atob(value.replace("b64:","")));
+          if(value=="false")value=false;
+          if(value=="true")value=true;
+          rc[key]=value;
         }
         resolve(rc);
       } else {
+        if(params && Object.keys(params).length>0)
           resolve(params);
       }
     },(err)=>{reject(err);})

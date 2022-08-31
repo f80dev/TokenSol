@@ -20,7 +20,7 @@
     docker rm -f prestashop
     docker volume rm Prestashop_volume
     docker volume create Prestashop_volume
-    docker run --name prestashop --network prestashopnet --add-host host.docker.internal:host-gateway --mount source=Prestashop_volume,target=/var/www/html --restart=always -e DBNAME=nfluent -e PS_FOLDER_INSTALL=install4280 -e PS_FOLDER_ADMIN=admin4280 -e DB_SERVER=MariaDB -p 8080:80 -p 4242:4242 -ti prestashop/prestashop
+    docker run --name prestashop --network prestashopnet --add-host host.docker.internal:host-gateway --mount source=Prestashop_volume,target=/var/www/html --restart=always -e DBNAME=nfluent -e PS_FOLDER_INSTALL=install4280 -e PS_ENABLE_SSL=1 -e PS_FOLDER_ADMIN=admin4280 -e DB_SERVER=MariaDB -p 8080:80 -p 4242:4242 -ti prestashop/prestashop
 
 
 Entrer dans une instance local:

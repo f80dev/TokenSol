@@ -8,7 +8,7 @@ import {UserService} from "../user.service";
 import {Location} from "@angular/common";
 import { NgNavigatorShareService } from 'ng-navigator-share';
 import {Clipboard} from "@angular/cdk/clipboard";
-import {Collection, find_collection, Operation} from "../../operation";
+import {find_collection, Operation} from "../../operation";
 import {NFT} from "../nfts/nfts.component";
 
 @Component({

@@ -40,9 +40,8 @@ export class AppComponent implements OnInit {
   //test: https://tokenfactory.nfluent.io/contest?ope=
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
-      this.toolbar_visible=params["toolbar"] || "true";
+      this.toolbar_visible=params["toolbar"];
     });
-    //  this.update_network();
   }
 
 
