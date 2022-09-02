@@ -9,13 +9,10 @@ import json
 import os
 import ssl
 import sys
-
 from copy import copy
-
-from io import BytesIO, StringIO
+from io import BytesIO
 from os.path import exists
 from random import random
-
 from zipfile import ZipFile
 
 import py7zr
@@ -23,13 +20,11 @@ import pyqrcode
 import requests
 import yaml
 from PIL.Image import Image
-
 from flask import request, jsonify, send_file, Flask, make_response
 from flask_cors import CORS
 from fontTools import ttLib
 from reportlab.graphics import renderPM
 from svglib.svglib import svg2rlg
-
 from werkzeug.datastructures import FileStorage
 from yaml import dump, Dumper
 
@@ -39,15 +34,19 @@ from Elrond.Elrond import Elrond, ELROND_KEY_DIR
 from GoogleCloudStorageTools import GoogleCloudStorageTools
 from NFT import NFT
 from PrestaTools import PrestaTools
-from dao import DAO
-
-from ftx import FTX
 from Solana.Solana import SOLANA_KEY_DIR, Solana
 from Tools import log, now, is_email, send_mail, open_html_file, encrypt, setParams
+from dao import DAO
+from ftx import FTX
 from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
-from secret import GITHUB_TOKEN, SALT, ENCRYPTION_KEY, GITHUB_ACCOUNT, PERMS
+from secret import GITHUB_TOKEN, SALT, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
+
 
 app = Flask(__name__)
 ftx=FTX()
@@ -437,6 +436,8 @@ def export_to_prestashop():
   """
   _operation=get_operation(request.args.get("ope"))
   _store_section=_operation["store"]
+  collection_filter:bool=(request.args.get("collection_filter","true")=="true") #Permet d'exlure le filtre du fichier d'opération
+
   prestashop=PrestaTools(_store_section["prestashop"]["api_key"],_store_section["prestashop"]["server"],_store_section["prestashop"]["language"])
   root_category=prestashop.find_category(_store_section["prestashop"]["root_category"]["name"] or "NFTs")
   if root_category is None:
@@ -461,24 +462,28 @@ def export_to_prestashop():
     if "name" in nft.collection and nft.collection["name"] not in categories.keys():
       log("Traitement de la collection "+nft.collection["name"])
       ref_col=prestashop.find_category_in_collections(nft.collection["name"],_operation["collections"])
-      store_col=prestashop.find_category_in_collections(nft.collection["name"],_operation["store"]["collections"])
       if ref_col is None:
         ref_col={"name":nft.collection["name"],"description":"","price":0}
 
-      if not store_col is None: #cette collection n'est pas dans les collections à inclure dans la boutique
-        c=prestashop.find_category(nft.collection["name"])
-        if c is None:
-          c=prestashop.add_category(
-            ref_col["name"],
-            root_category["id"],
-            ref_col["description"]
-          )
+    store_col=prestashop.find_category_in_collections(nft.collection["name"],_operation["store"]["collections"])
+    if not collection_filter or not store_col is None: #cette collection n'est pas dans les collections à inclure dans la boutique
+      c=prestashop.find_category(nft.collection["name"])
+      if c is None:
+        log("La catégorie "+nft.collection["name"]+" n'existe pas dans prestashop. On la créé")
+        c=prestashop.add_category(
+          ref_col["name"],
+          root_category["id"],
+          ref_col["description"]
+        )
 
-        categories[c["name"]]={
-          "price":store_col["price"] if "price" in store_col else ref_col["price"],
-          "name":ref_col["name"],
-          "id":c["id"]
-        }
+      categories[c["name"]]={
+        "price":store_col["price"] if store_col and "price" in store_col else ref_col["price"],
+        "name":ref_col["name"],
+        "id":c["id"]
+      }
+
+    else:
+      log("Ce NFT n'est pas dans les collections à exporter du fichier d'opération")
 
 
   for nft in nfts:
@@ -860,9 +865,12 @@ def get_tokens_to_send(ope:str):
 
 
 @app.route('/api/key/<code>',methods=["GET"])
-def get_key(code):
+@app.route('/api/qrcode/',methods=["GET"])
+def get_key(code=""):
   format=request.args.get("format","qrcode")
   scale=request.args.get("scale",9)
+
+  if len(code)==0: code=request.args.get("code","")
 
   buffer=BytesIO()
   pyqrcode.create(code).png(buffer,scale=scale)
@@ -1007,13 +1015,15 @@ def mint_for_prestashop():
     elrond=Elrond(_p["network"])
     royalties=body["royalties"] if "royalties" in body else 0
 
+
     if not "elrond" in addresses:
       _account,pem,words,qrcode=elrond.create_account(email=body["email"],domain_appli=app.config["DOMAIN_APPLI"])
       addresses["elrond"]=_account.address.bech32()
       prestashop.edit_customer(body["customer"],"note",yaml.dump(addresses))
+      bNewAccount=True
     else:
       _account=elrond.toAccount(addresses["elrond"])
-
+      bNewAccount=False
 
     if not "address" in _p or _p["address"] is None or _p["address"]=="":
       collection_id=elrond.add_collection(miner,collection,type="NonFungible")
@@ -1023,10 +1033,16 @@ def mint_for_prestashop():
       collection_id,nonce=elrond.extract_from_tokenid(_p["address"])
       t=elrond.transfer(collection_id,nonce,_p["owner"],_account)
 
-
     account_addr=_account.address.bech32()
+
     if t is None:
       return returnError("Impossible de transférer le NFT",{"address":_account.address.bech32()})
+    else:
+      if not bNewAccount:
+        send_mail(open_html_file("new_nft",{
+          "mini_wallet":"wallet?"+setParams({"toolbar":"false","network":_p["network"],"addr":account_addr}),
+        },domain_appli=app.config["DOMAIN_APPLI"]),body["email"],subject="Votre NFT est disponible dans votre wallet")
+
 
   if "solana" in _p["network"]:
     solana=Solana(_p["network"])
@@ -1295,10 +1311,11 @@ def keys(name:str=""):
   network=request.args.get("network","solana-devnet").lower()
 
   if request.method=="GET":
+    with_balance=(request.args.get("with_private","false")=="true")
     if "elrond" in network:
-      return jsonify(Elrond(network).get_keys(with_qrcode=True))
+      return jsonify(Elrond(network).get_keys(with_qrcode=True,with_balance=with_balance))
     if "solana" in network:
-      rc=Solana(network).get_keys(with_private=(request.args.get("with_private","false")=="true"),with_balance=True,with_qrcode=True)
+      rc=Solana(network).get_keys(with_private=(request.args.get("with_private","false")=="true"),with_balance=with_balance,with_qrcode=True)
       return jsonify(rc)
 
   filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in network else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
@@ -1528,7 +1545,6 @@ def get_token_by_delegate():
   return jsonify(rc)
 
 
-from cryptography.fernet import Fernet
 @app.route('/api/encrypt_key/<name>',methods=["GET"])
 #http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
 def encrypt_key(name:str):
@@ -1894,6 +1910,22 @@ def export():
 
 
 
+@app.route("/login", methods=["POST"])
+def login():
+  """
+  Create a route to authenticate your users and return JWTs. The
+  create_access_token() function is used to actually generate the JWT.
+  voir https://flask-jwt-extended.readthedocs.io/en/stable/basic_usage/
+  :return:
+  """
+  username = request.json.get("username", None)
+  password = request.json.get("password", None)
+  if username != "test" or password != "test":
+    return jsonify({"msg": "Bad username or password"}), 401
+
+  access_token = create_access_token(identity=username)
+  return jsonify(access_token=access_token)
+
 
 
 
@@ -1928,8 +1960,11 @@ if __name__ == '__main__':
     "APPLICATION_ROOT":sys.argv[2],
     "DOMAIN_APPLI":sys.argv[2],
     "DOMAIN_SERVER":sys.argv[1],
-    "UPDLOAD_FOLDER":"./Temp/"
+    "UPDLOAD_FOLDER":"./Temp/",
+    "JWT_SECRET_KEY":SECRET_JWT_KEY
   })
+  jwt = JWTManager(app)
+
 
   _port=int(app.config["DOMAIN_SERVER"][app.config["DOMAIN_SERVER"].rindex(":")+1:])
 

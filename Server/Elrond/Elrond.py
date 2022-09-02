@@ -353,6 +353,7 @@ class Elrond:
     else:
       return None
 
+
   def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0):
     """
     https://docs.elrond.com/developers/nft-tokens/
@@ -364,6 +365,10 @@ class Elrond:
     _user=self.toAccount(_user)
     rc=list()
     nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
+    if nfts is None:
+      log("Le compte "+_user.address.bech32()+" n'existe pas")
+      return []
+
     nfts=list(nfts["data"]["esdts"].values())
     if len(nfts)<offset:return []
 

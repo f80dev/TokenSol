@@ -15,8 +15,9 @@ class PrestaTools:
     self.language=language
 
   def url(self, service, params=""):
-    url =  self.server + "api/" + service + "?ws_key=" + self.key + "&io_format=JSON" + "&" + params
-    #log("Ouverture de " + url)
+    url =  self.server + "/api/" + service + "?ws_key=" + self.key + "&io_format=JSON" + "&" + params
+    url=url.replace("//api/","/api/")
+    log("Ouverture de " + url)
     return url
 
   def toXML(self, _d: dict, root_label: str,entete=True,pretty=True):

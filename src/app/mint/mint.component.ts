@@ -435,9 +435,8 @@ export class MintComponent implements OnInit {
       token.royalties=this.seller_fee_basis_points*100;
       token.network=this.network.network;
       if(token.symbol.length==0)token.symbol="NFT"+idx.toString(16);
-      token.marketplace={price:this.price,quantity:this.quantity}
     }
-    this.network.export_to_prestashop(this.sel_ope.id,this.tokens).subscribe(()=>{
+    this.network.export_to_prestashop(this.sel_ope.id,this.tokens,false).subscribe(()=>{
       this.network.wait();
       showMessage(this,"NFT transmis");
     })

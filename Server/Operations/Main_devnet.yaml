@@ -241,12 +241,13 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
 
   prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
-    #server: "http://127.0.0.1:8080/"              #adresse du serveur Prestashop
-    server: "http://161.97.75.165:8080/"              #adresse du serveur Prestashop
+    server: "http://127.0.0.1:8080"              #adresse du serveur Prestashop
+    #server: "http://161.97.75.165:8080"              #adresse du serveur Prestashop
     address: "$server$/fr/"                         #page de la boutique
     admin: "$server$/admin4280/"                    #page d'administration de la boutique
-    api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
-    #api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
+    #api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+    api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
+
 
     root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
       name: NFTs                                      #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
@@ -293,6 +294,8 @@ lottery:
     looser:
       message: "Retentez votre chance"                                            #Messge affiché si l'obtention du NFT à échoué
       redirection: "https://www.calviontherocks.com/fr"
+
+
 
   application: "$nfluent_appli$/contest"
 

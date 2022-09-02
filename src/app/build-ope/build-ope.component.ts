@@ -183,6 +183,6 @@ export class BuildOpeComponent implements OnInit {
   }
 
   open_miner() {
-    this.router.navigate(["miner"],{queryParams:{ope:this.sel_ope?.id}})
+    this.router.navigate(["miner"],{queryParams:{ope:this.sel_ope?.id,toolbar:true}})
   }
 }

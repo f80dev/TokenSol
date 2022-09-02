@@ -196,15 +196,11 @@ export class CreatorComponent implements OnInit {
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
 
-
         if(format=="zip"){
           this.network.wait("");
-          //this.user.connect().then((profil:any)=>{
-            //this.paiement(this.limit,profil).then(()=>{
-              this.url_collection=environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality;
-              this.url_collection=this.url_collection+"&data="+btoa(JSON.stringify(this.data))
-            //});
-          //});
+          showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
+          this.url_collection=environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality;
+          this.url_collection=this.url_collection+"&data="+btoa(JSON.stringify(this.data))
         }
 
         if(format=="preview"){

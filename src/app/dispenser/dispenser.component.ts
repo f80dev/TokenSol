@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import {encrypt, setParams, showError, showMessage} from "../../tools";
+import { setParams,  showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
-import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {NFT} from "../nfts/nfts.component";
 
@@ -44,8 +43,8 @@ export class DispenserComponent implements OnInit {
           } else {
             nft.style={opacity:0.3};
           }
-
-          this.nfts.push(nft);
+          if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
+          if(nft.marketplace.price==0)this.nfts.push(nft);
         }
       });
     })

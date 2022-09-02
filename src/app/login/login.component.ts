@@ -6,6 +6,8 @@ import {UserService} from "../user.service";
 import {GoogleLoginProvider, SocialAuthService} from "angularx-social-login";
 import {Location} from "@angular/common";
 import {ActiveDescendantKeyManager} from "@angular/cdk/a11y";
+import {Network} from "ipfs-core/types/src/components/network";
+import {NetworkService} from "../network.service";
 
 @Component({
   selector: 'app-login',
@@ -22,6 +24,7 @@ export class LoginComponent implements OnInit {
     public router:Router,
     public user:UserService,
     public routes:ActivatedRoute,
+    public network:NetworkService,
     public _location:Location,
     private socialAuthService: SocialAuthService
   ) { }
@@ -37,7 +40,7 @@ export class LoginComponent implements OnInit {
   connect(network: string) {
     if(network=="elrond"){
       // @ts-ignore
-      open("wallet.elrond.com","walletElrond")
+      open(this.network.url_wallet(),"walletElrond")
 
     }
 

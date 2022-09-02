@@ -14,9 +14,20 @@
       <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;">
       <br>
       <small>{{addr}}</small>
+      <br>
+
+
+    <button type="button" mat-raised-button mat-button (click)="open_elrond_authent()" style="margin-top: 20px;">
+      S'authentifier
+    </button>
+    <br>
+    <img [src]="qrcode" style="width: 200px;">
+    <br>
+
   </mat-tab>
 
   <mat-tab label="NFT Photos" *ngIf="takePhoto">
+    <br>
     Prendre une photo pour fabriquer un NFT lié à l'événement
     <br>
     <div *ngIf="photo_to_send.length==0">
@@ -35,7 +46,7 @@
       <br>
 
       <button type="button" mat-raised-button mat-button (click)="photo()">
-        Prendre
+        Photo
       </button>
 
     </div>

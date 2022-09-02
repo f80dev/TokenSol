@@ -609,10 +609,22 @@ export class NetworkService {
   // create_account(network: string, alias: string) {
   //   return this.httpClient.get(environment.server+"/api/create_account/"+network+"/"+alias+"/");
   // }
-  export_to_prestashop(id:string,nfts:any=[]) {
+  export_to_prestashop(id:string,nfts:any=[],collection_filter=true) {
     if(nfts.length==0)
-      return this.httpClient.get(environment.server+"/api/export_to_prestashop/?ope="+id);
+      return this.httpClient.get(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter);
     else
-      return this.httpClient.post(environment.server+"/api/export_to_prestashop/?ope="+id,nfts);
+      return this.httpClient.post(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter,nfts);
+  }
+
+  url_wallet() {
+    if(this.isElrond()){
+      return this.isMain() ? "https://wallet.elrond.com" : "https://devnet-wallet.elrond.com";
+    } else {
+      return "";
+    }
+  }
+
+  qrcode(body:string) {
+    return this.httpClient.get<string>(environment.server+"/api/qrcode/?code="+body);
   }
 }

@@ -7,8 +7,9 @@ import {environment} from "../../environments/environment";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NFT} from "../nfts/nfts.component";
 import {Observable, Subject} from "rxjs";
-import jsQR from "jsqr";
-
+import {WalletConnectProvider} from '@elrondnetwork/erdjs-wallet-connect-provider';
+import {WalletProvider} from "@elrondnetwork/erdjs-web-wallet-provider"
+import {Location} from "@angular/common";
 
 //Test : http://localhost:4200/wallet?addr=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr&toolbar=false
 @Component({
@@ -29,23 +30,53 @@ export class MywalletComponent implements OnInit {
   private trigger: Subject<void> = new Subject<void>();
   private nextWebcam: Subject<boolean|string> = new Subject<boolean|string>();
   photo_to_send: string="";
+  qrcode:string="";
+  provider:any=null;
 
   constructor(public user:UserService,
               public routes:ActivatedRoute,
               public toast:MatSnackBar,
-              public network:NetworkService) { }
+              public _location:Location,
+              public network:NetworkService) {
+    this.provider=new WalletConnectProvider(
+      "https://bridge.walletconnect.org/",
+      {
+        onClientLogin: ()=> {
+          debugger
+          alert('Logged in')
+        },
+        onClientLogout: ()=> {
+          alert('Logged out')
+        }
+      }
+    );
+  }
 
 
   ngOnInit(): void {
+    this.provider.init().then((b:boolean)=>{
+      this.provider.login().then((s:string)=>{
+        this.qrcode=environment.server+"/api/qrcode/?code="+s;
+      });
+    });
+
     getParams(this.routes).then((params:any)=>{
       this.addr=params["addr"];
       if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
       this.showDetail=params["show_detail"] || false;
-      this.network.network=params["network"] || this.addr.startsWith("erd") ? "elrond-devnet" : "solana-devnet";
+      this.network.network=params["network"] || "elrond-devnet";
       this.url_key=environment.server+"/api/key/"+this.addr+"?format=qrcode";
       this.takePhoto=params["takePhoto"];
       this.refresh();
     });
+  }
+
+  open_elrond_authent() {
+    //voir : https://docs.elrond.com/wallet/webhooks/#:~:text=The%20web%20wallet%20webhooks%20allow,form%20with%20the%20provided%20arguments.
+    let callback=environment.appli+this._location.path();
+    new WalletProvider(this.network.url_wallet()).login({callbackUrl:callback,redirectDelayMilliseconds:2000}).then((result)=>{
+
+    })
   }
 
   refresh(index:number=0) {

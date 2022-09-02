@@ -15,6 +15,7 @@ MONGO_CLUSTER_CONNECTION_STRING="mongodb+srv://nfluent:hh4271@cluster0.ygd13.mon
 
 USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"
+SECRET_JWT_KEY="hh4271"
 
 ELROND_PASSWORD="Hh42714280!!"
 
