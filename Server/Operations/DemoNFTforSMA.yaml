@@ -9,7 +9,7 @@ wallet: "$nfluent_appli$/wallet"
 #Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
 lazy_mining:
   content_storage: NFTstorage         #plateforme de destibation des images
-  network: elrond-devnet
+  network: elrond-mainnet
   miner: nfluent
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
@@ -32,7 +32,7 @@ data:
   sources:
     - type: network
       active: True
-      connexion: elrond-devnet
+      connexion: elrond-mainnet
       filter:
         limit: 200
       owner: nfluent

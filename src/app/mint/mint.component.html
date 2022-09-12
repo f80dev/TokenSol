@@ -80,10 +80,21 @@
   <table style="padding: 5px;width:100%;text-align: center;">
     <tr>
       <th>Visuel</th>
-      <th>Titre / Description</th>
+      <th>
+        Titre / Description
+        <mat-icon title="recopie les attributs du premier NFT sur les autres"
+                  style="cursor: pointer;font-size: medium;"
+                  (click)="clone_name()">refresh</mat-icon>
+
+      </th>
       <th>Fichiers</th>
       <th>Price / Quantity</th>
-      <th>Attributs</th>
+      <th style="vertical-align: center;">
+        Attributs
+      <mat-icon title="recopie les attributs du premier NFT sur les autres"
+                style="cursor: pointer;font-size: medium;"
+                (click)="clone_attribute()">refresh</mat-icon>
+      </th>
       <th>Créateurs
         <mat-icon (click)="add_miner_to_creator()" style="cursor: pointer;font-size: medium;">add</mat-icon>
         <mat-icon (click)="reset_creator()" style="cursor: pointer;font-size: medium;">cancel</mat-icon>
@@ -136,7 +147,7 @@
 
       <td style="text-align: left;">
         <ul>
-          <li *ngFor="let a of token.attributes">
+          <li *ngFor="let a of token.attributes" (click)="edit_attribute(a)" style="cursor: pointer;">
             <strong>{{a['trait_type']}}:</strong> {{a.value}}
           </li>
         </ul>

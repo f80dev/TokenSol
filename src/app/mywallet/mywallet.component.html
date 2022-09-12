@@ -1,11 +1,16 @@
+<app-hourglass [message]="message" style="position: absolute;width: 100%;right: 10px;top:10px;text-align: right;"></app-hourglass>
 <mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)"
                style="padding: 10px;width:100%;  text-align: center;">
-  <mat-tab label="NFTs">
+  <mat-tab [label]="tab_title">
 
     <button type="button" mat-raised-button mat-button
             *ngIf="qrcode_addr.length==0"
-            (click)="show_elrond_addr()" style="margin-top: 20px;">
+            (click)="show_elrond_addr()">
       Recevoir des NFTs
+    </button>
+    <button type="button" mat-raised-button mat-button
+            (click)="refresh(0)">
+      Actualiser
     </button>
     <br>
 
@@ -14,7 +19,6 @@
       Utiliser ce QRCode pour recevoir des NFT<br>
       <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="addr">
     </div>
-
 
 
     <app-reversebloc *ngFor="let nft of nfts" [image]="nft.visual" width="300px" height="300px">
@@ -49,6 +53,17 @@
 <!--    <br>-->
 <!--    <img [src]="qrcode" style="width: 200px;">-->
 <!--    <br>-->
+
+    <div style="width: 100%;text-align: center;height: 30px;vertical-align: middle;margin-top: 50px;">
+      <table style="display: inline-block;">
+        <tr>
+          <td>(c) NFluenT 2022</td><td>-</td>
+          <td><a href="mailto:contact@nfluent.io"><mat-icon>mail</mat-icon></a></td><td>-</td>
+          <td>{{network.network}}</td>
+        </tr>
+      </table>
+    </div>
+
 
   </mat-tab>
 
@@ -91,6 +106,6 @@
   </mat-tab>
 
 
-
 </mat-tab-group>
+
 

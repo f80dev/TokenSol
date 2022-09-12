@@ -435,8 +435,14 @@ export class NetworkService {
     setTimeout(()=>{this.waiting=""},durationInSec*1000);
   }
 
-  isElrond() {
-    return this.network.indexOf("elrond")>-1;
+  isElrond(addr="") {
+    if(addr.length){
+      return this.network.indexOf("elrond")>-1;
+    } else {
+      return addr.startsWith("erd");
+    }
+
+
   }
 
   isSolana() {

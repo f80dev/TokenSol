@@ -1,5 +1,5 @@
 <div style="width: 100%;text-align: center;position: relative;height: 100%;">
-  <mat-form-field appearance="fill" style="min-width: 300px;width:60%;max-width: 600px;">
+  <mat-form-field appearance="fill" style="min-width: 350px;width:60%;max-width: 600px;">
     <mat-label>{{intro_message}}</mat-label>
     <input matInput type="text" [(ngModel)]="address" (ngModelChange)="update_address()">
     <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
@@ -23,8 +23,8 @@
   </div>
 
 
-  <div id="cmdPanel" style="margin-left:10%;margin-top:20%;width: 80%;text-align: center;">
-    <hr>
+  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;">
+
 
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter"
@@ -34,6 +34,7 @@
 
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter" color="primary"
+            [disabled]="address.length<20 && address.indexOf('@')==-1"
             (click)="validate()">
       Valider
     </button>

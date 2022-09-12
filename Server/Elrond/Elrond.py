@@ -3,7 +3,7 @@ import io
 import json
 from os import listdir,remove
 from os.path import exists
-import requests
+from time import sleep
 import pyqrcode
 from Tools import get_qrcode
 from NFT import NFT
@@ -244,6 +244,8 @@ class Elrond:
         log("BUG: consulter "+self.getExplorer(owner.address.bech32(),"address"))
         return None
 
+      sleep(3)
+
       if RESULT_SECTION in t and len(t[RESULT_SECTION][0]["data"].split("@")) > 2:
         collection_id = t[RESULT_SECTION][0]["data"].split("@")[2]
 
@@ -251,6 +253,8 @@ class Elrond:
                + "@" + str_to_hex("ESDTRoleNFTCreate",False) \
                + "@" + str_to_hex("ESDTRoleNFTBurn",False) \
                + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
+
+        sleep(3)
 
         #TODO pour l'instant ne fonctionne pas
         #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);

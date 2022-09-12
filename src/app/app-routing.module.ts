@@ -27,8 +27,8 @@ import {IntroComponent} from "./intro/intro.component";
 const routes: Routes = [
   { path: 'wallet', component: MywalletComponent },
   { path: 'candymachine', component:CandymachineComponent },
-  { path: 'cm', component:CandymachineComponent },
-  { path: 'dealermachine', component:DealermachineComponent },
+  { path: 'cm', component:CandymachineComponent,pathMatch:"prefix" },
+  { path: 'dealermachine', component:DealermachineComponent ,pathMatch:"prefix"},
   { path: 'dm', component:DealermachineComponent },
 
   { path: 'help', component: HelpComponent },
@@ -40,7 +40,7 @@ const routes: Routes = [
   { path: 'keys', component: KeysComponent },
   { path: 'admin', component: AdminComponent },
   { path: 'contest', component: ContestComponent },
-  { path: 'dispenser', component: DispenserComponent },
+  { path: 'dispenser', component: DispenserComponent,pathMatch:"prefix" },
   { path: 'creator', component: CreatorComponent },
   { path: 'store', component: StoreComponent },
   { path: 'login', component: LoginComponent },
@@ -48,7 +48,8 @@ const routes: Routes = [
   { path: 'build', component:BuildOpeComponent },
   { path: 'validate', component: ValidateComponent },
   { path: 'buy', component: BuyComponent },
-  { path: '', component: IntroComponent },
+  { path: 'intro', component: IntroComponent },
+  { path: '', component: IntroComponent,pathMatch: 'full' },
   { path: '**', component: PageNotFoundComponent },
 ];
 

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {environment} from "../../environments/environment";
 import {NetworkService} from "../network.service";
-import {getParams, setParams, showMessage} from "../../tools";
+import {$$, getParams, setParams, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Clipboard} from '@angular/cdk/clipboard';
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -44,9 +44,12 @@ export class BuildOpeComponent implements OnInit {
     public clipboardService:Clipboard,
     public router:Router,
     public ngNavigatorShareService: NgNavigatorShareService
-  ) { }
+  ) {
+
+  }
 
   ngOnInit(): void {
+
 
     if(this.user.isConnected()){
 
@@ -63,15 +66,19 @@ export class BuildOpeComponent implements OnInit {
   }
 
   refresh () {
-    if(this.operation.sel_ope)this.url_store=environment.appli+"/store?toolbar=false&ope="+this.operation.sel_ope.id;
     this.refresh_ope({value:this.operation.sel_ope});
   }
 
 
   refresh_ope($event: any) {
+
     if(!$event.value)return;
+    this.operation.select($event.value.id);
 
     if(!this.operation.sel_ope)return;
+
+
+    $$("Mise a jour des liens avec "+$event.value.id)
 
 
     this.network.wait("Récupération des NFTs issue des sources",500);
@@ -103,7 +110,7 @@ export class BuildOpeComponent implements OnInit {
 
         if(this.operation.sel_ope.dispenser){
           this.url_dispenser_app=this.operation.sel_ope.dispenser.application.replace("$nfluent_appli$",environment.appli)
-            +"?param="+setParams({ope:ope,toolbar:false});
+            +"?param="+setParams({ope:ope,toolbar:false,selfWalletConnexion:false});
         }
 
         if(this.operation.sel_ope.validate){
@@ -124,9 +131,7 @@ export class BuildOpeComponent implements OnInit {
 
       if(this.operation.sel_ope?.candymachine){
         this.candymachine_url=environment.appli+"/cm?param="+setParams({ope:this.operation.sel_ope.id,toolbar:false});
-        this.network.qrcode(this.candymachine_url,"json").subscribe((result:any)=>{
-          this.candymachine_qrcode=result.qrcode;
-        })
+        this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.candymachine_url)+"&scale=13";
       }
     });
   }
@@ -169,7 +174,9 @@ export class BuildOpeComponent implements OnInit {
   }
 
 
-  share_link(url:string,title:string,text:string) {
+  share_link(appli:string,title:string,text:string) {
+    this.refresh();
+    let url=this.get_url_for_appli(appli);
     this.ngNavigatorShareService.share({
       title: title,
       text: text,
@@ -183,11 +190,30 @@ export class BuildOpeComponent implements OnInit {
       });
   }
 
-  open_appli(href: string, target: string="_self") {
+  get_url_for_appli(appli:string,_d:any={}):string {
+    if(!this.operation.sel_ope)return "";
+
+    _d.toolbar=false
+    _d.ope=this.operation.sel_ope.id;
+
+    // switch (appli) {
+    //   case "dispenser": {
+    //     break;
+    //   }
+    //   case "store": {
+    //     break;
+    //   }
+    // }
+
+    let param = setParams(_d);
+    return environment.appli+"/"+appli+"?param="+param;
+  }
+
+  open_appli(appli:string,add_param:any={}) {
     if(this.operation.sel_ope){
-      href=href.replace("$nfluent_appli$",environment.appli).replace("https://tokenfactory.nfluent.io",environment.appli);
-      open(href,target);
-    }
+      this.refresh();
+      open(this.get_url_for_appli(appli,add_param),"_self");
+      }
   }
 
   edit_ope() {

@@ -178,7 +178,7 @@
             </td>
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli(url_dispenser_app)">
+                      (click)="open_appli('dispenser')">
                 Ouvrir
               </button>
 
@@ -215,13 +215,14 @@
             </ul>
           </td>
           <td>
-            <a [href]="candymachine_url" target="_self">
+            <a [href]="candymachine_qrcode" target="print">
               <img [src]="candymachine_qrcode" style="width: 200px;">
-            </a>
+            </a><br>
+            <small>cliquer pour visualiser en grand format</small>
           </td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="open_appli(candymachine_url,'_self')">
+                    (click)="open_appli('cm')">
               Ouvrir
             </button>
             <br>
@@ -278,7 +279,7 @@
             </td>
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli(operation.sel_ope.lottery.application,'_self')">
+                      (click)="open_appli('lottery')">
                 Ouvrir
               </button>
               <br>
@@ -343,7 +344,7 @@
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
                       title="Permet de tester le processus de validation"
-                      (click)="open_validate()">
+                      (click)="open_appli('validate')">
                 Ouvrir
               </button>
               <br>
@@ -390,7 +391,7 @@
           </td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="open_appli(operation.sel_ope.store!.application+'?ope='+operation.sel_ope.id+'&toolbar=false','_self')">
+                    (click)="open_appli('store')">
               Ouvrir
             </button>
             <br>

@@ -40,7 +40,7 @@ export class DealermachineComponent implements OnInit {
       this.nft=params["token"];
       let ope=params["ope"];
       if(!this.nft){
-        $$("On va chercher les NFT dans le fichier d'opération");
+        $$("On va chercher les NFTs dans le fichier d'opération");
         let address=params["address"] || "";
         let symbol=params["symbol"] || "";
         this.network.get_nfts_from_operation(ope).subscribe((r:any)=>{
@@ -51,7 +51,6 @@ export class DealermachineComponent implements OnInit {
       }
 
       this.mining=params["mining"];
-
       this.selfWalletConnexion=params["selfWalletConnexion"] || false;
 
       if(ope){
@@ -100,8 +99,9 @@ export class DealermachineComponent implements OnInit {
   }
 
 
-  valide() {
-    let addr=this.alias.transform(this.address,"pubkey");
+  valide(addr:string) {
+    this.address=addr;
+    addr=this.alias.transform(addr,"pubkey");
     if(this.nft!.address?.startsWith("db_")){
       $$("Ce token est issue d'une base de données, donc non miné");;
         if(this.ope)this.message=this.ope.store.support.buy_message;
@@ -132,10 +132,9 @@ export class DealermachineComponent implements OnInit {
       }
   }
 
-
   onLoadPaymentData($event: any) {
     if($event.returnValue)
-      this.valide();
+      this.valide(this.address);
   }
 
   onflash($event: any) {

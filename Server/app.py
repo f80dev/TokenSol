@@ -890,6 +890,7 @@ def get_tokens_to_send(ope:str):
 
 @app.route('/api/key/<code>',methods=["GET"])
 @app.route('/api/qrcode/',methods=["GET"])
+@app.route('/api/qrcode/<code>',methods=["GET"])
 def get_key(code=""):
   format=request.args.get("format","qrcode")
   scale=request.args.get("scale",9)

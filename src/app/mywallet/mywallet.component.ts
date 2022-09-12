@@ -35,6 +35,8 @@ export class MywalletComponent implements OnInit,OnDestroy {
   provider:any=null;
   private hAccessCode: any;
   access_code: any;
+  message:string="";
+  tab_title: string="Vos NFTs";
 
   constructor(public user:UserService,
               public routes:ActivatedRoute,
@@ -69,12 +71,11 @@ export class MywalletComponent implements OnInit,OnDestroy {
         this.qrcode=environment.server+"/api/qrcode/?code="+s;
       });
     });
-
     getParams(this.routes).then((params:any)=>{
       this.addr=params["addr"];
       if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
       this.showDetail=params["show_detail"] || false;
-      this.network.network=params["network"] || "elrond-devnet";
+      this.network.network=params["network"] || "elrond-mainnet";
       this.generate_qrcode();
       this.hAccessCode=setInterval(()=>{this.generate_qrcode()},30000);
       this.takePhoto=params["takePhoto"];
@@ -92,7 +93,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   refresh(index:number=0) {
     if(index==0 && this.nfts.length==0){
-      this.network.wait("Chargement de vos NFTs");
+      this.message="Chargement NFTs";
       for(let arg of [[0,20],[21,50],[51,100],[101,200]]){
         let offset=arg[0];
         let limit=arg[1];
@@ -102,10 +103,19 @@ export class MywalletComponent implements OnInit,OnDestroy {
               this.nfts.push(nft);
             }
             if(r.length==0) {
-              if (arg[0] == 0)
+              if (arg[0] == 0){
                 showMessage(this, "Vous n'avez aucun NFT pour l'instant")
-              else
-                this.network.wait("");
+                this.tab_title="Vos NFTs";
+              }
+              else {
+                if(r.length>1){
+                  this.tab_title="Vos "+r.length+" NFTs";
+                } else {
+                  this.tab_title="Votre NFT";
+                }
+                this.message="";
+              }
+
             }
           }).catch(err=>{showError(this,err)});
         },offset*500);

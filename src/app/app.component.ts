@@ -47,11 +47,11 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
 
     setTimeout(()=>{
-      if(getBrowserName()=="firefox"){
-        showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
-      }
-
       getParams(this.routes).then((params:any)=>{
+        if(getBrowserName()=="firefox"){
+          showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
+        }
+
         this.network_service.version=params["version"] || "main";
         if(params.hasOwnProperty("toolbar")){
           this.toolbar_visible=params["toolbar"];
@@ -59,6 +59,10 @@ export class AppComponent implements OnInit {
         else {
           this.toolbar_visible="true";
         }
+
+
+      }).catch(()=>{
+        debugger
       });
     },600);
   }

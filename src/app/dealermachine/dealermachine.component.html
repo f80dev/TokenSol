@@ -2,16 +2,16 @@
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
-    <div class="mat-display-2" *ngIf="selfWalletConnexion">Acquérir ce NFT pour {{nft.marketplace!.price}}€</div>
-    <div class="mat-display-2" *ngIf="!selfWalletConnexion">Envoyer ce NFT</div>
+    <div class="mat-display-1" *ngIf="selfWalletConnexion">Acquérir ce NFT pour {{nft.marketplace!.price}}€</div>
+    <div class="mat-display-1" *ngIf="!selfWalletConnexion">Envoyer ce NFT</div>
 
     <img [src]="nft?.visual" *ngIf="nft?.visual"
-         style="max-width: 400px;width:80%;margin-bottom: 20px;"
+         style="max-width: 200px;width:80%;margin-bottom: 10px;"
          class="mat-elevation-z4">
     <br>
 
 
-
+<!--    gestion de la facture -->
     <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;" *ngIf="ope?.payment?.billing && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1">
       <mat-label>Indiquez une adresse mail pour recevoir une facture</mat-label>
       <input matInput type="text" [(ngModel)]="billing_address">
@@ -19,11 +19,13 @@
       <mat-hint>Une facture vous seras adressée</mat-hint>
     </mat-form-field>
 
+
     <div *ngIf="webcam">
       <br>
       Capturez l'adresse d'un wallet<br>
       <app-scanner [size]="350"  (flash)="onflash($event)"></app-scanner>
     </div>
+
 
     <div *ngIf="address.length>20 || (address.length>5 && address.indexOf('@')>-1)">
       <div *ngIf="nft.marketplace!.price>0">
@@ -54,18 +56,11 @@
 
       </div>
 
-      <button type="button" mat-raised-button mat-button *ngIf="nft.marketplace!.price==0" color="primary"
-              (click)="valide()">
-        Envoyer
-      </button>
-
     </div>
 
-    <button type="button" mat-raised-button mat-button
-            style="margin: 10px;"
-            (click)="cancel()">
-      Annuler
-    </button>
+    <app-authent (authent)="valide($event)" style="max-height: 300px;"></app-authent>
+
+
 
   </div>
 

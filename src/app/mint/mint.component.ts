@@ -465,4 +465,37 @@ export class MintComponent implements OnInit {
       token.marketplace={price:this.price,quantity:this.quantity};
     }
   }
+
+  edit_attribute(a: { trait_type: string; value: string }) {
+    this.dialog.open(PromptComponent,{
+      width: 'auto',data:
+        {
+          title: "modifier le trait_type et/ou la valeur",
+          result: a.trait_type+":"+a.value,
+          onlyConfirm: false,
+          lbl_ok:"Ok",
+          lbl_cancel:"Annuler"
+        }
+    }).afterClosed().subscribe((rep:string) => {
+      if(rep){
+        a.trait_type=rep.split(":")[0];
+        a.value=rep.split(":")[1];
+      }
+    });
+  }
+
+  clone_attribute() {
+    for(let i=1;i<this.tokens.length;i++){
+      this.tokens[i].attributes=this.tokens[0].attributes;
+    }
+    showMessage(this,"Recopie terminée")
+  }
+
+  clone_name() {
+    for(let i=1;i<this.tokens.length;i++){
+      this.tokens[i].name=this.tokens[0].name;
+      this.tokens[i].description=this.tokens[0].description;
+    }
+    showMessage(this,"Recopie terminée")
+  }
 }

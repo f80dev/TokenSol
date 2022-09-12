@@ -61,14 +61,15 @@ export function setParams(_d:any,prefix="") : string {
     if(typeof(_d[k])=="object")_d[k]="b64:"+btoa(JSON.stringify(_d[k]));
     rc.push(k+"="+_d[k]);
   }
-  return encrypt(prefix+rc.join("&"));
+  let url=encrypt(prefix+rc.join("&"));
+  return encodeURIComponent(url);
 }
 
 export function getParams(routes:ActivatedRoute) {
   return new Promise((resolve, reject) => {
     routes.queryParams.subscribe((params:any) => {
       if(params.hasOwnProperty("param")){
-        let _params=decrypt(params["param"]).split("&");
+        let _params=decrypt(decodeURIComponent(params["param"])).split("&");
         $$("Les paramètres à analyser sont "+_params);
         let rc:any={};
         for(let _param of _params){
