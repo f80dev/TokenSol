@@ -2,7 +2,7 @@
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
-    <div class="mat-display-2" *ngIf="selfWalletConnexion">Acquérir ce NFT pour {{nft.marketplace.price}}€</div>
+    <div class="mat-display-2" *ngIf="selfWalletConnexion">Acquérir ce NFT pour {{nft.marketplace!.price}}€</div>
     <div class="mat-display-2" *ngIf="!selfWalletConnexion">Envoyer ce NFT</div>
 
     <img [src]="nft?.visual" *ngIf="nft?.visual"
@@ -10,50 +10,25 @@
          class="mat-elevation-z4">
     <br>
 
-    <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;">
-      <mat-label *ngIf="selfWalletConnexion">Indiquez l'adresse de votre wallet ou votre email si vous n'en avez pas</mat-label>
-      <mat-label *ngIf="!selfWalletConnexion">Indiquez l'adresse du wallet ou l'email du destinataire</mat-label>
-      <input matInput type="text" [(ngModel)]="address">
-      <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
-      <mat-hint>Après acquisition, le NFT sera immédiatement transférer</mat-hint>
-    </mat-form-field>
 
-    <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;" *ngIf="ope?.payment?.billing && nft.marketplace.price>0 && address.length>0 && address.indexOf('@')==-1">
+
+    <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;" *ngIf="ope?.payment?.billing && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1">
       <mat-label>Indiquez une adresse mail pour recevoir une facture</mat-label>
       <input matInput type="text" [(ngModel)]="billing_address">
       <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
       <mat-hint>Une facture vous seras adressée</mat-hint>
     </mat-form-field>
 
-
-    <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20 && selfWalletConnexion ">
-      Se connecter avec votre wallet sur<br>
-      <button type="button" mat-raised-button mat-button color="primary"
-              *ngIf="network.installed_wallet().indexOf('phantom')>-1 || network.installed_wallet().indexOf('solflare')>-1"
-              (click)="open_wallet('solana')">
-        Solana
-      </button>
-
-      <button type="button" mat-raised-button mat-button
-              *ngIf="network.installed_wallet().indexOf('maiar')>-1"
-              (click)="open_wallet('elrond')">
-        Elrond
-      </button>
-
-      <div *ngIf="webcam">
-        <br>
-        Capturez l'adresse d'un wallet<br>
-        <app-scanner [size]="350"  (flash)="onflash($event)"></app-scanner>
-      </div>
-
-
+    <div *ngIf="webcam">
+      <br>
+      Capturez l'adresse d'un wallet<br>
+      <app-scanner [size]="350"  (flash)="onflash($event)"></app-scanner>
     </div>
 
-
     <div *ngIf="address.length>20 || (address.length>5 && address.indexOf('@')>-1)">
-      <div *ngIf="nft.marketplace.price>0">
+      <div *ngIf="nft.marketplace!.price>0">
         <br>
-        Acheter maintenant ce NFT pour <strong>{{nft.marketplace.price}}€</strong><br>
+        Acheter maintenant ce NFT pour <strong>{{nft.marketplace!.price}}€</strong><br>
 
         <google-pay-button
           environment="TEST"
@@ -65,25 +40,32 @@
         allowedPaymentMethods: [
         {type: 'CARD',
           parameters: {allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],allowedCardNetworks: ['VISA', 'MASTERCARD']},
-        tokenizationSpecification: {
+       tokenizationSpecification: {
           type: 'PAYMENT_GATEWAY',
           parameters: {gateway: 'example',gatewayMerchantId: 'exampleGatewayMerchantId'}
           }
          }
         ],
       merchantInfo: {merchantId: ope.payment.merchantId,merchantName: ope.payment.merchantName},
-      transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: nft.marketplace.price,currencyCode: ope.payment.currencyCode,countryCode: ope.payment.countryCode}}"
+      transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: nft.marketplace!.price.toString(5),currencyCode: ope.payment.currencyCode,countryCode: ope.payment.countryCode}}"
           (loadpaymentdata)="onLoadPaymentData($event)">
 
         </google-pay-button>
 
       </div>
 
-      <button type="button" mat-raised-button mat-button *ngIf="nft.marketplace.price==0" color="primary"
+      <button type="button" mat-raised-button mat-button *ngIf="nft.marketplace!.price==0" color="primary"
               (click)="valide()">
         Envoyer
       </button>
+
     </div>
+
+    <button type="button" mat-raised-button mat-button
+            style="margin: 10px;"
+            (click)="cancel()">
+      Annuler
+    </button>
 
   </div>
 

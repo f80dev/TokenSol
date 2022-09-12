@@ -44,7 +44,7 @@
               "tweetnacl"
             ],
             "styles": [
-              "src/styles.css",
+              "src/styles.scss",
               "src/nfluent.scss"
             ],
             "scripts": [
@@ -59,12 +59,12 @@
                 {
                   "type": "initial",
                   "maximumWarning": "50000kb",
-                  "maximumError": "100mb"
+                  "maximumError": "200mb"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "20kb",
-                  "maximumError": "40kb"
+                  "maximumWarning": "40kb",
+                  "maximumError": "120kb"
                 }
               ],
               "fileReplacements": [
@@ -118,7 +118,7 @@
             ],
             "styles": [
               "src/nfluent.scss",
-              "src/styles.css"
+              "src/styles.scss"
             ],
             "scripts": [
 

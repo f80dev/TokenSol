@@ -35,10 +35,7 @@ export interface MetadataExternal {
   image: string
   seller_fee_basis_points: number
   attributes:Attribute[]
-  collection: {
-    name:string
-    family:string | undefined
-  }
+  collection: string
   properties:{
     files:{uri:string,type:string}[]
     caterogy:string
@@ -68,18 +65,24 @@ export interface Search {
 }
 
 export interface NFT {
-  collection:any
+  collection:string
   symbol:string
   network: string | undefined
-  attributes:any[]
+  attributes:{
+    trait_type:string
+    value: string
+  }[]
   name:string
   description:string
   visual:string
-  creators:any[]
+  creators: any[]
   address:string | undefined
   royalties:number
   owner:string | undefined
-  marketplace:any | undefined
+  marketplace: {
+    price: number
+    quantity: number
+  } | undefined
   files:any[]
   solana: any | undefined
   message: string | undefined

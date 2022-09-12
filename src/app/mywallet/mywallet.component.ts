@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {UserService} from "../user.service";
 import {NetworkService} from "../network.service";
 import {getParams, removeBigInt, showError, showMessage} from "../../tools";
@@ -17,7 +17,7 @@ import {Location} from "@angular/common";
   templateUrl: './mywallet.component.html',
   styleUrls: ['./mywallet.component.css']
 })
-export class MywalletComponent implements OnInit {
+export class MywalletComponent implements OnInit,OnDestroy {
   nfts: NFT[]=[];
   indexTab: number=0;
   addr:any="";
@@ -31,7 +31,10 @@ export class MywalletComponent implements OnInit {
   private nextWebcam: Subject<boolean|string> = new Subject<boolean|string>();
   photo_to_send: string="";
   qrcode:string="";
+  qrcode_addr:string="";
   provider:any=null;
+  private hAccessCode: any;
+  access_code: any;
 
   constructor(public user:UserService,
               public routes:ActivatedRoute,
@@ -53,6 +56,13 @@ export class MywalletComponent implements OnInit {
   }
 
 
+  generate_qrcode(){
+    this.network.get_access_code(this.addr).subscribe((r:any)=>{
+        this.url_key=r.image;
+        this.access_code=r.access_code;
+      });
+  }
+
   ngOnInit(): void {
     this.provider.init().then((b:boolean)=>{
       this.provider.login().then((s:string)=>{
@@ -65,7 +75,8 @@ export class MywalletComponent implements OnInit {
       if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
       this.showDetail=params["show_detail"] || false;
       this.network.network=params["network"] || "elrond-devnet";
-      this.url_key=environment.server+"/api/key/"+this.addr+"?format=qrcode";
+      this.generate_qrcode();
+      this.hAccessCode=setInterval(()=>{this.generate_qrcode()},30000);
       this.takePhoto=params["takePhoto"];
       this.refresh();
     });
@@ -82,24 +93,20 @@ export class MywalletComponent implements OnInit {
   refresh(index:number=0) {
     if(index==0 && this.nfts.length==0){
       this.network.wait("Chargement de vos NFTs");
-      for(let arg of [[0,2],[2,6],[6,10],[10,1000]]){
+      for(let arg of [[0,20],[21,50],[51,100],[101,200]]){
         let offset=arg[0];
         let limit=arg[1];
         setTimeout(()=>{
-          this.network.get_tokens_from("owner",this.addr,limit,false,null,offset).then((r:NFT[])=>{
-
+          this.network.get_tokens_from("owner",this.addr,limit,false,null,offset,this.network.network).then((r:NFT[])=>{
             for(let nft of r){
-              if(nft.visual)
-                this.nfts.push(nft);
+              this.nfts.push(nft);
             }
             if(r.length==0) {
               if (arg[0] == 0)
                 showMessage(this, "Vous n'avez aucun NFT pour l'instant")
               else
                 this.network.wait("");
-
             }
-
           }).catch(err=>{showError(this,err)});
         },offset*500);
       }
@@ -127,5 +134,24 @@ export class MywalletComponent implements OnInit {
 
   send() {
     this.photo_to_send="";
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.hAccessCode);
+  }
+
+  show_elrond_addr() {
+    this.network.qrcode(this.addr,"json").subscribe((result:any)=>{
+      this.qrcode_addr=result.qrcode;
+    })
+
+  }
+
+  get_nft(nft: NFT) {
+    if(nft.owner && nft.address){
+      this.network.get_nft(nft.owner,nft.address,this.network.network).subscribe(()=>{
+        debugger
+      });
+    }
   }
 }

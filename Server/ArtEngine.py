@@ -24,7 +24,7 @@ def convert_to_gif(content:str,storage_platform=None,filename=None):
     image:Image=Image.open(io.BytesIO(base64.b64decode(content.split("base64,")[1])))
 
   if filename:
-    buffered=open("./temp/"+filename,"wb")
+    buffered=open(filename,"wb")
   else:
     buffered =io.BytesIO()
 
@@ -40,7 +40,7 @@ def convert_to_gif(content:str,storage_platform=None,filename=None):
 
   if filename:
     buffered.close()
-    return "./temp/"+filename
+    return filename
 
   return buffered
 
@@ -579,7 +579,6 @@ class ArtEngine:
         else:
           filename=collage.toStr()
           rc.append(filename)
-
 
         collage.close()
         collage.delete()

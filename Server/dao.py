@@ -31,16 +31,37 @@ class DAO:
       self.dbname=dbname
       self.domain=domain
 
-    log("Ouverture de la base de données "+self.dbname+" sur le domain "+DB_SERVERS[self.domain])
+    self.connect(self.domain,self.dbname)
+
+
+
+  def connect(self, domain, name):
+    """
+    effectue la connexion à la base si nécéssaire
+    :param domain:
+    :param name:
+    :return:
+    """
+    if domain==self.domain and name==self.dbname and not self.db is None:
+      return True
+
+    log("Tentative de connexion sur la base de données "+self.dbname+" sur le domain "+DB_SERVERS[self.domain])
     try:
       url=DB_SERVERS[self.domain] if not domain.startswith("mongodb+srv") else self.domain
       self.db: pymongo.mongo_client = pymongo.MongoClient(url)[self.dbname]
+      cols=self.db.__dict__
+      log("Connexion réussie. ")
+      return True
+
     except Exception as inst:
       log("Base de données non disponible "+str(inst.args))
       self.db=None
 
+    return False
 
-  def lazy_mint(self, _data,ope,server_addr="https://server.f80lab.com",id=""):
+
+
+  def lazy_mint(self, nft,ope,server_addr="https://server.f80lab.com",id=""):
     """
     Opere un transfert du NFT dans la base de données
     :param _data:
@@ -49,18 +70,14 @@ class DAO:
     :param id:
     :return:
     """
-    if "_id" in _data:del _data["_id"]
-    if not "id" in _data:
-      if len(id)==0: id=_data["collection"]["name"]+"_"+_data["symbol"]
-      _data["id"]=id
-
+    _data=nft.__dict__
+    _data["address"]="db_"+hex(int(now()*10000000))[2:]     #l'addresse commençant par db_ permet de désigner une base de données
     _data["ts"]=int(now()*1000)
     _data["ope"]=ope
-    _data["quantity"]=_data["marketplace"]["max_mint"]
-    result=self.db["nfts"].replace_one(filter={"id":_data["id"]},replacement=_data,upsert=True)
+    result=self.db["nfts"].replace_one(filter={"address":_data["address"]},replacement=_data,upsert=True)
     rc={
       "error":"",
-      "result":{"transaction":_data["id"],"mint":_data["id"]},
+      "result":{"transaction":"","mint":nft.address},
       "balance":0,
       "link_mint":"",
       "link_transaction":"",
@@ -72,14 +89,13 @@ class DAO:
   def nfts_from_collection(self, col):
     rc=[]
     if col:
-      nfts=self.db["nfts"].find(filter={"collection.name":col["name"]})
+      nfts=self.db["nfts"].find(filter={"collection":col})
     else:
       nfts=self.db["nfts"].find()
 
     for nft in nfts:
       _nft=NFT(object=nft)
-      if "max_mint" in nft.marketplace :_nft.marketplace["quantity"]=nft.marketplace["max_mint"]
-      rc.append(_nft.__dict__)
+      rc.append(_nft)
 
     return rc
 
@@ -120,7 +136,11 @@ class DAO:
     :param field:
     :return:
     """
-    self.db["nfts"].update_one({"id":_data["id"]},{ "$set": { field: _data[field] } })
+    self.db["nfts"].update_one({"address":_data["address"]},{ "$set": { field: _data[field] } })
+
+
+
+
 
 
 

@@ -2,7 +2,7 @@
   <div *ngFor="let nft of nfts" style="display: inline-flex;margin:10px;">
     <div *ngIf="format=='obj'" style="display: block;width: 450px;height:750px;padding:10px;" class="mat-elevation-z4">
       <strong>{{nft.name}}</strong>&nbsp;({{nft.symbol}})<br>
-      <small>Collection: {{nft.collection?.name}}</small><br>
+      <small>Collection: {{nft.collection}}</small><br>
       <small>NFT address: <a [href]="getSolanaExplorer(nft.address)" target="_blank">{{nft.address}}</a> </small>
       <br><br>
 
@@ -55,7 +55,7 @@
         <tr *ngIf="network.isSolana()"><td>Mutable</td><td>{{nft.solana?.isMutable}}</td></tr>
 <!--        <tr><td>Mint authority</td><td><a [href]="getSolanaExplorer(nft.splMintInfo?.mintAuthority)" target="_blank">{{nft.splMintInfo?.mintAuthority | alias}}</a></td></tr>-->
         <tr><td>Owner</td><td><a [href]="getSolanaExplorer(nft.owner)" target="_blank">{{nft.owner | alias}}</a></td></tr>
-        <tr><td>Quantite</td><td>{{nft.marketplace.quantity}}</td></tr>
+        <tr><td>Quantite</td><td>{{nft.marketplace?.quantity}}</td></tr>
       </table>
 
       <button

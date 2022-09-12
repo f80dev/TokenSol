@@ -1,5 +1,5 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import {AfterContentInit, AfterViewInit, Component, OnInit} from '@angular/core';
+import { Component, OnInit} from '@angular/core';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
@@ -7,8 +7,12 @@ import {UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
+import {Location} from "@angular/common";
 import {MetabossService} from "./metaboss.service";
-import {$$, getParams} from "../tools";
+import {getBrowserName, getParams, showMessage} from "../tools";
+import {OperationService} from "./operation.service";
+import {MatSnackBar} from "@angular/material/snack-bar";
+import {MatSelectChange} from "@angular/material/select";
 
 @Component({
   selector: 'app-root',
@@ -27,21 +31,36 @@ export class AppComponent implements OnInit {
   networks=NETWORKS;
   toolbar_visible: string="true";
 
-
   constructor(
     private breakpointObserver: BreakpointObserver,
     public user:UserService,
     public network_service:NetworkService,
     public routes:ActivatedRoute,
     public router:Router,
+    public _location:Location,
+    public toast:MatSnackBar,
+    public operation:OperationService,
     public metaboss:MetabossService
   ) {}
 
   //test: https://tokenfactory.nfluent.io/contest?ope=
   ngOnInit(): void {
-    getParams(this.routes).then((params:any)=>{
-      this.toolbar_visible=params["toolbar"];
-    });
+
+    setTimeout(()=>{
+      if(getBrowserName()=="firefox"){
+        showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
+      }
+
+      getParams(this.routes).then((params:any)=>{
+        this.network_service.version=params["version"] || "main";
+        if(params.hasOwnProperty("toolbar")){
+          this.toolbar_visible=params["toolbar"];
+        }
+        else {
+          this.toolbar_visible="true";
+        }
+      });
+    },600);
   }
 
 
@@ -57,8 +76,14 @@ export class AppComponent implements OnInit {
 
 
   update_network() {
-      this.metaboss.init_keys(this.network_service.network);
+    this.network_service.complement="("+this.operation.sel_ope?.store?.prestashop?.server+")";
+    this.metaboss.init_keys(this.network_service.network,false);
   }
 
+
+  refresh_ope($event: MatSelectChange) {
+    if(this._location.path(true).indexOf('/build')>-1)
+      this._location.replaceState("/build","ope="+$event.value.id,true);
+  }
 
 }

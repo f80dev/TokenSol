@@ -1,0 +1,26 @@
+<div class="mainform" style="text-align: center">
+  <div *ngIf="!showEnd" >
+    <h2>Recevoir un NFT de la collection</h2>
+    <div *ngFor="let col of collections">
+      {{col.name}}<br>
+      <img [src]="col.visual" style="width: 200px" [title]="col.description"><br>
+    </div>
+
+    <app-authent (authent)="authent($event)" style="margin: 100px;"></app-authent>
+  </div>
+
+  <div *ngIf="showEnd">
+    <p>
+      Votre demande de NFT est en cours de traitement<br>
+      Un mail vous sera envoyé dès la fin de traitement.<br>
+      Vous pouvez maintenant fermer cette fenêtre
+    </p>
+
+      <br>
+      <button type="button" mat-raised-button mat-button
+              (click)="back()">
+        Retour
+      </button>
+
+  </div>
+</div>

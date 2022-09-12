@@ -196,32 +196,26 @@ export class CreatorComponent implements OnInit {
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
 
-        if(format=="zip"){
+
+        this.network.wait("Fabrication de la collection ...");
+        showMessage(this,"L'aperçu se limite à 10 NFT maximum");
+        this.network.get_collection(Math.min(this.limit,10),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"preview",this.data).subscribe((r:any)=>{
+          this.show_download_link();
           this.network.wait("");
-          showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
-          this.url_collection=environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext+"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format+"&format=zip&limit="+this.limit+"&quality="+this.quality;
-          this.url_collection=this.url_collection+"&data="+btoa(JSON.stringify(this.data))
-        }
+          this.previews=r;
+        },(err)=>{showError(this,err);})
 
-        if(format=="preview"){
-          this.network.wait("Fabrication de la collection en cours ...");
-          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"preview",this.data).subscribe((r:any)=>{
-            this.network.wait("");
-            this.previews=r;
-          },(err)=>{showError(this,err);})
-        }
 
-        if(format=="upload"){
-          this.network.wait("");
-          this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"upload",this.data,this.sel_platform).subscribe((r:any) => {
-            this.upload_files=[];
-            for(let item of r){
-              // @ts-ignore
-              this.upload_files.push(item['url']);
-            }
-          });
-
-        }
+        // if(format=="upload"){
+        //   this.network.wait("");
+        //   this.network.get_collection(Math.min(this.limit,50),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"upload",this.data,this.sel_platform).subscribe((r:any) => {
+        //     this.upload_files=[];
+        //     for(let item of r){
+        //       // @ts-ignore
+        //       this.upload_files.push(item['url']);
+        //     }
+        //   });
+        // }
       });
     },(err)=>{showError(this,err);})
   }
@@ -379,9 +373,11 @@ export class CreatorComponent implements OnInit {
 
 
   find_font(filename:string) {
-    for(let f of this.fontfiles){
-      if(f.file==filename)
-        return f;
+    if(this.fontfiles){
+      for(let f of this.fontfiles){
+        if(f.file==filename)
+          return f;
+      }
     }
     return null;
   }
@@ -402,7 +398,7 @@ export class CreatorComponent implements OnInit {
           }
 
           this.layers=r.layers;
-          this.data=r.data || {title:"MonTitre",symbol:"token__idx__",description:"madescription",collection:"macollection",family:"mafamille",properties:"propriete=valeur",files:"http://monfichier"};
+          this.data=r.data || {title:"MonTitre",symbol:"token__idx__",description:"madescription",collection:"macollection",properties:"propriete=valeur",files:"http://monfichier"};
           this.col_width=r.width;
           this.col_height=r.height;
           this.filename_format=r.filename_format;
@@ -430,7 +426,14 @@ export class CreatorComponent implements OnInit {
   //https://server.f80lab.com/api/configs/?format=file
   quality=98;
   config_with_image=true;
-  data: any={title:"MonTitre",symbol:"token__idx__",description:"madescription",collection:"macollection",family:"mafamille",properties:"propriete=valeur",files:"http://monfichier"};
+  data: any={
+    title:"MonTitre",
+    symbol:"token__idx__",
+    description:"madescription",
+    collection:"macollection",
+    properties:"propriete=valeur",
+    files:"http://monfichier"
+  };
 
 
   save_config() {
@@ -476,6 +479,7 @@ export class CreatorComponent implements OnInit {
     let txt=atob($event.file.split("base64,")[1]);
     this.network.save_config_on_server($event.filename,txt).subscribe(()=>{
       this.network.wait("");
+      this.sel_config=$event.filename;
       this.load_config($event.filename);
     },(err)=>{
       showError(this);
@@ -601,6 +605,7 @@ export class CreatorComponent implements OnInit {
         open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
         open("https://emojipedia.org/search/?q="+resp,"search_emoji")
         open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
+        open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
         open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
         open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
         open("https://all-free-download.com/free-vector/"+resp+".html/","search_vectors")
@@ -674,5 +679,13 @@ export class CreatorComponent implements OnInit {
 
   miner() {
     this.router.navigate(["miner"],{queryParams:{param:setParams({files:this.upload_files})}})
+  }
+
+  show_download_link() {
+    showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
+    this.url_collection=environment.server+"/api/collection/?seed="+this.seed+"&image="+this.sel_ext
+      +"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format
+      +"&format=zip&limit="+this.limit+"&quality="
+      +this.quality+"&data="+btoa(encodeURIComponent(JSON.stringify(this.data)));
   }
 }

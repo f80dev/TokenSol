@@ -1,14 +1,12 @@
 import {Component,  OnInit} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
 import {
-  $$,
+  $$, b64DecodeUnicode,
   base64ToArrayBuffer,
   getParams,
   isLocal,
-  MetabossKey,
   showError,
-  showMessage,
-  syntaxHighlight
+  showMessage
 } from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PromptComponent} from "../prompt/prompt.component";
@@ -19,9 +17,8 @@ import {  NFT} from "../nfts/nfts.component";
 import ExifReader from 'exifreader';
 import {UserService} from "../user.service";
 import {ActivatedRoute} from "@angular/router";
-import {Operation} from "../../operation";
-import {NUMPAD_NINE} from "@angular/cdk/keycodes";
 import {environment} from "../../environments/environment";
+import {OperationService} from "../operation.service";
 
 
 @Component({
@@ -34,7 +31,6 @@ export class MintComponent implements OnInit {
   fileName: string="";
   key: string="";
   formData: FormData=new FormData();
-  sel_ope:any;
   sign: boolean=false;
   tokens: NFT[]=[];
   platforms=PLATFORMS;
@@ -42,6 +38,7 @@ export class MintComponent implements OnInit {
   price: any=0;
   quantity: any=1;
   seller_fee_basis_points: any=0;
+  collection: string="";
 
 
   constructor(
@@ -49,6 +46,7 @@ export class MintComponent implements OnInit {
     public network:NetworkService,
     public dialog:MatDialog,
     public user:UserService,
+    public operation:OperationService,
     public metaboss:MetabossService,
     public routes:ActivatedRoute,
   ) { }
@@ -57,8 +55,10 @@ export class MintComponent implements OnInit {
 
   ngOnInit(): void {
     if(this.user.isConnected()){
+      this.metaboss.init_keys(this.network.network,false);
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp)
+      if(this.collection.length==0 && this.tokens.length>0)this.collection=this.tokens[0].collection;
 
       getParams(this.routes).then((params:any)=>{
         if(params.hasOwnProperty("files")){
@@ -68,16 +68,8 @@ export class MintComponent implements OnInit {
           }
           this.onFileSelected(files);
         }
-
-        this.network.get_operations(params["ope"] || "").subscribe((r:any)=>{
-          this.sel_ope=r;
-        })
-
       })
-
-
     } else this.user.login("Le minage nécessite une authentification");
-    if(isLocal(environment.server))this.sel_platform="nfluent_local";
   }
 
 
@@ -99,12 +91,14 @@ export class MintComponent implements OnInit {
 
     if(_infos.hasOwnProperty("properties")){
       for(let a of _infos.properties.split("\n")){
-        attributes.push({trait_type:a.split("=")[0].trim(),value:a.split("=")[1].trim()})
+        if(a.length>1){
+          attributes.push({trait_type:a.split("=")[0].trim(),value:a.split("=")[1].trim()})
+        }
       }
     }
 
     if(_infos.hasOwnProperty("collection")){
-      collection={name:_infos.collection,family:_infos.family}
+      collection=_infos.collection
     }
 
 
@@ -162,13 +156,17 @@ export class MintComponent implements OnInit {
           tags = ExifReader.load(base64ToArrayBuffer(f.file.split("base64,")[1]))
         } catch (e) {}
 
-        this.upload_file({filename:f.filename,content:f.file,type:f.type}).then((url:any)=>{
-          let _infos:any={};
-          if(tags.hasOwnProperty("mint")){
-            _infos= JSON.parse(atob(tags.mint.value));
-          }
-          this.tokens.push(this.get_token_from_xmp(_infos,url))
-        });
+        let url=f.file;
+        let _infos:any={};
+        if(tags.hasOwnProperty("mint")){
+          _infos= JSON.parse(b64DecodeUnicode(tags.mint.value));
+        }
+        this.tokens.push(this.get_token_from_xmp(_infos,url))
+        if(this.collection.length==0)this.collection=this.tokens[0].collection;
+
+        // this.upload_file({filename:f.filename,content:f.file,type:f.type}).then((url:any)=>{
+        //
+        // });
 
       }
     }
@@ -176,11 +174,12 @@ export class MintComponent implements OnInit {
 
 
   confirm_mint(){
+    let nbtokens=this.tokens.length;
     this.dialog.open(PromptComponent,{
       width: 'auto',data:
         {
           title: "Confirmer le minage",
-          question: "html:... de "+this.tokens.length+" NFTs sur le réseau "+this.network.network+" par le compte <strong>"+this.metaboss.admin_key?.name+"</strong> ?",
+          question: "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+" par le compte <strong>"+this.metaboss.admin_key?.name+"</strong> ?",
           onlyConfirm:true,
           lbl_ok:"Ok",
           lbl_cancel:"Annuler"
@@ -194,22 +193,24 @@ export class MintComponent implements OnInit {
   }
 
 
+  //Fonction récurente appeler pour le minage en masse
+  complement: string="";
+
   mint(index=0){
+    this.set_collection();
     let _t:NFT=this.tokens[index];
-    _t.marketplace={price:this.price,quantity:this.quantity,royalties:this.seller_fee_basis_points*100}
+    _t.marketplace={price:this.price,quantity:this.quantity}
+    _t.royalties=this.seller_fee_basis_points*100;
     _t.message="hourglass:Minage";
     showMessage(this,"Minage de "+_t.name);
-    this.miner(_t).then((result:any)=>{
-      if(result.hasOwnProperty('error') && result.error.length>0){
-        _t.message="Erreur: "+result.error;
-      } else {
-        _t.message="Miné";
-        if(this.tokens.length>index){
-          this.mint(index+1);
-        }
+
+    this.miner(_t).then((nft:any)=>{
+      _t.message=nft.message;
+      if(this.tokens.length>index){
+        this.mint(index+1);
       }
-    }).catch((message:string)=>{
-      _t.message="Anomalie: "+message;
+    }).catch((result:any)=>{
+      _t.message="Anomalie de minage: "+result.message;
     });
   }
 
@@ -226,8 +227,10 @@ export class MintComponent implements OnInit {
     localStorage.setItem("tokenstoimport",JSON.stringify(this.tokens));
   }
 
+
   upload_file(file:any){
     return new Promise((resolve, reject) => {
+      file.type="image/webp";
       this.network.upload(file,this.sel_platform,file.type).subscribe((r: any) => {
         localStorage.removeItem("attach_file_" + file.uri);
         resolve(r.url)
@@ -243,29 +246,52 @@ export class MintComponent implements OnInit {
 
   upload_token(token: NFT) {
     for(let file of token.files){
-      this.upload_file(file).then((r:any)=>{file.uri=r;})
+      this.upload_file(file).then((r:any)=>{
+        file.uri=r;
+      })
     }
     this.upload_file({content:token.visual,type:""}).then((r:any)=>{token.visual=r;});
-    setTimeout(()=>{this.local_save();},10000);
+    token.message="visual uploaded";
   }
 
 
   upload_all_tokens() {
-    for(let token of this.tokens)
-      this.upload_token(token);
-    this.local_save();
+    for(let i=0;i<this.tokens.length;i++){
+      setTimeout(()=>{
+        this.network.wait("Upload de "+i+"/"+this.tokens.length+" en cours");
+        this.upload_token(this.tokens[i]);
+        if(i==this.tokens.length-1){
+          this.local_save();
+          this.network.wait("");
+        }
+      },i*2000);
+    }
   }
 
 
-
-  miner(token: NFT) {
-    return new Promise((resolve, reject) => {
+  //Opére le minage.
+  //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
+  miner(token: NFT) : Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      if(this.metaboss.admin_key==undefined){
+        reject("no signature");
+      }
       if(this.isValide(token)==""){
-        this.metaboss.mint(token,this.sign,this.sel_platform).then((result:any)=>{
+        token.message="Minage en cours";
+        if(this.network.network.startsWith("prestashop")){
+          this.prestashop(token).subscribe((result:any)=>{
+            showMessage(this,"NFT ajouter à prestashop");
+            result.nft=token
+            resolve(result);
+          });
+        }
+
+        this.metaboss.mint(token,this.sign, this.sel_platform,this.network.network).then((result:any)=>{
           if(!result.error || result.error==""){
-            showMessage(this,"Token miné");
+            token.message="Minted for "+result.cost+" "+result.unity;
             resolve(token);
           } else {
+            token.message="Mint error";
             reject(result.error);
           }
         }).catch((err)=>{
@@ -394,28 +420,11 @@ export class MintComponent implements OnInit {
 
 
 
-  set_collection(token:any) {
-    let result="macollection/mafamille";
-    if(token)result=token.collection["name"]+"/"+token.collection["family"];
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Nom de la collection et de la famille (separé par /)",
-          type: "text",
-          result:result,
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((collection:string) => {
-      if(collection){
-        let name=collection.trim().split("/")[0].trim();
-        let family=collection.indexOf("/")>-1 ? collection.split("/")[1].trim() : "";
-        let tokens=token ? [token] : this.tokens;
-        for(let _t of tokens)
-          _t.collection={name:name,family:family}
-      }
-    })
+  set_collection() {
+    for(let token of this.tokens){
+      token.collection=this.collection;
+      //if(token.collection.indexOf("/")==-1)token.collection=token.collection+"/nfluent";
+    }
   }
 
   onUploadXMP(file: any, token: NFT) {
@@ -427,19 +436,9 @@ export class MintComponent implements OnInit {
     this.tokens[pos]=token;
   }
 
-  prestashop() {
-    this.network.wait("Envoi des NFTs");
-    let idx=0;
-    for(let token of this.tokens){
-      idx=idx+1;
-      token.royalties=this.seller_fee_basis_points*100;
-      token.network=this.network.network;
-      if(token.symbol.length==0)token.symbol="NFT"+idx.toString(16);
-    }
-    this.network.export_to_prestashop(this.sel_ope.id,this.tokens,false).subscribe(()=>{
-      this.network.wait();
-      showMessage(this,"NFT transmis");
-    })
+
+  prestashop(token:NFT) {
+    return this.network.export_to_prestashop(this.operation.sel_ope!.id,token,false);
   }
 
 
@@ -449,7 +448,6 @@ export class MintComponent implements OnInit {
       nft.network=this.network.network;
     showMessage(this,"Network changed")
   }
-
 
 
   reset_creator() {
@@ -463,7 +461,8 @@ export class MintComponent implements OnInit {
   }
 
   set_marketplace(token: NFT) {
-    token.marketplace["price"]=this.price;
-    token.marketplace["quantity"]=this.quantity;
+    if(token){
+      token.marketplace={price:this.price,quantity:this.quantity};
+    }
   }
 }

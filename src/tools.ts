@@ -12,9 +12,48 @@ export interface MetabossKey {
   unity:string | null
 }
 
+export function b64DecodeUnicode(s:string):string {
+  return decodeURIComponent(Array.prototype.map.call(atob(s), function(c) {
+    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+  }).join(''))
+}
+
+export function encodeUnicode(str:string) {
+  // first we use encodeURIComponent to get percent-encoded UTF-8,
+  // then we convert the percent encodings into raw bytes which
+  // can be fed into btoa.
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode(Number('0x' + p1));
+    }));
+}
+
+
 export function encrypt(s:string) : string {
   return btoa(s);
 }
+
+
+export function getBrowserName() {
+  const agent = window.navigator.userAgent.toLowerCase()
+  switch (true) {
+    case agent.indexOf('edge') > -1:
+      return 'edge';
+    case agent.indexOf('opr') > -1 && !!(<any>window).opr:
+      return 'opera';
+    case agent.indexOf('chrome') > -1 && !!(<any>window).chrome:
+      return 'chrome';
+    case agent.indexOf('trident') > -1:
+      return 'ie';
+    case agent.indexOf('firefox') > -1:
+      return 'firefox';
+    case agent.indexOf('safari') > -1:
+      return 'safari';
+    default:
+      return 'other';
+  }
+}
+
 
 export function setParams(_d:any,prefix="") : string {
   let rc=[];
@@ -27,26 +66,41 @@ export function setParams(_d:any,prefix="") : string {
 
 export function getParams(routes:ActivatedRoute) {
   return new Promise((resolve, reject) => {
-    routes.queryParams.subscribe(params => {
+    routes.queryParams.subscribe((params:any) => {
       if(params.hasOwnProperty("param")){
         let _params=decrypt(params["param"]).split("&");
+        $$("Les paramètres à analyser sont "+_params);
         let rc:any={};
         for(let _param of _params){
           let key=_param.split("=")[0];
           let value:any=_param.split("=")[1];
 
           $$("Récupération de "+_param);
-          if(value.startsWith("b64:"))value=JSON.parse(atob(value.replace("b64:","")));
+          if(value.startsWith("b64:")){
+            try{
+              value=JSON.parse(atob(value.replace("b64:","")));
+            } catch (e) {
+              $$("!Impossible de parser le paramétrage");
+            }
+          }
           if(value=="false")value=false;
           if(value=="true")value=true;
           rc[key]=value;
         }
         resolve(rc);
       } else {
-        if(params && Object.keys(params).length>0)
+        $$("Param n'est pas présent dans les parametres, on fait une analyse standard")
+        if(params){
           resolve(params);
+        }else{
+          debugger
+          reject();
+        }
       }
-    },(err)=>{reject(err);})
+    },(err)=>{
+      $$("!Impossible d'analyser les parametres de l'url");
+      reject(err);
+    })
   });
 }
 
@@ -200,9 +254,10 @@ export function $$(s: string, obj: any= null) {
   if (lg.indexOf('!!') > -1  || localStorage.getItem("debug")=="2") {alert(lg); }
 }
 
-export function detect_network(addr:string){
+export function detect_network(addr:string) {
   if(addr.length<20 || addr.indexOf("@")>-1)return null;
   if(addr.startsWith("erd"))return "elrond";
+  if(addr.length>50 && addr.endsWith("="))return "access_code";
   return "solana";
 }
 

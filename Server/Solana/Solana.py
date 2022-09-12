@@ -347,7 +347,7 @@ class Solana:
 
 
 
-  def create_account(self,email="",wallet_name="solflare",domain_appli="",network="solana-devnet"):
+  def create_account(self,email="",wallet_name="solflare",domain_appli="",network="solana-devnet",subject="Votre compte Solana est disponible"):
     """
     Ouvre un compte sur Solana
     :param wallet_name:
@@ -370,7 +370,7 @@ class Solana:
         "mini_wallet":"wallet?"+setParams({"toolbar":"false","network":network,"addr":pubkey}),
         "private_key":privkey, #_account.secret_key.hex(),
         #"private_key_in_list":str([int(x) for x in _account.secret_key])
-      },domain_appli=domain_appli),email,subject="Votre compte Solana est disponible")
+      },domain_appli=domain_appli),email,subject=subject)
 
     return mnemonic,pubkey,privkey,str(integers_private_key)
 

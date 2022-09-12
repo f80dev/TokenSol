@@ -4,6 +4,9 @@
 
 #une fois terminé, ce fichier doit être chargé a l'adresse : https://tokensol.nfluent.io/build
 
+#notes:
+# $nfluent_appli$ est utilisé dans les API pour désigner l'appli nfluent. A terme il est possible d'utiliser des applis propriétaires
+
 
 id: "Main_devnet"          #cet Id doit être cohérent avec le nom du fichier
 title: "Opération fictive / Modele principal"     #est le titre usuel de l'operation qui apparait pour les validateurs
@@ -11,56 +14,23 @@ description: "Modèle principal"
 website: "https://nfluent.io"   #désigne le site concerné par l'opération
 version: 0.1
 network: elrond-devnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
+wallet: "$nfluent_appli$/wallet"
 
 #Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
 lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
   network: elrond-devnet
-  miner: herve
+  miner: nfluent
 
 
-#Caractéristiques détaides collections utilisées par les NFT
+#Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - name: NFluenTTest
+  - name: "NFluenT"
     visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
-    description: La collection des NFT by Influent
+    description: Une collection de NFTs by Nfluent
     creator: nfluent
-    price: 1
-
-  - name: nfluenteam
-    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
-    description: La collection des NFT by Influent
-    creator: herve
     price: 0
-
-
-  - name: A Madonna Di A Sierra
-    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
-    description: La collection des NFT by Influent
-    creator: nfluent
-    price: 10
-
-  - name: PASS VIP
-    visual:  https://static.ftx.com/nfts/3e6de159-be4c-44ae-961d-8f9d575d0d95.png
-    description: Acces au Calvi On The Rocks en VIP
-    creator: calvi
-    price: 380
-    currency: $
-
-  - name: PASS FESTIVAL
-    visual:  https://static.ftx.com/nfts/3e6de159-be4c-44ae-961d-8f9d575d0d95.png
-    description: Acces au Calvi On The Rocks en VIP
-    creator: calvi
-    price: 294
-    currency: $
-
-  - name: BILLET VIP
-    visual:  https://static.ftx.com/nfts/3e6de159-be4c-44ae-961d-8f9d575d0d95.png
-    description: Acces au Calvi On The Rocks en VIP
-    creator: calvi
-    price: 100
-    currency: $
 
 
 
@@ -70,9 +40,9 @@ database:                 #base de données contenant les historiques
 
 
 #la section accounts contient les clés privées (cryptées) des comptes Ã utiliser pendant l'opération
-accounts:
-  solana:
-    paul: Z0FBQUFBQmltR2ZCaDRoMUw2VFdla2hJajh2STNlOV8xQlhUcXgxcGtfUFllX1BVT3gxN0xULXVzTGpCSVF1N29vTzR1OTBuX0lVakY2bjVpNlhNQ0x3WUttWGJnTnRnWEZaVXBiMWNHaHdnTmtyUms1OENOcjB2QkV2ZFJrSkZiZzE4RENtWHBJbVNBYVZZaC1LMnBrbEctSGJvNWsxdHJvbmpTa01GWW1KODFENFlSbTFsRHNWX28wX1Z1ZVc5SjdVdkpqRW8zM1ByQW9GNlB1YXNIUVN4YXdIUFhCS3N2Z2dKQnM0aW9ncGVyTWZmMDF0VzNWYUlaVzNocFh6X1pEQUswMXRjbXEyb3lCRE9UZmxiY2xnX0x4QnhZXzMzM2pZX1ZOQ2VNWHoxSVc2TVByQVBjMWFCTXpJRVZLU05BTkJYUUFZcUpUYjRTZTFoLXZMMXFPZkFlWGFLS3pOYV9mSGpnVklOMU5aM1NUb25hMmFvbXZ5YUU2QXZvSjUyeWtJNDQzMk9XZlRs
+#accounts:
+#  solana:
+#    paul: Z0FBQUFBQmltR2ZCaDRoMUw2VFdla2hJajh2STNlOV8xQlhUcXgxcGtfUFllX1BVT3gxN0xULXVzTGpCSVF1N29vTzR1OTBuX0lVakY2bjVpNlhNQ0x3WUttWGJnTnRnWEZaVXBiMWNHaHdnTmtyUms1OENOcjB2QkV2ZFJrSkZiZzE4RENtWHBJbVNBYVZZaC1LMnBrbEctSGJvNWsxdHJvbmpTa01GWW1KODFENFlSbTFsRHNWX28wX1Z1ZVc5SjdVdkpqRW8zM1ByQW9GNlB1YXNIUVN4YXdIUFhCS3N2Z2dKQnM0aW9ncGVyTWZmMDF0VzNWYUlaVzNocFh6X1pEQUswMXRjbXEyb3lCRE9UZmxiY2xnX0x4QnhZXzMzM2pZX1ZOQ2VNWHoxSVc2TVByQVBjMWFCTXpJRVZLU05BTkJYUUFZcUpUYjRTZTFoLXZMMXFPZkFlWGFLS3pOYV9mSGpnVklOMU5aM1NUb25hMmFvbXZ5YUU2QXZvSjUyeWtJNDQzMk9XZlRs
 
 
 branding:                     #Utiliser pour uniformiser l'aspect des applications
@@ -100,22 +70,26 @@ data:
       connexion: elrond-devnet
       filter:
         limit: 200
-      owner: herve
+      owner: nfluent
+
 
     - type: database
-      active: False
+      active: false
       connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
-      dbname: nfluentdb_2       #Nom de la base de données contenant les NFTS
+      dbname: nfluent           #Nom de la base de données contenant les NFTS
       filter:
-        limit: 20
+        limit: 200
+
 
     - type: json              #Les NFTs sont contenus dans un fichier json
       active: False
       connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
 
+
     - type: web              #Les NFTs sont contenus dans un fichier json
       active: False
       connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+
 
     - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
       active: False
@@ -130,12 +104,12 @@ data:
 #Fonctionnement de la section Validate _____________________________________________________________________________________________________________________________
 #Section responsable du process de validation des NFTs
 validate:
-  title: "Bienvenu dans l'application de validation des passes Calvi On The Rocks"
+  title: "Bienvenu dans l'application de validation des NFT nfluent"    #Message d'acceuil des validateurs
   visible: True           #La section de validation est visible
   camera: True            #Si possible, utilise la caméra du device
   manual_input: True      #Le validateur peut saisir manuellement l'adresse du NFT du visiteur
 
-  application: "$nfluent_appli$/validate?toolbar=false"
+  application: "$nfluent_appli$/validate"
 
   users:                        #Liste des validateurs autorisé à modifier les NFTs
     - "paul.dudule@gmail.com"
@@ -145,7 +119,7 @@ validate:
 
   support:
     #message affiché aux validateurs pour la détection du wallet
-    message_search: "Veuillez flasher le QRCode du wallet FTX des visiteurs"
+    message_search: "Veuillez flasher le QRCode présenté par les visiteurs"
 
     #message affiché aux validateurs pour l'attribution des passes
     message_action: "Veuillez attribuer le nombre de passes souhaitez en fonction du solde restant sur le NFT"
@@ -168,23 +142,28 @@ validate:
       telegram: "https://t.me/+S2pSVLljMEVjN2Jk"    #Le lien d'invitation telegram s'obtient dans le menu "Gérer le groupe" de l'application Telegram
 
 
-  properties:                 #Liste des propriétés montrées au validateur à la validation du billet
-    - "Edition1"
-    - "Last use"
+  #Liste des propriétés montrées au validateur à la validation du billet
+  properties:
+    - ""
 
   #Lorsque le validateur appui sur validation du billet l'API de action_api est appelé
   actions:
-    buttons:
-      - api : $nfluent_server$/api/action_calvi/?nb_pass=1
-        label: Attribuer 1 pass
-        n_pass: 1               #nombre de passe à distribuer
-        collections:            #limiter l'action à certaines collections
-          - "PASS The Private Island Club"
-          - "BILLET The Private Island Club"
-          - "PASS VIP"
-          - "BILLET VIP"
-          - "PASS Festival"
-          - "BILLET Festival"
+    #buttons permet d'afficher une action à réalisé par le validateur sur le NFT (par exemple marqué le NFT comme utilisé)
+    #la section contient l'api appelée lorsqu'on déclenche le bouton, le message affiché
+#    buttons:
+#      - api : $nfluent_server$/api/action_demo/?nb_pass=1    #api appelée lorsqu'on valide le NFT
+#        label: Attribuer 1 pass     #Message affiché au validateur
+#        n_pass: 1                   #nombre de passe à distribuer
+#        collections:                #limiter l'action à certaines collections
+#          - "nfluentteam"
+#          - "bayard"
+#          - "NFluenT"
+
+    #Procédure déclenchée automatiquement si le visiteur dispose du NFT
+    success:
+      message: "Le visiteur peut entrer"
+      api: ""
+
 
     #Cette section dédiée à la sécurité regroupe certains points permettant de renforcer la sécurité des APIs
     security:
@@ -192,11 +171,11 @@ validate:
       ip_whitelist:             #liste des adresses IP pouvant appeler l'API
         - "*"
 
-  method:                     #Methode à utiliser pour la mise a jour
-    update_token: True        #Indique que le NFT va être mise a jour à chaque modification des metadata
-    update_authority: paul    #Compte utilisé pour la mise a jour des NFT (ce compte doit être présent sur le serveur)
-    storage: github           #plateformes disponibles: IPFS, IPFS via infura, NFTStorage
-    repository: test3         #Répertoire utilisé pour stocker les métadata offchain après mise a jour
+  method:                    #Methode à utiliser pour la mise a jour
+    update_token: False      #Indique que le NFT va être mise a jour à chaque modification des metadata
+    update_authority: paul   #Compte utilisé pour la mise a jour des NFT (ce compte doit être présent sur le serveur)
+    storage: OnChain            #plateformes disponibles: IPFS, IPFS via infura, NFTStorage, OnChain
+    repository:              #Répertoire utilisé pour stocker les métadata offchain après mise a jour
 
 
   #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
@@ -204,15 +183,11 @@ validate:
     mint_authority: ''
 
     collections:                #Liste des collections éligible à la validation
-      - "PASS The Private Island Club"
-      - "BILLET The Private Island Club"
-      - "PASS VIP"
-      - "BILLET VIP"
-      - "PASS Festival"
-      - "BILLET Festival"
+      - "nfluentteam"
+      - "bayard"
+      - "NFluenT"
 
     symbol: ''      #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
-
 
 
 payment: #Section désignant le réceptionnaire des payment via google pay : https://www.npmjs.com/package/@google-pay/button-angular
@@ -228,13 +203,9 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
   visible: True
   application: '$nfluent_appli$/store'    #Désigne l'application en charge de la vente
 
-  #Collection mise en vente dans le store (parmis les NFT issue de la section data/sources)
+  #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - name: "NFluenTTest"
-      price: 1              #Si le prix n'est pas fixé on utilise le prix de la section collection (voir au dessus)
-    - name: "A Madonna Di A Sierra"
-    - name: "nfluenteam"
-
+    - "NFluenT"
 
   support:      #Section regroupant les différents messages d'aides aux utilisateur
     buy_message: "Achat en cours"
@@ -243,7 +214,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
   prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
     server: "http://127.0.0.1:8080"              #adresse du serveur Prestashop
     #server: "http://161.97.75.165:8080"              #adresse du serveur Prestashop
-    address: "$server$/fr/"                         #page de la boutique
+    address: "$server$/fr/"                         #page de la boutique ($server$ reprend le contenu de la propriété server (ci-dessus) de la section
     admin: "$server$/admin4280/"                    #page d'administration de la boutique
     #api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
     api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
@@ -262,12 +233,29 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 #Section lié à la distribution nominative de NFT
 dispenser:
   visible: True
-  miner: nminer                                       #mineur en charge de la création des tokens pour les non minés
+  miner: nfluent                                       #mineur en charge de la création des tokens pour les non minés
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
 
   collections:                                      #Liste des collections concernée par la distribution
-    - name: "nfluenteam"
-      limit: 10
+    - "NFluenT"
+
+
+#Distribution de NFT au sein d'une ou plusieurs collecion à l'aveugle
+#le destinataire donne juste une adresse mail
+candymachine:
+  visible: True
+
+  collections:
+    - "NFluenT"
+
+  messages:
+    title: "Flasher ce code pour obtenir un NFT de la collection SMA"
+
+  limit:
+    total: 60
+    per_user: 1
+
+
 
 
 #Fonctionnement de la section lottery ________________________________________________________________________________________________________________________________
@@ -296,12 +284,10 @@ lottery:
       redirection: "https://www.calviontherocks.com/fr"
 
 
-
   application: "$nfluent_appli$/contest"
 
   collections: #Définie les limites sur le nombre de nft miner
-    - name: "nfluenteams"
-      limit: 50
+    - "NFluenT"
 
   limits:     #définis les quotas de minages toutes collections confondus
     by_day: 50

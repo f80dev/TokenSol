@@ -1,32 +1,58 @@
 <mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)"
                style="padding: 10px;width:100%;  text-align: center;">
   <mat-tab label="NFTs">
-    <app-nfts [nfts]="nfts" format="image" (refresh)="refresh()">
-    </app-nfts>
-  </mat-tab>
 
-  <mat-tab label="Detail" *ngIf="showDetail">
-    <app-nfts [nfts]="nfts" format="json">
-    </app-nfts>
-  </mat-tab>
-
-  <mat-tab label="Accès">
-      <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;">
-      <br>
-      <small>{{addr}}</small>
-      <br>
-
-
-    <button type="button" mat-raised-button mat-button (click)="open_elrond_authent()" style="margin-top: 20px;">
-      S'authentifier
+    <button type="button" mat-raised-button mat-button
+            *ngIf="qrcode_addr.length==0"
+            (click)="show_elrond_addr()" style="margin-top: 20px;">
+      Recevoir des NFTs
     </button>
     <br>
-    <img [src]="qrcode" style="width: 200px;">
-    <br>
+
+    <div *ngIf="qrcode_addr.length>0">
+      <br>
+      Utiliser ce QRCode pour recevoir des NFT<br>
+      <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="addr">
+    </div>
+
+
+
+    <app-reversebloc *ngFor="let nft of nfts" [image]="nft.visual" width="300px" height="300px">
+      <div style="padding: 10px;">
+        <div class="mat-body-2">{{nft.collection}}</div>
+        <div class="mat-title">{{nft.name}}</div>
+        <br>
+        <table style="width: 100%;">
+          <tr *ngFor="let attr of nft.attributes" class="mat-body-2">
+            <td>{{attr.trait_type}}</td>
+            <td>{{attr.value}}</td>
+          </tr>
+        </table>
+
+      </div>
+    </app-reversebloc>
 
   </mat-tab>
 
-  <mat-tab label="NFT Photos" *ngIf="takePhoto">
+
+  <mat-tab label="Accès">
+    <br>
+      <h3>Utiliser ce QRCode pour accèder à vos événements</h3>
+      <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;" [cdkCopyToClipboard]="access_code">
+      <br>
+      <br>
+
+    <button type="button" mat-raised-button mat-button (click)="open_elrond_authent()" style="margin-top: 20px;" *ngIf="network.version=='beta'">
+      S'authentifier
+    </button>
+
+<!--    <br>-->
+<!--    <img [src]="qrcode" style="width: 200px;">-->
+<!--    <br>-->
+
+  </mat-tab>
+
+  <mat-tab label="NFT Photos" *ngIf="takePhoto && network.version=='beta'">
     <br>
     Prendre une photo pour fabriquer un NFT lié à l'événement
     <br>

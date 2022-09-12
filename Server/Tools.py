@@ -78,7 +78,7 @@ def open_html_file(name:str,replace=dict(),domain_appli=""):
 
 
 
-def decrypt(content:bytes):
+def decrypt(content:bytes) -> str:
   """
   fonction de decryptage
   :param text:
@@ -90,17 +90,16 @@ def decrypt(content:bytes):
   with open(secret_key_filename,"rb") as file:
     key=file.read(10000)
   f=Fernet(key)
-  return f.decrypt(content)
+  return str(f.decrypt(content),"utf8")
 
 
 
-def encrypt(text:str):
+def encrypt(text:str,secret_key_filename="./secret_key"):
   """
   fonction d'encryptage utilisant le fichier secret_key du repertoire principale
   :param text:
   :return:
   """
-  secret_key_filename="./secret_key"
   if exists(secret_key_filename):
     with open(secret_key_filename,"rb") as file:
       key=file.read()
@@ -162,7 +161,7 @@ def filetype(filename=""):
   if filename.endswith(".txt"):return "text"
   return filename[filename.rindex(".")+1:]
 
-def api(url,alternate_domain=""):
+def api(url,alternate_domain="",timeout=60000):
   log("Appel de "+url)
   data=requests.api.get(url)
 
@@ -171,7 +170,7 @@ def api(url,alternate_domain=""):
     if len(alternate_domain)>0:
       url=url.replace(alternate_domain.split("=")[0],alternate_domain.split("=")[1])
 
-    data=requests.api.get(url)
+    data=requests.api.get(url,timeout=timeout)
 
     if data.status_code!=200:
       log("Echec de l'appel "+str(data.status_code)+" "+data.text)
@@ -239,6 +238,23 @@ def log(text:str,sep='\n'):
   global store_log
   delay=int(now()-start)
   line:str=str(int(delay/60))+":"+str(delay % 60)+" : "+text
-  print(line)
+  try:
+    print(line)
+  except:
+    print("Problème d'affichage d'une ligne")
   store_log = line+sep+store_log[0:10000]
   return text
+
+
+def get_timestamp_for_access_code():
+  return int(datetime.datetime.now().timestamp()/60)
+
+def get_access_code(addr:str) -> str:
+  return encrypt(addr+"ts:"+str(get_timestamp_for_access_code()))
+
+def check_access_code(code:str) -> str:
+  s=decrypt(bytes(code,"utf8"))
+  ts=int(s.split("ts:")[1])
+  #On vérifie la resence du timestamp
+  if ts!=get_timestamp_for_access_code(): return None
+  return s.split("ts:")[0]

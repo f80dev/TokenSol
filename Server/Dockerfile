@@ -67,6 +67,7 @@ RUN pip3 -v install Unidecode
 RUN pip3 -v install xmltodict
 RUN pip3 -v install pypng
 RUN pip3 -v install flask-jwt-extended
+RUN pip3 -v install apscheduler
 
 WORKDIR /
 RUN mkdir Solana

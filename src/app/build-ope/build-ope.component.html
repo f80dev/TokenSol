@@ -33,15 +33,7 @@
         </td>
 
         <td>
-          <mat-form-field appearance="fill" style="width:300px;" *ngIf="url_ope==''">
-            <mat-label>Sélectionner une opération hébergée sur le serveur</mat-label>
-            <mat-select [(value)]="sel_ope" (selectionChange)="refresh_ope($event)" >
-              <mat-option *ngFor="let ope of opes" [value]="ope">
-                {{ope.title}}
-              </mat-option>
-            </mat-select>
-            <mat-icon matSuffix (click)="sel_ope=null;">cancel</mat-icon>
-          </mat-form-field>
+
           /
           <mat-form-field appearance="fill" style="width:300px;">
             <mat-label>Utiliser une operation depuis un lien web</mat-label>
@@ -66,9 +58,9 @@
 
   </mat-expansion-panel>
 
-  <div *ngIf="sel_ope">
-    <div class="mat-display-3"  >{{sel_ope.title}}</div>
-    <small class="color-primary mat-display-1">{{sel_ope.description}}</small>
+  <div *ngIf="operation.sel_ope">
+    <div class="mat-display-3"  >{{operation.sel_ope.title}}</div>
+    <small class="color-primary mat-display-1">{{operation.sel_ope.description}}</small>
 
     <table style="line-height: 125%;">
       <tr style="font-size: medium">
@@ -78,17 +70,17 @@
           Stockage:<br>
         </td>
         <td style="font-size: large;">
-           {{sel_ope.network}}<br>
-          {{sel_ope.version}}<br>
-          {{sel_ope.metadatastorage}}
+           {{operation.sel_ope.network}}<br>
+          {{operation.sel_ope.version}}<br>
+          {{operation.sel_ope.metadatastorage}}
         </td>
       </tr>
-
     </table>
 
-    <mat-expansion-panel>
-      <mat-expansion-panel-header  class="color-primary">Sources des NFTs</mat-expansion-panel-header>
 
+
+    <mat-expansion-panel *ngIf="sources?.length>0">
+      <mat-expansion-panel-header  class="color-primary">Sources des NFTs</mat-expansion-panel-header>
         <table style="text-align: left;">
           <tr>
             <th>Sources</th>
@@ -96,7 +88,7 @@
           </tr>
           <tr>
             <td>
-              Les NFTs disponible pour cette opérations sont extraits de: <br><br>
+              Les NFTs disponibles pour cette opérations sont extraits de: <br><br>
               <ul class="mat-subheading-1">
                 <li *ngFor="let src of sources">
                   <span *ngIf="src.type=='web'">contenu dans le fichier <span class="color-accent">{{src.connexion}}</span></span>
@@ -120,12 +112,30 @@
               (click)="open_miner()">
         Miner
       </button>
-
     </mat-expansion-panel>
 
 
-    <mat-expansion-panel *ngIf="sel_ope.lazy_mining">
-      <mat-expansion-panel-header  class="color-primary">Minage</mat-expansion-panel-header>
+
+    <mat-expansion-panel *ngIf="operation.sel_ope.collections">
+      <mat-expansion-panel-header class="color-primary">Détail des collections</mat-expansion-panel-header>
+      <table>
+        <tr>
+          <th>Description</th>
+          <th>Visuel</th>
+          <th>Prix par défaut</th>
+        </tr>
+        <tr *ngFor="let col of operation.sel_ope.collections">
+          <td>{{col.name}}<br><small>{{col.description}}</small></td>
+          <td><img [src]="col.visual" style="width:150px"></td>
+          <td>{{col.price}}</td>
+        </tr>
+      </table>
+    </mat-expansion-panel>
+
+
+
+    <mat-expansion-panel *ngIf="operation.sel_ope.lazy_mining">
+      <mat-expansion-panel-header  class="color-primary">Paramètres de minage</mat-expansion-panel-header>
       <table>
         <tr>
           <th>Stockage</th>
@@ -133,19 +143,20 @@
         </tr>
         <tr>
         <td>
-          Content: {{sel_ope.lazy_mining.content_storage}}<br>
-          Metadata: {{sel_ope.lazy_mining.metadata_storage}}<br>
+          Content: {{operation.sel_ope.lazy_mining.content_storage}}<br>
+          Metadata: {{operation.sel_ope.lazy_mining.metadata_storage}}<br>
         </td>
           <td>
-            Miner: {{sel_ope.lazy_mining.miner}}<br>
-            Target: {{sel_ope.lazy_mining.network}}
+            Miner: {{operation.sel_ope.lazy_mining.miner}}<br>
+            Target: {{operation.sel_ope.lazy_mining.network}}
           </td>
         </tr>
       </table>
     </mat-expansion-panel>
 
+
       <!-- Section lié au dispenser / a la distribution -->
-      <mat-expansion-panel *ngIf="sel_ope.dispenser?.visible">
+      <mat-expansion-panel *ngIf="operation.sel_ope.dispenser?.visible">
         <mat-expansion-panel-header class="color-primary">Distribution par le propriétaire</mat-expansion-panel-header>
         <table>
           <tr>
@@ -155,25 +166,25 @@
 
           <tr>
             <td>
-              Mineur: {{sel_ope.dispenser?.miner}}<br>
-              Network: {{sel_ope.network}}
+              Mineur: {{operation.sel_ope.dispenser?.miner}}<br>
+              Network: {{operation.sel_ope.network}}
             </td>
             <td>
               <ul>
-                <li *ngFor="let col of sel_ope.dispenser!.collections!">
-                  {{col.name}} < {{col.limit}}
+                <li *ngFor="let col of operation.sel_ope.dispenser!.collections!">
+                  {{col}}
                 </li>
               </ul>
             </td>
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli(url_dispenser_app,'distribuer')">
-                Tester
+                      (click)="open_appli(url_dispenser_app)">
+                Ouvrir
               </button>
 
               <br>
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="share_link(url_dispenser_app,'Distributeur pour '+sel_ope.title,'Ouvrir ce lien distribuer des NFTs')">
+                      (click)="share_link(url_dispenser_app,'Distributeur pour '+operation.sel_ope.title,'Ouvrir ce lien distribuer des NFTs')">
                 Partager
               </button>
 
@@ -184,7 +195,58 @@
       </mat-expansion-panel>
 
 
-      <mat-expansion-panel *ngIf="sel_ope.lottery?.visible">
+
+
+
+      <mat-expansion-panel *ngIf="operation.sel_ope.candymachine.visible">
+      <mat-expansion-panel-header class="color-primary">Distributeur automatique</mat-expansion-panel-header>
+      <table>
+        <tr>
+          <th>Collections impliquées</th>
+          <th>QRCode d'accès</th>
+          <th>Partager le lien</th>
+        </tr>
+        <tr>
+          <td>
+            <ul>
+              <li *ngFor="let col of operation.sel_ope.candymachine.collections">
+                {{col}}
+              </li>
+            </ul>
+          </td>
+          <td>
+            <a [href]="candymachine_url" target="_self">
+              <img [src]="candymachine_qrcode" style="width: 200px;">
+            </a>
+          </td>
+          <td style="text-align: right;">
+            <button type="button" mat-raised-button mat-button color="primary"
+                    (click)="open_appli(candymachine_url,'_self')">
+              Ouvrir
+            </button>
+            <br>
+            <button type="button" mat-raised-button mat-button color="primary"
+                    (click)="share_link(candymachine_url,'Gagner des NFT','Recevoir des NFT gratuitement')">
+              Partager
+            </button>
+
+<!--            <share-buttons [theme]="'circles-dark'"-->
+<!--                           style="text-align: center;font-size: small;"-->
+<!--                           [include]="['facebook','twitter','linkedin','telegram','messenger','whatsapp','email','copy']"-->
+<!--                           [show]="8"-->
+<!--                           [url]="url"-->
+<!--                           description="Découvrez mon profil et mes réalisations"-->
+<!--                           tags="FEMIS"-->
+<!--                           [title]="title">-->
+<!--            </share-buttons>-->
+          </td>
+        </tr>
+      </table>
+    </mat-expansion-panel>
+
+
+
+      <mat-expansion-panel *ngIf="operation.sel_ope.lottery?.visible">
         <mat-expansion-panel-header  class="color-primary">Loterie</mat-expansion-panel-header>
         <table>
           <tr>
@@ -194,20 +256,20 @@
           </tr>
           <tr style="width: 100%;">
             <td>
-              Mineur: {{sel_ope.lottery?.miner}}<br>
-              Network: {{sel_ope.network}}
+              Mineur: {{operation.sel_ope.lottery?.miner}}<br>
+              Network: {{operation.sel_ope.network}}
             </td>
             <td>
               <ul>
-                <li *ngFor="let col of sel_ope.lottery.collections">
+                <li *ngFor="let col of operation.sel_ope.lottery.collections">
                   {{col.name}}
                 </li>
               </ul>
             </td>
             <td style="text-align: left;">
-              Store : <a [href]="sel_ope.lottery.application" target="same">Ouvrir</a><br>
-              Iframe: <mat-icon [cdkCopyToClipboard]="sel_ope.lottery.iframe_code">build</mat-icon><br>
-              QRCode: <mat-icon [cdkCopyToClipboard]="sel_ope.lottery.image_code">build</mat-icon>
+              Store : <a [href]="operation.sel_ope.lottery.application" target="same">Ouvrir</a><br>
+              Iframe: <mat-icon [cdkCopyToClipboard]="operation.sel_ope.lottery.iframe_code">build</mat-icon><br>
+              QRCode: <mat-icon [cdkCopyToClipboard]="operation.sel_ope.lottery.image_code">build</mat-icon>
             </td>
             <td>
             <span *ngFor="let col of collections_lottery">
@@ -216,13 +278,13 @@
             </td>
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli(sel_ope.lottery.application,'_self')">
-                Tester
+                      (click)="open_appli(operation.sel_ope.lottery.application,'_self')">
+                Ouvrir
               </button>
               <br>
 
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="share_link(sel_ope.lottery.application,'Mode lotterie pour '+sel_ope.title,'Ouvrir ce lien pour initier la distribution')">
+                      (click)="share_link(operation.sel_ope.lottery.application,'Mode lotterie pour '+operation.sel_ope.title,'Ouvrir ce lien pour initier la distribution')">
                 Partager
               </button>
 
@@ -232,7 +294,7 @@
       </mat-expansion-panel>
 
 
-      <mat-expansion-panel *ngIf="sel_ope.validate?.visible || url_ope.length>0">
+      <mat-expansion-panel *ngIf="operation.sel_ope.validate?.visible || url_ope!.length>0">
         <mat-expansion-panel-header class="color-primary">
           Validation
         </mat-expansion-panel-header>
@@ -247,20 +309,19 @@
           </tr>
           <tr style="vertical-align: top;">
             <td>
-              <strong>Update:</strong> {{sel_ope.validate!.method!.update_authority}}<br>
-              <strong>Storage:</strong> {{sel_ope.validate!.method!.storage}} / {{sel_ope.validate!.method!.repository}}
+              <strong>Update:</strong> {{operation.sel_ope.validate!.method!.update_authority}}<br>
+              <strong>Storage:</strong> {{operation.sel_ope.validate!.method!.storage}} / {{operation.sel_ope.validate!.method!.repository}}
             </td>
-            <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
+            <td style="text-align: left;" *ngIf="operation.sel_ope.validate?.users">
               <ul>
-                <li *ngFor="let prop of sel_ope.validate!.properties">
+                <li *ngFor="let prop of operation.sel_ope.validate!.properties">
                   {{prop}}
                 </li>
               </ul>
             </td>
-            <td style="text-align: left;" *ngIf="sel_ope.validate?.users">
-
+            <td style="text-align: left;" *ngIf="operation.sel_ope.validate?.users">
               <ul>
-                <li *ngFor="let user of sel_ope.validate!.users">
+                <li *ngFor="let user of operation.sel_ope.validate!.users">
                   <mat-icon (click)="send_mail(user)"
                             style="cursor: pointer;font-size: medium;"
                             [title]="'notifier '+user">notifications</mat-icon>
@@ -273,7 +334,7 @@
             </td>
             <td>
               <ul>
-                <li *ngFor="let col of sel_ope.validate!.filters!.collections">
+                <li *ngFor="let col of operation.sel_ope.validate!.filters!.collections">
                   {{col}}
                 </li>
               </ul>
@@ -281,13 +342,14 @@
 
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli(sel_ope.validate!.application,'_self')">
-                 Tester
+                      title="Permet de tester le processus de validation"
+                      (click)="open_validate()">
+                Ouvrir
               </button>
               <br>
 
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="share_link(sel_ope.validate!.application,'validation '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
+                      (click)="share_link(operation.sel_ope.validate!.application,'validation '+operation.sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
                 Partager
               </button>
 
@@ -297,7 +359,7 @@
       </mat-expansion-panel>
 
 
-    <mat-expansion-panel *ngIf="sel_ope.store?.visible || url_ope.length>0">
+    <mat-expansion-panel *ngIf="operation.sel_ope.store?.visible || url_ope.length>0">
       <mat-expansion-panel-header class="color-primary">
         Store
       </mat-expansion-panel-header>
@@ -311,29 +373,29 @@
           <td>
             <ul>
               <li *ngFor="let k of store_collections">
-                {{k.name}}: {{k.price}} €
+                {{k}}
               </li>
             </ul>
           </td>
           <td>
-            Serveur: {{sel_ope.store!.prestashop!.server}}<br>
-            <a [href]="sel_ope.store!.prestashop!.address.replace('$server$',sel_ope.store!.prestashop!.server)" target="store">Voir la boutique</a>
+            Serveur: {{operation.sel_ope.store!.prestashop!.server}}<br>
+            <a [href]="operation.sel_ope.store!.prestashop!.address.replace('$server$',operation.sel_ope.store!.prestashop!.server)" target="store">Voir la boutique</a>
             /
-            <a [href]="sel_ope.store!.prestashop!.admin.replace('$server$',sel_ope.store!.prestashop!.server)" target="store">Accès admin</a>
+            <a [href]="operation.sel_ope.store!.prestashop!.admin.replace('$server$',operation.sel_ope.store!.prestashop!.server)" target="store">Accès admin</a>
             <br><br>
             <button type="button" mat-raised-button mat-button
-                    (click)="send_prestashop(sel_ope.id)">
+                    (click)="send_prestashop(operation.sel_ope.id)">
               Transférer les NFTs
             </button>
           </td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="open_appli(sel_ope.store!.application+'?ope='+sel_ope.id+'&toolbar=false','_self')">
-              Tester
+                    (click)="open_appli(operation.sel_ope.store!.application+'?ope='+operation.sel_ope.id+'&toolbar=false','_self')">
+              Ouvrir
             </button>
             <br>
             <button type="button" mat-raised-button mat-button
-                    (click)="share_link(sel_ope.store!.application+'?ope='+sel_ope.id+'&toolbar=false','la boutique '+sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
+                    (click)="share_link(operation.sel_ope.store!.application+'?ope='+operation.sel_ope.id+'&toolbar=false','la boutique '+operation.sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
               Partager
             </button>
           </td>

@@ -5,16 +5,14 @@ import {
   SocialLoginModule,
   SocialAuthServiceConfig,
 } from 'angularx-social-login';
+
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {SolWalletsModule} from "angular-sol-wallets";
 import {HttpClientModule} from "@angular/common/http";
 import { AppRoutingModule } from './app-routing.module';
-
-
 import {MatIconModule} from "@angular/material/icon";
 import {MatToolbarModule} from "@angular/material/toolbar";
-
 import { LayoutModule } from '@angular/cdk/layout';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -46,7 +44,6 @@ import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatSnackBarModule} from "@angular/material/snack-bar";
 import { ManageComponent } from './manage/manage.component';
 import { LinkComponent } from './link/link.component';
-import {ClipboardModule} from "@angular/cdk/clipboard";
 import { FilterPipe } from './filter.pipe';
 import { AliasPipe } from './alias.pipe';
 import { UploadFileComponent } from './upload-file/upload-file.component';
@@ -72,6 +69,14 @@ import {GooglePayButtonModule} from "@google-pay/button-angular";
 import { StoreComponent } from './store/store.component';
 import { SvgComponent } from './svg/svg.component';
 import { LoginComponent } from './login/login.component';
+import { ReverseblocComponent } from './reversebloc/reversebloc.component';
+import { UnityComponent } from './unity/unity.component';
+import { CandymachineComponent } from './candymachine/candymachine.component';
+import { AuthentComponent } from './authent/authent.component';
+import {ShareButtonsModule} from "ngx-sharebuttons/buttons";
+import {ClipboardModule} from "@angular/cdk/clipboard";
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { IntroComponent } from './intro/intro.component';
 
 
 @NgModule({
@@ -107,14 +112,22 @@ import { LoginComponent } from './login/login.component';
     DispenserComponent,
     StoreComponent,
     SvgComponent,
-    LoginComponent
+    LoginComponent,
+    ReverseblocComponent,
+    UnityComponent,
+    CandymachineComponent,
+    AuthentComponent,
+    PageNotFoundComponent,
+    IntroComponent
   ],
     imports: [
         BrowserModule,
+      ShareButtonsModule,
       SocialLoginModule,
         BrowserAnimationsModule,
         SolWalletsModule,
         ColorPickerModule,
+      ClipboardModule,
         HttpClientModule,
         MatDialogModule,
         NgxJsonViewerModule,
@@ -155,11 +168,13 @@ import { LoginComponent } from './login/login.component';
 
     {provide: 'SocialAuthServiceConfig',
       useValue: {
-        autoLogin: true,
-        providers: [{
-          id: GoogleLoginProvider.PROVIDER_ID,
-          provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
-        }],
+        autoLogin: false,
+        providers: [
+          // {
+          // id: GoogleLoginProvider.PROVIDER_ID,
+          // provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
+          // }
+        ],
       } as SocialAuthServiceConfig}
   ],
   bootstrap: [AppComponent]

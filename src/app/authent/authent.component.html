@@ -1,0 +1,42 @@
+<div style="width: 100%;text-align: center;position: relative;height: 100%;">
+  <mat-form-field appearance="fill" style="min-width: 300px;width:60%;max-width: 600px;">
+    <mat-label>{{intro_message}}</mat-label>
+    <input matInput type="text" [(ngModel)]="address" (ngModelChange)="update_address()">
+    <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
+    <mat-hint>{{explain_message}}</mat-hint>
+  </mat-form-field>
+
+
+  <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20 && network.version=='beta'">
+    Se connecter avec votre wallet sur<br>
+    <button type="button" mat-raised-button mat-button
+            *ngIf="network.installed_wallet().indexOf('phantom')>-1 || network.installed_wallet().indexOf('solflare')>-1"
+            (click)="open_wallet('solana')">
+      Solana
+    </button>
+
+    <button type="button" mat-raised-button mat-button
+            *ngIf="network.installed_wallet().indexOf('maiar')>-1"
+            (click)="open_wallet('elrond')">
+      Elrond
+    </button>
+  </div>
+
+
+  <div id="cmdPanel" style="margin-left:10%;margin-top:20%;width: 80%;text-align: center;">
+    <hr>
+
+    <button type="button" mat-raised-button mat-button
+            title="Ne pas se connecter"
+            (click)="oncancel.emit()">
+      Annuler
+    </button>
+
+    <button type="button" mat-raised-button mat-button
+            title="Ne pas se connecter" color="primary"
+            (click)="validate()">
+      Valider
+    </button>
+
+
+  </div>

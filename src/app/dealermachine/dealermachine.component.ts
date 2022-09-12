@@ -40,6 +40,7 @@ export class DealermachineComponent implements OnInit {
       this.nft=params["token"];
       let ope=params["ope"];
       if(!this.nft){
+        $$("On va chercher les NFT dans le fichier d'opération");
         let address=params["address"] || "";
         let symbol=params["symbol"] || "";
         this.network.get_nfts_from_operation(ope).subscribe((r:any)=>{
@@ -61,9 +62,6 @@ export class DealermachineComponent implements OnInit {
       }
 
     })
-
-
-
   }
 
   //http://127.0.0.1:4200/dealermachine/?ope=calvi2022
@@ -103,12 +101,11 @@ export class DealermachineComponent implements OnInit {
 
 
   valide() {
-
     let addr=this.alias.transform(this.address,"pubkey");
-    if(this.nft!.address==""){
+    if(this.nft!.address?.startsWith("db_")){
       $$("Ce token est issue d'une base de données, donc non miné");;
         if(this.ope)this.message=this.ope.store.support.buy_message;
-        this.network.mint_for_contest(addr,this.ope,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft!).subscribe((r:any)=>{;
+        this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft!).subscribe((r:any)=>{;
           this.message="";
           if(r.error.length>0){
             this.message=r.error+". ";
@@ -121,7 +118,6 @@ export class DealermachineComponent implements OnInit {
           this.lost();
         })
     }else{
-
         if(this.nft!.address!=""){
           $$("Ce token est déjà miné, on se contente de le transférer");
           let mint_addr=this.nft!.address || "";
@@ -130,6 +126,7 @@ export class DealermachineComponent implements OnInit {
           this.network.transfer_to(mint_addr,addr,owner).subscribe(()=>{
             this.message="";
             showMessage(this,"Transféré");
+            this._location.back();
           })
         }
       }
@@ -141,13 +138,11 @@ export class DealermachineComponent implements OnInit {
       this.valide();
   }
 
-  open_wallet(network: string) {
-    this.userService.connect("",network).then((r:any)=>{
-      this.address=r.address;
-    })
-  }
-
   onflash($event: any) {
     this.address=$event.data;
+  }
+
+  cancel() {
+    this._location.back();
   }
 }

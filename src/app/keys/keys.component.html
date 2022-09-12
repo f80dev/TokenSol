@@ -53,10 +53,10 @@
         <a [href]="key.explorer" target="_blank"><strong>{{key.name}}</strong></a>
       </td>
       <td style="font-size: small;">
-        <a [href]="key.explorer">{{key.pubkey}}</a>
+        <a [href]="key.explorer">{{key.pubkey.substring(0,5)+' ... '+key.pubkey.substring(key.pubkey.length-5)}}</a>
       </td>
       <td>
-        <img [src]="key.qrcode" style="width: 100px;">
+        <img [src]="key.qrcode" style="width: 100px;cursor: pointer;" title="cliquer pour copier l'adresse" [cdkCopyToClipboard]="key.pubkey">
       </td>
       <td>
         <button type="button" mat-raised-button mat-button (click)="del_key(key.name)">

@@ -29,7 +29,7 @@ class Infura:
     #response = requests.post('https://ipfs.infura.io:5001/api/v0/put',body,auth=(INFURA_PROJECT_ID, INFURA_PROJECT_SECRET))
 
     rc=response.json()
-    rc["url"]="https://ipfs.io/ipfs/"+rc["Hash"]+"?"+body["filename"] if "filename" in body else ""
+    rc["url"]="https://ipfs.io/ipfs/"+rc["Hash"]+("?"+body["type"] if "type" in body else "")
     return rc
 
 

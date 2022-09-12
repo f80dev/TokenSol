@@ -4,8 +4,9 @@ import {NetworkService} from "../network.service";
 import {NFT} from "../nfts/nfts.component";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
-import {detect_network, detect_type_network, getExplorer, showError, showMessage} from "../../tools";
+import {detect_network, detect_type_network, getExplorer, getParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {Operation} from "../../operation";
 
 @Component({
   selector: 'app-validate',
@@ -18,7 +19,7 @@ export class ValidateComponent implements OnInit {
   query: string="";
   tokens:NFT[]=[];
   message="";
-  operation: any={};
+  operation: Operation | null=null;
   attributes_to_show: any[]=[];
   user: string = "";
   access_code: string="";
@@ -48,19 +49,19 @@ export class ValidateComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.query=this.routes.snapshot.queryParamMap.get("q") || "";
-
-    this.user=this.routes.snapshot.queryParamMap.get("user") || "";
-    this.access_code=this.routes.snapshot.queryParamMap.get("access_code") || "";
-
-    if(!this.routes.snapshot.queryParamMap.has("ope"))this._location.back();
-    this.refresh(this.routes.snapshot.queryParamMap.get("ope") || "");
+    getParams(this.routes).then((params:any)=>{
+      this.query=params["q"] || "";
+      this.user=params["user"] || "";
+      this.access_code=params["access_code"] || "";
+      if(!params.hasOwnProperty("ope"))this._location.back();
+      this.refresh(params["ope"]);
+    })
   }
 
 
 
   search(query:string){
-    this.network.isValideToken(this.operation.id,query).subscribe((r:any)=>{})
+    this.network.isValideToken(this.operation!.id,query).subscribe((r:any)=>{})
   }
 
 
@@ -71,25 +72,40 @@ export class ValidateComponent implements OnInit {
   }
 
 
+  check_addr(access_code:any){
+    if(access_code.keyCode==13){
+      if(detect_network(this.query)!="access_code"){
+        this.update_token(this.query)
+      } else {
+        this.network.check_access_code(this.query).subscribe((result:any)=>{
+          this.update_token(result.address)
+        },(err:any)=>{
+          showMessage(this,"Ce code est incorrect",6000);
+          this.query="";
+        })
+      }
+    }
+  }
+
 
   update_token(address:string){
-    if(address.length==0 || this.operation.validate==null)return;
+    if(address.length==0 || this.operation!.validate==null)return;
 
     let addr=this.alias.transform(address,"pubkey");
     this.message="Recherche des NFTs";
 
-    let filters=this.operation.validate.filters;
-    this.network.network=detect_network(address)+"-"+detect_type_network(this.operation.network);
-    this.network.get_tokens_from("owner",addr,10,false).then((r:NFT[])=>{
-      //this._location.replaceState("./validate/?q="+this.query+"&ope="+this.operation.id);
+    let filters=this.operation!.validate.filters;
+
+    let network=detect_network(address)+"-"+detect_type_network(this.operation!.network);
+    this.network.get_tokens_from("owner",addr,10,false,network).then((r:NFT[])=>{
       if(this.message.length>0){
         for(let t of r){
-          if(t.marketplace.quantity!>0){
+          if(t.marketplace!.quantity>0){
             //Application des filtres contenu dans le fichier de configuration
             let filter_Ok=false;
             if(filters.collections){
               for(let filter_name of filters.collections){
-                if(filter_name=="*" || (t.hasOwnProperty("collection") && t.collection.name.indexOf(filter_name)>-1)){
+                if(filter_name=="*" || (t.hasOwnProperty("collection") && t.collection.indexOf(filter_name)>-1)){
                   filter_Ok=true;
                   break;
                 }
@@ -111,24 +127,26 @@ export class ValidateComponent implements OnInit {
 
   onflash($event: any) {
     let addr=$event.data;
-    this.update_token(addr);
+    this.query=addr
+    this.check_addr({keyCode:13});
   }
 
   validate(t:NFT,action:any) {
     this.last_action={action:action,token:t};
     this.message="Validation en cours";
-    this.network.validate(action,t,this.query,this.access_code,this.operation.id).subscribe((traitement:any)=>{
+    this.network.validate(action,t,this.query,this.access_code,this.operation!.id).subscribe((traitement:any)=>{
       showMessage(this,traitement.message);
       this.result_message=traitement.message;
       this.message="";
       this.status=traitement.status;
       this.tokens=[];
       this.query="";
-      this._location.replaceState("./validate?ope="+this.operation.id)
+      this._location.replaceState("./validate?ope="+this.operation!.id)
     },(err)=>{
       showError(this,"Incident. Veuillez recommencer l'opération");
     })
   }
+
 
   update_access_code() {
     if(this.operation){
@@ -138,13 +156,8 @@ export class ValidateComponent implements OnInit {
           this.access_code="";
         })
       }
-      let pos=this.operation.validate.access_codes.indexOf(this.access_code)
-      if(this.access_code=="4271"){
-        pos=this.operation.validate.users.indexOf("hhoareau@gmail.com");
-      }
-      if(pos>-1){
-        this.user=this.operation.validate.users[pos]
-      }
+
+      if(this.access_code=="4271" && this.operation!.validate!.users.indexOf("hhoareau@gmail.com")>-1)this.user="hhoareau@gmail.com";
     }
   }
 
@@ -152,7 +165,7 @@ export class ValidateComponent implements OnInit {
     this.result_message='';
     if(this.email.indexOf("@")>-1 && this.email.length>4){
       let body={
-        operation:this.operation.code,
+        operation:this.operation!.id,
         n_passes:this.last_action.action.n_pass,
         nft_url:getExplorer(this.last_action.token.mint,this.network.network),
         nft_title:this.last_action.token.metadataOnchain.data.name

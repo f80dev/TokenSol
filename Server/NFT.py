@@ -2,7 +2,7 @@ import json
 
 
 class NFT:
-  collection:dict
+  collection:str
   attributes:list
   name:str
   description:str
@@ -19,7 +19,7 @@ class NFT:
 
   def __init__(self, name: str="",
                symbol: str="",
-               collection: dict=dict(),
+               collection: str="",
                attributes: list=list(),
                description: str="",
                visual: str="",
@@ -49,10 +49,10 @@ class NFT:
       self.creators=object["creators"]
       self.files=object["files"] if "files" in object else []
       self.attributes=object["attributes"]
-      self.collection=object["collection"] if "collection" in object else {name:""}
-      self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1}
+      self.collection=object["collection"] if "collection" in object else ""
+      self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1,"max_mint":1}
       self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)
-      self.address=object["mint"] if "mint" in object else ""
+      self.address=object["address"] if "address" in object else ""      #Données obligatoire
       self.network=object["network"]
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}

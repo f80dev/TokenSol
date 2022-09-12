@@ -1,15 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import {environment} from "../../environments/environment";
 import {NetworkService} from "../network.service";
-import {showMessage} from "../../tools";
+import {getParams, setParams, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
+import {Clipboard} from '@angular/cdk/clipboard';
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {UserService} from "../user.service";
-import {Location} from "@angular/common";
-import { NgNavigatorShareService } from 'ng-navigator-share';
-import {Clipboard} from "@angular/cdk/clipboard";
-import {find_collection, Operation} from "../../operation";
+import {NgNavigatorShareService } from 'ng-navigator-share';
 import {NFT} from "../nfts/nfts.component";
+import {OperationService} from "../operation.service";
 
 @Component({
   selector: 'app-build-ope',
@@ -17,9 +16,9 @@ import {NFT} from "../nfts/nfts.component";
   styleUrls: ['./build-ope.component.css']
 })
 export class BuildOpeComponent implements OnInit {
-  sel_ope: Operation | null=null;
+
   url: string = "";
-  opes: Operation[]=[];
+
   iframe_code: string="";
   image_code: string="";
   url_ope: string="";
@@ -31,80 +30,103 @@ export class BuildOpeComponent implements OnInit {
   url_store="";
   store_collections: any[]=[];
   sources: any;
+  candymachine_qrcode: string="";
+  candymachine_url: string="";
+  title: string="NFluenT Candy Machine";
+
 
   constructor(
     public network:NetworkService,
     public routes:ActivatedRoute,
+    public operation:OperationService,
     public toast:MatSnackBar,
     public user:UserService,
     public clipboardService:Clipboard,
-    public _location:Location,
     public router:Router,
     public ngNavigatorShareService: NgNavigatorShareService
   ) { }
 
   ngOnInit(): void {
+
     if(this.user.isConnected()){
-      this.refresh();
+
+      setTimeout(()=>{
+        getParams(this.routes).then((params:any)=>{
+          this.operation.select(params["ope"]);
+          this.refresh();
+        })
+
+      },1000);
     } else {
       this.user.login();
     }
   }
 
-  refresh(){
-      this.network.get_operations().subscribe((r:any)=>{
-        this.opes=r;
-        if(!this.sel_ope){
-          let ope=this.routes.snapshot.queryParamMap.get("ope");
-          if(ope){
-            for(let sel of r){
-              if(sel.id==ope)this.sel_ope=sel;
-            }
-          }else{
-            this.sel_ope=r[r.length-1];
-          }
-          if(this.sel_ope)this.url_store=environment.appli+"/store?toolbar=false&ope="+this.sel_ope.id;
-          this.refresh_ope({value:this.sel_ope});
-        }
-      })
-
+  refresh () {
+    if(this.operation.sel_ope)this.url_store=environment.appli+"/store?toolbar=false&ope="+this.operation.sel_ope.id;
+    this.refresh_ope({value:this.operation.sel_ope});
   }
 
-  refresh_ope($event: any) {
-    let ope=$event.value.id;
-    if(!this.sel_ope)return;
 
-    let url=this.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
-    this.sel_ope.lottery.application=url;
+  refresh_ope($event: any) {
+    if(!$event.value)return;
+
+    if(!this.operation.sel_ope)return;
+
+
     this.network.wait("Récupération des NFTs issue des sources",500);
-    this.network.get_nfts_from_operation(this.sel_ope.id).subscribe((r:any)=>{
+    this.network.get_nfts_from_operation(this.operation.sel_ope.id).subscribe((r:any)=>{
       this.network.wait("")
       this.nfts=[]
       this.collection_keys=[];
       this.sources=r.sources;
       for(let _nft of r.nfts){
         let nft:NFT=_nft;
-        let k=nft.collection.name;
-        if(k && nft.marketplace.quantity>0){
+        nft.marketplace!.price=nft.marketplace!.price  || 0;
+        let k=nft.collection;
+        if(k && nft.marketplace!.quantity>0){
           if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
           if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
-          this.collections[k]=this.collections[k]+nft.marketplace.quantity;
+          this.collections[k]=this.collections[k]+nft.marketplace!.quantity;
         }
       }
 
-      if(this.sel_ope){
-        if(this.sel_ope.dispenser)this.url_dispenser_app=this.sel_ope.dispenser.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
-        this.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";
-        this.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
+      if(this.operation.sel_ope){
+        let ope=this.operation.sel_ope.id;
 
-        if(this.sel_ope.validate)this.sel_ope.validate.application=this.sel_ope.validate.application.replace("$tokenfactory$",environment.appli)+"?ope="+ope;
-
-        this.store_collections=[];
-        let _c:any=null;
-        for(_c of $event.value.store.collections){
-          if(!_c.hasOwnProperty("price"))_c.price=find_collection(this.sel_ope,_c.name)?.price; //On va chercher le prix
-          this.store_collections.push(_c);
+        if(this.operation.sel_ope.lottery){
+          let url=this.operation.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
+          this.operation.sel_ope.lottery.application=url;
+          this.operation.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";
+          this.operation.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
         }
+
+        if(this.operation.sel_ope.dispenser){
+          this.url_dispenser_app=this.operation.sel_ope.dispenser.application.replace("$nfluent_appli$",environment.appli)
+            +"?param="+setParams({ope:ope,toolbar:false});
+        }
+
+        if(this.operation.sel_ope.validate){
+          this.operation.sel_ope.validate.application=this.operation.sel_ope.validate.application.replace("$nfluent_appli$",environment.appli);
+        }
+
+        if(this.operation.sel_ope.store){
+          this.store_collections=this.operation.sel_ope.store.collections;
+        }
+
+        // let _c:any=null;
+        // for(_c of $event.value.store.collections){
+        //   if(!_c.hasOwnProperty("price"))
+        //     _c.price=find_collection(this.operation.sel_ope,_c.name)?.price; //On va chercher le prix
+        //   this.store_collections.push(_c);
+        // }
+      }
+
+      if(this.operation.sel_ope?.candymachine){
+        this.candymachine_url=environment.appli+"/cm?param="+setParams({ope:this.operation.sel_ope.id,toolbar:false});
+        this.network.qrcode(this.candymachine_url,"json").subscribe((result:any)=>{
+          this.candymachine_qrcode=result.qrcode;
+        })
       }
     });
   }
@@ -117,17 +139,18 @@ export class BuildOpeComponent implements OnInit {
     })
   }
 
+
   new_model() {
     open(environment.appli+"/assets/new_operation.yaml","blank","");
   }
 
   delete_ope() {
-    if(this.sel_ope)
-      open(environment.server+"/api/operations/"+this.sel_ope.id+"?format=file","_blanck");
+    if(this.operation.sel_ope)
+      open(environment.server+"/api/operations/"+this.operation.sel_ope.id+"?format=file","_blanck");
   }
 
   send_mail(user="") {
-    this.network.send_mail_to_validateur(this.sel_ope,user).subscribe(()=>{
+    this.network.send_mail_to_validateur(this.operation.sel_ope,user).subscribe(()=>{
       showMessage(this,"Notifications envoyées");
     });
   }
@@ -135,14 +158,14 @@ export class BuildOpeComponent implements OnInit {
   update_url_ope(evt:any) {
     this.url=environment.appli+"/validate?toolbar=false&ope=b64:"+btoa(this.url_ope);
     this.network.get_operations(this.url_ope).subscribe((ope:any)=>{
-      this.sel_ope=ope;
+      this.operation.sel_ope=ope;
       showMessage(this,"Operation chargée");
     })
   }
 
   download_ope() {
-    if(this.sel_ope)
-      open(environment.server+"/api/operations/"+this.sel_ope.id,"download");
+    if(this.operation.sel_ope)
+      open(environment.server+"/api/operations/"+this.operation.sel_ope.id,"download");
   }
 
 
@@ -160,29 +183,39 @@ export class BuildOpeComponent implements OnInit {
       });
   }
 
-  open_appli(href: string, target: string) {
-    if(this.sel_ope){
+  open_appli(href: string, target: string="_self") {
+    if(this.operation.sel_ope){
       href=href.replace("$nfluent_appli$",environment.appli).replace("https://tokenfactory.nfluent.io",environment.appli);
       open(href,target);
     }
   }
 
   edit_ope() {
-    if(this.sel_ope){
-      let url="https://codebeautify.org/yaml-editor-online?url="+encodeURI(environment.server+"/api/getyaml/"+this.sel_ope.id+"/txt/?dir=./Operations");
+    if(this.operation.sel_ope){
+      let url="https://codebeautify.org/yaml-editor-online?url="+encodeURI(environment.server+"/api/getyaml/"+this.operation.sel_ope.id+"/txt/?dir=./Operations");
       open(url,"editor");
     }
   }
 
   send_prestashop(id:string) {
     this.network.wait("Transfert vers prestashop",60);
-    this.network.export_to_prestashop(id).subscribe((r:any)=>{
+    this.network.export_to_prestashop(id,null).subscribe((r:any)=>{
       this.network.wait("");
       showMessage(this,"NFTs transférés")
     });
   }
 
   open_miner() {
-    this.router.navigate(["miner"],{queryParams:{ope:this.sel_ope?.id,toolbar:true}})
+    this.router.navigate(["miner"],{queryParams:{ope:this.operation.sel_ope?.id,toolbar:true}})
+  }
+
+  open_validate() {
+    if(this.operation.sel_ope){
+      let url=this.operation.sel_ope.validate!.application+"?param="+setParams({
+        toolbar:false,
+        ope:this.operation.sel_ope.id
+      })
+      this.open_appli(url,'_self');
+    }
   }
 }

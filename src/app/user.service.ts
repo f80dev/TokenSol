@@ -29,7 +29,7 @@ export class UserService {
     private httpClient : HttpClient,
     public router:Router
   ) {
-    if(environment.appli.indexOf("127.0.0.1"))this.email="hhoareau@gmail.com";
+    //if(environment.appli.indexOf("127.0.0.1")) this.email="hhoareau@gmail.com";
   }
 
   isConnected() {
@@ -61,7 +61,6 @@ export class UserService {
 
 
   connected() {
-
     return (this.addr && this.addr.length>0) || this.email.length>0;
   }
 

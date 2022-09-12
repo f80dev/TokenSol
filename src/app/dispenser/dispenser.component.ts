@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import { setParams,  showMessage} from "../../tools";
+import {getParams, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {MatDialog} from "@angular/material/dialog";
 import {NFT} from "../nfts/nfts.component";
+import {Operation} from "../../operation";
 
 @Component({
   selector: 'app-dispenser',
@@ -31,23 +32,25 @@ export class DispenserComponent implements OnInit {
   //test: http://127.0.0.1:4200/dispenser?ope=calvi22_devnet&toolbar=false/dispenser?ope=calvi22_devnet
   ngOnInit(): void {
     let limit=Number(this.routes.snapshot.queryParamMap.get("limit") || "1000") ;
-    this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((operation:any)=>{
-      this.operation=operation;
-      this.message="Chargement des NFTs";
-      this.network.get_tokens_to_send(operation.id,"dispenser",limit).subscribe((nfts:any) => {
-        this.nfts=[];
-        this.message="";
-        for(let nft of nfts){
-          if(nft.marketplace.quantity>0){
-            nft.style={opacity:1};
-          } else {
-            nft.style={opacity:0.3};
+    getParams(this.routes).then((params:any)=>{
+      this.network.get_operations(params["ope"]).subscribe((operation:Operation)=>{
+        this.operation=operation;
+        this.message="Chargement des NFTs";
+        this.network.get_tokens_to_send(operation.id,"dispenser",limit).subscribe((nfts:any) => {
+          this.nfts=[];
+          this.message="";
+          for(let nft of nfts){
+            if(nft.marketplace.quantity>0){
+              nft.style={opacity:1};
+            } else {
+              nft.style={opacity:0.3};
+            }
+            if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
+            if(nft.marketplace.price==0 && operation.dispenser!.collections.indexOf(nft.collection)>-1)this.nfts.push(nft);
           }
-          if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
-          if(nft.marketplace.price==0)this.nfts.push(nft);
-        }
-      });
-    })
+        });
+      })
+    });
   }
 
   send(nft: any) {
@@ -60,6 +63,7 @@ export class DispenserComponent implements OnInit {
     this.router.navigate(["dealermachine"],{queryParams:{param:setParams({
           token:nft,
           price:0,
+          ope: this.operation.id,
           selfWalletConnexion:false,
           mining:this.operation.lazy_mining
         })}})

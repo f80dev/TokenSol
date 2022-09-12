@@ -50,6 +50,8 @@ Forcer l'usage de TCP
 ##Installation de prestashop (serveur Apache / php)
 
 Documentation: https://hub.docker.com/r/prestashop/prestashop/
+Tutoriel pour installation via Docker : https://www.youtube.com/watch?v=oTwEtg0DQXE
+
 
 ###Installation sur le serveur
 
@@ -73,7 +75,12 @@ Analyse de l'instance:
 
     docker container exec -it prestashop /bin/bash
 
+
+
+
 ##Configuration finale
+
+
 ###Se connecter dans l'instance prestashop
 
     docker container exec -it prestashop /bin/bash

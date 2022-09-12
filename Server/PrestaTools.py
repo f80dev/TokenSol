@@ -60,12 +60,11 @@ class PrestaTools:
       "type": "image/gif"
     }
     resp = requests.post(self.url("images/products/" + product_id), files=files)
-    try:
-      resp = resp.json()
-      return resp["image"]
-    except:
+    if resp.status_code==200:
+      return True
+    else:
       log("Erreur d'upload de l'image " + str(resp))
-      return None
+      return False
 
 
 
@@ -196,7 +195,7 @@ class PrestaTools:
     _p["price"] = nft.get_price()
     _p["wholesale_price"]=_p["price"]
 
-    _category=self.find_category(nft.collection["name"])
+    _category=self.find_category(nft.collection)
     _p["id_category_default"] = _category["id"]
 
     log("Remplissage de l'associations")

@@ -19,9 +19,18 @@ import {FaqsComponent} from "./faqs/faqs.component";
 import {DispenserComponent} from "./dispenser/dispenser.component";
 import {StoreComponent} from "./store/store.component";
 import {LoginComponent} from "./login/login.component";
+import {CandymachineComponent} from "./candymachine/candymachine.component";
+import {PageNotFoundComponent} from "./page-not-found/page-not-found.component";
+import {IntroComponent} from "./intro/intro.component";
 
 
 const routes: Routes = [
+  { path: 'wallet', component: MywalletComponent },
+  { path: 'candymachine', component:CandymachineComponent },
+  { path: 'cm', component:CandymachineComponent },
+  { path: 'dealermachine', component:DealermachineComponent },
+  { path: 'dm', component:DealermachineComponent },
+
   { path: 'help', component: HelpComponent },
   { path: 'about', component: AboutComponent },
   { path: 'reload', component: FaucetComponent },
@@ -36,12 +45,11 @@ const routes: Routes = [
   { path: 'store', component: StoreComponent },
   { path: 'login', component: LoginComponent },
   { path: 'manage', component: ManageComponent },
-  { path: 'dealermachine', component:DealermachineComponent },
-  { path: 'dm', component:DealermachineComponent },
   { path: 'build', component:BuildOpeComponent },
   { path: 'validate', component: ValidateComponent },
-  { path: 'wallet', component: MywalletComponent },
   { path: 'buy', component: BuyComponent },
+  { path: '', component: IntroComponent },
+  { path: '**', component: PageNotFoundComponent },
 ];
 
 @NgModule({

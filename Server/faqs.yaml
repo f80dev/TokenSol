@@ -29,4 +29,34 @@ content:
       ici description de la procédure de validation
       "
 
+  - index: drawing_appli
+    title: Quelles applications gratuites pour concevoir mes NFTs ?
+    order: 0
+    format: html
+    content: "
+      Au delà des applications professionnelles de dessins type Adobe, il existe des références gratuites pour concevoir vos NFTs. En voici quelques une :
+      <ul>
+      <li><a href='https://inkscape.org/'>Inkscape</a>, idéal pour le dessin et la mise en page (combiner des éléments de texte, de dessin et d'image importer)</li>
+      <li><a href='https://www.gimp.org/'>Gimp</a>, pour la retouche photo</li>
+      <li><a href='https://apps.microsoft.com/store/detail/paint-3d/9NBLGGH5FV99'>Paint 3D</a>, pour la conception de petits objets 3D</li>
+      <li><a href='https://www.blender.org/'>Blender</a> pour du dessin 3D plus complexe et l'animation (logiciel complexe à maitriser mais de nombreux tutoriels disponibles sur Internet)</li>
+      </ul>
+    "
+
+  - index: image_bank
+    title: Ou trouver des images, clipart, sticker ?
+    order: 0
+    format: html
+    content: "
+      De nombreuse banque d'images, de photos, de sticker sont accessibles gratuitement sur Internet:
+      <ul>
+      <li><a href='https://pixabay.com/fr/'>Pixabay</a>, pour les images et photos libre de droits</li>
+      <li><a href='https://www.google.fr/advanced_image_search?hl=fr&fg=1'>La page de recherche avancée</a> de Google image</li>
+      <li><a href='https://www.pexels.com/fr-fr/'>Pexels</a>, assez comparable à pixabay</li>
+      <li><a href='https://thenounproject.com/'>Noun Project</a>, plus spécialisé dans l'iconographie</li>
+      </ul>
+      <br>
+      L'option
+    "
+
 

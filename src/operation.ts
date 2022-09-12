@@ -1,3 +1,4 @@
+//Description d'une collection
 export interface Collection {
   name: string
   visual: string
@@ -6,6 +7,8 @@ export interface Collection {
   price: number
 }
 
+//Description de la structure d'une opération
+//Voir le fichier yaml commenté pour le détail des sections
 export interface Operation {
   id: string
   title: string
@@ -41,6 +44,20 @@ export interface Operation {
     miner: string
   }
 
+  candymachine : {
+    visible: boolean
+    collections:string[]
+
+    messages:{
+      title: string
+    }
+
+    limit: {
+      total: number
+      per_user: number
+    }
+  }
+
   validate:{
     title: string
     visible: boolean
@@ -50,17 +67,34 @@ export interface Operation {
     application: string
 
     users: string[]
-
-    support: any | null
+    support: {
+      contacts: {
+        message: string
+        mail: string
+        phone: string
+        telegram: string | null
+      },
+      message_search: string
+      warning_process: string
+    }
 
     properties: string[]
 
     actions:{
-      api: string
-      label: string
-      n_pass: number
-      collections: string[]
-    }[]
+      buttons: [
+        {
+          api: string
+          label: string
+          n_pass: number
+          collections: string[]
+        }
+      ]
+
+      success : {
+        message: string
+        api: string
+      }
+    }
 
     method:{
       update_token: boolean

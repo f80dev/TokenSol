@@ -35,7 +35,7 @@ export class StoreComponent implements OnInit {
         for(let nft of nfts){
           nft.marketplace={price:0,quantity:1};
           for(let c of this.operation.store.collections || []){
-            if(c.name==nft.collection.name)nft.marketplace={price:c.price,quantity:nft.balance};
+            if(c.name==nft.collection)nft.marketplace={price:c.price,quantity:nft.balance};
           }
           this.nfts.push(nft);
         }
@@ -50,7 +50,7 @@ export class StoreComponent implements OnInit {
     let param=setParams({
       token:nft,
       ope:this.operation.id,
-      selfWalletConnexion:false,
+      selfWalletConnexion:true,
       mining:this.operation.store.miner
     })
     this.router.navigate(["dealermachine"],{queryParams:{param:param}});

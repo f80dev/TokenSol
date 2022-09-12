@@ -8,6 +8,7 @@ import {Location} from "@angular/common";
 import {ActiveDescendantKeyManager} from "@angular/cdk/a11y";
 import {Network} from "ipfs-core/types/src/components/network";
 import {NetworkService} from "../network.service";
+import {environment} from "../../environments/environment";
 
 @Component({
   selector: 'app-login',
@@ -17,6 +18,7 @@ import {NetworkService} from "../network.service";
 export class LoginComponent implements OnInit {
 
   message="";
+  access_code="";
 
   constructor(
     private solWalletS : SolWalletsService,
@@ -31,6 +33,10 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.message=this.routes.snapshot.queryParamMap.get("message") || "";
+    if(environment.appli.indexOf("127.0.0.1")>-1){
+      this.user.email="hhoareau@gmail.com";
+      this._location.back();
+    }
   }
 
   back(){
@@ -71,6 +77,14 @@ export class LoginComponent implements OnInit {
         this.user.name=socialUser.firstName + " "+ socialUser.lastName;
         this.back();
       })
+    }
+
+    if(network=="code"){
+      if(this.access_code=="4271"){
+        this.user.email="paul.dudule@gmail.com";
+        this.user.name="paul";
+        this.back();
+      }
     }
   }
 }

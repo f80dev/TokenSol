@@ -20,3 +20,5 @@ APPNAME="TokenFactory"
 SMTP_SERVER="ssl0.ovh.net"
 SMTP_SERVER_PORT=587
 IMAP_SERVER="imap.ionos.fr"
+
+NFTTOMINT_FILE="nfts_to_mint"

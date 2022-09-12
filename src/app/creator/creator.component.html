@@ -76,7 +76,7 @@
   <mat-expansion-panel [expanded]="show_collection">
     <mat-expansion-panel-header>Visuels / Images</mat-expansion-panel-header>
     <button type="button" mat-raised-button mat-button
-            (click)="generate_collection('preview')">
+            (click)="generate_collection()">
       Apercu
     </button>
     <button type="button" mat-raised-button mat-button
@@ -240,7 +240,7 @@
     &nbsp;
     <mat-form-field appearance="fill" style="max-width: 100px">
       <mat-label>Nombre d'unités</mat-label>
-      <input matInput type="number" [(ngModel)]="limit" >
+      <input matInput type="number" [(ngModel)]="limit" (ngModelChange)="show_download_link()">
     </mat-form-field>
 
     <mat-form-field appearance="fill" style="max-width: 100px">
@@ -269,14 +269,15 @@
       Aperçu
     </button>
 
-    <button type="button" mat-raised-button mat-button
-            (click)="generate_collection('zip')">
-      Télécharger
-    </button>
+    <a [href]="url_collection"
+       *ngIf="url_collection.length>0"
+       title="Télécharger la collection"
+       style="vertical-align: middle;text-align:center;height: 30px;margin: 10px;"
+       download="collection.7z">
 
-    <a [href]="url_collection" *ngIf="url_collection.length>0" title="Télécharger la collection" download="collection.7z">
-      <mat-icon>download</mat-icon>
+      <mat-icon>download</mat-icon>&nbsp;Télécharger
     </a>
+
 
     <mat-form-field appearance="fill" style="max-width: 200px">
       <mat-label>Nom des fichiers téléchargés</mat-label>
@@ -328,7 +329,6 @@
         <th>Symbole</th>
         <th>Collections</th>
         <th>Propriétés / Attributs</th>
-        <th>Fichiers</th>
       </tr>
       <tr>
         <td>
@@ -352,22 +352,14 @@
 
         <td>
           <mat-form-field appearance="fill" style="max-width: 100px">
-            <mat-label>Collections</mat-label>
+            <mat-label>Nom</mat-label>
             <input matInput type="text" [(ngModel)]="data.collection">
-          </mat-form-field>
-          /
-          <mat-form-field appearance="fill" style="max-width: 100px">
-            <mat-label>Famille</mat-label>
-            <input matInput type="text" [(ngModel)]="data.family">
           </mat-form-field>
         </td>
         <td>
           <textarea class="mat-elevation-z2"
                     title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
-                    matInput [(ngModel)]="data.properties" rows="5" cols="20"></textarea>
-        </td>
-        <td>
-          <textarea matInput class="mat-elevation-z2" [(ngModel)]="data.files" rows="5" cols="20"></textarea>
+                    matInput [(ngModel)]="data.properties" rows="5" cols="40"></textarea>
         </td>
       </tr>
     </table>

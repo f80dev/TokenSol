@@ -10,19 +10,29 @@
   </div>
 
 
-  <button type="button" color="primary" mat-raised-button mat-button (click)="connect('solana')">
-    Solana
-  </button>
-  <br>
+  <div *ngIf="network.is_beta()">
 
-  <button type="button" color="primary"  mat-raised-button mat-button (click)="connect('elrond')">
-    Elrond
-  </button>
-  <br>
+    <button type="button" color="primary" mat-raised-button mat-button (click)="connect('solana')">
+      Solana
+    </button>
+    <br>
 
-  <button type="button" color="primary"  mat-raised-button mat-button (click)="connect('google')">
-    Google
-  </button>
-  <br>
+    <button type="button" color="primary"  mat-raised-button mat-button (click)="connect('elrond')">
+      Elrond
+    </button>
+    <br>
+
+    <button type="button" color="primary"  mat-raised-button mat-button (click)="connect('google')">
+      Google
+    </button>
+    <br>
+
+  </div>
+
+  <mat-form-field appearance="fill" style="width:300px;font-size: large;">
+    <mat-label>Votre code d'accès</mat-label>
+    <input matInput type="text" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
+  </mat-form-field>
+
 
 </div>

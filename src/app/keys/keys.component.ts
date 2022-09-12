@@ -40,7 +40,7 @@ export class KeysComponent implements OnInit {
 
   refresh(){
     this.user.connect().then((profil)=> {
-      this.metaboss.init_keys(this.network.network).then(()=>{this.network.wait();});
+      this.metaboss.init_keys(this.network.network,true).then(()=>{this.network.wait();});
     });
   }
 

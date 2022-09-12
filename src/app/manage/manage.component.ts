@@ -69,7 +69,7 @@ export class ManageComponent implements OnInit {
     if(this.type_addr=="token_list"){
       this.nfts=[];
       for(let a of this.addrs){
-        this.network.get_tokens_from("token",a,this.limit).then((r:any)=> {
+        this.network.get_tokens_from("token",a,this.limit, false, null, 0,  this.network.network).then((r:any)=> {
           this.nfts.push(r[0]);
         });
       }
@@ -84,7 +84,7 @@ export class ManageComponent implements OnInit {
         if(pubkey.length==0)return;
 
         this.network.wait("Récupération des NFT par "+this.type_addr+" pour "+pubkey);
-        this.network.get_tokens_from(this.type_addr, pubkey,this.limit).then((r:any)=>{
+        this.network.get_tokens_from(this.type_addr, pubkey,this.limit, false, null, 0, this.network.network).then((r:any)=>{
           showMessage(this,r.length+" NFTs affichés");
           this.network.wait("")
           this.nfts=[];
@@ -93,7 +93,7 @@ export class ManageComponent implements OnInit {
               this.nfts.push(nft);
           }
 
-          this.nfts.sort((a:NFT, b:NFT) => (a.marketplace.quantity < b.marketplace.quantity) ? 1 : -1)
+          this.nfts.sort((a:NFT, b:NFT) => (a.marketplace!.quantity < b.marketplace!.quantity) ? 1 : -1)
         }).catch(err=>{this.network.wait("");showError(this,err);});
       }
     }

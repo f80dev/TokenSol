@@ -5,13 +5,14 @@ import {MetabossKey, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
+import {type} from "os";
 
 @Component({
   selector: 'app-selectkey',
   templateUrl: './selectkey.component.html',
   styleUrls: ['./selectkey.component.css']
 })
-export class SelectkeyComponent implements OnInit, OnChanges {
+export class SelectkeyComponent implements OnChanges {
   selected: MetabossKey | undefined;
   @Input("fontsize") fontsize = "x-small";
   @Input("keys") keys: MetabossKey[] = [];
@@ -23,17 +24,19 @@ export class SelectkeyComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     let fix_key=localStorage.getItem("key") || "paul";
-    for(let k of this.keys){
-      if(k.name==fix_key){
-        this.metaboss.admin_key=k;
-        this.selected=k;
+    // @ts-ignore
+    try {
+      for(let k of this.keys){
+        if(k.name==fix_key){
+          this.metaboss.admin_key=k;
+          this.selected=k;
+        }
       }
+    } catch (e) {
+      
     }
-    }
-
-  ngOnInit(): void {
-
   }
+
 
   refresh($event: MatSelectChange) {
     this.metaboss.admin_key=$event.value;

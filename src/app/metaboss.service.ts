@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {NetworkService} from "./network.service";
-import {Observable} from "rxjs";
 import {environment} from "../environments/environment";
 import {$$, MetabossKey} from "../tools";
+import {NFT} from "./nfts/nfts.component";
 
 @Injectable({
   providedIn: 'root'
@@ -19,19 +19,23 @@ export class MetabossService {
   )
   {}
 
-
   //http://localhost:4200/keys
-  init_keys(network="elrond-devnet") {
+  init_keys(network="elrond-devnet",with_balance=true) {
     return new Promise((resolve, reject) => {
       this.network.wait("Chargement des clés");
-      this.httpClient.get<MetabossKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance=true").subscribe((r: MetabossKey[]) => {
-        this.keys = r;
-        this.network.wait();
-        resolve(r);
-      },()=>{
-        $$("Probleme de chargement");
+      if(this.network.isElrond() || this.network.isSolana()){
+        this.httpClient.get<MetabossKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance="+with_balance).subscribe((r: MetabossKey[]) => {
+          this.keys = r;
+          this.network.wait();
+          resolve(r);
+        },()=>{
+          $$("Probleme de chargement");
+          reject();
+        });
+      }
+      else {
         reject();
-      });
+      }
     });
   }
 
@@ -41,9 +45,8 @@ export class MetabossService {
   }
 
 
-  mint(token:any,sign=false,platform="nftstorage",network=""){
+  mint(token:NFT,sign=false,platform="nftstorage",network=""){
     return new Promise((resolve, reject) => {
-      network=(network=="") ? this.network.network : "elrond-devnet"
       this.network.wait("Minage en cours sur "+network);
       this.httpClient.post(environment.server+"/api/mint/?keyfile="+this.admin_key?.name+"&sign="+sign+"&platform="+platform+"&network="+network,token).subscribe((r)=>{
         this.network.wait();
@@ -156,7 +159,7 @@ export class MetabossService {
   }
 
   del_key(name: string) {
-    return this.httpClient.delete(environment.server+"/api/keys/"+name)
+    return this.httpClient.delete(environment.server+"/api/keys/"+name+"/?network="+this.network.network)
   }
 
   encrypte_key(name:string) {

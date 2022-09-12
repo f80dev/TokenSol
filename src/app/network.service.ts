@@ -11,13 +11,14 @@ import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {$$,words} from "../tools";
+import {$$, encodeUnicode, words} from "../tools";
 import {environment} from "../environments/environment";
 
 import {SplTokenInfo, NFT, SolanaToken} from "./nfts/nfts.component";
 import {Layer} from "./creator/creator.component";
 import {retry, timeout} from "rxjs";
-import {AliasPipe} from "./alias.pipe";
+import {unescape} from "querystring";
+import {Operation} from "../operation";
 
 export enum type_addr {
   "owner",
@@ -32,6 +33,9 @@ export class NetworkService {
   private _network:string="elrond-devnet";
   private _connection: Connection=new Connection(clusterApiUrl("devnet"), 'confirmed');
   waiting: string="";
+  complement: string | undefined ="";
+  fiat_unity: string="$";
+  version: string="0.1";
 
   constructor(
     private httpClient : HttpClient
@@ -152,6 +156,33 @@ export class NetworkService {
     });
   }
 
+  unity_conversion: any={};
+
+
+  get_price(unity="egld"){
+    return new Promise((resolve, reject) => {
+      let now=new Date().getTime();
+      if(this.unity_conversion && this.unity_conversion.hasOwnProperty(unity) && now-this.unity_conversion[unity].lastdate<100000){
+        resolve(this.unity_conversion[unity].value);
+      }
+      if(unity.toLowerCase()=="egld"){
+        this.httpClient.get("https://data.elrond.com/market/quotes/egld/price").subscribe((result:any)=>{
+          if(result.length>0){
+            this.unity_conversion[unity]={value:result[result.length-1].value,lastdate:new Date().getTime()};
+            resolve(result[result.length-1].value);
+          }
+        },(err)=>{
+          reject(80);
+        });
+      } else {
+        this.unity_conversion[unity]={value:1,lastdate:new Date().getTime()};
+        //TODO a adapter sur la base d'un tableau de correspondance entre la monnaie
+        resolve(1);
+      }
+    });
+
+  }
+
 
   build_token_from_solscan(mintAddress:string):Promise<SolanaToken> {
     return new Promise((resolve, reject) => {
@@ -255,7 +286,7 @@ export class NetworkService {
         seller_fee_basis_points: t.royaltyFeeRate*100,
         issuer:t.issuer,
         attributes:l_attributes,
-        collection: {name: t.collection,family:""},
+        collection: t.collection,
         name: t.name,
         description: t.description,
         image: t.imageUrl,
@@ -289,7 +320,7 @@ export class NetworkService {
   }
 
 
-  get_tokens_from(type_addr:string,addr:string,limit=100,short=false,filter:any=null,offset=0) : Promise<any[]> {
+  get_tokens_from(type_addr:string,addr:string,limit=100,short=false,filter:any=null,offset=0,network="elrond-devnet") : Promise<any[]> {
 
     $$("Recherche de token par "+type_addr)
     return new Promise((resolve,reject) => {
@@ -456,7 +487,11 @@ export class NetworkService {
 
   get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98,target="preview",data={},platform="nftstorage") {
     let url=environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format="+target+"&limit="+limit+"&quality="+quality+"&platform="+platform;
-    url=url+"&data="+btoa(JSON.stringify(data));
+
+    let s_data=JSON.stringify(data)
+    s_data=btoa(encodeURIComponent(s_data))
+
+    url=url+"&data="+s_data;
     return this.httpClient.get(
       url,
       { headers: new HttpHeaders({ timeout: `${200000}` }) }
@@ -473,7 +508,7 @@ export class NetworkService {
   }
 
   remove_image(name:string){
-    return this.httpClient.delete(environment.server+"/api/images/"+name);
+    return this.httpClient.delete(environment.server+"/api/images/"+encodeURI(name));
   }
 
   reset_collection() {
@@ -481,11 +516,11 @@ export class NetworkService {
   }
 
   save_config_on_server(name:string,body:any) {
-    return this.httpClient.post(environment.server+"/api/save_config/"+name+"/",body);
+    return this.httpClient.post(environment.server+"/api/save_config/"+encodeURI(name)+"/",body);
   }
 
   load_config(name:string) {
-    return this.httpClient.get(environment.server+"/api/configs/"+name+"/?format=json");
+    return this.httpClient.get(environment.server+"/api/configs/"+encodeURI(name)+"/?format=json");
   }
 
   list_config() {
@@ -528,7 +563,7 @@ export class NetworkService {
 
   get_operations(ope="") {
     if(ope.startsWith("http"))ope="b64:"+btoa(ope);
-    return this.httpClient.get(environment.server+"/api/operations/"+ope);
+    return this.httpClient.get<Operation>(environment.server+"/api/operations/"+ope);
   }
 
   upload_operation(filename:string, content:any) {
@@ -609,11 +644,8 @@ export class NetworkService {
   // create_account(network: string, alias: string) {
   //   return this.httpClient.get(environment.server+"/api/create_account/"+network+"/"+alias+"/");
   // }
-  export_to_prestashop(id:string,nfts:any=[],collection_filter=true) {
-    if(nfts.length==0)
-      return this.httpClient.get(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter);
-    else
-      return this.httpClient.post(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter,nfts);
+  export_to_prestashop(id:string,token:NFT | null,collection_filter=true) {
+    return this.httpClient.post(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter,token);
   }
 
   url_wallet() {
@@ -624,7 +656,32 @@ export class NetworkService {
     }
   }
 
-  qrcode(body:string) {
-    return this.httpClient.get<string>(environment.server+"/api/qrcode/?code="+body);
+  qrcode(body:string,format:"image" | "json" | "qrcode"="image") {
+    return this.httpClient.get<string>(environment.server+"/api/qrcode/?code="+body+"&format="+format);
+  }
+
+  get_access_code(addr: string) {
+    return this.httpClient.get<string>(environment.server+"/api/access_code/"+addr+"?format=base64");
+  }
+
+  check_access_code(access_code: string) {
+    return this.httpClient.get<string>(environment.server+"/api/check_access_code/"+access_code+"?format=base64");
+  }
+
+  get_nft(owner: string, address: string, network: string) {
+    return this.httpClient.get<any>(environment.server+"/api/nft/"+owner+"/"+address+"?network="+network);
+  }
+
+  add_user_for_nft(address:string,network:string,operation_id:string,collections:string[]=[]) {
+    return this.httpClient.post(environment.server+"/api/add_user_for_nft/",{
+      address:address,
+      network:network,
+      operation_id:operation_id,
+      collections:collections
+    });
+  }
+
+  is_beta() {
+    return (this.version=="beta");
   }
 }
