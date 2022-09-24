@@ -46,8 +46,7 @@ from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
 from secret import GITHUB_TOKEN, SALT, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY, SECRETS_FILE
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import create_access_token, JWTManager
 
 from settings import NFTTOMINT_FILE
 

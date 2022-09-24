@@ -145,8 +145,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
   handleImage(event: any) {
-    var rc=event;
-    if(!rc.startsWith('data:'))rc=rc+"data:image/jpeg;base64,"
+    let rc=event;
+    if(!rc.startsWith('data:'))rc="data:image/jpeg;base64,"+rc;
+
     this.image_for_token=rc;
     this.message="Fabrication des modèles sur la base de l'image suivante";
     setTimeout(()=>{

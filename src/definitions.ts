@@ -16,7 +16,8 @@ export const PLATFORMS=[
   {label:"IPFS",value:"ipfs"},
   {label:"Infura (IPFS)",value:"infura"},
   {label:"nFluent Server",value:"nfluent"},
-  {label:"nFluent Local Server",value:"nfluent_local"}
+  {label:"nFluent Local Server",value:"nfluent_local"},
+  {label:"La configuration",value:"infile"}
 ]
 
 export const GOOGLE_CLIENT_ID="167299914377-p8vuf2f6npqnigl5kpqrh34cqjd81eko.apps.googleusercontent.com"
