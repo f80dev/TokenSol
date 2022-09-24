@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {NFT} from "../nfts/nfts.component";
+
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
 import {detect_network, detect_type_network, getExplorer, getParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Operation} from "../../operation";
+import {NFT} from "../../nft";
 
 @Component({
   selector: 'app-validate',
@@ -105,7 +106,7 @@ export class ValidateComponent implements OnInit {
             let filter_Ok=false;
             if(filters.collections){
               for(let filter_name of filters.collections){
-                if(filter_name=="*" || (t.hasOwnProperty("collection") && t.collection.indexOf(filter_name)>-1)){
+                if(filter_name=="*" || (t.hasOwnProperty("collection") && t.collection.id!.indexOf(filter_name)>-1)){
                   filter_Ok=true;
                   break;
                 }

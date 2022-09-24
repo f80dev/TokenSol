@@ -1,9 +1,8 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { GoogleLoginProvider } from 'angularx-social-login';
 import {
   SocialLoginModule,
-  SocialAuthServiceConfig,
+  SocialAuthServiceConfig, GoogleLoginProvider,
 } from 'angularx-social-login';
 
 import { AppComponent } from './app.component';
@@ -68,7 +67,6 @@ import { DispenserComponent } from './dispenser/dispenser.component';
 import {GooglePayButtonModule} from "@google-pay/button-angular";
 import { StoreComponent } from './store/store.component';
 import { SvgComponent } from './svg/svg.component';
-import { LoginComponent } from './login/login.component';
 import { ReverseblocComponent } from './reversebloc/reversebloc.component';
 import { UnityComponent } from './unity/unity.component';
 import { CandymachineComponent } from './candymachine/candymachine.component';
@@ -77,6 +75,7 @@ import {ShareButtonsModule} from "ngx-sharebuttons/buttons";
 import {ClipboardModule} from "@angular/cdk/clipboard";
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 import { IntroComponent } from './intro/intro.component';
+import { LoginComponent } from './login/login.component';
 
 
 @NgModule({
@@ -112,13 +111,13 @@ import { IntroComponent } from './intro/intro.component';
     DispenserComponent,
     StoreComponent,
     SvgComponent,
-    LoginComponent,
     ReverseblocComponent,
     UnityComponent,
     CandymachineComponent,
     AuthentComponent,
     PageNotFoundComponent,
-    IntroComponent
+    IntroComponent,
+    LoginComponent
   ],
     imports: [
         BrowserModule,
@@ -170,10 +169,10 @@ import { IntroComponent } from './intro/intro.component';
       useValue: {
         autoLogin: false,
         providers: [
-          // {
-          // id: GoogleLoginProvider.PROVIDER_ID,
-          // provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
-          // }
+          {
+          id: GoogleLoginProvider.PROVIDER_ID,
+          provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
+          }
         ],
       } as SocialAuthServiceConfig}
   ],

@@ -2,7 +2,7 @@ import json
 
 
 class NFT:
-  collection:str
+  collection:dict
   attributes:list
   name:str
   description:str
@@ -19,7 +19,7 @@ class NFT:
 
   def __init__(self, name: str="",
                symbol: str="",
-               collection: str="",
+               collection: dict={},
                attributes: list=list(),
                description: str="",
                visual: str="",
@@ -71,5 +71,8 @@ class NFT:
 
   def add_attribute(self,key:str,value:str):
     self.attributes.append({"trait_type":key,"value":value})
+
+  def is_minted(self):
+	  return len(self.address)>0 and not self.address.startswith("db_")
 
 

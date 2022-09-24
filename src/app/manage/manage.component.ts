@@ -5,11 +5,12 @@ import {ActivatedRoute} from "@angular/router";
 import {Location} from "@angular/common"
 import {$$, showError, showMessage} from "../../tools";
 import {FilterPipe} from "../filter.pipe";
-import {NFT} from "../nfts/nfts.component";
+
 import {AliasPipe} from "../alias.pipe";
 import {MatSelectChange} from "@angular/material/select";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {ClipboardModule} from "@angular/cdk/clipboard";
+import {NFT} from "../../nft";
+import {UserService} from "../user.service";
 
 @Component({
   selector: 'app-manage',
@@ -27,7 +28,7 @@ export class ManageComponent implements OnInit {
   constructor(
     public network:NetworkService,
     public metaboss:MetabossService,
-    public clipboard:ClipboardModule,
+    public user:UserService,
     public routes:ActivatedRoute,
     public _location:Location,
     public toast:MatSnackBar,
@@ -74,8 +75,8 @@ export class ManageComponent implements OnInit {
         });
       }
     }else{
-      if(this.metaboss.admin_key && this.type_addr!=""){
-        let new_url="./manage/?search="+this.type_addr+"&account="+this.metaboss.admin_key.name+"&view="+this.pubkey+"&network="+this.network.network;
+      if(this.user.key && this.type_addr!=""){
+        let new_url="./manage/?search="+this.type_addr+"&account="+this.user.key.name+"&view="+this.pubkey+"&network="+this.network.network;
         this._location.replaceState(new_url);
         this.nfts=[];
         let pubkey=this.alias_pipe.transform(this.pubkey,"pubkey");
@@ -125,8 +126,8 @@ export class ManageComponent implements OnInit {
 
   transfer_all() {
     this.mass_treatment((nft:NFT)=>{
-      if(nft.address && this.metaboss.admin_key){
-        this.network.transfer_to(nft.address,this.metaboss.admin_key.pubkey,this.pubkey,this.network.network).subscribe(()=>{
+      if(nft.address && this.user.key){
+        this.network.transfer_to(nft.address,this.user.key.pubkey,this.pubkey,this.network.network).subscribe(()=>{
           showMessage(this,nft.address+" transféré");
         })
       }

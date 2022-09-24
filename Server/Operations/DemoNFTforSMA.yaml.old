@@ -3,7 +3,7 @@ title: "Démonstration NFT pour le congrès du SMA"     #est le titre usuel de l
 description: "Distribution gratuite de NFT pour les participants à la presentation NFTluent"
 website: "https://nfluent.io"   #désigne le site concerné par l'opération
 version: 0.1
-network: elrond-devnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
+network: elrond-mainnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
 wallet: "$nfluent_appli$/wallet"
 
 #Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
@@ -16,7 +16,7 @@ lazy_mining:
 collections:
   - name: "SMA22"
     visual:  https://www.blog.sma-syndicat.org/wp-content/uploads/2018/06/logo_sma1.jpg
-    description: Une collection de NFTs by Nfluent
+    description: Preuve de participation au Congrès National du Syndicat des Musiques Actuelles – La Coopérative de mai 13 & 14 septembre 2022 – Clermont-Ferrand
     creator: nfluent
     price: 0
 

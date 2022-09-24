@@ -2,7 +2,7 @@
 
   <div class="mat-display-3 color-primary">Minage des NFTs</div>
   <div class="mat-subheading-2 color-accent" style="margin-top: -50px">
-    Minage sur {{network.network}} {{network.complement}} prévu pour {{tokens.length}} NFTs assuré par {{metaboss.admin_key?.name}}
+    Minage sur {{network.network}} {{network.complement}} prévu pour {{tokens.length}} NFTs assuré par {{user.key?.name}}
   </div>
 
   <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br>
@@ -46,7 +46,7 @@
       Upload visuel
     </button>
 
-    <button type="button" [disabled]="metaboss.admin_key==undefined && network.network.indexOf('database')==-1"
+    <button type="button" [disabled]="user.key==undefined && network.network.indexOf('database')==-1"
             mat-raised-button mat-button
             (click)="confirm_mint()">
       Tout miner
@@ -94,6 +94,9 @@
       <mat-icon title="recopie les attributs du premier NFT sur les autres"
                 style="cursor: pointer;font-size: medium;"
                 (click)="clone_attribute()">refresh</mat-icon>
+      <mat-icon title="recopie les attributs du premier NFT sur les autres"
+                style="cursor: pointer;font-size: medium;"
+                (click)="add_attribute()">add_circle</mat-icon>
       </th>
       <th>Créateurs
         <mat-icon (click)="add_miner_to_creator()" style="cursor: pointer;font-size: medium;">add</mat-icon>
@@ -120,11 +123,11 @@
             <td>Nom</td>
             <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.name"></td>
           </tr>
-          <tr>
+          <tr *ngIf="!network.isElrond()">
             <td>Description</td>
             <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.description"></td>
           </tr>
-          <tr>
+          <tr *ngIf="!network.isElrond()">
             <td>Symbole</td>
             <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.symbol"></td>
           </tr>
@@ -154,17 +157,23 @@
       </td>
 
 
-      <td>
-        <app-link *ngFor="let creator of token.creators"
-                  [content]="'https://solscan.io/account/'+creator.address+'?cluster=devnet'">
-          {{(creator.address | alias:network.network).substring(0,15)+'..'}}&nbsp;({{creator?.share}}%)
-          <br>
-        </app-link>
+      <td >
+        <div *ngIf="!network.isElrond()">
+          <app-link *ngFor="let creator of token.creators"
+                    [content]="'https://solscan.io/account/'+creator.address+'?cluster=devnet'">
+            {{(creator.address | alias:network.network).substring(0,15)+'..'}}&nbsp;({{creator?.share}}%)
+            <br>
+          </app-link>
+        </div>
+        <div *ngIf="network.isElrond()">
+          Le créateur est le mineur sur Elrond
+        </div>
+
       </td>
 
       <td>
         <mat-icon style="cursor: pointer" (click)="upload_token(token)" title="upload du visuel" *ngIf="token.visual.startsWith('data')">upload</mat-icon>
-        <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="metaboss.admin_key">build</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="user.key">build</mat-icon>
         <mat-icon style="cursor: pointer" [title]="to_string(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <br>

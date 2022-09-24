@@ -1,29 +1,47 @@
-<app-hourglass [message]="message" style="position: absolute;width: 100%;right: 10px;top:10px;text-align: right;"></app-hourglass>
+
 <mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)"
                style="padding: 10px;width:100%;  text-align: center;">
   <mat-tab [label]="tab_title">
 
-    <button type="button" mat-raised-button mat-button
-            *ngIf="qrcode_addr.length==0"
-            (click)="show_elrond_addr()">
-      Recevoir des NFTs
-    </button>
-    <button type="button" mat-raised-button mat-button
-            (click)="refresh(0)">
-      Actualiser
-    </button>
+
+    <table style="display: inline-block;width:fit-content;width:100%;"><tr>
+      <td><button type="button" mat-raised-button mat-button style="width: 90px;"
+                  *ngIf="qrcode_addr.length==0"
+                  (click)="show_elrond_addr()">
+        Recevoir
+      </button></td>
+      <td>
+        <mat-icon (click)="force_refresh()" style="cursor: pointer;font-size: x-large;">refresh</mat-icon>
+      </td>
+      <td>
+        <mat-form-field style="min-width: 100px;width: 60%;max-width:500px;font-size: medium;">
+          <mat-label>Collections:</mat-label>
+          <mat-select [(value)]="sel_collection" (selectionChange)="force_refresh()">
+            <mat-option *ngFor="let col of collections" [value]="col" >
+              {{col.name}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+      </td>
+    </tr></table>
+
+
     <br>
+    <app-hourglass [message]="message"></app-hourglass>
+    <br>
+
 
     <div *ngIf="qrcode_addr.length>0">
       <br>
       Utiliser ce QRCode pour recevoir des NFT<br>
-      <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="addr">
+      <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="user.addr">
     </div>
 
 
     <app-reversebloc *ngFor="let nft of nfts" [image]="nft.visual" width="300px" height="300px">
       <div style="padding: 10px;">
-        <div class="mat-body-2">{{nft.collection}}</div>
+        <div class="mat-body-2">{{nft.collection.name}}</div>
         <div class="mat-title">{{nft.name}}</div>
         <br>
         <table style="width: 100%;">
@@ -41,18 +59,11 @@
 
   <mat-tab label="Accès">
     <br>
-      <h3>Utiliser ce QRCode pour accèder à vos événements</h3>
-      <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;" [cdkCopyToClipboard]="access_code">
-      <br>
-      <br>
+    <h3>Utiliser ce QRCode pour accèder à vos événements</h3>
+    <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;" [cdkCopyToClipboard]="access_code">
+    <br>
+    <br>
 
-    <button type="button" mat-raised-button mat-button (click)="open_elrond_authent()" style="margin-top: 20px;" *ngIf="network.version=='beta'">
-      S'authentifier
-    </button>
-
-<!--    <br>-->
-<!--    <img [src]="qrcode" style="width: 200px;">-->
-<!--    <br>-->
 
     <div style="width: 100%;text-align: center;height: 30px;vertical-align: middle;margin-top: 50px;">
       <table style="display: inline-block;">
@@ -67,39 +78,170 @@
 
   </mat-tab>
 
-  <mat-tab label="NFT Photos" *ngIf="takePhoto && network.version=='beta'">
-    <br>
-    Prendre une photo pour fabriquer un NFT lié à l'événement
-    <br>
-    <div *ngIf="photo_to_send.length==0">
-      <webcam
-        [height]="300"
-        [width]="300"
-        [trigger]="triggerObservable"
-        [allowCameraSwitch]="false"
-        [imageQuality]="0.85"
-        [captureImageData]="true"
-        imageType="image/jpeg"
-        (imageCapture)="handleImage($event)">
-      </webcam>
+  <mat-tab label="NFTlive">
+
+    <mat-form-field style="min-width: 100px;width: 60%;max-width:500px;font-size: medium;">
+      <mat-select [(value)]="sel_ope">
+        <mat-option *ngFor="let ope of opes" [value]="ope" >
+          {{ope.event!.title}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
 
+    <div *ngIf="photos_to_send.length==0 && sel_ope && sel_ope.nftlive">
+
+      <app-hourglass [message]="message"></app-hourglass>
       <br>
+      <img *ngIf="image_for_token.length>0"
+           [src]="image_for_token"
+           style="width: 200px;">
 
-      <button type="button" mat-raised-button mat-button (click)="photo()">
-        Photo
-      </button>
+      <div *ngIf="message.length==0">
+        <br>
+        Prendre une photo pour fabriquer un NFT.
+        <br><br>
+
+        <table style="width: 650px;display: inline-block;text-align: center;" >
+          <tr>
+            <td style="width: 50%;">
+              <webcam
+                [height]="300"
+                [width]="300"
+                [trigger]="triggerObservable"
+                [allowCameraSwitch]="false"
+                [imageQuality]="0.95"
+                [captureImageData]="true"
+                imageType="image/jpeg"
+                (click)="photo()"
+                (imageCapture)="handleImage($event.imageAsBase64)">
+              </webcam>
+            </td>
+            <td style="width: 50%;">
+              <img src="./assets/folder.png"><br><br>
+            </td>
+          <tr>
+            <td>
+              <button type="button" mat-raised-button mat-button (click)="photo()">
+                Déclencher
+              </button>
+            </td>
+            <td>
+              <app-upload-file (uploaded)="on_upload($event)"
+                               title="Chargée une image depuis votre ordinateur"
+                               extensions=".png,.psd,.webp,.gif,.jpg,.svg,.yaml">
+                Charger un fichier
+              </app-upload-file>
+            </td>
+          </tr>
+        </table>
+        <br>
+      </div>
+
 
     </div>
 
 
-    <div *ngIf="photo_to_send.length>0">
-      <img [src]="photo_to_send" style="width:80%;">
+    <div *ngIf="photos_to_send.length>0" style="width: 100%;">
+      Choisissez un NFT à fabriquer<br>
+      <div *ngFor="let img of photos_to_send" style="height:150px;width:150px;display: inline-block;margin: 10px;position: relative;" class="mat-elevation-z2">
+        <!--          <div *ngIf="" style="position: absolute;top:0;left:0;width:100%;height: 100%;background-color: grey;"></div>-->
+        <img style="width: 90%;margin:5%;"
+             [style.opacity]="get_opacity(img)"
+             [src]="img"
+             title="Cliquer pour miner ce NFT"
+             (click)="token_to_send=img"
+             class="mat-elevation-z2">
+      </div>
+
       <br>
 
-      <button type="button" mat-raised-button mat-button (click)="send()">
-        Fabriquer
+      <div style="width:80%;max-width: 250px;display: inline-block;text-align: center;" *ngIf="token_to_send">
+
+        <mat-form-field appearance="fill" style="width: 100%;"
+                        *ngIf="sel_ope!.nftlive!.nft_target.permissions.transfer">
+          <mat-label>Indiquez l'adresse du destinataire</mat-label>
+          <input matInput type="text" [(ngModel)]="owner">
+          <mat-hint>Le NFT sera envoyé à cette addresse</mat-hint>
+        </mat-form-field>
+        <br>
+
+        <mat-form-field appearance="fill" style="width: 100%;"
+                        *ngIf="sel_ope!.nftlive!.nft_target.permissions.transfer">
+          <mat-label>Inscrivez un message (max 60 caractères)</mat-label>
+          <input matInput type="text" [maxLength]="60" [(ngModel)]="attributes">
+          <mat-hint>Reste {{40-attributes.length}} caractères</mat-hint>
+        </mat-form-field>
+
+      </div>
+
+      <br>
+
+      <button type="button" mat-raised-button mat-button (click)="reset()">
+        Annuler
       </button>
+
+      <button type="button" mat-raised-button mat-button (click)="send(token_to_send)" *ngIf="token_to_send">
+        Envoyer <span *ngIf="sel_ope!.nftlive">(Prix:{{sel_ope!.nftlive!.price}})</span>
+      </button>
+
+    </div>
+
+  </mat-tab>
+
+  <mat-tab label="Préférences">
+    <app-authent *ngIf="!user.strong"
+                 message="La mise a jour de vos préférences nécéssite une authentification"
+                 [showGoogle]="true"
+                 [showAccesCode]="false">
+    </app-authent>
+
+
+    <div *ngIf="user.strong">
+      <div style="max-width: 600px;width: 90%;display: inline-block;margin: 50px;font-size: medium;text-align: left;">
+        Afin de mieux sécuriser votre wallet vous pouvez inscrire ici un mot de passe ou enregistrez une photo d'identité.<br>
+        Lors de l'accès aux événements, l'agent vérifiera que vous êtes bien le propriétaire du wallet :<br>
+        <ul>
+          <li>en vous demandant le mot secret</li>
+          <li>ou en vérifiant que la photo est bien la votre</li>
+        </ul>
+
+      </div>
+      <br>
+
+      <mat-form-field appearance="fill" style="max-width: 250px;width: 80%;"
+                      *ngIf="!secret.startsWith('data:')">
+        <mat-label>Votre mot ou code secret</mat-label>
+        <input matInput type="text" maxlength="10" [(ngModel)]="secret">
+        <mat-hint>Ce code secret vous sera demandé pour la validation</mat-hint>
+      </mat-form-field>
+
+      <br>
+      <img [src]="secret" *ngIf="secret.startsWith('data:')" style="width:200px;margin: 10px;" class="mat-elevation-z2">
+
+      <br><br>
+
+      <div *ngIf="secret.length==0">
+        ou charger une photo d'identité
+        <br><br>
+        <app-upload-file (uploaded)="update_identity_photo($event)">
+          Charger une photo
+        </app-upload-file>
+      </div>
+
+
+
+
+      <button type="button" mat-raised-button mat-button (click)="user.strong=false">
+        Annuler
+      </button>
+
+      <button type="button" mat-raised-button mat-button (click)="save_privacy()">
+        Valider
+      </button>
+
+
+
 
     </div>
 

@@ -17,6 +17,8 @@ USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"
 SECRET_JWT_KEY="hh4271"
 
+SECRETS_FILE="./secrets_access.pkl"
+
 ELROND_PASSWORD="Hh42714280!!"
 
 GOOGLE_ACCOUNT="nfluent@calviontherock.iam.gserviceaccount.com"

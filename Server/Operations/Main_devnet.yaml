@@ -24,6 +24,43 @@ lazy_mining:
   miner: nfluent
 
 
+#section détaillant l'événement associé à cette opération
+event:
+  title: Réunion bayard jeunnesse
+  place: 12 rue Martel, 75010 Paris   #Lieu de l'événement
+  dates:                              #Liste des périodes d'ouvertures
+    - start: 04/02/1971 20:00
+      end: 04/02/1971 22:00
+
+#section détaillant la possibilité de faire des photos
+nftlive:
+  collections: #design la collection qui donne le droit d'utiliser NFTLive
+    - "BAYARD-2018c7"
+
+  configuration: nftlive    #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
+  limit: 3                  #nombre de NFT à proposer à l'utilisateurs
+
+  price: 0                  #prix d'utilisation du service
+
+  nft_target:               #désigne les caractéristiques du NFT qui sera miné
+    miner: nfluent
+    name: monnft                      #nom du NFT qui sera miné
+    collection: "BAYARD"              #collection auquel appartiendra le NFT
+    royalties: 20                     #royalties pour le mineur
+    dimensions: 800x800               #dimension du NFT miné
+    attributes:                       #attributs affecter au NFT
+      moment: Reunion bayard
+
+    permissions:
+      transfer: True
+      update_name: True
+      update_attributes: True
+
+
+
+
+
+
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
   - name: "NFluenT"
@@ -183,9 +220,7 @@ validate:
     mint_authority: ''
 
     collections:                #Liste des collections éligible à la validation
-      - "nfluentteam"
-      - "bayard"
-      - "NFluenT"
+      - "BAYARD-2018c7:"
 
     symbol: ''      #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
@@ -205,19 +240,32 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "NFluenT"
+    - "BAYARD-2018c7:"
+
+  #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
+  filter:
+    from: 1
+    to: 3
 
   support:      #Section regroupant les différents messages d'aides aux utilisateur
     buy_message: "Achat en cours"
 
 
-  prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
-    server: "http://127.0.0.1:8080"              #adresse du serveur Prestashop
-    #server: "http://161.97.75.165:8080"              #adresse du serveur Prestashop
-    address: "$server$/fr/"                         #page de la boutique ($server$ reprend le contenu de la propriété server (ci-dessus) de la section
-    admin: "$server$/admin4280/"                    #page d'administration de la boutique
-    #api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
-    api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
+#  prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
+#    server: "http://127.0.0.1:8080"              #adresse du serveur Prestashop
+#    #server: "http://161.97.75.165:8080"              #adresse du serveur Prestashop
+#    address: "$server$/fr/"                         #page de la boutique ($server$ reprend le contenu de la propriété server (ci-dessus) de la section
+#    admin: "$server$/admin4280/"                    #page d'administration de la boutique
+#    #api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
+#    api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
+
+
+  prestashop:
+    server: "https://shop.nfluent.io/"
+    address: "$server$/fr/"
+    admin: "$server$/admin4280/"
+    api_key: "DLHZSTR7IB5X68BW4HZGDCIWBIYC9F32"
+
 
 
     root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
@@ -237,7 +285,7 @@ dispenser:
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
 
   collections:                                      #Liste des collections concernée par la distribution
-    - "NFluenT"
+    - "BAYARD-2018c7"
 
 
 #Distribution de NFT au sein d'une ou plusieurs collecion à l'aveugle
@@ -246,7 +294,7 @@ candymachine:
   visible: True
 
   collections:
-    - "NFluenT"
+    - "BAYARD-2018c7:"
 
   messages:
     title: "Flasher ce code pour obtenir un NFT de la collection SMA"
@@ -254,6 +302,11 @@ candymachine:
   limit:
     total: 60
     per_user: 1
+
+
+
+
+
 
 
 

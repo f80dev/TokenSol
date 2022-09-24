@@ -1,10 +1,11 @@
 //Description d'une collection
 export interface Collection {
-  name: string
-  visual: string
-  description: string
-  creator: string
-  price: number
+  name: string | undefined
+  id: string | undefined
+  visual: string | undefined
+  description: string | undefined
+  owner : string | undefined
+  price: number | undefined
 }
 
 //Description de la structure d'une opération
@@ -123,6 +124,11 @@ export interface Operation {
     visible: boolean
     application: string
 
+    filter: null | {
+      from: number
+      to: number
+    }
+
     collections:{
       name: string
       price: number | null
@@ -147,6 +153,44 @@ export interface Operation {
       on_sale: boolean
       language: number
     } | null
+  } | null
+
+  nftlive: {
+    collections:string[]
+    nft_target: {
+      collection: string
+      name: string
+      miner: string
+      dimensions: string
+      royalties: number
+      quality:number | 90
+
+      permissions:{
+        transfer: boolean
+        update_name: boolean
+        update_attributes: boolean
+      }
+    }
+
+    price: number
+    configuration: string
+    limit: number
+
+    period:             {
+      start:string
+      end:  string
+    }
+  } | null
+
+  event: {
+    title: string
+    place: string
+    dates:[{
+      start: string
+      end: string
+    }]
+
+
   } | null
 
   dispenser: {

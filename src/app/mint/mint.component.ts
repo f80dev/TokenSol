@@ -4,7 +4,6 @@ import {
   $$, b64DecodeUnicode,
   base64ToArrayBuffer,
   getParams,
-  isLocal,
   showError,
   showMessage
 } from "../../tools";
@@ -13,12 +12,14 @@ import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {PLATFORMS} from "../../definitions";
 import {NetworkService} from "../network.service";
-import {  NFT} from "../nfts/nfts.component";
+
 import ExifReader from 'exifreader';
 import {UserService} from "../user.service";
 import {ActivatedRoute} from "@angular/router";
-import {environment} from "../../environments/environment";
+
 import {OperationService} from "../operation.service";
+import {NFT} from "../../nft";
+import {Collection} from "../../operation";
 
 
 @Component({
@@ -38,7 +39,7 @@ export class MintComponent implements OnInit {
   price: any=0;
   quantity: any=1;
   seller_fee_basis_points: any=0;
-  collection: string="";
+  collection: Collection | null=null;
 
 
   constructor(
@@ -54,11 +55,11 @@ export class MintComponent implements OnInit {
 
 
   ngOnInit(): void {
-    if(this.user.isConnected()){
+    if(this.user.isConnected(true)){
       this.metaboss.init_keys(this.network.network,false);
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp)
-      if(this.collection.length==0 && this.tokens.length>0)this.collection=this.tokens[0].collection;
+      if(!this.collection && this.tokens.length>0)this.collection=this.tokens[0].collection;
 
       getParams(this.routes).then((params:any)=>{
         if(params.hasOwnProperty("files")){
@@ -76,10 +77,10 @@ export class MintComponent implements OnInit {
 
   get_token_from_xmp(_infos:any,url:string):NFT {
     let creators:any[]=[];
-    if(this.metaboss.admin_key){
+    if(this.user.key){
       creators.push(
         {
-          address: this.metaboss.admin_key?.pubkey!,
+          address: this.user.key?.pubkey!,
           share:100,
           verified: 0
         }
@@ -162,7 +163,7 @@ export class MintComponent implements OnInit {
           _infos= JSON.parse(b64DecodeUnicode(tags.mint.value));
         }
         this.tokens.push(this.get_token_from_xmp(_infos,url))
-        if(this.collection.length==0)this.collection=this.tokens[0].collection;
+        if(!this.collection)this.collection=this.tokens[0].collection;
 
         // this.upload_file({filename:f.filename,content:f.file,type:f.type}).then((url:any)=>{
         //
@@ -179,7 +180,7 @@ export class MintComponent implements OnInit {
       width: 'auto',data:
         {
           title: "Confirmer le minage",
-          question: "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+" par le compte <strong>"+this.metaboss.admin_key?.name+"</strong> ?",
+          question: "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+" par le compte <strong>"+this.user.key?.name+"</strong> ?",
           onlyConfirm:true,
           lbl_ok:"Ok",
           lbl_cancel:"Annuler"
@@ -273,7 +274,7 @@ export class MintComponent implements OnInit {
   //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
   miner(token: NFT) : Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      if(this.metaboss.admin_key==undefined){
+      if(this.user.key==undefined){
         reject("no signature");
       }
       if(this.isValide(token)==""){
@@ -286,17 +287,21 @@ export class MintComponent implements OnInit {
           });
         }
 
-        this.metaboss.mint(token,this.sign, this.sel_platform,this.network.network).then((result:any)=>{
-          if(!result.error || result.error==""){
-            token.message="Minted for "+result.cost+" "+result.unity;
-            resolve(token);
-          } else {
-            token.message="Mint error";
-            reject(result.error);
-          }
-        }).catch((err)=>{
-          showError(err);
-        })
+        if(this.user.key){
+          this.network.mint(token,this.user.key.name,this.user.key.name,this.sign, this.sel_platform,this.network.network).then((result:any)=>{
+            if(!result.error || result.error==""){
+              token.message="Minted for "+result.cost+" "+result.unity;
+              resolve(token);
+            } else {
+              token.message="Mint error";
+              reject(result.error);
+            }
+          }).catch((err)=>{
+            showError(err);
+          })
+        } else {
+          showMessage(this,"Vous devez avoir sélectionné une clé");
+        }
       } else {
         reject(token);
         showMessage(this,"Minage impossible: "+this.isValide(token));
@@ -337,7 +342,7 @@ export class MintComponent implements OnInit {
     this.dialog.open(PromptComponent,{
       width: 'auto',data:
         {
-          title: "Royalties pour "+this.metaboss.admin_key?.name,
+          title: "Royalties pour "+this.user.key?.name,
           type: "number",
           onlyConfirm:false,
           lbl_ok:"Ok",
@@ -350,13 +355,13 @@ export class MintComponent implements OnInit {
             t.creators[0].share=t.creators[0].share-Number(royalties);
             t.creators.push({
               verified: 0,
-              address:this.metaboss.admin_key?.pubkey,
+              address:this.user.key?.pubkey,
               share:Number(royalties)
             });
           } else {
             t.creators.push({
               verified: 0,
-              address:this.metaboss.admin_key?.pubkey,
+              address:this.user.key?.pubkey,
               share:100
             });
           }
@@ -374,7 +379,7 @@ export class MintComponent implements OnInit {
         {
           title: "Adresse du créateur ?",
           type: "text",
-          result:this.metaboss.admin_key?.pubkey,
+          result:this.user.key?.pubkey,
           onlyConfirm:false,
           lbl_ok:"Ok",
           lbl_cancel:"Annuler"
@@ -411,7 +416,7 @@ export class MintComponent implements OnInit {
       if(!token.image.startsWith("http"))return "Le visuel n'est pas partagé";
       let canSign=false;
       for(let c of token.properties.creators){
-        if(c.address==this.metaboss.admin_key?.pubkey)canSign=true;
+        if(c.address==this.user.key?.pubkey)canSign=true;
       }
       if(!canSign)return "Le miner ne fait pas parti des créateurs";
     }
@@ -422,10 +427,11 @@ export class MintComponent implements OnInit {
 
   set_collection() {
     for(let token of this.tokens){
-      token.collection=this.collection;
-      //if(token.collection.indexOf("/")==-1)token.collection=token.collection+"/nfluent";
+      if(this.collection)token.collection=this.collection;
     }
   }
+
+
 
   onUploadXMP(file: any, token: NFT) {
     let pos=this.tokens.indexOf(token);
@@ -438,7 +444,7 @@ export class MintComponent implements OnInit {
 
 
   prestashop(token:NFT) {
-    return this.network.export_to_prestashop(this.operation.sel_ope!.id,token,false);
+    return this.network.export_to_prestashop(this.operation.sel_ope!.id,[token],false);
   }
 
 
@@ -454,7 +460,7 @@ export class MintComponent implements OnInit {
     for(let t of this.tokens){
       t.creators=[{
         verified: 0,
-        address:this.metaboss.admin_key?.pubkey,
+        address:this.user.key?.pubkey,
         share:100
       }];
     }
@@ -497,5 +503,10 @@ export class MintComponent implements OnInit {
       this.tokens[i].description=this.tokens[0].description;
     }
     showMessage(this,"Recopie terminée")
+  }
+
+  add_attribute() {
+    this.tokens[0].attributes.push({trait_type: "nom de l'attribut", value: "valuer de l'attribut"})
+    this.edit_attribute(this.tokens[0].attributes[this.tokens[0].attributes.length-1]);
   }
 }

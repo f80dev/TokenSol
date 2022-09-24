@@ -367,7 +367,7 @@ class Solana:
       send_mail(open_html_file("mail_new_solana_account",{
         "wallet_address":pubkey, #_account.public_key.to_base58(),
         "words":mnemonic,
-        "mini_wallet":"wallet?"+setParams({"toolbar":"false","network":network,"addr":pubkey}),
+        "mini_wallet":"?"+setParams({"toolbar":"false","network":network,"addr":pubkey}),
         "private_key":privkey, #_account.secret_key.hex(),
         #"private_key_in_list":str([int(x) for x in _account.secret_key])
       },domain_appli=domain_appli),email,subject=subject)

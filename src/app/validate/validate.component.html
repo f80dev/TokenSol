@@ -93,7 +93,7 @@
               <td *ngFor="let t of tokens">
                 <button *ngFor="let action of operation.validate.actions.buttons"
                         style="margin: 5px"
-                        [disabled]="action.collections.length>0 && action.collections.indexOf(t.collection)==-1"
+                        [disabled]="action.collections.length>0 && action.collections.indexOf(t.collection.id!)==-1"
                         type="button" mat-raised-button mat-button
                         (click)="validate(t,action)">
                   {{action.label}}

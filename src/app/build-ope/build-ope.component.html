@@ -133,8 +133,47 @@
     </mat-expansion-panel>
 
 
+    <mat-expansion-panel *ngIf="operation.sel_ope.event">
+      <mat-expansion-panel-header class="color-primary">Evénement associé</mat-expansion-panel-header>
+      <table>
+        <tr>
+          <th>Evénement</th>
+          <th>NFTLive</th>
+        </tr>
+        <tr>
+          <td>
+            <table>
+              <tr>
+                <td>Titre de l'événement:</td>
+                <td>{{operation.sel_ope.event.title}}</td>
+              </tr>
+              <tr>
+                <td>Lieu</td>
+                <td>{{operation.sel_ope.event.place}}</td>
+              </tr>
+              <tr>
+                <td>Dates</td>
+                <td>
+                  <div *ngFor="let d of operation.sel_ope.event!.dates">
+                    {{d.start}} -> {{d.end}}
+                  </div>
+                </td>
+              </tr>
+            </table>
 
-    <mat-expansion-panel *ngIf="operation.sel_ope.lazy_mining">
+          </td>
+          <td *ngIf="operation.sel_ope.nftlive!.collections">
+            Collections: {{operation.sel_ope.nftlive!.collections.join(' - ')}}<br>
+            Configuration: {{operation.sel_ope.nftlive!.configuration}}<br>
+
+
+          </td>
+        </tr>
+      </table>
+    </mat-expansion-panel>
+
+
+      <mat-expansion-panel *ngIf="operation.sel_ope.lazy_mining">
       <mat-expansion-panel-header  class="color-primary">Paramètres de minage</mat-expansion-panel-header>
       <table>
         <tr>
@@ -367,6 +406,7 @@
       <table >
         <tr style="width: 100%;">
           <th>Collection en ventes</th>
+          <th>Filtres</th>
           <th>Prestashop</th>
           <th>Vente directe</th>
         </tr>
@@ -379,6 +419,9 @@
             </ul>
           </td>
           <td>
+            De {{operation.sel_ope.store!.filter!.from}} à {{operation.sel_ope.store!.filter!.to}}
+          </td>
+          <td>
             Serveur: {{operation.sel_ope.store!.prestashop!.server}}<br>
             <a [href]="operation.sel_ope.store!.prestashop!.address.replace('$server$',operation.sel_ope.store!.prestashop!.server)" target="store">Voir la boutique</a>
             /
@@ -387,6 +430,10 @@
             <button type="button" mat-raised-button mat-button
                     (click)="send_prestashop(operation.sel_ope.id)">
               Transférer les NFTs
+            </button>
+            <button type="button" mat-raised-button mat-button
+                    (click)="analyse_order(operation.sel_ope.id)">
+              Analyser les commandes
             </button>
           </td>
           <td style="text-align: right;">

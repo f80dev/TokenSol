@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {Clipboard} from '@angular/cdk/clipboard';
 import {MetabossService} from "../metaboss.service";
-import {$$, MetabossKey, setParams, showMessage} from "../../tools";
+import {$$, CryptoKey, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
@@ -31,7 +31,7 @@ export class KeysComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    if(this.user.isConnected()){
+    if(this.user.isConnected(true)){
       this.refresh();
     } else {
       this.user.login();
@@ -99,10 +99,14 @@ export class KeysComponent implements OnInit {
 
   }
 
-  open_wallet(key: MetabossKey) {
+  open_wallet(key: CryptoKey) {
     this.router.navigate(
       ["wallet"],
       {queryParams:{param:setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network})}}
     );
+  }
+
+  open_extra_wallet(key: CryptoKey) {
+    open("https://wallet.nfluent.io/?param="+setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network}))
   }
 }

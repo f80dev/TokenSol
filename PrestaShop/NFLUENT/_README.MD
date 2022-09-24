@@ -1,5 +1,32 @@
 #Installation de PrestaShop
 
+##Installation standard sur un serveur UBUNTU
+
+  Installation de Ubuntu 22 sur un VPS à 4 coeurs
+  Suivi du processus d'installation décrit ici : https://www.how2shout.com/linux/how-to-install-prestashop-on-ubuntu-22-04-server/
+  avec le mots de passe habituel
+
+  Puis installation du certificat : https://serverspace.io/support/help/how-to-get-lets-encrypt-ssl-on-ubuntu/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##Installation de la BDD
 ###Démarrer une instance MariaDB sur un serveur (75.119.159.46 dans l'exemple)
 

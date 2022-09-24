@@ -1,10 +1,14 @@
+import copy
+import datetime
 import shutil
 
 import requests
 import unidecode
 import xmltodict
 
+from Elrond.Elrond import Elrond
 from NFT import NFT
+from Solana.Solana import Solana
 from Tools import log
 
 
@@ -27,6 +31,8 @@ class PrestaTools:
     rc=rc+xml
     if entete:rc=rc+"</prestashop>"
     return rc
+
+
 
   def get_languages(self, label):
     if self.language==0:
@@ -76,6 +82,73 @@ class PrestaTools:
       else:
         if cat["name"][0]["value"] == name: return cat
     return None
+
+
+  def get_customers(self,id=""):
+    if len(id)>0:id="/"+id
+    customers = requests.get(self.url("customers"+id, "display=full"))
+    if len(id)==0:
+      return customers.json()["customers"]
+    else:
+      return customers.json()["customers"][0]
+
+
+
+
+  def convert_to_nft(self,_p:dict) -> NFT:
+    _c=self.get_categories(int(_p["associations"]["categories"][0]["id"]))
+    collection=_c["name"]
+    id_image=_p["associations"]["images"][0]["id"]
+    miner=_p["miner"] if "miner" in _p else ""
+    owner=_p["owner"] if "owner" in _p else ""
+    visual=_p["visual"] if "visual" in _p else self.server+"api/images/products/"+id_image+"/"+id_image+"?ws_key="+self.key
+    royalties=_p["royalties"] if "royalties" in _p else 0
+    addresses=_p["address"] if "address" in _p else ""
+    # if "address" in body and not body["address"] is None:
+    #   addresses=yaml.load(body["address"]) or dict()
+
+    creators=[]
+    if "creators" in _p:
+      for creator in _p["creators"].split(","):
+        creators.append({"address":creator.split("_")[0],"ratio":creator.split("_")[0]})
+
+    attributes=self.desc_to_dict(_p["description"])
+    marketplace={"quantity":_p["quantity"],"price":_p["price"]}
+
+    _nft=NFT(_p["name"],"",collection,attributes,_p["description"],visual,creators,addresses,royalties,marketplace)
+    _nft.other={"miner":miner,"owner":owner}
+    return _nft
+
+
+
+
+  def analyse_order(self) -> [NFT]:
+    """
+    voir https://devdocs.prestashop-project.org/1.7/webservice/resources/order_invoices/
+    :return:
+    """
+    rc=[]
+    orders = requests.get(self.url("orders", "display=full"))
+    for order in orders.json()["orders"]:
+      if order["current_state"]=="2":
+        _c=self.get_customers(order["id_customer"])
+        for order_row in order["associations"]["order_rows"]:
+          _p=self.get_products(order_row["product_id"])
+          if _p:
+            _p=self.complete_product_with_features(_p)
+            _nft=self.convert_to_nft(_p)
+            _nft.other={
+              "owner":self.get_address_for_customer(_c),
+              "order_id":order["id"]
+            }
+
+            rc.append(_nft)
+    return rc
+
+
+
+
+
 
 
 
@@ -140,9 +213,13 @@ class PrestaTools:
 
   def get_products(self,id:str=""):
     if id:id=str(id)
-    rest = requests.get(self.url("products/"+id,"display=full")).json()["products"]
-    if len(id)>0 and len(rest)>0:return rest[0]
-    return rest["products"]
+    rest = requests.get(self.url("products/"+id,"display=full"))
+    if rest.status_code==404:
+      return None
+    else:
+      rest=rest.json()
+      if len(id)>0 and len(rest)>0:return rest["products"][0]
+      return rest["products"]
 
   def get_images(self):
     rest = requests.get(self.url("images/products/5","display=full")).json()
@@ -187,11 +264,16 @@ class PrestaTools:
     _p["on_sale"] =1 if on_sale else 0
     _p["low_stock_alert"]=0
     _p["minimal_quantity"]=1
+    _p["additional_delivery_times"]=0
     _p["is_virtual"] = 1
     _p["customizable"] = 0
+    _p["online_only"]=0
+    _p["id_category_default"]=2
+    _p["state"]=1
     _p["active"]= 0
     _p["available_for_order"]= 1
-    #_p["available_date"]= "2022-01-01"
+    _p["available_date"]=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _p["show_condition"]= 1
     _p["price"] = nft.get_price()
     _p["wholesale_price"]=_p["price"]
 
@@ -278,7 +360,7 @@ class PrestaTools:
     return resp.json()["product_option"]
 
 
-  def set_product_quantity(self, product, quantity=1, id_shop=1):
+  def set_product_quantity(self, product, quantity=1, id_shop=1,out_of_stock=0):
     """
       voir  https://devdocs.prestashop.com/1.7/webservice/resources/stock_availables/
             https://www.prestashop.com/forums/topic/229629-webservice-how-to-set-product-quantity/
@@ -292,7 +374,7 @@ class PrestaTools:
     stock["id_product_attribute"] = product["associations"]["stock_availables"][0]["id_product_attribute"]
     stock["quantity"] = quantity
     stock["id_shop"] = id_shop
-    stock["out_of_stock"] = quantity
+    stock["out_of_stock"] = out_of_stock         #ne plus vendre le produit si le stock est épuisé
     stock["depends_on_stock"] = 0
     resp = requests.put(self.url("stock_availables/" + stock["id"]), self.toXML(stock, "stock_available"))
     return resp.json()
@@ -343,7 +425,7 @@ class PrestaTools:
 
   def find_category_in_collections(self,category_name , collections):
     for col_from_op in collections:
-      if col_from_op["name"]==category_name:
+      if col_from_op==category_name:
         return col_from_op
     return None
 
@@ -354,6 +436,44 @@ class PrestaTools:
       if _c["id"]==int(id_category):
         return _c
     return None
+
+
+
+
+  def update_order_status(self,order_id,new_status):
+    """
+    https://devdocs.prestashop-project.org/1.7/webservice/resources/order_histories/
+    :param order_id:
+    :param new_status:
+    :return:
+    """
+    order_histories=requests.get(self.url("order_histories","display=full"))
+    resp=requests.get(self.url("order_histories","schema=blank"))
+
+    _new_order=resp.json()["order_history"]
+    _new_order["id_order_state"]=str(new_status)
+    _new_order["id_order"]=order_id
+    del _new_order["id"]
+    del _new_order["date_add"] #=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    result=requests.post(self.url("order_histories",""),data=self.toXML(_new_order,"order_history"))
+    return result.status_code
+
+
+
+    # if resp.status_code==200:
+    #   for h in resp.json()["order_histories"]:
+    #     if h["id_order"]==str(order_id):
+    #       _new_order=copy.copy(h)
+    #       _new_order["id_order_state"]=new_status
+    #       del _new_order["id"]
+    #       del _new_order["date_add"] #=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    #       result=requests.post(self.url("order_histories",""),_new_order)
+    #       return result.status_code
+
+    #return None
+
+
+
 
   def desc_to_dict(self, description:str):
     rc=dict()
@@ -375,6 +495,24 @@ class PrestaTools:
       return (resp.status_code==200)
     else:
       return False
+
+
+
+  def complete_product_with_features(self, _p):
+    if _p is None:return None
+    for feature in _p["associations"]["product_features"]:
+      obj=self.get_product_feature(feature["id"],feature["id_feature_value"])
+      _p[obj[0]]=obj[1]
+    return _p
+
+  def get_address_for_customer(self, _c:dict,network="elrond"):
+    rc:str=_c["email"]
+    if "elrond" in network and "elrond:" in _c["note"]:rc=_c["note"].split("elrond:")[1].split("\n")[0]
+    if "solana" in network and "solana:" in _c["note"]:rc=_c["note"].split("solana:")[1].split("\n")[0]
+    return rc.strip()
+
+
+
 
 
 

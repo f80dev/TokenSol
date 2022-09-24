@@ -73,14 +73,6 @@
         Sign:
       </app-selectkey>&nbsp;&nbsp;
 
-      <button mat-button
-              title="se connecter"
-              *ngIf="!user.connected()"
-              mat-icon-button
-              (click)="login()">
-        <mat-icon>login</mat-icon>
-      </button>
-
 
       <button type="button"
               *ngIf="user.connected()"

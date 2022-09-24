@@ -2,19 +2,19 @@ import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
-import {$$, MetabossKey} from "../tools";
-import {NFT} from "./nfts/nfts.component";
+import {$$, CryptoKey} from "../tools";
+import {UserService} from "./user.service";
 
 @Injectable({
   providedIn: 'root'
 })
 export class MetabossService {
 
-  admin_key:MetabossKey | undefined;
-  public keys:MetabossKey[]=[];
+  public keys:CryptoKey[]=[];
 
   constructor(
     private httpClient : HttpClient,
+    private user:UserService,
     private network:NetworkService
   )
   {}
@@ -24,11 +24,11 @@ export class MetabossService {
     return new Promise((resolve, reject) => {
       this.network.wait("Chargement des clés");
       if(this.network.isElrond() || this.network.isSolana()){
-        this.httpClient.get<MetabossKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance="+with_balance).subscribe((r: MetabossKey[]) => {
+        this.httpClient.get<CryptoKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance="+with_balance).subscribe((r: CryptoKey[]) => {
           this.keys = r;
           this.network.wait();
           resolve(r);
-        },()=>{
+        },(err:any)=>{
           $$("Probleme de chargement");
           reject();
         });
@@ -45,18 +45,6 @@ export class MetabossService {
   }
 
 
-  mint(token:NFT,sign=false,platform="nftstorage",network=""){
-    return new Promise((resolve, reject) => {
-      this.network.wait("Minage en cours sur "+network);
-      this.httpClient.post(environment.server+"/api/mint/?keyfile="+this.admin_key?.name+"&sign="+sign+"&platform="+platform+"&network="+network,token).subscribe((r)=>{
-        this.network.wait();
-        resolve(r);
-      },(err)=>{
-        this.network.wait();
-        reject(err);
-      })
-    });
-  }
 
 
 
@@ -64,7 +52,7 @@ export class MetabossService {
   update(nft_addr:string,new_value:string,field="uri",network="elrond-devnet") {
     return new Promise((resolve, reject) => {
       if(field=='uri'){
-        this.httpClient.get(environment.server+"/api/update?url="+new_value+"&account="+this.admin_key+"&network="+network).subscribe((r:any)=>{
+        this.httpClient.get(environment.server+"/api/update?url="+new_value+"&account="+this.user.key+"&network="+network).subscribe((r:any)=>{
           resolve(true);
         })
       }
@@ -74,7 +62,7 @@ export class MetabossService {
 
   update_obj(nft_addr:string,data:any,network="elrond-devnet") {
     return new Promise((resolve, reject) => {
-      this.httpClient.post(environment.server+"/api/update_obj/?account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network,data).subscribe((r:any)=>{
+      this.httpClient.post(environment.server+"/api/update_obj/?account="+nft_addr+"&keyfile="+this.user.key?.name+"&network="+network,data).subscribe((r:any)=>{
         if(r.result=="error")
           reject(r.error);
         else
@@ -88,7 +76,7 @@ export class MetabossService {
   burn(nft_addr:string | undefined,network="elrond-devnet",delay=1) {
     return new Promise((resolve, reject) => {
       this.network.wait("En cours de destruction");
-      this.httpClient.get(environment.server+"/api/burn?&delay="+delay+"&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
+      this.httpClient.get(environment.server+"/api/burn?&delay="+delay+"&account="+nft_addr+"&keyfile="+this.user.key?.name+"&network="+network).subscribe((r:any)=>{
         this.network.wait("");
         if(r.result=="error")
           reject(r.error);
@@ -106,7 +94,7 @@ export class MetabossService {
         let bc=false;
         for (let k of this.keys) {
           if (k.name == account) {
-            this.admin_key = k;
+            this.user.key = k;
             bc=true;
             resolve(k);
           }
@@ -132,7 +120,7 @@ export class MetabossService {
 
   sign(nft_addr:string,creator_addr:string,network="elrond-devnet") {
     return new Promise((resolve, reject) => {
-      this.httpClient.get(environment.server+"/api/sign?creator="+creator_addr+"&account="+nft_addr+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
+      this.httpClient.get(environment.server+"/api/sign?creator="+creator_addr+"&account="+nft_addr+"&keyfile="+this.user.key?.name+"&network="+network).subscribe((r:any)=>{
         resolve(r);
       },(err)=>{
         reject(err);
@@ -141,16 +129,16 @@ export class MetabossService {
   }
 
   airdrop(amount: number) {
-    if(this.admin_key?.pubkey){
+    if(this.user.key?.pubkey){
       // @ts-ignore
-      this.network.airdrop(this.admin_key?.pubkey).then(()=>{});
+      this.network.airdrop(this.user.key?.pubkey).then(()=>{});
     }
 
   }
 
   use(address: string, network: string) {
     return new Promise((resolve, reject) => {
-      this.httpClient.get(environment.server+"/api/use?account="+address+"&keyfile="+this.admin_key?.name+"&network="+network).subscribe((r:any)=>{
+      this.httpClient.get(environment.server+"/api/use?account="+address+"&keyfile="+this.user.key?.name+"&network="+network).subscribe((r:any)=>{
         resolve(r);
       },(err)=>{
         reject(err);

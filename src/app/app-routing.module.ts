@@ -18,10 +18,11 @@ import {AdminComponent} from "./admin/admin.component";
 import {FaqsComponent} from "./faqs/faqs.component";
 import {DispenserComponent} from "./dispenser/dispenser.component";
 import {StoreComponent} from "./store/store.component";
-import {LoginComponent} from "./login/login.component";
+
 import {CandymachineComponent} from "./candymachine/candymachine.component";
 import {PageNotFoundComponent} from "./page-not-found/page-not-found.component";
 import {IntroComponent} from "./intro/intro.component";
+import {LoginComponent} from "./login/login.component";
 
 
 const routes: Routes = [
@@ -35,6 +36,7 @@ const routes: Routes = [
   { path: 'about', component: AboutComponent },
   { path: 'reload', component: FaucetComponent },
   { path: 'faqs', component: FaqsComponent },
+  { path: 'login', component: LoginComponent },
   { path: 'mint', component: MintComponent },
   { path: 'miner', component: MintComponent },
   { path: 'keys', component: KeysComponent },
@@ -43,11 +45,11 @@ const routes: Routes = [
   { path: 'dispenser', component: DispenserComponent,pathMatch:"prefix" },
   { path: 'creator', component: CreatorComponent },
   { path: 'store', component: StoreComponent },
-  { path: 'login', component: LoginComponent },
   { path: 'manage', component: ManageComponent },
   { path: 'build', component:BuildOpeComponent },
   { path: 'validate', component: ValidateComponent },
   { path: 'buy', component: BuyComponent },
+  { path: 'pagenotfound', component: PageNotFoundComponent},
   { path: 'intro', component: IntroComponent },
   { path: '', component: IntroComponent,pathMatch: 'full' },
   { path: '**', component: PageNotFoundComponent },

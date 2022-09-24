@@ -11,20 +11,41 @@
     <br>
 
 
-<!--    gestion de la facture -->
+
+
+    <div *ngIf="!selfWalletConnexion">
+      <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" >
+        <mat-label>Indiquer l'adresse ou l'email du destinataire</mat-label>
+        <input matInput type="text" [(ngModel)]="address">
+        <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
+      </mat-form-field>
+
+      <button type="button" mat-raised-button mat-button
+              title="Ne pas se connecter" color="primary"
+              [disabled]="address.length<20 && address.indexOf('@')==-1"
+              (click)="validate()">
+        Valider
+      </button>
+      <br>
+
+
+      <div *ngIf="webcam">
+        <br>
+        Capturez l'adresse d'un wallet<br>
+        <app-scanner [size]="350"  (flash)="onflash($event)"></app-scanner>
+      </div>
+
+    </div>
+
+
+
+    <!--    gestion de la facture -->
     <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;" *ngIf="ope?.payment?.billing && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1">
       <mat-label>Indiquez une adresse mail pour recevoir une facture</mat-label>
       <input matInput type="text" [(ngModel)]="billing_address">
       <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
       <mat-hint>Une facture vous seras adressée</mat-hint>
     </mat-form-field>
-
-
-    <div *ngIf="webcam">
-      <br>
-      Capturez l'adresse d'un wallet<br>
-      <app-scanner [size]="350"  (flash)="onflash($event)"></app-scanner>
-    </div>
 
 
     <div *ngIf="address.length>20 || (address.length>5 && address.indexOf('@')>-1)">
@@ -58,7 +79,10 @@
 
     </div>
 
-    <app-authent (authent)="valide($event)" style="max-height: 300px;"></app-authent>
+    <app-authent *ngIf="selfWalletConnexion"
+                 (authent)="valide($event)"
+                 style="max-height: 300px;">
+    </app-authent>
 
 
 

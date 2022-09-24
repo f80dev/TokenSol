@@ -138,7 +138,12 @@ class Elrond:
     return rc
 
   def get_collection(self,collection_id):
-    return api(self._proxy.url+"/collections/"+collection_id,"gateway=api")
+    rc=api(self._proxy.url+"/collections/"+collection_id,"gateway=api")
+    if "ticker" in rc:
+      rc["id"]=rc["ticker"]
+    else:
+      rc["id"]=rc["collection"]
+    return rc
 
 
   def format_offchain(self,_data) -> dict:
@@ -180,6 +185,10 @@ class Elrond:
       return {"error":"Impossible de trouver la clé privée du propriétaire pour faire le transfert"}
 
     _to=self.toAccount(_to)
+    if _to is None:
+      log("Destinataire inconnu")
+      return False
+
     if _from.address.bech32()==_to.address.bech32(): return False
 
     log("Transfert de "+collection_id+"-"+str(nonce)+" de "+_from.address.bech32()+" a "+_to.address.bech32())
@@ -197,7 +206,7 @@ class Elrond:
 
 
 
-  def add_collection(self, owner:Account, collection,type="SemiFungible"):
+  def add_collection(self, owner:Account, collection_name:str,type="SemiFungible"):
     """
     gestion des collections sur Elrond
     voir
@@ -208,23 +217,25 @@ class Elrond:
     :return:
     """
     owner=self.toAccount(owner)
-    collection:str=collection.replace(" ","").replace("'","")[:20]
+    collection:str=collection_name.replace(" ","").replace("'","")[:20]
     if collection.lower().startswith("elrond"):
       log("La collection en doit pas commencer par Elrond")
       return None
 
     collection_id=None
+    log("On recherche la collection de nom "+collection_name+" appartenant à "+owner.address.bech32())
     for col in self.get_collections(owner):
-      if col["name"]==collection and owner.address.bech32()==col["owner"]:
+      if col["name"].upper()==collection_name.upper() and owner.address.bech32()==col["owner"]:
         collection_id=col["collection"]
         break
 
     if collection_id is None:
-      collection_id=collection[:8].upper() if collection_id is None else collection_id
+      collection_id=collection_name[:8].upper() if collection_id is None else collection_id
+      log("La collection n'est pas encore construite, donc on construit "+collection_id)
       #Exemple de requete : issueNonFungible@4d61436f6c6c656374696f6e456c726f6e64@4d41434f4c4c4543@63616e467265657a65@74727565
       #Résultat : https://devnet-explorer.elrond.com/transactions/1e7ac5f911cffce2b846c3f98b8abad636b2958a32df6bebde0ee0b83f087a94
       data = "issue"+type \
-             + "@" + str_to_hex(collection, False) \
+             + "@" + str_to_hex(collection_name, False) \
              + "@" + str_to_hex(collection_id, False) \
              + "@" + str_to_hex("canFreeze", False)+"@"+str_to_hex("true",False) \
              + "@" + str_to_hex("canChangeOwner", False)+"@"+str_to_hex("true",False) \
@@ -339,7 +350,7 @@ class Elrond:
     if len(email)>0:
       send_mail(open_html_file("mail_new_account",{
         "wallet_address":address,
-        "mini_wallet":"wallet?"+setParams({"toolbar":"false","network":network,"addr":address}),
+        "mini_wallet":"?"+setParams({"toolbar":"false","network":network,"addr":address}),
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
         "url_explorer":("https://explorer.elrond.com" if "mainnet" in network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
         "words":words,
@@ -393,7 +404,7 @@ class Elrond:
       return None
 
 
-  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0):
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=True):
     """
     https://docs.elrond.com/developers/nft-tokens/
     :param _user:
@@ -422,15 +433,18 @@ class Elrond:
           log("Analyse de "+str(nft))
 
           collection_id,nonce=self.extract_from_tokenid(nft["tokenIdentifier"])
-          if not collection_id in collections:
-            collections[collection_id]=self.get_collection(collection_id)
+          if with_collection:
+            if not collection_id in collections:
+              collections[collection_id]=self.get_collection(collection_id)
 
-          collection=collections[collection_id]
+            collection=collections[collection_id]
+          else:
+            collection={"id":collection_id}
 
           _nft=NFT(
             nft["name"],
             nft["tokenIdentifier"].split("-")[1],
-            collection["name"],
+            collection,
             nft["attributes"] if 'attributes' in nft else [],
             nft["description"] if "description" in nft else "",
             str(base64.b64decode(nft["uris"][0]),"utf8"),
@@ -616,6 +630,7 @@ class Elrond:
 
   def toAccount(self, user):
     if type(user)==str:
+      if len(user)==0: return None
       if user.startswith("erd"):
         user=Account(address=user)
       else:
@@ -637,9 +652,8 @@ class Elrond:
               secret_key, pubkey = derive_keys(words)
               user=Account(address=Address(pubkey).bech32())
               user.secret_key=secret_key.hex()
-        # else:
-        #   keystore_file="./Elrond/PEM/"+user+(".json" if not user.endswith('.json') else '')
-        #   user=Account(key_file=keystore_file,password=ELROND_PASSWORD)
+        else:
+          return None
 
     return user
 

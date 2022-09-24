@@ -1,5 +1,7 @@
 <div style="width: 100%;text-align: center;position: relative;height: 100%;">
-  <mat-form-field appearance="fill" style="min-width: 350px;width:60%;max-width: 600px;">
+
+
+  <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" *ngIf="!strong">
     <mat-label>{{intro_message}}</mat-label>
     <input matInput type="text" [(ngModel)]="address" (ngModelChange)="update_address()">
     <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
@@ -7,23 +9,43 @@
   </mat-form-field>
 
 
-  <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20 && network.version=='beta'">
-    Se connecter avec votre wallet sur<br>
-    <button type="button" mat-raised-button mat-button
-            *ngIf="network.installed_wallet().indexOf('phantom')>-1 || network.installed_wallet().indexOf('solflare')>-1"
-            (click)="open_wallet('solana')">
-      Solana
+
+  <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >
+
+        <h3>Wallet connect</h3>
+        <img [src]="qrcode" style="max-width: 250px;width: 80%;">
+        <br>
+
+    <br><br>
+    <div *ngIf="showNetwork">
+      Se connecter avec votre wallet sur<br>
+      <button type="button" mat-raised-button mat-button
+              *ngIf="api.isSolana(network) && (api.installed_wallet().indexOf('phantom')>-1 || api.installed_wallet().indexOf('solflare')>-1)"
+              (click)="open_wallet()">
+        Solana
+      </button>
+
+      <button type="button" mat-raised-button mat-button
+              *ngIf="api.installed_wallet().indexOf('maiar')>-1"
+              (click)="open_wallet()">
+        Elrond
+      </button>
+
+    </div>
+
+    <button type="button" color="primary"  mat-raised-button mat-button (click)="connect('google')" *ngIf="showGoogle">
+      Google
     </button>
 
-    <button type="button" mat-raised-button mat-button
-            *ngIf="network.installed_wallet().indexOf('maiar')>-1"
-            (click)="open_wallet('elrond')">
-      Elrond
-    </button>
   </div>
 
+  <mat-form-field appearance="fill" style="width:300px;font-size: large;" *ngIf="showAccesCode">
+    <mat-label>Votre code d'accès</mat-label>
+    <input matInput type="number" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
+  </mat-form-field>
 
-  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;">
+
+  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;" *ngIf="!strong">
 
 
     <button type="button" mat-raised-button mat-button
@@ -34,10 +56,11 @@
 
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter" color="primary"
-            [disabled]="address.length<20 && address.indexOf('@')==-1"
+            [disabled]="user.addr.length<20 && user.addr.indexOf('@')==-1"
             (click)="validate()">
       Valider
     </button>
 
 
   </div>
+</div>

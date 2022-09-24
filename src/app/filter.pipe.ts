@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import {NFT} from "./nfts/nfts.component";
+import {NFT} from "../nft";
+
 
 @Pipe({
   name: 'filter'

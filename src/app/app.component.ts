@@ -60,7 +60,6 @@ export class AppComponent implements OnInit {
           this.toolbar_visible="true";
         }
 
-
       }).catch(()=>{
         debugger
       });

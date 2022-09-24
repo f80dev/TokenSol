@@ -77,6 +77,16 @@ class Sticker(Element):
     super().__init__(name,ext)
     self.data=data
 
+    if not dimension is None:     #accepte la syntaxe 800x800
+      if type(dimension)==str:
+        dimension=(int(dimension.split("x")[0]),int(dimension.split("x")[1]))
+
+    #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
+    ext=ext.replace(";","").lower()
+    if "jpeg" in ext:ext="jpg"
+    if "web" in ext:ext="webp"
+    ext="image/"+ext
+
     if image:
       if type(image)==str:
         if not image.startswith("http"):
@@ -88,15 +98,27 @@ class Sticker(Element):
           if "/api/images/" in image:
             filename=image.split("/api/images/")[1].split("?")[0]
             self.image=Image.open("./temp/"+filename)
-            if self.image and self.image.mode!="RGBA":self.image=self.image.convert("RGBA")
           else:
             self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
+
+        if self.image and self.image.mode!="RGBA":self.image=self.image.convert("RGBA")
 
       else:
         if type(image)==bytes:
           self.image=Image.open(BytesIO(image))
         else:
           self.image=image.copy()
+
+      if self.image.format!="JPEG":
+        ech=1
+        l=abs(self.image.width-self.image.height)
+        if self.image.width>self.image.height:
+          offset=(self.image.width-self.image.height)/2
+          box=(offset,0,self.image.height+offset,self.image.height)
+        if self.image.width<self.image.height:
+          offset=(self.image.height-self.image.width)/2
+          box=(0,offset,self.image.width,self.image.width+offset)
+        if l>0: self.image=self.image.crop((box[0]*ech,box[1]*ech,box[2]*ech,box[3]*ech))
 
     if text:
       self.text={
@@ -430,7 +452,7 @@ class Layer:
     return True
 
 
-  def add(self,elt:Element,autoName=True):
+  def add(self,elt:Element):
     if elt is None: return self
     elt.name=self.name+"-"+str(len(self.elements))
     self.elements.append(elt)
@@ -526,7 +548,9 @@ class ArtEngine:
 
   def add_image_to_layer(self,name,image):
     layer=self.get_layer(name)
+    if layer is None: return False
     layer.add(Sticker("",image))
+    return True
 
   def sort(self):
     self.layers=sorted(self.layers,key=lambda x:x.position)

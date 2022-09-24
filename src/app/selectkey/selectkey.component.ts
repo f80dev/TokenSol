@@ -1,11 +1,12 @@
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
 import {MatSelectChange} from "@angular/material/select";
-import {MetabossKey, setParams, showMessage} from "../../tools";
+import {CryptoKey, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
 import {type} from "os";
+import {UserService} from "../user.service";
 
 @Component({
   selector: 'app-selectkey',
@@ -13,12 +14,13 @@ import {type} from "os";
   styleUrls: ['./selectkey.component.css']
 })
 export class SelectkeyComponent implements OnChanges {
-  selected: MetabossKey | undefined;
+  selected: CryptoKey | undefined;
   @Input("fontsize") fontsize = "x-small";
-  @Input("keys") keys: MetabossKey[] = [];
+  @Input("keys") keys: CryptoKey[] = [];
   @Output('refresh') onrefresh: EventEmitter<any> = new EventEmitter();
 
   constructor(private metaboss: MetabossService,
+              public user:UserService,
               public toast: MatSnackBar) {
   }
 
@@ -28,19 +30,19 @@ export class SelectkeyComponent implements OnChanges {
     try {
       for(let k of this.keys){
         if(k.name==fix_key){
-          this.metaboss.admin_key=k;
+          this.user.key=k;
           this.selected=k;
         }
       }
     } catch (e) {
-      
+
     }
   }
 
 
   refresh($event: MatSelectChange) {
-    this.metaboss.admin_key=$event.value;
-    localStorage.setItem("key",this.metaboss.admin_key?.name!);
+    this.user.key=$event.value;
+    localStorage.setItem("key",this.user.key?.name!);
     this.onrefresh.emit($event);
   }
 
@@ -53,7 +55,7 @@ export class SelectkeyComponent implements OnChanges {
   }
 
   open_wallet() {
-    let url=environment.appli+"/wallet?param="+setParams({addr:this.selected?.pubkey});
+    let url=environment.wallet+"/?param="+setParams({addr:this.selected?.pubkey});
     open(url,"wallet");
   }
 }

@@ -12,16 +12,9 @@ import {Location} from "@angular/common";
 import {MatSelectChange} from "@angular/material/select";
 import {ClipboardModule} from "@angular/cdk/clipboard";
 import {UserService} from "../user.service";
+import {Layer} from "../../create";
+import {OperationService} from "../operation.service";
 
-export interface Layer {
-  params: any;
-  unique: boolean
-  indexed: boolean
-  name:string
-  position:number
-  elements:any[]
-  text:string
-}
 
 @Component({
   selector: 'app-creator',
@@ -69,6 +62,7 @@ export class CreatorComponent implements OnInit {
     public network:NetworkService,
     public dialog:MatDialog,
     public router:Router,
+    public operation:OperationService,
     public routes:ActivatedRoute,
     public user:UserService,
     public toast:MatSnackBar,
@@ -189,6 +183,11 @@ export class CreatorComponent implements OnInit {
     },(err)=>{showError(this,err)});
   }
 
+
+
+
+
+
   url_collection="";
   generate_collection(format="zip") {
     let i=0;
@@ -196,9 +195,13 @@ export class CreatorComponent implements OnInit {
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
 
+        if(this.operation!.sel_ope!.nftlive){
+          this.data.operation=this.operation.sel_ope?.id;
+        }
 
         this.network.wait("Fabrication de la collection ...");
         showMessage(this,"L'aperçu se limite à 10 NFT maximum");
+
         this.network.get_collection(Math.min(this.limit,10),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"preview",this.data).subscribe((r:any)=>{
           this.show_download_link();
           this.network.wait("");
@@ -262,6 +265,8 @@ export class CreatorComponent implements OnInit {
   onclick_on_text($event: MouseEvent,l:Layer) {
     this.position_text={x:$event.offsetX/2,y:$event.offsetY/2}
   }
+
+
 
   modify_element($event:MouseEvent, layer: Layer, element:any) {
     if($event.button==0){
@@ -398,7 +403,16 @@ export class CreatorComponent implements OnInit {
           }
 
           this.layers=r.layers;
-          this.data=r.data || {title:"MonTitre",symbol:"token__idx__",description:"madescription",collection:"macollection",properties:"propriete=valeur",files:"http://monfichier"};
+          this.data=r.data || {
+            title:"MonTitre",
+            symbol:"token__idx__",
+            description:"madescription",
+            collection:"macollection",
+            properties:"propriete=valeur",
+            files:"http://monfichier"
+          };
+          if(!this.data.hasOwnProperty("nftlive"))this.data.nftlive={datestart:"",timestart:"",duration:120};
+
           this.col_width=r.width;
           this.col_height=r.height;
           this.filename_format=r.filename_format;
@@ -412,9 +426,11 @@ export class CreatorComponent implements OnInit {
           this.fontsize=r.fontstyle.size;
           this.font=this.find_font(r.fontstyle.name);
           this.color=r.fontstyle.color;
+
         }
 
         this.previews=[];
+
         this.network.wait("");
       },(err=>{
         showError(this,err);
@@ -432,7 +448,8 @@ export class CreatorComponent implements OnInit {
     description:"madescription",
     collection:"macollection",
     properties:"propriete=valeur",
-    files:"http://monfichier"
+    files:"http://monfichier",
+    operation:""
   };
 
 
@@ -449,6 +466,7 @@ export class CreatorComponent implements OnInit {
         limit: this.limit,
         filename_format: this.filename_format,
         platform: this.sel_platform,
+        nftlive:this.data.nftlive,
         fontstyle: {
           name: this.font.file,
           color: this.color,
@@ -616,7 +634,9 @@ export class CreatorComponent implements OnInit {
   paste_picture(layer: Layer) {
     navigator.clipboard.read().then((content)=>{
       for (const item of content) {
-        if (!item.types.includes('image/png')) {throw new Error('Clipboard contains non-image data.');}
+        if (!item.types.includes('image/png')) {
+          showMessage(this,"Ce contenu ne peut être intégré. Enregistrez l'image sur votre ordinateur et importez là ensuite");
+        }
         item.getType('image/png').then((blob)=>{
           let reader = new FileReader();
           reader.readAsDataURL(blob)
@@ -625,8 +645,10 @@ export class CreatorComponent implements OnInit {
             this.network.upload(s,this.sel_platform,blob.type).subscribe((r:any)=>{
               layer.elements.push({image:r.url});
               this.network.wait("")
-            })
+            },()=>{showError(this);})
           }
+        },()=>{
+
         })
       }
     })

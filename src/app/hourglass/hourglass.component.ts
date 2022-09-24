@@ -4,7 +4,7 @@ import {Router} from '@angular/router';
 @Component({
   selector: 'app-hourglass',
   templateUrl: './hourglass.component.html',
-  styleUrls: ['./hourglass.component.sass']
+  styleUrls: ['./hourglass.component.css']
 })
 export class HourglassComponent implements OnInit,OnDestroy {
 

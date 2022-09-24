@@ -6,7 +6,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
 import {UserService} from "../user.service";
-import {NFT} from "../nfts/nfts.component";
+import {NFT} from "../../nft";
 
 @Component({
   selector: 'app-dealermachine',
@@ -143,5 +143,13 @@ export class DealermachineComponent implements OnInit {
 
   cancel() {
     this._location.back();
+  }
+
+  validate() {
+    if(this.address && this.address.indexOf("@")==-1 && !this.network.isElrond(this.address)){
+      showMessage(this,"Le service n'est compatible qu'avec les adresses elrond");
+    } else {
+      this.valide(this.address);
+    }
   }
 }

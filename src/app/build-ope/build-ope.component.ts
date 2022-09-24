@@ -7,8 +7,9 @@ import {Clipboard} from '@angular/cdk/clipboard';
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {UserService} from "../user.service";
 import {NgNavigatorShareService } from 'ng-navigator-share';
-import {NFT} from "../nfts/nfts.component";
+
 import {OperationService} from "../operation.service";
+import {NFT} from "../../nft";
 
 @Component({
   selector: 'app-build-ope',
@@ -90,7 +91,7 @@ export class BuildOpeComponent implements OnInit {
       for(let _nft of r.nfts){
         let nft:NFT=_nft;
         nft.marketplace!.price=nft.marketplace!.price  || 0;
-        let k=nft.collection;
+        let k=nft.collection.id;
         if(k && nft.marketplace!.quantity>0){
           if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
           if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
@@ -226,6 +227,14 @@ export class BuildOpeComponent implements OnInit {
   send_prestashop(id:string) {
     this.network.wait("Transfert vers prestashop",60);
     this.network.export_to_prestashop(id,null).subscribe((r:any)=>{
+      this.network.wait("");
+      showMessage(this,"NFTs transférés")
+    });
+  }
+
+  analyse_order(id:string) {
+    this.network.wait("Analyse des commandes",60);
+    this.network.analyse_prestashop_orders(id).subscribe((r:any)=>{
       this.network.wait("");
       showMessage(this,"NFTs transférés")
     });

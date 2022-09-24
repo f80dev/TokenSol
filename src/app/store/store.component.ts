@@ -3,7 +3,8 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {setParams, showMessage} from "../../tools";
-import {NFT} from "../nfts/nfts.component";
+import {NFT} from "../../nft";
+
 
 @Component({
   selector: 'app-store',

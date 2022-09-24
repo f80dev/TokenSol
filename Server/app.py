@@ -13,6 +13,7 @@ import urllib
 from asyncio import sleep
 from copy import copy
 from io import BytesIO
+from os import listdir
 from os.path import exists
 from random import random
 from zipfile import ZipFile
@@ -44,7 +45,7 @@ from ftx import FTX
 from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
-from secret import GITHUB_TOKEN, SALT, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY
+from secret import GITHUB_TOKEN, SALT, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY, SECRETS_FILE
 from flask_jwt_extended import create_access_token
 from flask_jwt_extended import JWTManager
 
@@ -196,13 +197,18 @@ def get_fonts():
 @app.route('/api/layers/',methods=["POST"])
 #test http://127.0.0.1:4242/api/test/
 def layers(body=None):
+  """
+  charge les couches dans l'instance partagé nft
+  :param body:
+  :return:
+  """
   if body is None: body=request.json
   if not "name" in body:
     return "Syntaxe error for this layer",500
   name=body["name"]
   limit=int(request.args.get("limit","0"))
   log("Generation de la couche "+name)
-  nft.delete(name) # <-- cette instance ne devrait plus être partagés dans une optique multi-usage
+  nft.delete(name) # <-- TODO: cette instance ne devrait plus être partagés dans une optique multi-usage
   position=body["position"] if "position" in body else 0
   layer=Layer(name,
               position=position,
@@ -313,7 +319,7 @@ def generate_svg():
 
 @app.route('/api/collection/')
 #test http://127.0.0.1:4242/api/test/
-def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
+def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data={},ext="webp"):
   """
   Generation de la collection des NFTs
   :param limit:
@@ -340,7 +346,13 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
     if layer.indexed:
       max_item=max_item*len(layer.elements)
 
-  s_data= urllib.parse.unquote(str(base64.b64decode(data), "utf8"))
+  if type(data)!=dict:
+    s_data= urllib.parse.unquote(str(base64.b64decode(data), "utf8"))
+    _d=json.loads(s_data)
+  else:
+    _d=data
+    s_data=""
+
 
   files=nft.generate(
     dir="./temp/",
@@ -398,6 +410,69 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100):
 
 
 
+@app.route('/api/send_photo_for_nftlive/<conf_id>/',methods=['POST'])
+def send_photo_for_nftlive(conf_id:str):
+
+  config=configs(conf_id,format="dict")
+
+  image=request.json["photo"]
+  dim=request.json["dimensions"] if "dimensions" in request.json else config["width"]+"x"+config["height"]
+  limit=request.json["limit"] if "limit" in request.json else config["limit"]
+  quality=request.json["quality"] if "quality" in request.json else 90
+  note=request.json["note"] if "note" in request.json else ""
+
+  nft.reset()
+  nft.add(Layer("maphoto",position=0))
+  nft.add_image_to_layer("maphoto",image)
+  for layer in config["layers"]: layers(layer)
+
+  dir="./temp/"
+  files=nft.generate(
+    dir=dir,
+    limit=int(limit),
+    seed_generator=0,
+    width=int(dim.split("x")[0]),
+    height=int(dim.split("x")[1]),
+    quality=quality,
+    data=note,
+    ext="webp"
+  )
+  files=[x.replace(dir,"") for x in files]
+
+  return jsonify({"images":files})
+
+
+
+
+
+
+
+@app.route('/api/nftlive_access/<addr>/')
+def nftlive_access(addr:str):
+  """
+  Consiste à vérifier l'accès à NFT live
+  :param addr: addr du demandeur
+  :return: l'ensemble des opérations auquel il peut prétendre
+  """
+
+  network=request.args.get("network","elrond-devnet")
+  nfts=[]
+  if(addr.startswith("erd")):
+    elrond:Elrond=Elrond(network)
+    nfts=elrond.get_nfts(elrond.toAccount(addr),with_attr=False,with_collection=True)
+
+  rc=[]
+  for ope in get_operations():
+    if "nftlive" in ope:
+      for nft in nfts:
+        if nft.collection["id"] in ope["nftlive"]["collections"]:
+          if not ope in rc:rc.append(ope)
+
+  return jsonify(rc)
+
+
+
+
 
 
 @app.route('/api/infos/')
@@ -437,8 +512,23 @@ def test2():
 
 
 
+@app.route('/api/analyse_prestashop_orders/',methods=["GET"])
+#test http://127.0.0.1:4242/api/analyse_prestashop_orders/?ope=main_devnet
+def analyse_prestashop_orders():
+  _operation=get_operation(request.args.get("ope"))
+  _store_section=_operation["store"]
+  prestashop=PrestaTools(_store_section["prestashop"]["api_key"],_store_section["prestashop"]["server"],_store_section["prestashop"]["language"])
+  nfts=prestashop.analyse_order()
+  for nft in nfts:
+    new_owner=nft.other["owner"]
+    mint(nft,nft.other["miner"] if "miner" in nft.other else "",new_owner,nft.network)
+    prestashop.update_order_status(nft.other["order_id"],4) #Passage de la commande au statut expédié
+
+  return jsonify({"message":"traitement terminé"})
+
+
 @app.route('/api/export_to_prestashop/',methods=["GET",'POST'])
-#test http://127.0.0.1:4242/api/export_to_prestashop/?root_category=1&ope=calvi22_devnet&api
+#test http://127.0.0.1:4242/api/export_to_prestashop/?root_category=1&ope=main_devnet&api
 def export_to_prestashop():
   """
   htag: transfer_to_prestashop
@@ -465,6 +555,10 @@ def export_to_prestashop():
     nfts=get_nfts_from_src(_operation["data"]["sources"],with_attributes=True)
   else:
     nfts=[NFT(object=request.json)]
+
+  if "filter" in _store_section:
+    if "from" in _store_section["filter"]:
+      nfts=nfts[_store_section["filter"]["from"]:_store_section["filter"]["to"]]
 
   for nft in nfts:
     if nft.collection not in categories.keys():
@@ -494,7 +588,7 @@ def export_to_prestashop():
       }
 
     else:
-      log("Ce NFT n'est pas dans les collections à exporter du fichier d'opération")
+      log("Le NFT "+nft.name+" de la collection "+nft.collection+" n'est pas dans les collections à exporter du fichier d'opération")
 
 
   for nft in nfts:
@@ -504,12 +598,15 @@ def export_to_prestashop():
         "address":nft.address,
         "network":nft.network,
         "operation":_operation["id"],
-        "miner":_operation["lazy_mining"]["miner"],
-        "owner":nft.owner,
         "royalties":str(nft.royalties),
         "visual":nft.visual,
         "creators":" ".join([_c["address"]+"_"+str(_c["share"]) for _c in nft.creators])
       }
+
+      if not nft.is_minted():
+        features["miner"]=_operation["lazy_mining"]["miner"]
+      else:
+        features["owner"]=nft.owner
 
       product=prestashop.add_product(nft=nft,on_sale=True,
                                      operation_id=_operation["id"],
@@ -575,6 +672,19 @@ def tables(table:str):
     rc={"error":""}
 
   return jsonify(rc)
+
+
+
+def get_operations() -> [dict]:
+  """
+  retourne l'ensemble des opérations disponibles sur le serveur
+  :return:
+  """
+  rc=[]
+  for name in listdir("./Operations"):
+    if name.endswith(".yaml"):
+      rc.append(get_operation(name))
+  return rc
 
 
 def get_operation(name:str):
@@ -854,7 +964,15 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
           size=(config["width"],config["height"]),
           format="list",
           seed=src["seed"] if "seed" in src else 1,
-          limit=src["limit"] if "limit" in src else 10
+          limit=src["limit"] if "limit" in src else 10,
+          data={
+            "title":"MonTitre",
+            "symbol":"token__idx__",
+            "description":"madescription",
+            "collection":"macollection",
+            "properties":"propriete=valeur",
+            files:"http://monfichier"
+          }
         )
         for file in files:
           id=file[file.rindex("/")+1:]
@@ -869,6 +987,24 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
 
 
 
+
+
+
+@app.route('/api/save_privacy/',methods=["POST"])
+#test http://127.0.0.1:4242/api/get_tokens_for_dispenser/calvi22_devnet?limit=10
+def save_privacy():
+  data:dict=request.json
+
+  secrets=dict()
+  if exists(SECRETS_FILE):
+    with open(SECRETS_FILE,"rb") as file:
+      secrets = pickle.load(file)
+
+  secrets[data["addr"]]=data["secret"]
+  with open(SECRETS_FILE,"wb") as file2:
+    pickle.dump(secrets,file2)
+
+  return jsonify({"message":"ok"})
 
 
 
@@ -940,13 +1076,16 @@ def async_mint(nbr_items:str="3"):
 
       if not nft is None:
         rc=mint(nft,operation["lazy_mining"]["miner"],ask["address"],ask["network"])
-        if rc["error"]=="":
-          with open(NFTTOMINT_FILE,"rb") as file:
-            nfts_to_mint = pickle.load(file)
+        if not rc or rc["error"]!="":
+          log("Problème de minage pour "+ask["address"]+" sur "+ask["network"])
 
-          with open(NFTTOMINT_FILE,"wb") as file:
-            l=list(filter(lambda x : x!=ask ,nfts_to_mint))
-            pickle.dump(l,file)
+        with open(NFTTOMINT_FILE,"rb") as file:
+          nfts_to_mint = pickle.load(file)
+
+        with open(NFTTOMINT_FILE,"wb") as file:
+          l=list(filter(lambda x : x!=ask ,nfts_to_mint))
+          pickle.dump(l,file)
+
 
   return True
 
@@ -1109,17 +1248,16 @@ def mint_for_prestashop():
   _p=prestashop.get_products(_p["id_product"])
   _c=prestashop.get_categories(int(_p["associations"]["categories"][0]["id"]))
 
-  for feature in _p["associations"]["product_features"]:
-    obj=prestashop.get_product_feature(feature["id"],feature["id_feature_value"])
-    _p[obj[0]]=obj[1]
+  _p=prestashop.complete_product_with_features(_p)
+  if not "network" in _p:_p["network"]=_operation["lazy_mining"]["network"]
+
+  nft:NFT=prestashop.convert_to_nft(_p)
 
   collection=_c["name"]
   id_image=_p["associations"]["images"][0]["id"]
   miner=body["miner"] if "miner" in body else _operation["lazy_mining"]["miner"]
-
   visual=_p["visual"] if "visual" in _p else _operation["store"]["prestashop"]["server"]+"api/images/products/"+id_image+"/"+id_image+"?ws_key="+_operation["store"]["prestashop"]["api_key"]
 
-  if not "network" in _p:_p["network"]=_operation["lazy_mining"]["network"]
   addresses=dict()
   if "address" in body and not body["address"] is None:
     addresses=yaml.load(body["address"]) or dict()
@@ -1129,7 +1267,6 @@ def mint_for_prestashop():
   if "elrond" in _p["network"]:
     elrond=Elrond(_p["network"])
     royalties=body["royalties"] if "royalties" in body else 0
-
 
     if not "elrond" in addresses:
       _account,pem,words,qrcode=elrond.create_account(email=body["email"],domain_appli=app.config["DOMAIN_APPLI"])
@@ -1141,6 +1278,8 @@ def mint_for_prestashop():
       bNewAccount=False
 
     if not "address" in _p or _p["address"] is None or _p["address"]=="":
+
+
       collection_id=elrond.add_collection(miner,collection,type="NonFungible")
       nonce,cid=elrond.mint(miner,_p["name"],collection_id,attributes,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
       t=elrond.transfer(collection_id,nonce,miner,_account)
@@ -1155,7 +1294,7 @@ def mint_for_prestashop():
     else:
       if not bNewAccount:
         send_mail(open_html_file("new_nft",{
-          "mini_wallet":"wallet?"+setParams({"toolbar":"false","network":_p["network"],"addr":account_addr}),
+          "mini_wallet":"?"+setParams({"toolbar":"false","network":_p["network"],"addr":account_addr}),
         },domain_appli=app.config["DOMAIN_APPLI"]),body["email"],subject="Votre NFT est disponible dans votre wallet")
 
 
@@ -1282,7 +1421,7 @@ def configs(name:str="",format=""):
   if len(name)==0:
     return jsonify({"files":os.listdir("./Configs")})
   else:
-    if request.method=="GET":
+    if request.method=="GET" or format=="dict":
       if len(format)==0: format=request.args.get("format","yaml")
       filename="./Configs/"+name.replace(".yaml","")+".yaml"
       rc=dict()
@@ -1484,20 +1623,20 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
   if platform.startswith("nfluent"):
     ext=data["type"].split("/")[1].split("+")[0]
 
-    if "filename" in data and exists(data["filename"]):
+    if "filename" in data and not data["filename"] is None and len(data["filename"])>0 and exists(data["filename"]):
       log("Le fichier est déjà présent sur le serveur")
       cid=data["filename"][data["filename"].rindex("/")+1:]
       return {"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+cid+"?"+ext}
 
     b=base64.b64decode(data["content"].split("base64,")[1])
-    if ext=="gif" or ext=="png": ext="webp"
+    #if ext=="gif" or ext=="png": ext="webp"
     cid=hex(hash(data["content"]))+"."+ext
     filename="./temp/"+cid
 
     if ext=="svg":
       s=Sticker(cid,text=str(b,"utf8"))
     else:
-      s=Sticker(cid,data["content"])
+      s=Sticker(cid,data["content"],ext=ext)
 
     s.save(filename)
 
@@ -1652,7 +1791,7 @@ def upload():
     content=str(request.data,"utf8")
     if not "base64" in content:content=";base64,"+content
     body={
-      "filename":request.args.get("filename","temp"),
+      "filename":request.args.get("filename"),
       "content":content,
       "type":request.args.get("type","")
     }
@@ -1727,13 +1866,13 @@ def upload_metadata():
 
 
 def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
-
+  rc= {"error":"Problème technique"}
   account=None
   if is_email(owner):
     email=owner
     if "elrond" in network:
       elrond=Elrond(network)
-      _account,pem,words,qrcode=elrond.create_account(email=email,subject="Votre NFT '"+nft.name+"' est disponible", domain_appli=app.config["DOMAIN_APPLI"])
+      _account,pem,words,qrcode=elrond.create_account(email=email,network=network,subject="Votre NFT '"+nft.name+"' est disponible", domain_appli=app.config["DOMAIN_APPLI"])
       account=_account.address.bech32()
       log("Notification de "+owner+" que son compte "+elrond.getExplorer(account,"account")+" est disponible")
     else:
@@ -1753,21 +1892,24 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
     # if not _ope is None:
     #   dao.add_histo(_ope["id"],"new_account",account,"","",_ope["network"],"Création d'un compte pour "+owner,owner)
 
-  if "elrond" in network.lower():
+  if len(miner)==0:miner=owner
+
+  if "elrond" in network.lower() and not account is None:
     elrond=Elrond(network)
-    collection_id=elrond.add_collection(miner,nft.collection,type="NonFungible")
     old_amount=elrond.get_account(miner)["amount"]
+
     if nft.address.startswith("db_") or len(nft.address)==0:
+      collection_id=elrond.add_collection(miner,nft.collection["name"],type="NonFungible")
       nonce,cid=elrond.mint(miner,
-                            title=nft.name,
-                            collection=collection_id,
-                            properties=nft.attributes,
-                            files=[],
-                            ipfs=None,
-                            quantity=nft.marketplace["quantity"],
-                            royalties=nft.royalties/100,  #On ne prend les royalties que pour le premier créator
-                            visual=nft.visual
-                            )
+                              title=nft.name,
+                              collection=collection_id,
+                              properties=nft.attributes,
+                              files=[],
+                              ipfs=None,
+                              quantity=nft.marketplace["quantity"],
+                              royalties=nft.royalties/100,  #On ne prend les royalties que pour le premier créator
+                              visual=nft.visual
+                              )
     else:
       collection_id,nonce = elrond.extract_from_tokenid(nft.address)
 
@@ -1779,6 +1921,8 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
 
       if elrond.toAccount(miner).address.bech32()!=account:
         rc=elrond.transfer(collection_id,nonce,elrond.toAccount(miner),account)
+        if not rc:
+          return {"error":"Erreur de transfert"}
 
       solde=elrond.get_account(miner)["amount"]-old_amount
       rc={"command":"ESDTCreate",
@@ -1855,10 +1999,11 @@ def api_mint():
   rc={}
   keyfile=request.args.get("keyfile","paul").lower()
   network=request.args.get("network","elrond-devnet")
+  owner=request.args.get("owner",keyfile)
   offchaindata_platform=request.args.get("offchaindata_platform","ipfs").replace(" ","").lower()
   _data=NFT(object=request.json)
 
-  rc=mint(_data,keyfile,keyfile,network,offchaindata_platform)
+  rc=mint(_data,keyfile,owner,network,offchaindata_platform)
 
   if not _data.visual.startswith("http"):
     return jsonify({"error":"Vous devez uploader les images avant le minage"})

@@ -17,16 +17,14 @@ fontstyle:
     size: 32.8
 height: 500
 layers:
--   elements:
-    -   image: https://server.nfluent.io:4242/api/images/-0x64f398ef3cdc87d4.webp?format=image/webp
+-   elements: []
     indexed: true
     name: layer2
     params: {}
     position: 0
     text: ''
     unique: false
--   elements:
-    -   image: https://server.nfluent.io:4242/api/images/0x331b7e81e5b1ccdd.png?format=image/png
+-   elements: []
     indexed: true
     name: layer1
     params: {}

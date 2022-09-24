@@ -5,8 +5,9 @@ import {getParams, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {MatDialog} from "@angular/material/dialog";
-import {NFT} from "../nfts/nfts.component";
+
 import {Operation} from "../../operation";
+import {NFT} from "../../nft";
 
 @Component({
   selector: 'app-dispenser',
@@ -46,7 +47,8 @@ export class DispenserComponent implements OnInit {
               nft.style={opacity:0.3};
             }
             if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
-            if(nft.marketplace.price==0 && operation.dispenser!.collections.indexOf(nft.collection)>-1)this.nfts.push(nft);
+            if(operation.dispenser && nft.marketplace.price==0 && operation.dispenser.collections.indexOf(nft.collection["id"])>-1)
+              this.nfts.push(nft);
           }
         });
       })

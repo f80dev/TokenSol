@@ -4,6 +4,7 @@ import {Collection, Operation} from "../../operation";
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
 import {Location} from "@angular/common";
+import {MatSnackBar} from "@angular/material/snack-bar";
 
 @Component({
   selector: 'app-candymachine',
@@ -18,6 +19,7 @@ export class CandymachineComponent implements OnInit {
   constructor(
     public routes:ActivatedRoute,
     public router:Router,
+    public toast:MatSnackBar,
     public _location:Location,
     public network: NetworkService
   ) { }
@@ -41,27 +43,13 @@ export class CandymachineComponent implements OnInit {
     })
   }
 
-  // random_nft(ope_id:string,limit:number=100)  {
-  //   this.network.get_tokens_to_send(ope_id,"candymachine",limit).subscribe((nfts:any) => {
-  //     if(nfts.length>0){
-  //       let idx=Math.random()*nfts.length;
-  //
-  //       this.router.navigate(["dealermachine"],{queryParams:{param:setParams({
-  //             token:nfts[idx],
-  //             price:0,
-  //             ope: this.operation!.id,
-  //             selfWalletConnexion:true,
-  //             mining:this.operation!.lazy_mining
-  //           })}})
-  //     }
-  //   });
-  // }
-
 
   authent($event: any) {
-    this.network.add_user_for_nft($event,this.network.network,this.operation!.id,this.operation?.candymachine.collections).subscribe(()=>{
-      this.showEnd=true;
-    })
+    if(this.operation?.network){
+      this.network.add_user_for_nft($event,this.operation?.network,this.operation!.id,this.operation?.candymachine.collections).subscribe(()=>{
+        this.showEnd=true;
+      })
+    }
   }
 
   back() {

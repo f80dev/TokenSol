@@ -11,14 +11,13 @@ import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
 import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {$$, encodeUnicode, words} from "../tools";
+import {$$, CryptoKey, encrypt, words} from "../tools";
 import {environment} from "../environments/environment";
 
-import {SplTokenInfo, NFT, SolanaToken} from "./nfts/nfts.component";
-import {Layer} from "./creator/creator.component";
 import {retry, timeout} from "rxjs";
-import {unescape} from "querystring";
 import {Operation} from "../operation";
+import {NFT, SolanaToken, SplTokenInfo} from "../nft";
+import {Layer} from "../create";
 
 export enum type_addr {
   "owner",
@@ -57,6 +56,7 @@ export class NetworkService {
         }).catch((err:Error)=>{reject(err)});
     });
   };
+
 
 
   get network(): string {
@@ -133,7 +133,7 @@ export class NetworkService {
         type:"metaplex"
       }
     }
-    if(offchain && offchain!={} && offchain.hasOwnProperty("attributes")){
+    if(offchain && offchain.hasOwnProperty("attributes")){
       token.search={collection:words(offchain.collection),metadata:words(Object.values(offchain.attributes))}
     }
 
@@ -224,7 +224,7 @@ export class NetworkService {
         if(filter==null || (filter.mintAuthority && mintAuthority==filter.mintAuthority)){
           $$("Analyse de "+mintAddress);
           this.httpClient.get(environment.server+"/api/scan/"+mintAddress+"?network="+this.network).subscribe((token_account:any)=>{
-            if(token_account!={}){
+            if(token_account && token_account.hasOwnProperty("uri")){
               let headers = new Headers({
                 'Cache-Control':  'no-cache, no-store, must-revalidate, post-check=0, pre-check=0',
                 'Pragma': 'no-cache',
@@ -436,7 +436,7 @@ export class NetworkService {
   }
 
   isElrond(addr="") {
-    if(addr.length){
+    if(addr.length==0){
       return this.network.indexOf("elrond")>-1;
     } else {
       return addr.startsWith("erd");
@@ -445,8 +445,9 @@ export class NetworkService {
 
   }
 
-  isSolana() {
-    return this.network.indexOf("solana")>-1;
+  isSolana(network="") {
+    if(network=="")network=this.network;
+    return network.indexOf("solana")>-1;
   }
 
   get_nfts_balance_from_ftx(){
@@ -650,17 +651,13 @@ export class NetworkService {
   // create_account(network: string, alias: string) {
   //   return this.httpClient.get(environment.server+"/api/create_account/"+network+"/"+alias+"/");
   // }
-  export_to_prestashop(id:string,token:NFT | null,collection_filter=true) {
-    return this.httpClient.post(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter,token);
+  export_to_prestashop(id:string,tokens:NFT[] | null=null,collection_filter=true) {
+    if(!tokens || tokens?.length==0)
+      return this.httpClient.get(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter);
+    else
+      return this.httpClient.post(environment.server+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter,tokens);
   }
 
-  url_wallet() {
-    if(this.isElrond()){
-      return this.isMain() ? "https://wallet.elrond.com" : "https://devnet-wallet.elrond.com";
-    } else {
-      return "";
-    }
-  }
 
   qrcode(body:string,format:"image" | "json" | "qrcode"="image") {
     return this.httpClient.get<string>(environment.server+"/api/qrcode/?code="+body+"&format="+format);
@@ -689,5 +686,39 @@ export class NetworkService {
 
   is_beta() {
     return (this.version=="beta");
+  }
+
+  analyse_prestashop_orders(operation_id: string) {
+    return this.httpClient.get(environment.server+"/api/analyse_prestashop_orders/?ope="+operation_id);
+  }
+
+  nftlive_access(addr: string, network: string="elrond-devnet") {
+    return this.httpClient.get(environment.server+"/api/nftlive_access/"+addr+"/?network="+network);
+  }
+
+  send_photo_for_nftlive(limit:number,conf_id:string, dimensions:string,quality:number,note:string,body: any) {
+    body["limit"]=limit
+    body["dimensions"]=dimensions
+    body["note"]=note;
+    body["quality"]=quality
+    return this.httpClient.post(environment.server+"/api/send_photo_for_nftlive/"+conf_id+"/",body)
+  }
+
+
+  mint(token:NFT, miner:string, owner:string,sign=false, platform="nftstorage", network=""){
+    return new Promise((resolve, reject) => {
+      this.wait("Minage en cours sur "+network);
+      this.httpClient.post(environment.server+"/api/mint/?keyfile="+miner+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network,token).subscribe((r)=>{
+        this.wait();
+        resolve(r);
+      },(err)=>{
+        this.wait();
+        reject(err);
+      })
+    });
+  }
+
+  save_privacy(addr: string, secret: string) {
+    return this.httpClient.post(environment.server+"/api/save_privacy/",{addr:addr,secret:encrypt(secret)});
   }
 }

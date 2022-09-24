@@ -7,7 +7,8 @@ export const environment = {
   version: "0.1.4",
   server:"http://127.0.0.1:4242",
   appname:"TokenFactory",
-  appli:"http://127.0.0.1:4200"
+  appli:"http://127.0.0.1:4200",
+  wallet:"http://127.0.0.1:4200"
 };
 
 /*

@@ -1,7 +1,7 @@
 import {environment} from "./environments/environment";
 import {ActivatedRoute} from "@angular/router";
 
-export interface MetabossKey {
+export interface CryptoKey {
   name: string
   pubkey: string
   privatekey:string | null
@@ -11,6 +11,15 @@ export interface MetabossKey {
   explorer:string | null
   unity:string | null
 }
+
+export function url_wallet(network:string) : string {
+  if(network.indexOf("elrond")>-1){
+    return network.indexOf("devnet")==-1 ? "https://wallet.elrond.com" : "https://devnet-wallet.elrond.com";
+  } else {
+    return "";
+  }
+}
+
 
 export function b64DecodeUnicode(s:string):string {
   return decodeURIComponent(Array.prototype.map.call(atob(s), function(c) {
@@ -65,36 +74,51 @@ export function setParams(_d:any,prefix="") : string {
   return encodeURIComponent(url);
 }
 
-export function getParams(routes:ActivatedRoute) {
+
+function analyse_params(params:string):any {
+  let _params=decrypt(decodeURIComponent(params)).split("&");
+  $$("Les paramètres à analyser sont "+_params);
+  let rc:any={};
+  for(let _param of _params) {
+    let key = _param.split("=")[0];
+    let value: any = _param.split("=")[1];
+
+    $$("Récupération de " + _param);
+    if (value.startsWith("b64:")) {
+      try {
+        value = JSON.parse(atob(value.replace("b64:", "")));
+      } catch (e) {
+        $$("!Impossible de parser le paramétrage");
+      }
+    }
+    if (value == "false") value = false;
+    if (value == "true") value = true;
+    rc[key] = value;
+  }
+  return rc;
+}
+
+
+export function getParams(routes:ActivatedRoute,local_setting_params="") {
   return new Promise((resolve, reject) => {
     routes.queryParams.subscribe((params:any) => {
       if(params.hasOwnProperty("param")){
-        let _params=decrypt(decodeURIComponent(params["param"])).split("&");
-        $$("Les paramètres à analyser sont "+_params);
-        let rc:any={};
-        for(let _param of _params){
-          let key=_param.split("=")[0];
-          let value:any=_param.split("=")[1];
-
-          $$("Récupération de "+_param);
-          if(value.startsWith("b64:")){
-            try{
-              value=JSON.parse(atob(value.replace("b64:","")));
-            } catch (e) {
-              $$("!Impossible de parser le paramétrage");
-            }
-          }
-          if(value=="false")value=false;
-          if(value=="true")value=true;
-          rc[key]=value;
-        }
+        let rc=analyse_params(params["param"]);
+        if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["param"]);
         resolve(rc);
       } else {
+        if(local_setting_params.length>0){
+          params=localStorage.getItem(local_setting_params)
+          if(params){
+            let rc=analyse_params(params);
+            resolve(rc);
+          }
+        }
+
         $$("Param n'est pas présent dans les parametres, on fait une analyse standard")
         if(params){
           resolve(params);
         }else{
-          debugger
           reject();
         }
       }
