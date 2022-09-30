@@ -20,12 +20,14 @@
     </mat-toolbar>
 
     <mat-nav-list>
-      <a mat-list-item [routerLink]="'creator'">Générateur de collection</a>
+      <a mat-list-item [routerLink]="'creator'">Générateur de NFTs</a>
+      <a mat-list-item [routerLink]="'collections'">Gestion des collections</a>
       <a mat-list-item [routerLink]="'reload'">Rechargement</a>
       <a mat-list-item [routerLink]="'keys'">Gestion des clés</a>
       <a mat-list-item [routerLink]="'mint'">Miner</a>
       <a mat-list-item [routerLink]="'build'">Gestion des opérations</a>
       <a mat-list-item [routerLink]="'manage'">Gestion des NFTs</a>
+      <a mat-list-item [routerLink]="'pool'">Pool de minage</a>
       <a mat-list-item [routerLink]="'wallet'">Mes NFTs</a>
       <a mat-list-item [routerLink]="'admin'">Administrateur</a>
       <a mat-list-item [routerLink]="'help'">Aide</a>
@@ -69,7 +71,7 @@
         </mat-select>
       </mat-form-field>
 
-      <app-selectkey [keys]="metaboss.keys" *ngIf="network_service.network.indexOf('database')==-1">
+      <app-selectkey [keys]="metaboss.keys">
         Sign:
       </app-selectkey>&nbsp;&nbsp;
 

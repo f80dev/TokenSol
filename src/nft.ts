@@ -5,6 +5,7 @@ export interface Creator {
   verified:number
   share:number
 }
+
 export interface SplTokenInfo {
   mint:string
   owner:string
@@ -13,15 +14,18 @@ export interface SplTokenInfo {
   address:string
   isFrozen:boolean
 }
+
 export interface SplMintInfo {
   mintAuthority:string
   supply:string
   decimal:number
 }
+
 export interface Attribute {
   trait_type:string
   value:string
 }
+
 export interface MetadataExternal {
   name:string
   description:string
@@ -53,6 +57,7 @@ export interface MetadataOnChain {
     creators:Creator[]
   }
 }
+
 export interface Search {
   collection:string
   metadata:string

@@ -11,17 +11,35 @@ import imageio
 import numpy
 import numpy as np
 import requests
+import svglib.svglib
 from PIL import Image, ImageSequence, ImageFilter, ImageOps,ImageEnhance
 from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
+from PIL.ImageOps import pad
+from reportlab.graphics import renderPM
 
-from Tools import now, log
+from reportlab.pdfbase.ttfonts import TTFont
+from svglib.svglib import svg2rlg
+
+from Tools import now, log, get_fonts
+
+
+
+def extract_image_from_string(content:str) -> Image:
+  if type(content)==bytes:
+    return Image.open(io.BytesIO(content))
+
+  if "base64" in content:
+    content=content.split("base64,")[1]
+
+  return Image.open(io.BytesIO(base64.b64decode(content)))
+
 
 def convert_to_gif(content:str,storage_platform=None,filename=None):
   if content.startswith("http"):
     image:Image=Image.open(io.BytesIO(requests.get(content).content))
   else:
-    image:Image=Image.open(io.BytesIO(base64.b64decode(content.split("base64,")[1])))
+    image:Image=extract_image_from_string(content)
 
   if filename:
     buffered=open(filename,"wb")
@@ -59,10 +77,17 @@ class Element():
   def save(self,filename,quality=98):
     pass
 
+  def transform(self,scale,translation):
+    pass
+
   def toStr(self):
     pass
 
+  def render_svg(self,dictionnary:dict={},dimension=(500,500)):
+    pass
 
+  def get_code(self):
+    pass
 
 
 class Sticker(Element):
@@ -87,17 +112,35 @@ class Sticker(Element):
     if "web" in ext:ext="webp"
     ext="image/"+ext
 
-    if image:
+    if not image is None:
       if type(image)==str:
+        if ext=="image/svg":
+          if image.startswith("http"):
+            self.text={"text":str(requests.get(image).content,"utf8")}
+
+          if image.startswith("data:"):
+            self.text={"text":str(base64.b64decode(image.split("base64,")[1]),"utf8")}
+
+          if self.text is None:
+            with open("./temp/"+image,"r") as file:
+              content=file.readline()
+              self.text={"text":content}
+
+          self.render_svg(with_picture=False)
+          return
+
         if not image.startswith("http"):
           if "base64" in image:
-            self.image=Image.open(BytesIO(base64.b64decode(image.split("base64,")[1])))
+            self.image=extract_image_from_string(image)
           else:
             self.image=Image.open(image).convert("RGBA")
         else:
           if "/api/images/" in image:
             filename=image.split("/api/images/")[1].split("?")[0]
-            self.image=Image.open("./temp/"+filename)
+            if exists("./temp/"+filename):
+              self.image=Image.open("./temp/"+filename)
+            else:
+              self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
           else:
             self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
 
@@ -148,16 +191,49 @@ class Sticker(Element):
     return self.image
 
 
-  def render_svg(self,dictionnary:dict={}):
-    svg_code=self.text
-    for k in dictionnary.keys():
-      svg_code=svg_code.replace(k,dictionnary[k])
+  def transform(self,scale,translation):
+    offset=(translation[0]/self.image.width,translation[1]/self.image.height)
+    pad(self.image,size=(self.image.width*scale[0],self.image.height*scale[1]),color=None,centering=(offset[0]+0.5,offset[1]+0.5))
 
-    with cairo.SVGSurface(svg_code,self.text["dimension"][0],self.text["dimension"][1]) as surface:
-      buffered = BytesIO()
-      surface.write_to_png(buffered)
-      self.image.save(buffered, format="WEBP",quality=90)
+
+  def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,server_domain="",prefix_name="svg"):
+    svg_code=self.text["text"]
+    svg_code="<svg"+svg_code.split("<svg")[1]
+    if dictionnary!={}:
+      for k in dictionnary.keys():
+        svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
+
+    filename=prefix_name+"_"+hex(int(now()*100000))+".svg"
+    with open("./temp/"+filename,"w",encoding="utf8") as file:
+      file.writelines(svg_code)
+    file.close()
+
+    self.text={"text":svg_code}
+
+    if with_picture:
+      svg=svg2rlg("./temp/"+filename)
+      image=extract_image_from_string(renderPM.drawToString(svg,"GIF")).convert("RGBA")
+
+      newImage = []
+      for item in image.getdata():
+        if item[:3] == (255, 255, 255):
+          newImage.append((255, 255, 255, 0))
+        else:
+          newImage.append(item)
+
+      image.putdata(newImage)
+      self.image=image.convert("RGBA")
+      self.text["dimension"]=(self.image.width,self.image.height)
+    else:
+      if "width=" in svg_code and "height=" in svg_code:
+        self.text["dimension"]=(int(svg_code.split("width=\"")[1].split("\"")[0]),int(svg_code.split("height=\"")[1].split("\"")[0]))
+      else:
+        self.text["dimension"]=(500,500)
+
+      self.image=server_domain+"/"+filename
+
     return self.image
+
 
   def clear(self):
     if self.text :
@@ -200,7 +276,10 @@ class Sticker(Element):
 
   def clone(self,new_name=""):
     if new_name=="": new_name=self.name+"_clone"
-    return Sticker(name=new_name,image=self.image.copy())
+    rc=Sticker(name=new_name,image=self.image,ext=self.ext,data=self.data)
+    if type(self.image)!=str: rc.image=self.image.copy()
+    rc.text=self.text
+    return rc
 
   def replace_color(self,old_color,new_color):
     if old_color.startswith("#"):old_color=(int(old_color[1:2],16),int(old_color[3:4],16),int(old_color[5:6],16))
@@ -280,12 +359,12 @@ class Sticker(Element):
     return rc
 
 
-  def fusion(self,to_concat,factor):
+  def fusion(self,to_concat:Element,factor:float,replacement:dict):
       #log("Fusion de "+self.name+" avec "+to_concat.name)
       if to_concat.image is None and not to_concat.text is None:
-        if "<svg" in to_concat.text:
+        if "<svg" in to_concat.text["text"]:
           log("Collage d'un SVG")
-          src=to_concat.render_svg()
+          src=to_concat.render_svg(replacement)
         else:
           log("Collage d'un texte")
           src=to_concat.render_text(factor)
@@ -321,7 +400,7 @@ class Sticker(Element):
     _data_to_add=self.data
     if len(self.data)>0:
       for i in range(10):
-        _data_to_add=_data_to_add.replace("__idx__",str(index))
+        _data_to_add=_data_to_add.replace("_idx_",str(index))
 
       xmp="<?xpacket begin='' id=''?><x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description rdf:mint='"\
           +str(base64.b64encode(bytes(_data_to_add,"utf8")),"utf8")\
@@ -438,6 +517,8 @@ class Layer:
     self.name=name if len(name)>0 else str(now())
     self.unique=unique if type(unique)!=str else False
     self.indexed=indexed if type(indexed)!=str else False
+    self.scale=(1,1)
+    self.translation=(0,0)
     self.position=position
     if element:self.add(element)
 
@@ -529,6 +610,20 @@ class ArtEngine:
   def __init__(self,name="collage"):
     self.name=name
 
+
+
+
+  def register_fonts(self,filter=""):
+    log("Enregistrement des polices")
+    for font in get_fonts():
+      if filter=="" or font["name"]==filter:
+        log("Enregistrement de "+font["name"])
+        svglib.fonts.register_font(font["name"],"./Fonts/"+font["file"])
+
+    log("Enregistrement terminé")
+    return True
+
+
   def reset(self):
     self.layers.clear()
 
@@ -552,10 +647,27 @@ class ArtEngine:
     layer.add(Sticker("",image))
     return True
 
+
+
   def sort(self):
     self.layers=sorted(self.layers,key=lambda x:x.position)
 
-  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp",data=""):
+
+
+  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp",data="",replacements={}):
+    """
+    Génération des collections
+    :param dir:
+    :param limit:
+    :param seed_generator:
+    :param width:
+    :param height:
+    :param quality:
+    :param ext:
+    :param data:
+    :param replacements:
+    :return:
+    """
     if seed_generator>0:seed(seed_generator)
     if len(dir)>0 and not dir.endswith("/"):dir=dir+"/"
     rc=list()
@@ -584,7 +696,9 @@ class ArtEngine:
           if layer.indexed or layer.unique: name.append(elt.name)
           elt.open()
 
-          collage.fusion(elt,1 if elt.text is None else width/elt.text["dimension"][0])
+          scale=width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0])
+          elt.transform(layer.scale,layer.translation)
+          collage.fusion(elt,scale,replacements)
           if layer.unique: layer.remove(elt)
 
           elt.close()
@@ -595,7 +709,7 @@ class ArtEngine:
 
         histo.append(name)
         if len(dir)>0:
-          filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "__idx__" in self.name else dir+self.name.replace("__idx__",str(index))+"."+collage.ext
+          filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
           rc.append(filename)
           if collage.ext.lower()=="gif":
             rc.append(filename.replace(".gif",".xmp"))

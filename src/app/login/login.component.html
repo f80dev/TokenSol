@@ -1,6 +1,8 @@
 <div class="mainform">
   <app-authent [showAccesCode]="true"
                [showGoogle]="false"
-               [showNetwork]="false"
+               [showNetwork]="true"
+               [showWebcam]="true"
+               [showDynamicToken]="true"
                (authent)="_location.back()"></app-authent>
 </div>

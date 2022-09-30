@@ -9,6 +9,7 @@ import {MywalletComponent} from "./mywallet/mywallet.component";
 import {KeysComponent} from "./keys/keys.component";
 import {MintComponent} from "./mint/mint.component";
 import {ManageComponent} from "./manage/manage.component";
+import {MinerpoolComponent} from "./minerpool/minerpool.component";
 import {CreatorComponent} from "./creator/creator.component";
 import {ValidateComponent} from "./validate/validate.component";
 import {DealermachineComponent} from "./dealermachine/dealermachine.component";
@@ -23,6 +24,7 @@ import {CandymachineComponent} from "./candymachine/candymachine.component";
 import {PageNotFoundComponent} from "./page-not-found/page-not-found.component";
 import {IntroComponent} from "./intro/intro.component";
 import {LoginComponent} from "./login/login.component";
+import {CollectionsComponent} from "./collections/collections.component";
 
 
 const routes: Routes = [
@@ -37,11 +39,13 @@ const routes: Routes = [
   { path: 'reload', component: FaucetComponent },
   { path: 'faqs', component: FaqsComponent },
   { path: 'login', component: LoginComponent },
+  { path: 'collections', component: CollectionsComponent},
   { path: 'mint', component: MintComponent },
   { path: 'miner', component: MintComponent },
   { path: 'keys', component: KeysComponent },
   { path: 'admin', component: AdminComponent },
   { path: 'contest', component: ContestComponent },
+  { path: 'pool', component: MinerpoolComponent },
   { path: 'dispenser', component: DispenserComponent,pathMatch:"prefix" },
   { path: 'creator', component: CreatorComponent },
   { path: 'store', component: StoreComponent },

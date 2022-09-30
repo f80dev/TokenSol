@@ -31,7 +31,10 @@ class DAO:
       self.dbname=dbname
       self.domain=domain
 
-    self.connect(self.domain,self.dbname)
+    log("Initialisation de la base de données")
+    if self.connect(self.domain,self.dbname):
+      log("Tentative de connexion ok")
+
 
 
 
@@ -129,6 +132,7 @@ class DAO:
         "params":params
       })
 
+
   def update(self, _data,field="quantity"):
     """
     Mise a jour de la quantité
@@ -139,6 +143,39 @@ class DAO:
     self.db["nfts"].update_one({"address":_data["address"]},{ "$set": { field: _data[field] } })
 
 
+
+  def get_nfts_to_mint(self,limit=100):
+    nfts=[]
+    for transaction in self.db["mintpool"].find({"dtWork":None}):
+      if transaction["dtStart"]<now():
+        nfts.append(transaction)
+
+    return nfts[:limit]
+
+
+  def edit_pool(self,id,dtWork,transaction):
+    """
+    Confirme la réalisation d'un travail
+    :param id:
+    :param dtWork:
+    :return:
+    """
+    rc=self.db["mintpool"].update_one({"_id":id},{"$set":{"dtWork":dtWork}})
+    return rc.modified_count
+
+
+
+  def add_nft_to_mint(self,nft:NFT,miner:str,operation_id,dtStart=now()):
+    obj={
+      "dtStart":dtStart,
+      "nft":nft.__dict__,
+      "dtWork":None,
+      "tx":None,
+      "miner":miner,
+      "operation":operation_id
+    }
+    tx=self.db["mintpool"].insert_one(obj)
+    return tx.inserted_id
 
 
 

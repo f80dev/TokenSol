@@ -32,43 +32,17 @@ event:
     - start: 04/02/1971 20:00
       end: 04/02/1971 22:00
 
-#section détaillant la possibilité de faire des photos
-nftlive:
-  collections: #design la collection qui donne le droit d'utiliser NFTLive
-    - "BAYARD-2018c7"
-
-  configuration: nftlive    #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
-  limit: 3                  #nombre de NFT à proposer à l'utilisateurs
-
-  price: 0                  #prix d'utilisation du service
-
-  nft_target:               #désigne les caractéristiques du NFT qui sera miné
-    miner: nfluent
-    name: monnft                      #nom du NFT qui sera miné
-    collection: "BAYARD"              #collection auquel appartiendra le NFT
-    royalties: 20                     #royalties pour le mineur
-    dimensions: 800x800               #dimension du NFT miné
-    attributes:                       #attributs affecter au NFT
-      moment: Reunion bayard
-
-    permissions:
-      transfer: True
-      update_name: True
-      update_attributes: True
-
-
-
-
 
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - name: "NFluenT"
+  - id: "NFLUENT-518891"          #Id de la collection. A priori cet id doit se trouver dans les sources
+    name: "NFluenT"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
     visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
     description: Une collection de NFTs by Nfluent
-    creator: nfluent
-    price: 0
 
+  - id: "BAYARD-2018c7"
+    name: Bayard
 
 
 database:                 #base de données contenant les historiques
@@ -107,7 +81,7 @@ data:
       connexion: elrond-devnet
       filter:
         limit: 200
-      owner: nfluent
+      owner: herve
 
 
     - type: database
@@ -220,7 +194,7 @@ validate:
     mint_authority: ''
 
     collections:                #Liste des collections éligible à la validation
-      - "BAYARD-2018c7:"
+      - "BAYARD-2018c7"
 
     symbol: ''      #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
@@ -240,7 +214,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "BAYARD-2018c7:"
+    - "NFLUENTE-6dce97"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -266,8 +240,6 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
     admin: "$server$/admin4280/"
     api_key: "DLHZSTR7IB5X68BW4HZGDCIWBIYC9F32"
 
-
-
     root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
       name: NFTs                                      #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
       description: Nos collections de NFT
@@ -284,8 +256,7 @@ dispenser:
   miner: nfluent                                       #mineur en charge de la création des tokens pour les non minés
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
 
-  collections:                                      #Liste des collections concernée par la distribution
-    - "BAYARD-2018c7"
+  collections:                                      #Liste des collections concernée par la distribution (si vide toutes les collections disponibles depuis la source sont prises en compte)
 
 
 #Distribution de NFT au sein d'une ou plusieurs collecion à l'aveugle
@@ -293,17 +264,20 @@ dispenser:
 candymachine:
   visible: True
 
+  connexion:
+    wallet_connect: False      #Permet de se connecter à la candy machine via wallet connect
+    webcam: False
+    email: True
+
   collections:
-    - "BAYARD-2018c7:"
+    - "NFLUENT-518891"
 
   messages:
-    title: "Flasher ce code pour obtenir un NFT de la collection SMA"
+    title: "Flasher ce code pour obtenir un NFT de la collection NFLuenT"
 
   limit:
     total: 60
     per_user: 1
-
-
 
 
 
@@ -340,7 +314,7 @@ lottery:
   application: "$nfluent_appli$/contest"
 
   collections: #Définie les limites sur le nombre de nft miner
-    - "NFluenT"
+    - "NFLUENT-518891"
 
   limits:     #définis les quotas de minages toutes collections confondus
     by_day: 50
@@ -355,7 +329,47 @@ lottery:
     dtEnd: ""
     duration: 1
 
+
+
+#Section rassemblant l'ensemble des paramètres en charge de la sécurité de TokenForge
 security:
   #Liste des adresses internet (IP ADDRESS) pouvant appeler l'api
   whitelist:
     - "*"
+
+
+
+#section détaillant la possibilité de faire des photos
+nftlive:
+  collections: #design la collection qui donne le droit d'utiliser NFTLive
+    - "BAYARD-2018c7"
+
+  configuration: nftlive    #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
+  limit: 10                 #nombre de NFT à proposer à l'utilisateurs
+
+  price: 0                  #prix d'utilisation du service
+
+  dynamic_fields:           #liste de champs utilisé par le créateur pour personnaliser le NFT
+    - name: description     #nom du champs, présent dans un SVG du NFT sous le libellé _description_
+      maxlen: 30            #nombre maximum de caractères
+      message: "Note placée en bas de votre photo"
+      value: "votre message"
+
+  nft_target:               #désigne les caractéristiques du NFT qui sera miné
+    miner: nfluent
+    name: monnft                      #nom du NFT qui sera miné
+    description: ??
+    collection: "BAYARD"              #collection auquel appartiendra le NFT
+    royalties: 20                     #royalties pour le mineur
+    dimensions: 800x800               #dimension du NFT miné
+    attributes:                       #attributs affecter au NFT
+      moment: Reunion bayard
+
+    permissions:
+      transfer: True
+      update_name: True
+      update_attributes: True
+
+
+
+

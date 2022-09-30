@@ -11,8 +11,6 @@
     <br>
 
 
-
-
     <div *ngIf="!selfWalletConnexion">
       <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" >
         <mat-label>Indiquer l'adresse ou l'email du destinataire</mat-label>
@@ -22,9 +20,9 @@
 
       <button type="button" mat-raised-button mat-button
               title="Ne pas se connecter" color="primary"
-              [disabled]="address.length<20 && address.indexOf('@')==-1"
+              [disabled]="address.length<20 && address.indexOf('@')==-1 && !address.startsWith('\'') "
               (click)="validate()">
-        Valider
+        Envoyer
       </button>
       <br>
 
@@ -32,11 +30,10 @@
       <div *ngIf="webcam">
         <br>
         Capturez l'adresse d'un wallet<br>
-        <app-scanner [size]="350"  (flash)="onflash($event)"></app-scanner>
+        <app-scanner [size]="250" (flash)="onflash($event)"></app-scanner>
       </div>
 
     </div>
-
 
 
     <!--    gestion de la facture -->

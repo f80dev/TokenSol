@@ -1,7 +1,6 @@
 import {Component,  OnInit} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
-import {
-  $$, b64DecodeUnicode,
+import { $$, b64DecodeUnicode,
   base64ToArrayBuffer,
   getParams,
   showError,
@@ -15,7 +14,7 @@ import {NetworkService} from "../network.service";
 
 import ExifReader from 'exifreader';
 import {UserService} from "../user.service";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 
 import {OperationService} from "../operation.service";
 import {NFT} from "../../nft";
@@ -40,6 +39,8 @@ export class MintComponent implements OnInit {
   quantity: any=1;
   seller_fee_basis_points: any=0;
   collection: Collection | null=null;
+  sel_collection: Collection | null=null;
+  collections: Collection[]=[]
 
 
   constructor(
@@ -49,6 +50,7 @@ export class MintComponent implements OnInit {
     public user:UserService,
     public operation:OperationService,
     public metaboss:MetabossService,
+    public router:Router,
     public routes:ActivatedRoute,
   ) { }
 
@@ -93,13 +95,17 @@ export class MintComponent implements OnInit {
     if(_infos.hasOwnProperty("properties")){
       for(let a of _infos.properties.split("\n")){
         if(a.length>1){
-          attributes.push({trait_type:a.split("=")[0].trim(),value:a.split("=")[1].trim()})
+          if(a.indexOf("=")>-1){
+            attributes.push({trait_type:a.split("=")[0].trim(),value:a.split("=")[1].trim()})
+          } else {
+            attributes.push({trait_type:"",value:a})
+          }
         }
       }
     }
 
     if(_infos.hasOwnProperty("collection")){
-      collection=_infos.collection
+      collection={"name":_infos.collection}
     }
 
 
@@ -126,6 +132,12 @@ export class MintComponent implements OnInit {
   }
 
 
+
+  onCollectionSelected(file:any){
+    this.network.extract_zip(file).subscribe((images:any)=>{
+      this.tokens=images;
+    });
+  }
 
   onFileSelected(files: any) {
     if(files.hasOwnProperty("filename"))files=[files]
@@ -164,10 +176,6 @@ export class MintComponent implements OnInit {
         }
         this.tokens.push(this.get_token_from_xmp(_infos,url))
         if(!this.collection)this.collection=this.tokens[0].collection;
-
-        // this.upload_file({filename:f.filename,content:f.file,type:f.type}).then((url:any)=>{
-        //
-        // });
 
       }
     }
@@ -251,8 +259,12 @@ export class MintComponent implements OnInit {
         file.uri=r;
       })
     }
-    this.upload_file({content:token.visual,type:""}).then((r:any)=>{token.visual=r;});
-    token.message="visual uploaded";
+    token.message="visual uploading ...";
+    this.upload_file({content:token.visual,type:""}).then((r:any)=>{
+      token.visual=r;
+      token.message="visual uploaded";
+    });
+
   }
 
 
@@ -272,6 +284,8 @@ export class MintComponent implements OnInit {
 
   //Opére le minage.
   //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
+
+
   miner(token: NFT) : Promise<any> {
     return new Promise<any>((resolve, reject) => {
       if(this.user.key==undefined){
@@ -508,5 +522,9 @@ export class MintComponent implements OnInit {
   add_attribute() {
     this.tokens[0].attributes.push({trait_type: "nom de l'attribut", value: "valuer de l'attribut"})
     this.edit_attribute(this.tokens[0].attributes[this.tokens[0].attributes.length-1]);
+  }
+
+  open_collections() {
+    this.router.navigate(["collections"],{queryParams:{owner:this.user.addr}});
   }
 }

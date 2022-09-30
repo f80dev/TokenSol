@@ -1,6 +1,7 @@
 import base64
 import datetime as datetime
 import json
+import os
 import smtplib
 from email import encoders
 from email.mime.base import MIMEBase
@@ -12,9 +13,30 @@ from os.path import exists
 import pyqrcode
 import requests
 from cryptography.fernet import Fernet
+from fontTools import ttLib
 
 from secret import USERNAME, PASSWORD
 from settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
+
+
+def get_fonts(dir="./Fonts/"):
+  rc=[]
+  for f in os.listdir(dir):
+    try:
+      tt = ttLib.TTFont(dir+f)
+      info=tt.get("name")
+      for name in info.names[:20]:
+        if not "copyright" in str(name).lower() and not "©" in str(name) and len(str(name))<20:
+          obj={"name":str(name),"file":f}
+          if not obj["name"] in [x["name"] for x in rc]:
+            rc.append(obj)
+            break
+          else:
+            break
+    except:
+      log("Traitement du fichier "+f+" problématique")
+
+  return rc
 
 
 def is_email(addr):
@@ -183,9 +205,9 @@ def api(url,alternate_domain="",timeout=60000):
 
 
 
-def get_qrcode(text:str):
+def get_qrcode(text:str,scale=3):
   buffer=BytesIO()
-  pyqrcode.create(text).png(buffer,scale=9)
+  pyqrcode.create(text).png(buffer,scale=scale)
   return "data:image/png;base64,"+str(base64.b64encode(buffer.getvalue()),"utf8")
 
 

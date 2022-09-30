@@ -1,7 +1,7 @@
 import base64
 import io
 import json
-from os import listdir,remove
+from os import listdir
 from os.path import exists
 from time import sleep
 import pyqrcode
@@ -135,7 +135,18 @@ class Elrond:
     else:
       rc=cols
 
+    for item in rc:
+      item["id"]=item["ticker"]
+      item["option"]={
+        "canFreeze":item["canFreeze"],
+        "canWipe":item["canWipe"],
+        "canPause":item["canPause"]
+      }
+
     return rc
+
+
+
 
   def get_collection(self,collection_id):
     rc=api(self._proxy.url+"/collections/"+collection_id,"gateway=api")
@@ -178,12 +189,7 @@ class Elrond:
     :return:
     """
 
-    _from=self.find_key(_from)
-    if type(_from)==dict:
-      _from=self.toAccount(_from["name"])
-    else:
-      return {"error":"Impossible de trouver la clé privée du propriétaire pour faire le transfert"}
-
+    _from=self.toAccount(_from)
     _to=self.toAccount(_to)
     if _to is None:
       log("Destinataire inconnu")
@@ -255,7 +261,7 @@ class Elrond:
         log("BUG: consulter "+self.getExplorer(owner.address.bech32(),"address"))
         return None
 
-      sleep(3)
+      sleep(5)
 
       if RESULT_SECTION in t and len(t[RESULT_SECTION][0]["data"].split("@")) > 2:
         collection_id = t[RESULT_SECTION][0]["data"].split("@")[2]
@@ -278,6 +284,8 @@ class Elrond:
         t = self.send_transaction(owner,
                                   Account(address=NETWORKS[self.network_name]["nft"]),
                                   owner, 0, data)
+
+        sleep(5)
 
       else:
         log("Erreur de création de la collection. Consulter "+self.getExplorer(owner.address.bech32(),"address"))
@@ -364,23 +372,29 @@ class Elrond:
     """
     analyse du champs attributes des NFT elrond (qui peut contenir les données onchain ou via IPFS)
     :param body:
-    :return:
+    :return: les attributs, description
     """
     attr=str(base64.b64decode(bytes(body,"utf8")),"utf8")
-    if attr.startswith("{"):
+
+    if attr.startswith("{\""):attr=" - "+attr
+
+    if " - {\"" in attr:
+      desc=attr.split(" - {\"")[0]
+      attr="{\""+attr.split(" - {\"")[1]
       _d=json.loads(attr)
       rc=[]
       for k in _d.keys():
         rc.append({"trait_type":k,"value":_d[k]})
-      return rc
+      return rc,desc
 
     if attr.startswith("metadata"):
       cid=attr.split("metadata:")[1].split(";")[0]
       log("Recherche des attributs via "+cid)
       ipfs_url="https://ipfs.io/ipfs/"+cid
-      return api(ipfs_url,timeout=1000) if with_ipfs else ipfs_url
+      result=api(ipfs_url,timeout=1000) if with_ipfs else ipfs_url
+      return result,""
 
-    return attr
+    return {},attr
 
 
   def get_nft(self,owner:Account,collection_id:str="",nonce:str="",token_id:str=""):
@@ -398,7 +412,8 @@ class Elrond:
     result=api(self._proxy.url+"/address/"+self.toAccount(owner).address.bech32()+"/nft/"+collection_id+"/nonce/"+nonce)
     if result:
       nft=result["data"]["tokenData"]
-      nft["attributes"]=self.analyse_attributes(nft["attributes"])
+      nft["attributes"],nft["description"]=self.analyse_attributes(nft["attributes"])
+
       return nft
     else:
       return None
@@ -428,7 +443,7 @@ class Elrond:
         if "attributes" in nft:
           _data={}
           nft["tags"]=""
-          nft["attributes"]=self.analyse_attributes(nft["attributes"],with_attr)
+          nft["attributes"],nft["description"]=self.analyse_attributes(nft["attributes"],with_attr)
 
           log("Analyse de "+str(nft))
 
@@ -517,7 +532,7 @@ class Elrond:
 
 
 
-  def mint(self, miner, title, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", file="", tags="",metadata_to_ipfs=False):
+  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", file="", tags="",metadata_to_ipfs=False):
     """
     Fabriquer un NFT au standard elrond
     https://docs.elrond.com/developers/nft-tokens/
@@ -551,20 +566,24 @@ class Elrond:
     #Exemple : issueSemiFungible@546f757245696666656c@544f555245494646454c@63616e467265657a65@74727565@63616e57697065@74727565@63616e5472616e736665724e4654437265617465526f6c65@74727565
     #Transaction hash 3f002652038ba8aed2876809a9e019451770c740749c1047a5b4d354f5fb217a
 
-    if visual.lower().endswith("webp"):
-      visual=convert_to_gif(visual,NFTStorage())
+    # if visual.lower().endswith("webp"):
+    #   visual=convert_to_gif(visual,NFTStorage())
 
     if metadata_to_ipfs:
+      if len(description)>0:properties["description"]=description
       cid_metadata=ipfs.add(properties)
       s="metadata:"+cid_metadata["Hash"]+"/props.json;tags:"+("" if len(tags)==0 else " ".join(tags))
     else:
       cid_metadata={"url":"","Hash":""}
       _d=dict()
       if type(properties)==list:
-        for prop in properties:
-          _d[prop["trait_type"]]=prop["value"]
+        if len(properties)>0:
+          for prop in properties:
+            _d[prop["trait_type"]]=prop["value"]
 
-      s=json.dumps(_d)
+          s=description+" - "+json.dumps(_d)
+        else:
+          s=description
 
     data = "ESDTNFTCreate" \
            + "@" + str_to_hex(collection,False) \
@@ -631,13 +650,18 @@ class Elrond:
   def toAccount(self, user):
     if type(user)==str:
       if len(user)==0: return None
+
+      if user.startswith("erd"):
+        key=self.find_key(user)
+        if key: user=key["name"]
+
       if user.startswith("erd"):
         user=Account(address=user)
       else:
         pem_file="./Elrond/PEM/"+user+(".pem" if not user.endswith('.pem') else '')
         if exists(pem_file):
           with open(pem_file,"r") as file:
-            txt="".join(file.readlines())
+            txt=file.read()
             if txt.startswith("-----BEGIN PRIVATE KEY"):
               user=Account(pem_file=pem_file)
             else:
@@ -673,28 +697,34 @@ class Elrond:
 
 
   def balance(self,account:Account):
-    return self._proxy.get_account_balance(account.address)
+    if type(account)!=Account: account=self.toAccount(account)
+    return self._proxy.get_account_balance(account.address)/1e18
 
-  def get_keys(self,with_qrcode=False,with_balance=False):
+  def get_keys(self,qrcode_scale=0,with_balance=False):
     rc=[]
     for f in listdir(ELROND_KEY_DIR):
       log("Lecture de "+f)
       if f.endswith(".pem"): #or f.endswith(".json"):
-        _a=self.toAccount(f)
+        pubkey=open("./Elrond/PEM/"+f).read().split("BEGIN PRIVATE KEY for ")[1].split("---")[0]
+
         rc.append({
           "name":f.replace(".pem","").replace(".json",""),
-          "pubkey":_a.address.bech32() if type(_a)==Account else _a,
-          "qrcode": get_qrcode(_a.address.bech32()) if with_qrcode else "",
-          "explorer":self.getExplorer(_a.address.bech32(),"address"),
-          "balance":self.balance(_a)/1e18 if with_balance else 0,
+          "pubkey":pubkey,
+          "qrcode": get_qrcode(pubkey,qrcode_scale) if qrcode_scale>0 else "",
+          "explorer":self.getExplorer(pubkey,"address"),
+          "balance":self.balance(Account(address=pubkey)) if with_balance else 0,
           "unity":"egld"
         })
 
     return rc
 
 
-  def find_key(self,address):
-    if type(address)==Account: address=address.address.bech32()
+  def find_key(self,address_or_name):
+    if type(address_or_name)==Account:
+      address_or_name=address_or_name.address.bech32()
+
     for k in self.get_keys():
-      if k["pubkey"]==address or k["name"]==address:
+      if k["pubkey"]==address_or_name or k["name"]==address_or_name:
         return k
+
+    return None

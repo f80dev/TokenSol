@@ -20,7 +20,7 @@
 #fabrication: docker build -t f80hub/tokensol . && docker push f80hub/tokensol:latest
 #installation: docker rm -f tokensol && docker pull f80hub/tokensol:latest
 #Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp
-  #démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io ssl
+#démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io ssl
 
 #demarage sur windows :
 # du main docker run --restart=always -p 4242:4242 -v /root/temp:/temp -v /root/certs:/certs --name tokensol -ti f80hub/tokensol:latest python3 app.py 4242
@@ -40,7 +40,7 @@ RUN pip3 -v install Flask-Cors
 RUN pip3 -v install pyyaml
 RUN pip3 install --upgrade pip setuptools wheel
 RUN export PATH="$HOME/.local/bin:$PATH"
-RUN pip3 install pyopenssl
+RUN pip3 -v install pyopenssl==22.0.0
 RUN pip3 -v install solana
 RUN pip3 -v install base58
 RUN pip3 -v install ipfshttpclient
@@ -52,7 +52,7 @@ RUN pip3 -v install pillow
 RUN pip3 -v install py7zr
 RUN pip3 -v install ffmpeg-python
 RUN pip3 -v install pypng
-RUN pip3 -v install dnspython==2.0.0
+RUN pip3 -v install dnspython
 RUN pip3 -v install pymongo
 RUN pip3 -v install google-cloud-storage
 RUN pip3 -v install PyGithub
@@ -68,6 +68,9 @@ RUN pip3 -v install xmltodict
 RUN pip3 -v install pypng
 RUN pip3 -v install flask-jwt-extended
 RUN pip3 -v install apscheduler
+RUN pip3 -v install Flask-Caching
+RUN pip3 -v install requests-cache
+RUN pip3 -v install cryptography
 
 WORKDIR /
 RUN mkdir Solana
@@ -86,7 +89,6 @@ VOLUME /certs
 
 EXPOSE 4242
 
-COPY ./Fonts/*.ttf $APP_HOME/Fonts
 COPY *.py $APP_HOME
 COPY secret_key $APP_HOME
 COPY *.json $APP_HOME

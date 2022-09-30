@@ -73,6 +73,7 @@ export class CreatorComponent implements OnInit {
 
 
 
+
   refresh(){
     this.network.list_config().subscribe((r:any)=>{
       this.configs=r.files;
@@ -90,7 +91,9 @@ export class CreatorComponent implements OnInit {
 
 
   ngOnInit(): void {
-      if(environment.appli.indexOf("127.0.0.1")>-1 || environment.appli.indexOf("localhost")>-1)this.sel_platform="nfluent_local"
+      if(environment.appli.indexOf("127.0.0.1")>-1 || environment.appli.indexOf("localhost")>-1){
+        this.sel_platform="nfluent"
+      }
       this.layers=[];
       this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
       this.network.get_palettes().subscribe((p)=>{
@@ -124,16 +127,18 @@ export class CreatorComponent implements OnInit {
   }
 
 
-
+  //add_image_to_layer ajouter une image
   on_upload(evt: any,layer:Layer) {
+
     let body={
       filename:evt.filename,
       "content":evt.file,
       "type":evt.type
     }
 
-    if(body.filename.endsWith("yaml")){
-      this.network.generate_svg(evt.file).subscribe((r:any)=>{
+    if(body.filename.endsWith("svg")){
+      this.network.generate_svg(evt.file,this.text_to_add,layer.name).subscribe((r:any)=>{
+        layer.elements=[];
         for(let img of r)
           layer.elements.push({image:img});
       })
@@ -164,7 +169,9 @@ export class CreatorComponent implements OnInit {
           text:"",
           unique:false,
           indexed:true,
-          position:this.layers.length
+          position:this.layers.length,
+          translation: {x:0,y:0},
+          scale: {x:1,y:1}
         })
       }
     });
@@ -195,6 +202,7 @@ export class CreatorComponent implements OnInit {
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
 
+        this.data.sequence=this.text_to_add.split("|");
         if(this.operation!.sel_ope!.nftlive){
           this.data.operation=this.operation.sel_ope?.id;
         }
@@ -345,6 +353,8 @@ export class CreatorComponent implements OnInit {
         unique:false,
         indexed:true,
         position:l.position,
+        translation:{x:0,y:0},
+        scale:{x:1,y:1}
       }
 
       if(l["text"]){
@@ -479,6 +489,7 @@ export class CreatorComponent implements OnInit {
         for (let f of l.elements)
           f = "\"" + f + "\""
       }
+
       this.config_name = this.config_name.replace(".yaml.yaml", ".yaml");
       this.network.save_config_on_server(this.config_name, body).subscribe(() => {
         this.sel_config = this.config_name;
@@ -494,8 +505,7 @@ export class CreatorComponent implements OnInit {
 
   on_upload_config($event: any) {
     this.network.wait("Chargement du fichier de configuration");
-    let txt=atob($event.file.split("base64,")[1]);
-    this.network.save_config_on_server($event.filename,txt).subscribe(()=>{
+    this.network.save_config_on_server($event.filename,$event.file).subscribe(()=>{
       this.network.wait("");
       this.sel_config=$event.filename;
       this.load_config($event.filename);
@@ -528,11 +538,11 @@ export class CreatorComponent implements OnInit {
           }
       }).afterClosed().subscribe((end:number) => {
         let modele=this.text_to_add;
-        if(modele.indexOf("__idx__")==-1)modele=modele+"__idx__";
+        if(modele.indexOf("_idx_")==-1)modele=modele+"_idx_";
         this.text_to_add="";
         let nbr_digits=end.toString().length;
         for(let i=start;i<=end;i++){
-          this.text_to_add=this.text_to_add+modele.replace("__idx__",i.toString().padStart(nbr_digits,'0'))+"|";
+          this.text_to_add=this.text_to_add+modele.replace("_idx_",i.toString().padStart(nbr_digits,'0'))+"|";
         }
       });
     });
@@ -709,5 +719,44 @@ export class CreatorComponent implements OnInit {
       +"&size="+this.col_width+","+this.col_height+"&name="+this.filename_format
       +"&format=zip&limit="+this.limit+"&quality="
       +this.quality+"&data="+btoa(encodeURIComponent(JSON.stringify(this.data)));
+  }
+
+  transform(layer: Layer) {
+    if(!layer.translation)layer.translation={x:0,y:0};
+    if(!layer.scale)layer.scale={x:1,y:1};
+
+    this.dialog.open(PromptComponent,{
+      width: 'auto',data:
+        {
+          title: "Translation (x,y) ?",
+          type: "text",
+          result:layer.translation.x+","+layer.translation.y,
+          onlyConfirm:false,
+          lbl_ok:"Ok",
+          lbl_cancel:"Annuler"
+        }
+    }).afterClosed().subscribe((translation:string) => {
+      if(translation){
+        layer.translation.x=Number(translation.split(",")[0]);
+        layer.translation.y=Number(translation.split(",")[1]);
+      }
+      this.dialog.open(PromptComponent,{
+        width: 'auto',data:
+          {
+            title: "Echelle (x,y) ?",
+            type: "text",
+            result:layer.scale.x+","+layer.scale.y,
+            onlyConfirm:false,
+            lbl_ok:"Ok",
+            lbl_cancel:"Annuler"
+          }
+      }).afterClosed().subscribe((scale:string) => {
+        if (scale) {
+          layer.scale.x = Number(scale.split(",")[0]);
+          layer.scale.y = Number(scale.split(",")[1]);
+        }
+      })
+
+    })
   }
 }

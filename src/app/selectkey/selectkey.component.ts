@@ -42,8 +42,10 @@ export class SelectkeyComponent implements OnChanges {
 
   refresh($event: MatSelectChange) {
     this.user.key=$event.value;
-    localStorage.setItem("key",this.user.key?.name!);
-    this.onrefresh.emit($event);
+    this.user.init($event.value).then(()=>{
+      localStorage.setItem("key",this.user.key?.name!);
+      this.onrefresh.emit($event);
+    })
   }
 
   informe_copy() {
@@ -55,7 +57,7 @@ export class SelectkeyComponent implements OnChanges {
   }
 
   open_wallet() {
-    let url=environment.wallet+"/?param="+setParams({addr:this.selected?.pubkey});
+    let url=environment.wallet+"/wallet/?param="+setParams({addr:this.selected?.pubkey,toolbar:true});
     open(url,"wallet");
   }
 }

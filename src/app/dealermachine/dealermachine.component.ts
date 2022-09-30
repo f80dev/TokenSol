@@ -1,7 +1,7 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {$$, decrypt, getParams, hasWebcam, showMessage} from "../../tools";
+import {$$, decrypt, getParams, hasWebcam, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
@@ -100,7 +100,7 @@ export class DealermachineComponent implements OnInit {
 
 
   valide(addr:string) {
-    this.address=addr;
+    this.address=addr.replace("'","");
     addr=this.alias.transform(addr,"pubkey");
     if(this.nft!.address?.startsWith("db_")){
       $$("Ce token est issue d'une base de données, donc non miné");;
@@ -109,13 +109,12 @@ export class DealermachineComponent implements OnInit {
           this.message="";
           if(r.error.length>0){
             this.message=r.error+". ";
-            this.lost();
           } else {
             this.win();
           }
-        },(err)=>{
+        },(err:any)=>{
+          showError(this,err);
           this.message="";
-          this.lost();
         })
     }else{
         if(this.nft!.address!=""){
@@ -126,6 +125,9 @@ export class DealermachineComponent implements OnInit {
           this.network.transfer_to(mint_addr,addr,owner).subscribe(()=>{
             this.message="";
             showMessage(this,"Transféré");
+            this._location.back();
+          },(err:any)=>{
+            showMessage(this,"Impossible d'envoyer ce NFT");
             this._location.back();
           })
         }
@@ -146,7 +148,7 @@ export class DealermachineComponent implements OnInit {
   }
 
   validate() {
-    if(this.address && this.address.indexOf("@")==-1 && !this.network.isElrond(this.address)){
+    if(this.address && this.address.indexOf("@")==-1 && !this.address.startsWith('\'') && !this.network.isElrond(this.address)){
       showMessage(this,"Le service n'est compatible qu'avec les adresses elrond");
     } else {
       this.valide(this.address);

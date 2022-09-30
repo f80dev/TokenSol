@@ -6,6 +6,14 @@ export interface Collection {
   description: string | undefined
   owner : string | undefined
   price: number | undefined
+  type: string | undefined
+}
+
+interface Connexion {
+  wallet_connect: boolean | false
+  email: boolean | false
+  google: boolean | false
+  webcam: boolean | false
 }
 
 //Description de la structure d'une opération
@@ -57,6 +65,8 @@ export interface Operation {
       total: number
       per_user: number
     }
+
+    connexion: Connexion
   }
 
   validate:{
@@ -157,6 +167,12 @@ export interface Operation {
 
   nftlive: {
     collections:string[]
+    dynamic_fields:[{
+      name: string
+      maxlen: number | 30
+      value: string | ""
+      message: string | ""
+    }]
     nft_target: {
       collection: string
       name: string

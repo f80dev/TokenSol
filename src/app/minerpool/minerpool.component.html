@@ -1,0 +1,39 @@
+<div class="mainform">
+  <h1>Pool de minage des NFTs</h1>
+  <app-hourglass [message]="message"></app-hourglass>
+  <div id="cmdPanel" style="width: 100%;" *ngIf="message.length==0">
+    <button type="button" mat-raised-button mat-button
+            (click)="run()">
+      Déclencher le traitement
+    </button>
+
+
+    <br>
+
+  </div>
+  <table style="width: 96%;text-align: center;padding: 1%;margin:1%;" class="mat-elevation-z4">
+    <tr>
+      <th>Operation</th>
+      <th>Nom / Collection du NFT</th>
+      <th>Mineur</th>
+      <th>Destinataire</th>
+      <th>Réalisé le</th>
+      <th>Transaction</th>
+      <th>Commande</th>
+    </tr>
+    <tr *ngFor="let ask of asks">
+      <td>{{ask.operation}} </td>
+      <td>{{ask.nft.name || ask.nft.collection.id}} </td>
+      <td>{{ask.nft.creators[0] | alias}}</td>
+      <td>{{ask.nft.owner | alias}} </td>
+      <td>{{ask.dtWork}}</td>
+      <td></td>
+      <td>
+        <button type="button" mat-raised-button mat-button
+                (click)="cancel(ask)">
+          Annuler
+        </button>
+      </td>
+    </tr>
+  </table>
+</div>

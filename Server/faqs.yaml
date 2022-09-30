@@ -57,7 +57,38 @@ content:
       <li><a href='https://thenounproject.com/'>Noun Project</a>, plus spécialisé dans l'iconographie</li>
       </ul>
       <br>
-
     "
+
+
+  - index: add_nfluent_component
+    title: Comment ajouter le composant d'authentification nfluent à mon application angular
+    order: 0
+    format: html
+    content:
+      "
+      Pour ajouter un composant NFLuent à son projet, la procédure est la suivante:
+      <ul>
+      <li>ajouter les services network, user</li>
+      <li>ajouter la librairie tools.ts</li>
+      <li>déclarer le module httpclient</li>
+      <li>ajouter la déclaration d'un GOOGLE_CLIENT_ID récupérable <a href='https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid'>ici</a></li>
+      <li>installer les librairies :
+      <ul>
+        <li>npm install @elrondnetwork/erdjs</li>
+        <li>npm install @elrondnetwork/erdjs-wallet-connect-provider</li>
+        <li>npm install @elrondnetwork/erdjs-web-wallet-provider</li>
+        <li>npm install angularx-social-login --force</li>
+        <li>npm i --save angular-sol-wallets --force</li>
+        <li>npm install --save @solana/spl-token @solana/web3.js</li>
+        <li>npm install --save-dev node-fetch</li>
+
+      </ul>
+      <li>ajouter un champs 'server' et un champs 'local' au fichier environnement </li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      </ul>
+      "
 
 

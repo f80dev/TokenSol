@@ -109,4 +109,8 @@ export class KeysComponent implements OnInit {
   open_extra_wallet(key: CryptoKey) {
     open("https://wallet.nfluent.io/?param="+setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network}))
   }
+
+  open_collections(key: CryptoKey) {
+    this.router.navigate(["collections"],{queryParams:{owner:key.pubkey}});
+  }
 }

@@ -76,6 +76,8 @@ import {ClipboardModule} from "@angular/cdk/clipboard";
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 import { IntroComponent } from './intro/intro.component';
 import { LoginComponent } from './login/login.component';
+import { CollectionsComponent } from './collections/collections.component';
+import { MinerpoolComponent } from './minerpool/minerpool.component';
 
 
 @NgModule({
@@ -117,7 +119,9 @@ import { LoginComponent } from './login/login.component';
     AuthentComponent,
     PageNotFoundComponent,
     IntroComponent,
-    LoginComponent
+    LoginComponent,
+    CollectionsComponent,
+    MinerpoolComponent
   ],
     imports: [
         BrowserModule,

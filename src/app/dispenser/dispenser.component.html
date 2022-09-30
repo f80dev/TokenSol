@@ -4,7 +4,6 @@
 
   <app-hourglass [message]="message"></app-hourglass>
 
-
   <div *ngIf="message.length==0" style="width: 100%;font-size: 10px;">
     <br>Cliquez sur le NFT à envoyer<br>
     <div *ngFor="let nft of nfts" style="display: inline-block;margin:10px;cursor: pointer;line-height: 105%;" (click)="send(nft)" [style.opacity]="nft.style?.opacity">

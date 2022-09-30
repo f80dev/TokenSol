@@ -56,7 +56,7 @@
         <a [href]="key.explorer">{{key.pubkey.substring(0,5)+' ... '+key.pubkey.substring(key.pubkey.length-5)}}</a>
       </td>
       <td>
-        <img [src]="key.qrcode" style="width: 100px;cursor: pointer;" title="cliquer pour copier l'adresse" [cdkCopyToClipboard]="key.pubkey">
+        <img *ngIf="key.qrcode!.length>0" [src]="key.qrcode" style="width: 100px;cursor: pointer;" title="cliquer pour copier l'adresse" [cdkCopyToClipboard]="key.pubkey">
       </td>
       <td>
         <button type="button" mat-raised-button mat-button (click)="del_key(key.name)">
@@ -70,6 +70,9 @@
         </button>
         <button type="button" mat-raised-button mat-button (click)="open_extra_wallet(key)">
           Extra Wallet
+        </button>
+        <button type="button" mat-raised-button mat-button (click)="open_collections(key)">
+          Collections
         </button>
       </td>
       <td></td>

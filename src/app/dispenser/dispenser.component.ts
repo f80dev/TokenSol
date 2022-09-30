@@ -47,7 +47,7 @@ export class DispenserComponent implements OnInit {
               nft.style={opacity:0.3};
             }
             if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
-            if(operation.dispenser && nft.marketplace.price==0 && operation.dispenser.collections.indexOf(nft.collection["id"])>-1)
+            if(operation.dispenser && nft.marketplace.price==0 && (!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1))
               this.nfts.push(nft);
           }
         });

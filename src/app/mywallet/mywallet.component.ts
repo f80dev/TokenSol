@@ -11,6 +11,7 @@ import {Location} from "@angular/common";
 import {NFT} from "../../nft";
 import {Collection, Operation} from "../../operation";
 import {UserService} from "../user.service";
+import {Clipboard} from "@angular/cdk/clipboard";
 
 //Test : http://localhost:4200/wallet?addr=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr&toolbar=false
 @Component({
@@ -45,6 +46,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   collections:Collection[]=[{
     description: undefined,
     id: "*",
+    type:"NFT",
     owner: undefined,
     price: undefined,
     visual: undefined,
@@ -56,6 +58,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   constructor(public routes:ActivatedRoute,
               public toast:MatSnackBar,
+              public clipboard:Clipboard,
               public router:Router,
               public user:UserService,
               public _location:Location,
@@ -97,12 +100,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
     if(index==0 && this.nfts.length==0){
       this.message="Chargement NFTs";
 
-      for(let arg of [[0,5],[6,20],[21,50],[51,100],[101,200]]){
-        let offset=arg[0];
-        let limit=arg[1];
-        setTimeout(()=>{
-          this.network.get_tokens_from("owner",this.user.addr,limit,false,null,offset,this.network.network).then((r:NFT[])=>{
-
+          this.network.get_tokens_from("owner",this.user.addr,250,true,null,0,this.network.network).then((r:NFT[])=>{
             for(let nft of r){
               if(this.collections.map((x:Collection)=>{return x.name}).indexOf(nft.collection["name"])==-1)this.collections.push(nft.collection);
               if(this.sel_collection.id=="*" || nft.collection.name==this.sel_collection.name){
@@ -110,8 +108,8 @@ export class MywalletComponent implements OnInit,OnDestroy {
                 this.nfts.push(nft);
               }
             }
+
             if(r.length==0) {
-              if (arg[0] == 0){
                 showMessage(this, "Vous n'avez aucun NFT pour l'instant")
                 this.tab_title="Vos NFTs";
               }
@@ -123,11 +121,10 @@ export class MywalletComponent implements OnInit,OnDestroy {
                 }
               }
 
-            }
           }).catch(err=>{showError(this,err)});
-        },offset*500);
+
       }
-    }
+
     if(index==2){
       this.open_nftlive();
     }
@@ -144,6 +141,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
 
+  //Envoi la photo pour fabrication de la collection
   handleImage(event: any) {
     let rc=event;
     if(!rc.startsWith('data:'))rc="data:image/jpeg;base64,"+rc;
@@ -158,6 +156,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
           this.sel_ope.nftlive.nft_target.dimensions,
           this.sel_ope.nftlive.nft_target.quality,
           this.attributes,
+          this.sel_ope.nftlive.dynamic_fields,
           {photo:rc}).subscribe((r:any)=>{
           this.message="";
           this.image_for_token="";
@@ -182,7 +181,8 @@ export class MywalletComponent implements OnInit,OnDestroy {
         visual: undefined,
         description: undefined,
         owner: undefined,
-        price: undefined
+        price: undefined,
+        type:"NFT"
       };
 
       let token:NFT= {
@@ -228,6 +228,8 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
   show_elrond_addr() {
+    showMessage(this,"Votre adresse est disponible dans le presse-papier");
+    this.clipboard.copy(this.user.addr);
     this.network.qrcode(this.user.addr,"json").subscribe((result:any)=>{
       this.qrcode_addr=result.qrcode;
     })
@@ -271,5 +273,19 @@ export class MywalletComponent implements OnInit,OnDestroy {
     this.network.save_privacy(this.user.addr,this.secret).subscribe(()=>{
       this.user.strong=false;
     })
+  }
+
+  on_authent($event: any) {
+    if($event.addr==this.user.addr){
+      showMessage(this,"Vous êtes maintenant pleinement connecté à votre wallet");
+      this.user.strong=true;
+    } else {
+      showMessage(this,"Ce wallet ne correspond pas à votre wallet actuelle");
+    }
+  }
+
+  on_disconnect(){
+    showMessage(this,"Déconnexion");
+    this.user.strong=false;
   }
 }

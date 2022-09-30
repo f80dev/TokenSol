@@ -7,8 +7,9 @@
 
   <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br>
 
-  <div style="width: 300px;display: inline-block;">
-    <app-upload-file (uploaded)="onFileSelected($event)" extensions=".webp,.png,.gif,.jpeg,.jpg,.json,.zip">Charger des visuels</app-upload-file>
+  <div style="width: 300px;display: inline-block;text-align: center;margin-top: 20px;">
+    <app-upload-file (uploaded)="onFileSelected($event)" width="200px" extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels</app-upload-file><br>
+<!--    <app-upload-file (uploaded)="onCollectionSelected($event)" width="200px" extensions=".zip,.7z">Charger une collection</app-upload-file><br>-->
   </div>
 
   <mat-form-field style="fontsize:small">
@@ -24,9 +25,26 @@
 
   <div style="display: inline-block">
 
-    <mat-form-field appearance="fill" style="max-width: 120px">
+    <mat-form-field style="fontsize:small">
+      <mat-label>Collection à utiliser</mat-label>
+      <mat-select [(value)]="sel_collection">
+        <mat-option *ngFor="let collection of collections" [value]="collection">
+          {{collection.name}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="open_collections()">
+      Mes collections
+    </button>
+
+
+
+    <mat-form-field appearance="fill" style="max-width: 120px" *ngIf="collection">
       <mat-label>Collection</mat-label>
-      <input matInput type="text" max="40" [(ngModel)]="collection" >
+      <input matInput type="text" max="40" [(ngModel)]="collection!.name">
     </mat-form-field>
 
     <mat-form-field appearance="fill" style="max-width: 80px">
@@ -123,9 +141,9 @@
             <td>Nom</td>
             <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.name"></td>
           </tr>
-          <tr *ngIf="!network.isElrond()">
+          <tr >
             <td>Description</td>
-            <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.description"></td>
+            <td><textarea matInput class="mat-elevation-z2" [(ngModel)]="token.description"></textarea></td>
           </tr>
           <tr *ngIf="!network.isElrond()">
             <td>Symbole</td>
@@ -151,7 +169,7 @@
       <td style="text-align: left;">
         <ul>
           <li *ngFor="let a of token.attributes" (click)="edit_attribute(a)" style="cursor: pointer;">
-            <strong>{{a['trait_type']}}:</strong> {{a.value}}
+            <strong *ngIf="a['trait_type'].length>0">{{a['trait_type']}}:</strong> {{a.value}}
           </li>
         </ul>
       </td>

@@ -5,6 +5,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
 import {Location} from "@angular/common";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {Body} from "node-fetch";
 
 @Component({
   selector: 'app-candymachine',
@@ -15,6 +16,7 @@ export class CandymachineComponent implements OnInit {
   operation: Operation | null=null;
   showEnd: boolean=false;
   collections: Collection[]=[];
+
 
   constructor(
     public routes:ActivatedRoute,
@@ -30,12 +32,11 @@ export class CandymachineComponent implements OnInit {
       this.network.get_operations(params["ope"]).subscribe((operation:any)=>{
         this.operation=operation;
         for(let col of operation.collections){
-          if(operation.candymachine.collections.indexOf(col.name)>-1){
+          if(operation.candymachine.collections.indexOf(col.id)>-1){
             this.collections.push(col);
           }
         }
       },(err:any)=>{
-        debugger
         showError(this,err);
       })
     }).catch(()=>{
@@ -46,7 +47,14 @@ export class CandymachineComponent implements OnInit {
 
   authent($event: any) {
     if(this.operation?.network){
-      this.network.add_user_for_nft($event,this.operation?.network,this.operation!.id,this.operation?.candymachine.collections).subscribe(()=>{
+      let body={
+        owner:$event.addr,
+        network:this.operation?.network,
+        miner: this.operation.lazy_mining.miner,
+        operation:this.operation.id,
+        collection:this.operation.candymachine.collections[0]
+      }
+      this.network.add_user_for_nft(body).subscribe(()=>{
         this.showEnd=true;
       })
     }
@@ -55,4 +63,6 @@ export class CandymachineComponent implements OnInit {
   back() {
     this._location.back();
   }
+
+
 }

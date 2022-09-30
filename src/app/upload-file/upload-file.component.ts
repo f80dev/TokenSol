@@ -15,7 +15,9 @@ export class UploadFileComponent implements OnInit {
   @Input("title") title:string="";
   @Input("icon") icon:string="";
   @Input("send_file") send_file:boolean=false;
+  @Input() width:string="fit-content";
   @Input("encode") encode=true;
+  @Input() format="binary";
   @Input("maxsize") maxsize:number=10000000000000;
   @Input("show_cancel") show_cancel:boolean=false;
   @Output("uploaded") onupload:EventEmitter<any>=new EventEmitter();
@@ -44,18 +46,30 @@ export class UploadFileComponent implements OnInit {
           let content = file.reader.result;
           this.message = "";
           if(!this.encode)content=atob(content);
-          this.onupload.emit({
-            filename:file.name,
-            file:content,
-            type:content.split("data:")[1].split(";")[0]
-          })
+          if(this.format=="text"){
+            this.onupload.emit({
+              filename:file.name,
+              file:content,
+              type:"plain/txt"
+            })
+          }else{
+            this.onupload.emit({
+              filename:file.name,
+              file:content,
+              type:content.split("data:")[1].split(";")[0]
+            })
+          }
+
         }
 
         if(this.send_file){
           this.onupload.emit({filename:file.name,file:file})
         } else {
           this.message = "Chargement du fichier";
-          file.reader.readAsDataURL(file);
+          if(this.format=="binary")
+            file.reader.readAsDataURL(file);
+          else
+            file.reader.readAsText(file,"utf-8")
         }
 
       } else {

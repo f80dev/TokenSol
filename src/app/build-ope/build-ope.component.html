@@ -25,7 +25,7 @@
           Importer une opération<br>depuis votre poste<br>
           <app-upload-file (uploaded)="upload_operation($event)"
                            title="Ajouter une opération"
-                           style="margin: 10px"
+                           style="margin: 10px" format="text"
                            extensions=".yaml">
             Importer
           </app-upload-file>
@@ -100,8 +100,8 @@
             </td>
             <td>
               <ul>
-                <li *ngFor="let k of collection_keys">
-                  {{k}}: {{collections[k]}}
+                <li *ngFor="let k of collection_keys" [cdkCopyToClipboard]="k" style="cursor: copy;">
+                  {{k}} : {{collections[k]}}
                 </li>
               </ul>
             </td>

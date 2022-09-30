@@ -1,3 +1,5 @@
+
+
 import { Injectable } from '@angular/core';
 import {
   clusterApiUrl,
@@ -9,20 +11,15 @@ import {
 } from "@solana/web3.js";
 import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
-import {TokenListProvider} from "@solana/spl-token-registry";
 import {HttpClient, HttpHeaders} from "@angular/common/http";
-import {$$, CryptoKey, encrypt, words} from "../tools";
+import {$$, encrypt, words} from "../tools";
 import {environment} from "../environments/environment";
 
 import {retry, timeout} from "rxjs";
-import {Operation} from "../operation";
+import {Collection, Operation} from "../operation";
 import {NFT, SolanaToken, SplTokenInfo} from "../nft";
 import {Layer} from "../create";
 
-export enum type_addr {
-  "owner",
-  "miner"
-}
 
 @Injectable({
   providedIn: 'root'
@@ -251,74 +248,71 @@ export class NetworkService {
   }
 
 
-
-
-
   isMain() {
-    return this._network=="mainnet";
+    return this._network.indexOf("mainnet")>-1;
   }
 
 
-  all_nfts() : Promise<any[]> {
-    return new Promise((resolve,reject) => {
-      new TokenListProvider().resolve().then((tokens) => {
-        const tokenList = tokens.filterByClusterSlug(this._network).getList();
-        resolve(tokenList);
-      }).catch(err => {
-        reject(err);
-      });
-    });
-  }
-
-
-  build_token_from_ftx(t:any) : SolanaToken {
-    let l_attributes=t.attributesList;
-    l_attributes.push({trait_type:"redeemable",value:t.redeemable});
-    l_attributes.push({trait_type:"redeemed",value:t.redeemed});
-    let token:SolanaToken={
-      splMintInfo: undefined,
-      splTokenInfo: undefined,
-      mint:t.solMintAddress,
-      network:this.network,
-      address:t.solMintAddress,
-      metadataPDA:{},
-      metadataOffchain: {
-        seller_fee_basis_points: t.royaltyFeeRate*100,
-        issuer:t.issuer,
-        attributes:l_attributes,
-        collection: t.collection,
-        name: t.name,
-        description: t.description,
-        image: t.imageUrl,
-        external_url: "",
-        properties: {
-          files:[
-            {uri:t.imageUrl,type:""},{uri:t.animationUrl,type:""}
-          ],
-          caterogy:"",
-          creators:[]
-        },
-      },
-      metadataOnchain:{
-        type:"nft",
-        updateAuthority:"",
-        mint:t.solMintAddress,
-        key:t.id,
-        data:{
-          symbol:"",
-          name:t.name,
-          uri:"",
-          sellerFeeBasisPoints:t.royaltyFeeRate*100,
-          creators:[]
-        },
-        isMutable:0,
-        primarySaleHappened:0
-      },
-      search:{collection:t.collection,metadata:""}
-    }
-    return token;
-  }
-
+  // all_nfts() : Promise<any[]> {
+  //   return new Promise((resolve,reject) => {
+  //     new TokenListProvider().resolve().then((tokens:any) => {
+  //       const tokenList = tokens.filterByClusterSlug(this._network).getList();
+  //       resolve(tokenList);
+  //     }).catch((err:any) => {
+  //       reject(err);
+  //     });
+  //   });
+  // }
+  //
+  //
+  // build_token_from_ftx(t:any) : SolanaToken {
+  //   let l_attributes=t.attributesList;
+  //   l_attributes.push({trait_type:"redeemable",value:t.redeemable});
+  //   l_attributes.push({trait_type:"redeemed",value:t.redeemed});
+  //   let token:SolanaToken={
+  //     splMintInfo: undefined,
+  //     splTokenInfo: undefined,
+  //     mint:t.solMintAddress,
+  //     network:this.network,
+  //     address:t.solMintAddress,
+  //     metadataPDA:{},
+  //     metadataOffchain: {
+  //       seller_fee_basis_points: t.royaltyFeeRate*100,
+  //       issuer:t.issuer,
+  //       attributes:l_attributes,
+  //       collection: t.collection,
+  //       name: t.name,
+  //       description: t.description,
+  //       image: t.imageUrl,
+  //       external_url: "",
+  //       properties: {
+  //         files:[
+  //           {uri:t.imageUrl,type:""},{uri:t.animationUrl,type:""}
+  //         ],
+  //         caterogy:"",
+  //         creators:[]
+  //       },
+  //     },
+  //     metadataOnchain:{
+  //       type:"nft",
+  //       updateAuthority:"",
+  //       mint:t.solMintAddress,
+  //       key:t.id,
+  //       data:{
+  //         symbol:"",
+  //         name:t.name,
+  //         uri:"",
+  //         sellerFeeBasisPoints:t.royaltyFeeRate*100,
+  //         creators:[]
+  //       },
+  //       isMutable:0,
+  //       primarySaleHappened:0
+  //     },
+  //     search:{collection:t.collection,metadata:""}
+  //   }
+  //   return token;
+  // }
+  //
 
   get_tokens_from(type_addr:string,addr:string,limit=100,short=false,filter:any=null,offset=0,network="elrond-devnet") : Promise<any[]> {
 
@@ -350,7 +344,7 @@ export class NetworkService {
           // }
 
           if(type_addr=="owner"){
-            this.httpClient.get(environment.server+"/api/nfts/?limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
+            this.httpClient.get(environment.server+"/api/nfts/?with_attr="+(!short)+"&limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
               resolve(r);
             })
 
@@ -392,6 +386,8 @@ export class NetworkService {
         if(this.network.indexOf("elrond")>-1){
           this.httpClient.get(environment.server+"/api/nfts/?limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
             resolve(r);
+          },(err:any)=>{
+            reject(err);
           })
         }
 
@@ -511,7 +507,11 @@ export class NetworkService {
 
   //recoit un objet aux propriétés filename & content
   upload(file: any ,platform="nftstorage",type="image/png"){
-    return this.httpClient.post(environment.server+"/api/upload/?platform="+platform+"&type="+type,file);
+    if(platform!="nfluent"){
+      return this.httpClient.post(environment.server+"/api/upload/?platform="+platform+"&type="+type,file);
+    }else{
+      return this.httpClient.post("https://server.f80lab.com:4242/api/upload/?platform="+platform+"&type="+type,file);
+    }
   }
 
   remove_image(name:string){
@@ -523,7 +523,7 @@ export class NetworkService {
   }
 
   save_config_on_server(name:string,body:any) {
-    return this.httpClient.post(environment.server+"/api/save_config/"+encodeURI(name)+"/",body);
+    return this.httpClient.post(environment.server+"/api/configs/"+encodeURIComponent(name)+"/",{filename:name,file:body});
   }
 
   load_config(name:string) {
@@ -644,7 +644,13 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/transfer_to/"+mint_addr+"/"+to_addr+"/"+owner+"?network="+network);
   }
 
-  generate_svg(data:string) {
+  generate_svg(file_content:string,text_to_add:string,layer_name:string) {
+    let data={
+      file:file_content,
+      sequence: text_to_add.split("|"),
+      layer:layer_name,
+      server:environment.server+"/api/images"
+    }
     return this.httpClient.post(environment.server+"/api/generate_svg/",data);
   }
 
@@ -675,13 +681,8 @@ export class NetworkService {
     return this.httpClient.get<any>(environment.server+"/api/nft/"+owner+"/"+address+"?network="+network);
   }
 
-  add_user_for_nft(address:string,network:string,operation_id:string,collections:string[]=[]) {
-    return this.httpClient.post(environment.server+"/api/add_user_for_nft/",{
-      address:address,
-      network:network,
-      operation_id:operation_id,
-      collections:collections
-    });
+  add_user_for_nft(body:any) {
+    return this.httpClient.post(environment.server+"/api/add_user_for_nft/",body);
   }
 
   is_beta() {
@@ -696,11 +697,12 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/nftlive_access/"+addr+"/?network="+network);
   }
 
-  send_photo_for_nftlive(limit:number,conf_id:string, dimensions:string,quality:number,note:string,body: any) {
+  send_photo_for_nftlive(limit:number,conf_id:string, dimensions:string,quality:number,note:string,dynamic_fields:any[], body: any) {
     body["limit"]=limit
     body["dimensions"]=dimensions
     body["note"]=note;
     body["quality"]=quality
+    body["dynamic_fields"]=dynamic_fields
     return this.httpClient.post(environment.server+"/api/send_photo_for_nftlive/"+conf_id+"/",body)
   }
 
@@ -720,5 +722,30 @@ export class NetworkService {
 
   save_privacy(addr: string, secret: string) {
     return this.httpClient.post(environment.server+"/api/save_privacy/",{addr:addr,secret:encrypt(secret)});
+  }
+
+  extract_zip(file:any) {
+    return this.httpClient.post(environment.server+"/api/extract_zip/",file);
+  }
+
+  get_collections(owner: string,network="") {
+    if(network.length==0)network=this.network;
+    return this.httpClient.get(environment.server+"/api/collections/"+owner+"/?network="+network);
+  }
+
+  create_collection(owner: string, new_collection: Collection) {
+    return this.httpClient.post(environment.server+"/api/create_collection/"+owner+"/?network="+this.network,new_collection);
+  }
+
+  get_minerpool() {
+    return this.httpClient.get(environment.server+"/api/minerpool/");
+  }
+
+  run_mintpool(limit: number=3) {
+    return this.httpClient.get(environment.server+"/api/async_mint/"+limit+"/");
+  }
+
+  cancel_mintpool_treatment(id: string) {
+    return this.httpClient.delete(environment.server+"/api/minerpool/"+id+"/");
   }
 }

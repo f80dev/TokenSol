@@ -16,11 +16,10 @@ export class MetabossService {
     private httpClient : HttpClient,
     private user:UserService,
     private network:NetworkService
-  )
-  {}
+  ) {}
 
   //http://localhost:4200/keys
-  init_keys(network="elrond-devnet",with_balance=true) {
+  init_keys(network="elrond-devnet",with_balance=false) {
     return new Promise((resolve, reject) => {
       this.network.wait("Chargement des clés");
       if(this.network.isElrond() || this.network.isSolana()){

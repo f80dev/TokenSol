@@ -47,10 +47,13 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
 
     setTimeout(()=>{
+
       getParams(this.routes).then((params:any)=>{
         if(getBrowserName()=="firefox"){
           showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
         }
+
+        this.metaboss.init_keys();
 
         this.network_service.version=params["version"] || "main";
         if(params.hasOwnProperty("toolbar")){

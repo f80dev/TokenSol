@@ -1,7 +1,14 @@
 <div style="width: 100%;text-align: center;position: relative;height: 100%;">
 
 
-  <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" *ngIf="!strong">
+  <mat-form-field appearance="fill" style="width:300px;font-size: large;" *ngIf="showAccesCode">
+    <mat-label>Votre code d'accès</mat-label>
+    <input matInput type="number" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
+  </mat-form-field>
+  <br>
+
+
+  <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" *ngIf="showAddress">
     <mat-label>{{intro_message}}</mat-label>
     <input matInput type="text" [(ngModel)]="address" (ngModelChange)="update_address()">
     <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
@@ -9,14 +16,23 @@
   </mat-form-field>
 
 
+  <app-scanner *ngIf="showWebcam" [size]="200" (flash)="on_flash($event)"></app-scanner>
+  <div *ngIf="showDynamicToken">
+    <button type="button" color="primary"
+            mat-raised-button
+            mat-button
+            (click)="update_dynamic_token()" >
+      Coller le token
+    </button>
+  </div>
+
 
   <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >
+    <div *ngIf="showWalletConnect">
+      <h3>Connecter votre wallet via Wallet Connect</h3>
+      <img [src]="qrcode" style="max-width: 150px;width: 80%;">
+    </div>
 
-        <h3>Wallet connect</h3>
-        <img [src]="qrcode" style="max-width: 250px;width: 80%;">
-        <br>
-
-    <br><br>
     <div *ngIf="showNetwork">
       Se connecter avec votre wallet sur<br>
       <button type="button" mat-raised-button mat-button
@@ -33,21 +49,17 @@
 
     </div>
 
-    <button type="button" color="primary"  mat-raised-button mat-button (click)="connect('google')" *ngIf="showGoogle">
-      Google
+    <button type="button"  mat-raised-button mat-button (click)="connect('google')"
+            title="Authentification simplifiée pour les utisateurs de gmail"
+            *ngIf="showGoogle">
+      S'authentifier via Google
     </button>
 
   </div>
 
-  <mat-form-field appearance="fill" style="width:300px;font-size: large;" *ngIf="showAccesCode">
-    <mat-label>Votre code d'accès</mat-label>
-    <input matInput type="number" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
-  </mat-form-field>
 
 
-  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;" *ngIf="!strong">
-
-
+  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;">
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter"
             (click)="oncancel.emit()">
@@ -56,7 +68,7 @@
 
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter" color="primary"
-            [disabled]="user.addr.length<20 && user.addr.indexOf('@')==-1"
+            [disabled]="address.length<20 && user.addr.indexOf('@')==-1"
             (click)="validate()">
       Valider
     </button>

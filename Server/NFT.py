@@ -1,5 +1,10 @@
 import json
 
+from fontTools.ttLib import TTFont
+from reportlab.pdfbase import pdfmetrics
+
+from Tools import get_fonts
+
 
 class NFT:
   collection:dict
@@ -56,6 +61,8 @@ class NFT:
       self.network=object["network"]
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
+
+
 
   def toJson(self):
     return json.dumps(self, default=lambda o: o.__dict__,sort_keys=True, indent=4)

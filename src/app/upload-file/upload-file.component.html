@@ -1,6 +1,7 @@
 <input #csvInput [hidden]="true"
        type="file" onclick="this.value=null"
        [multiple]="true"
+       [style.width]="width"
        (change)="import($event)"
        [accept]="extensions"/>
 
@@ -10,7 +11,8 @@
 </mat-icon>
 
 <button mat-raised-button
-        mat-button style="width: fit-content;display: inline-block;"
+        mat-button style="display: inline-block;"
+        [style.width]="width"
         *ngIf="icon.length==0"
         [title]="title"
         (click)="csvInput.click()">
