@@ -125,10 +125,9 @@
         </td>
 
         <td style="width:150px">
-          <app-upload-file (uploaded)="on_upload($event,layer)"
+          <app-upload-file (uploaded)="on_upload($event,layer)" icon="image"
                            title="Chargée une image depuis votre ordinateur"
                            extensions=".png,.psd,.webp,.gif,.jpg,.svg,.yaml">
-            <mat-icon>image</mat-icon>
           </app-upload-file>
 
           <button style="width: fit-content" mat-icon-button mat-button
@@ -156,7 +155,6 @@
                   (click)="paste_picture(layer)">
             <mat-icon>content_paste</mat-icon>
           </button>
-
 
           <button style="width: fit-content" mat-icon-button mat-button
                   title="Générer des copies par variation de couleurs"
@@ -332,9 +330,9 @@
     <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
     <table>
       <tr>
-        <th>Titre & Description</th>
-        <th>Symbole</th>
-        <th>Collections</th>
+        <th>Titre</th>
+        <th>Description</th>
+        <th *ngIf="!network.isElrond()">Symbole</th>
         <th>Propriétés / Attributs</th>
       </tr>
       <tr>
@@ -343,12 +341,11 @@
             <mat-label>Titre / Nom</mat-label>
             <input matInput type="text" [(ngModel)]="data.title">
           </mat-form-field>
-          /
-          <mat-form-field appearance="fill" style="max-width: 200px">
-            <mat-label>Description</mat-label>
-            <input matInput type="text" [(ngModel)]="data.description">
-          </mat-form-field>
-
+        </td>
+        <td>
+           <textarea class="mat-elevation-z2"
+                     title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
+                     matInput [(ngModel)]="data.description" rows="5" cols="40"></textarea>
         </td>
         <td>
           <mat-form-field appearance="fill" style="max-width: 200px" *ngIf="!network.isElrond()">
@@ -357,12 +354,6 @@
           </mat-form-field>
         </td>
 
-        <td>
-          <mat-form-field appearance="fill" style="max-width: 100px">
-            <mat-label>Nom</mat-label>
-            <input matInput type="text" [(ngModel)]="data.collection">
-          </mat-form-field>
-        </td>
         <td>
           <textarea class="mat-elevation-z2"
                     title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"

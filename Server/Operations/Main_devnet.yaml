@@ -111,6 +111,12 @@ data:
         - "paul"
 
 
+#Section utilisée pour personnalisé les messages envoyés aux clients
+contact:
+  create_account_email:       #désigne le mail envoyer à la création de compte
+    preambule: ""
+    epilogue: ""
+
 
 #Fonctionnement de la section Validate _____________________________________________________________________________________________________________________________
 #Section responsable du process de validation des NFTs

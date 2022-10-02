@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PromptComponent } from './prompt.component';
+import {MAT_DIALOG_DATA, MatDialogModule, MatDialogRef} from "@angular/material/dialog";
 
 describe('PromptComponent', () => {
   let component: PromptComponent;
@@ -8,7 +9,12 @@ describe('PromptComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ PromptComponent ]
+      declarations: [ PromptComponent ],
+      imports: [MatDialogModule],
+      providers: [
+        {provide: MatDialogRef, useValue: {}},
+        {provide: MAT_DIALOG_DATA,useValue: []}
+      ]
     })
     .compileComponents();
   });

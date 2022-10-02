@@ -31,22 +31,18 @@ export class CollectionsComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.routes.queryParams.subscribe((params:any)=>{
-      if(params.hasOwnProperty("owner")){
-        this.user.init(params["owner"]);
-      } else {
-        this.refresh(this.user.addr);
-      }
-    })
+      this.routes.queryParams.subscribe((params:any)=>{
+        if(params.hasOwnProperty("owner")){
+          this.addr=params["owner"]
+          this.user.init(this.addr);
+        } else {
+          this.addr=this.user.addr;
+        }
+        this.refresh(this.addr)
+      })
   }
 
   refresh(addr=""){
-    if(addr==""){
-      addr=this.user.addr;
-    }
-    else {
-      this.addr=addr;
-    }
     this.network.get_collections(addr).subscribe((r:any)=>{
       this.user.collections=r;
     })
@@ -67,5 +63,9 @@ export class CollectionsComponent implements OnInit {
       this.user.collections.push(r.collection);
       showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
     })
+  }
+
+  open_inspire() {
+    open("https://"+(this.network.isMain() ? "" : "devnet.")+"inspire.art/"+this.addr+"/collections");
   }
 }

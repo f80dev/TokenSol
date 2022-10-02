@@ -32,8 +32,8 @@ export class ManageComponent implements OnInit {
     public routes:ActivatedRoute,
     public _location:Location,
     public toast:MatSnackBar,
-    private filterPipe:FilterPipe,
-    private alias_pipe:AliasPipe
+    public filterPipe:FilterPipe,
+    public alias_pipe:AliasPipe
   ) {}
 
 

@@ -64,10 +64,7 @@ export class UserService {
           reject(err);
         });
       });
-
-
     });
-
   }
 
   str_to_hex(text:string){

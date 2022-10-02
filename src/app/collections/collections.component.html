@@ -1,5 +1,5 @@
 <div class="mainform">
-  <h1>Gestion des collections de {{user.addr | alias}}</h1>
+  <h1>Gestion des collections de {{addr | alias}}</h1>
 
   <mat-form-field appearance="fill" style="width: 200px">
     <mat-label>Nom de la collection</mat-label>
@@ -15,6 +15,11 @@
   <button type="button" mat-raised-button mat-button (click)="create_collection()">
     Fabriquer
   </button>
+
+  <button type="button" mat-raised-button mat-button (click)="open_inspire()">
+    Inspire.ART
+  </button>
+
   <br><br>
 
   <table style="width: 96%;text-align: center;padding: 1%;margin:1%;" class="mat-elevation-z4">
@@ -27,7 +32,7 @@
     </tr>
     <tr *ngFor="let col of user.collections">
       <td>{{col.name}}</td>
-      <td>{{col.id}}</td>
+      <td ><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
       <td>{{col.description}}</td>
       <td></td>
       <td>

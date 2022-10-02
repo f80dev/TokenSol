@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { MinerpoolComponent } from './minerpool.component';
+import {HttpClientModule} from "@angular/common/http";
 
 describe('MinerpoolComponent', () => {
   let component: MinerpoolComponent;
@@ -8,7 +9,8 @@ describe('MinerpoolComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ MinerpoolComponent ]
+      declarations: [ MinerpoolComponent ],
+      imports: [HttpClientModule]
     })
     .compileComponents();
 

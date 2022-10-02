@@ -1,5 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import {ActivatedRoute} from "@angular/router";
+import {HttpClientModule} from "@angular/common/http";
+import {RouterTestingModule} from "@angular/router/testing";
+import {MatSnackBarModule} from "@angular/material/snack-bar";
+import {AliasPipe} from "./alias.pipe";
 
 describe('AppComponent', () => {
   beforeEach(async () => {
@@ -7,6 +12,7 @@ describe('AppComponent', () => {
       declarations: [
         AppComponent
       ],
+      imports: [HttpClientModule,RouterTestingModule,MatSnackBarModule]
     }).compileComponents();
   });
 
@@ -16,16 +22,6 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have as title 'NFTCalvi'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('NFTCalvi');
-  });
 
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.content span')?.textContent).toContain('NFTCalvi app is running!');
-  });
+
 });

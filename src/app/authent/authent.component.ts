@@ -89,6 +89,7 @@ export class AuthentComponent implements OnInit {
     if(isLocal(environment.appli) && this.showAccesCode){
       this.user.email="hhoareau@gmail.com";
       this.user.addr="herve";
+      this.user.strong=true;
       this.onauthent.emit({addr:this.user.addr});
     }
   }

@@ -1,4 +1,4 @@
-import {Component,  OnInit} from '@angular/core';
+import {AfterViewChecked, Component, OnInit} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
 import { $$, b64DecodeUnicode,
   base64ToArrayBuffer,
@@ -55,12 +55,22 @@ export class MintComponent implements OnInit {
   ) { }
 
 
-
   ngOnInit(): void {
+        this.init_form();
+    }
+
+
+
+
+  init_form(){
     if(this.user.isConnected(true)){
-      this.metaboss.init_keys(this.network.network,false);
       let tmp=localStorage.getItem("tokenstoimport");
-      if(tmp)this.tokens=JSON.parse(tmp)
+      if(tmp)this.tokens=JSON.parse(tmp);
+
+      this.network.get_collections(this.user.addr,this.network.network).subscribe((r:Collection[])=>{
+        this.collections=r;
+      })
+
       if(!this.collection && this.tokens.length>0)this.collection=this.tokens[0].collection;
 
       getParams(this.routes).then((params:any)=>{
@@ -74,6 +84,8 @@ export class MintComponent implements OnInit {
       })
     } else this.user.login("Le minage nécessite une authentification");
   }
+
+
 
 
 

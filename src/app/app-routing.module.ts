@@ -33,7 +33,6 @@ const routes: Routes = [
   { path: 'cm', component:CandymachineComponent,pathMatch:"prefix" },
   { path: 'dealermachine', component:DealermachineComponent ,pathMatch:"prefix"},
   { path: 'dm', component:DealermachineComponent },
-
   { path: 'help', component: HelpComponent },
   { path: 'about', component: AboutComponent },
   { path: 'reload', component: FaucetComponent },

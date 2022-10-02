@@ -42,10 +42,12 @@ export class SelectkeyComponent implements OnChanges {
 
   refresh($event: MatSelectChange) {
     this.user.key=$event.value;
-    this.user.init($event.value).then(()=>{
-      localStorage.setItem("key",this.user.key?.name!);
-      this.onrefresh.emit($event);
-    })
+    if(this.user.key){
+      this.user.init(this.user.key.pubkey).then(()=>{
+        localStorage.setItem("key",this.user.key?.name!);
+        this.onrefresh.emit($event);
+      })
+    }
   }
 
   informe_copy() {

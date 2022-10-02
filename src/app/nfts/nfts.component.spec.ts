@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { NftsComponent } from './nfts.component';
+import {HttpClientModule} from "@angular/common/http";
+import {MatDialogModule} from "@angular/material/dialog";
+import {MatSnackBarModule} from "@angular/material/snack-bar";
 
 describe('NftsComponent', () => {
   let component: NftsComponent;
@@ -8,7 +11,8 @@ describe('NftsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ NftsComponent ]
+      declarations: [ NftsComponent ],
+      imports: [HttpClientModule,MatDialogModule,MatSnackBarModule]
     })
     .compileComponents();
   });

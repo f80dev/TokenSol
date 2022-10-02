@@ -140,11 +140,12 @@ class Sticker(Element):
             if exists("./temp/"+filename):
               self.image=Image.open("./temp/"+filename)
             else:
-              self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
+              self.image=Image.open(BytesIO(requests.get(image).content))
           else:
-            self.image=Image.open(BytesIO(requests.get(image).content)).convert("RGBA")
+            self.image=Image.open(BytesIO(requests.get(image).content))
 
-        if self.image and self.image.mode!="RGBA":self.image=self.image.convert("RGBA")
+        if self.image and self.image.mode!="RGBA" and ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
+          self.image=self.image.convert("RGBA")
 
       else:
         if type(image)==bytes:
@@ -152,7 +153,7 @@ class Sticker(Element):
         else:
           self.image=image.copy()
 
-      if self.image.format!="JPEG":
+      if self.image.format!="JPEG" and ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
         ech=1
         l=abs(self.image.width-self.image.height)
         if self.image.width>self.image.height:
@@ -192,8 +193,10 @@ class Sticker(Element):
 
 
   def transform(self,scale,translation):
-    offset=(translation[0]/self.image.width,translation[1]/self.image.height)
-    pad(self.image,size=(self.image.width*scale[0],self.image.height*scale[1]),color=None,centering=(offset[0]+0.5,offset[1]+0.5))
+    if scale!=(1,1) or translation!=(0,0):
+      if ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
+        offset=(translation[0]/self.image.width,translation[1]/self.image.height)
+        pad(self.image,size=(self.image.width*scale[0],self.image.height*scale[1]),color=None,centering=(offset[0]+0.5,offset[1]+0.5))
 
 
   def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,server_domain="",prefix_name="svg"):
@@ -304,7 +307,7 @@ class Sticker(Element):
 
 
   def merge_animated_image(self,base:Image,to_paste:Image):
-    filename="./temp/temp_merge_"+str(now())+".gif"
+    filename="./temp/temp_merge_"+hex(int(now()*100000))+".gif"
     wr=imageio.get_writer(filename,mode="I")
 
     frames_to_paste = [f.resize(base.size).convert("RGBA") for f in ImageSequence.Iterator(to_paste)]
@@ -696,9 +699,8 @@ class ArtEngine:
           if layer.indexed or layer.unique: name.append(elt.name)
           elt.open()
 
-          scale=width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0])
           elt.transform(layer.scale,layer.translation)
-          collage.fusion(elt,scale,replacements)
+          collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements)
           if layer.unique: layer.remove(elt)
 
           elt.close()

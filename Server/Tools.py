@@ -188,9 +188,9 @@ def api(url,alternate_domain="",timeout=60000):
   data=requests.api.get(url)
 
   if data.status_code!=200:
-    log("Appel de "+url)
     if len(alternate_domain)>0:
       url=url.replace(alternate_domain.split("=")[0],alternate_domain.split("=")[1])
+      log("Appel de "+url)
 
     data=requests.api.get(url,timeout=timeout)
 

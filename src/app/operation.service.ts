@@ -1,7 +1,6 @@
 import {Injectable} from '@angular/core';
 import {NetworkService} from "./network.service";
 import {Operation} from "../operation";
-import {ActivatedRoute} from "@angular/router";
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +12,6 @@ export class OperationService {
 
   constructor(
     public network: NetworkService,
-    public routes:ActivatedRoute,
   ) {
     this.refresh();
   }

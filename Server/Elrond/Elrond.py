@@ -5,7 +5,7 @@ from os import listdir
 from os.path import exists
 from time import sleep
 import pyqrcode
-from Tools import get_qrcode
+from Tools import get_qrcode,hex_to_str
 from NFT import NFT
 import textwrap
 
@@ -124,9 +124,15 @@ class Elrond:
 
 
   def get_collections(self,creator:Account,fields=list()):
+    """
+    récupération des collections voir :
+    :param creator:
+    :param fields:
+    :return:
+    """
     creator=self.toAccount(creator)
     if type(creator)==str:creator=Account(address=creator)
-    url=self._proxy.url+"/collections?creator="+creator.address.bech32()
+    url=self._proxy.url+"/accounts/"+creator.address.bech32()+"/collections"
     rc=list()
     cols=api(url,"gateway=api")
     if len(fields)>0:
@@ -263,35 +269,37 @@ class Elrond:
 
       sleep(5)
 
-      if RESULT_SECTION in t and len(t[RESULT_SECTION][0]["data"].split("@")) > 2:
-        collection_id = t[RESULT_SECTION][0]["data"].split("@")[2]
+      if RESULT_SECTION in t:
+        log("Recherche du collection id")
+        for result in t[RESULT_SECTION]:
+          if len(result["data"].split("@"))>2:
+            collection_id = result["data"].split("@")[2]
 
-        data = "setSpecialRole@" + collection_id + "@" + owner.address.hex() \
-               + "@" + str_to_hex("ESDTRoleNFTCreate",False) \
-               + "@" + str_to_hex("ESDTRoleNFTBurn",False) \
-               + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
+            data = "setSpecialRole@" + collection_id + "@" + owner.address.hex() \
+                   + "@" + str_to_hex("ESDTRoleNFTCreate",False) \
+                   + "@" + str_to_hex("ESDTRoleNFTBurn",False) \
+                   + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
 
-        sleep(3)
+            sleep(3)
 
-        #TODO pour l'instant ne fonctionne pas
-        #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
+            #TODO pour l'instant ne fonctionne pas
+            #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
 
-        if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
+            if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
 
-        #Exemple d'usage de setSpecialRole sur la collection présente
-        #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
+            #Exemple d'usage de setSpecialRole sur la collection présente
+            #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
 
-        t = self.send_transaction(owner,
-                                  Account(address=NETWORKS[self.network_name]["nft"]),
-                                  owner, 0, data)
-
-        sleep(5)
+            t = self.send_transaction(owner,
+                                      Account(address=NETWORKS[self.network_name]["nft"]),
+                                      owner, 0, data)
+            sleep(5)
 
       else:
         log("Erreur de création de la collection. Consulter "+self.getExplorer(owner.address.bech32(),"address"))
         collection_id=None
 
-    return collection_id
+    return hex_to_str(collection_id)
 
 
   def get_account(self,_user):
@@ -303,7 +311,7 @@ class Elrond:
 
 
   def get_pem(self,secret_key: bytes, pubkey: bytes):
-    name = pubkey.hex()
+    name =Account(pubkey).address.bech32()
 
     header = f"-----BEGIN PRIVATE KEY for {name}-----"
     footer = f"-----END PRIVATE KEY for {name}-----"

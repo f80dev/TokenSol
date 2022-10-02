@@ -730,7 +730,7 @@ export class NetworkService {
 
   get_collections(owner: string,network="") {
     if(network.length==0)network=this.network;
-    return this.httpClient.get(environment.server+"/api/collections/"+owner+"/?network="+network);
+    return this.httpClient.get<Collection[]>(environment.server+"/api/collections/"+owner+"/?network="+network);
   }
 
   create_collection(owner: string, new_collection: Collection) {

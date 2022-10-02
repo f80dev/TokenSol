@@ -10,14 +10,10 @@ import {NetworkService} from "../network.service";
   styleUrls: ['./buy.component.css']
 })
 export class BuyComponent implements OnInit {
-
-
-
-  private tokens: any;
   nfts: any;
 
   constructor(
-    private user:UserService,
+    public user:UserService,
     public network:NetworkService
   ) { }
 
@@ -25,13 +21,8 @@ export class BuyComponent implements OnInit {
     this.user.connect().then((addr)=>{
       this.network.get_nfts_from_miner(new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA")).then(r=>{
         this.nfts=r;
-        this.refresh();
       })
     })
-  }
-
-  refresh(){
-    //voir https://solana-labs.github.io/solana-web3.js/classes/Connection.html#getTokenAccountsByOwner
   }
 
 }

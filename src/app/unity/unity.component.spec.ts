@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { UnityComponent } from './unity.component';
+import {HttpClientModule} from "@angular/common/http";
 
 describe('UnityComponent', () => {
   let component: UnityComponent;
@@ -8,7 +9,8 @@ describe('UnityComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ UnityComponent ]
+      declarations: [ UnityComponent ],
+      imports: [HttpClientModule]
     })
     .compileComponents();
   });

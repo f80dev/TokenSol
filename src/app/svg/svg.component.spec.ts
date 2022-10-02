@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SvgComponent } from './svg.component';
+import {HttpClientModule} from "@angular/common/http";
 
 describe('SvgComponent', () => {
   let component: SvgComponent;
@@ -8,7 +9,8 @@ describe('SvgComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ SvgComponent ]
+      declarations: [ SvgComponent ],
+      imports: [HttpClientModule]
     })
     .compileComponents();
   });
