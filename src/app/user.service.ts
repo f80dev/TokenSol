@@ -53,17 +53,21 @@ export class UserService {
   init(addr:string,route=""){
     return new Promise((resolve, reject) => {
       this.addr=addr
-      this.network.get_collections(this.addr,this.network.network).subscribe((cols:any)=>{
-        this.collections=cols;
-        this.httpClient.get(environment.server+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
-          this.profil = r;
-          r.address=addr;
-          resolve(r);
-        },(err)=>{
-          $$("!probleme de récupération des permissions")
-          reject(err);
+      if(addr.length>0){
+        localStorage.setItem("addr",addr);
+        this.network.get_collections(this.addr,this.network.network,false).subscribe((cols:any)=>{
+          this.collections=cols;
+          this.httpClient.get(environment.server+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
+            this.profil = r;
+            r.address=addr;
+            resolve(r);
+          },(err)=>{
+            $$("!probleme de récupération des permissions")
+            reject(err);
+          });
         });
-      });
+      }
+
     });
   }
 
@@ -152,4 +156,9 @@ export class UserService {
     });
   }
 
+  find_collection(sel_collection: string) {
+    for(let col of this.collections)
+      if(col.id==sel_collection)return col;
+    return null;
+  }
 }

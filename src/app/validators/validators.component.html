@@ -1,0 +1,39 @@
+<div class="mainform">
+  <h1>Liste des validateurs</h1>
+  <table style="width: 96%;text-align: center;padding: 1%;margin:1%;" class="mat-elevation-z4">
+    <tr>
+      <th>Id</th>
+      <th>Nom</th>
+      <th>Last connexion</th>
+      <th>Operation</th>
+      <th>Nombre de NFTs</th>
+      <th>Code de validation</th>
+      <th>Actions</th>
+    </tr>
+    <tr *ngFor="let validator of validators">
+      <td>{{validator.id}}</td>
+      <td>{{validator.name}}</td>
+      <td>{{validator.dtLastConnexion}}</td>
+      <td>
+        <mat-select [(ngModel)]="validator.operation" (ngModelChange)="update_operation(validator)">
+          <mat-option *ngFor="let operation of operations" [value]="operation.id">{{operation.title}}</mat-option>
+        </mat-select>
+        {{validator.operation}}
+      </td>
+      <td>{{validator.nfts}}</td>
+      <td>
+        <img [src]="validator.qrcode_accesscode"
+             style="height:100px;width: 100px;cursor: copy"
+             [cdkCopyToClipboard]="validator.access_code">
+
+      </td>
+      <td>
+        <button type="button" mat-raised-button mat-button
+                (click)="desactivate()">
+          Désactiver
+        </button>
+      </td>
+
+    </tr>
+  </table>
+</div>

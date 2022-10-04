@@ -12,8 +12,11 @@ from os.path import exists
 
 import pyqrcode
 import requests
+import unicodedata
+import yaml
 from cryptography.fernet import Fernet
 from fontTools import ttLib
+
 
 from secret import USERNAME, PASSWORD
 from settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
@@ -100,7 +103,7 @@ def open_html_file(name:str,replace=dict(),domain_appli=""):
 
 
 
-def decrypt(content:bytes) -> str:
+def decrypt(content:bytes,secret_key_filename="./secret_key") -> str:
   """
   fonction de decryptage
   :param text:
@@ -108,7 +111,6 @@ def decrypt(content:bytes) -> str:
   """
   if type(content)==str:content=base64.b64decode(content)
 
-  secret_key_filename="./secret_key"
   with open(secret_key_filename,"rb") as file:
     key=file.read(10000)
   f=Fernet(key)
@@ -213,6 +215,7 @@ def get_qrcode(text:str,scale=3):
 
 
 def hex_to_str(number):
+  number=''.join([x for x in number if ord(x)>=ord('0')])
   if not type(number)==str:
     number=hex(number)[2:]
   rc=""
@@ -248,9 +251,29 @@ def str_to_hex(letters,zerox=True):
     return rc
 
 
+def get_operation(name:str):
+  if name.startswith("b64:"): name=str(base64.b64decode(name.split("b64:")[1]),"utf8")
+  if name.startswith("http"):
+    rc=requests.get(name).text
+    rc=yaml.load(rc,Loader=yaml.FullLoader)
+  else:
+    name=name.replace(".yaml","")
+    rc=yaml.load(open("./Operations/"+name+".yaml","r"),Loader=yaml.FullLoader)
+  return rc
+
+
+def strip_accents(text):
+  text = unicodedata.normalize('NFD', text) \
+    .encode('ascii', 'ignore') \
+    .decode("utf-8")
+
+  return str(text)
+
+
 #Retourne la date du jour en secondes
-def now():
+def now(format="dec"):
   rc= datetime.datetime.now(tz=None).timestamp()
+  if format=="hex":return hex(int(rc*10000))
   return rc
 
 

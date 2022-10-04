@@ -1,5 +1,6 @@
 <div class="mainform" *ngIf="operation && operation.validate" [ngStyle]="operation?.branding?.style">
-  <div *ngIf="user!.length>0 && operation">
+  <div *ngIf="user!.length>0 && operation && operation.validate.users.length>0">
+<!--    Ecran destiné aux validateur pour authentifier les visiteurs-->
     <div *ngIf="operation.validate && operation.validate!.visible && result_message?.length==0">
       <h2>{{operation.title}}</h2><br><br>
       <div *ngIf="message?.length==0 && tokens.length==0">
@@ -93,7 +94,7 @@
               <td *ngFor="let t of tokens">
                 <button *ngFor="let action of operation.validate.actions.buttons"
                         style="margin: 5px"
-                        [disabled]="action.collections.length>0 && action.collections.indexOf(t.collection.id!)==-1"
+                        [disabled]="action.collections.length>0 && action.collections.indexOf(t.collection!.id!)==-1"
                         type="button" mat-raised-button mat-button
                         (click)="validate(t,action)">
                   {{action.label}}
@@ -112,6 +113,8 @@
         </button>
       </div>
     </div>
+
+
     <div *ngIf="result_message && result_message.length>0">
       <br>
       <div style="font-size: xx-large;width:100%;text-align: center;">

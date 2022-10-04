@@ -334,6 +334,7 @@
         <th>Description</th>
         <th *ngIf="!network.isElrond()">Symbole</th>
         <th>Propriétés / Attributs</th>
+        <th>Liens / fichiers</th>
       </tr>
       <tr>
         <td>
@@ -347,17 +348,21 @@
                      title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
                      matInput [(ngModel)]="data.description" rows="5" cols="40"></textarea>
         </td>
-        <td>
-          <mat-form-field appearance="fill" style="max-width: 200px" *ngIf="!network.isElrond()">
+        <td *ngIf="!network.isElrond()">
+          <mat-form-field appearance="fill" style="max-width: 200px" >
             <mat-label>Symbol</mat-label>
             <input matInput type="text" [(ngModel)]="data.symbol">
           </mat-form-field>
         </td>
-
         <td>
           <textarea class="mat-elevation-z2"
                     title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
                     matInput [(ngModel)]="data.properties" rows="5" cols="40"></textarea>
+        </td>
+        <td>
+          <textarea class="mat-elevation-z2"
+                    title="Chaque lien est sur une ligne"
+                    matInput [(ngModel)]="data.files" rows="5" cols="40"></textarea>
         </td>
       </tr>
     </table>

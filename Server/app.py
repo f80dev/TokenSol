@@ -18,6 +18,9 @@ from os.path import exists
 from random import random
 from zipfile import ZipFile
 
+import Tools
+from Tools import get_operation, decrypt
+
 import py7zr
 import pyqrcode
 import requests
@@ -279,9 +282,10 @@ def get_collections(owner:str):
   :return:
   """
   network=request.args.get("network","elrond-devnet")
+  with_detail=(request.args.get("detail","true")=="true")
   if "elrond" in network:
     elrond=Elrond(network)
-    cols=elrond.get_collections(owner)
+    cols=elrond.get_collections(owner,with_detail)
 
   return jsonify(cols)
 
@@ -442,7 +446,8 @@ def nftlive_access(addr:str):
   nfts=[]
   if(addr.startswith("erd")):
     elrond:Elrond=Elrond(network)
-    nfts=elrond.get_nfts(elrond.toAccount(addr),with_attr=False,with_collection=True)
+    nfts=elrond.get_nfts(elrond.toAccount(addr),with_attr=False)
+    nfts=elrond.complete_collection(nfts)
 
   rc=[]
   for ope in get_operations():
@@ -600,7 +605,7 @@ def export_to_prestashop():
         return returnError("Impossible de créer "+nft.toString())
       else:
         prestashop.set_product_quantity(product,nft.get_quantity())
-        filename="./temp/image"+hex(int(now()*1000000))+".gif"
+        filename="./temp/image"+now("hex")+".gif"
         try:
           buf_image=convert_to_gif(nft.visual,filename=filename)
           sleep(3)
@@ -670,15 +675,6 @@ def get_operations() -> [dict]:
   return rc
 
 
-def get_operation(name:str):
-  if name.startswith("b64:"): name=str(base64.b64decode(name.split("b64:")[1]),"utf8")
-  if name.startswith("http"):
-    rc=requests.get(name).text
-    rc=yaml.load(rc,Loader=yaml.FullLoader)
-  else:
-    name=name.replace(".yaml","")
-    rc=yaml.load(open("./Operations/"+name+".yaml","r"),Loader=yaml.FullLoader)
-  return rc
 
 
 
@@ -686,7 +682,6 @@ def get_operation(name:str):
 @app.route('/api/transfer_to/<nft_addr>/<to>/<owner>',methods=["GET"])
 def transfer_to(nft_addr:str,to:str,owner:str):
   network=request.args.get("network","solana-devnet")
-
 
   if "solana" in network:
     solana=Solana(network)
@@ -702,11 +697,13 @@ def transfer_to(nft_addr:str,to:str,owner:str):
     collection_id,nonce=elrond.extract_from_tokenid(nft_addr)
     if "@" in to:
       to,pem,words,qrcode=elrond.create_account(to,domain_appli=app.config["DOMAIN_APPLI"],network=network)
-      t=elrond.transfer(collection_id,nonce,elrond.toAccount(owner),to)
-      rc=(not t is None)
+
+    t=elrond.transfer(collection_id,nonce,elrond.toAccount(owner),to)
+    nfluent_wallet=elrond.nfluent_wallet_url(to,network)
+    rc=(not t is None)
 
   if rc:
-    return jsonify({"error":"","message":"NFT transféré"})
+    return jsonify({"error":"","message":"NFT transféré","nfluent_wallet":nfluent_wallet})
   else:
     return returnError("Probleme de transfert")
 
@@ -829,8 +826,9 @@ def manage_operations(ope=""):
 
     if rc and type(rc)==dict and "validate" in rc and "users" in rc["validate"]:
       rc["validate"]["access_codes"]=[]
-      for user in rc["validate"]["users"]:
-        rc["validate"]["access_codes"].append(get_access_code_from_email(user))
+      if rc["validate"]["users"]:
+        for user in rc["validate"]["users"]:
+          rc["validate"]["access_codes"].append(get_access_code_from_email(user))
 
 
   if request.method=="POST":
@@ -940,7 +938,12 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
 
         if src["connexion"].startswith("elrond"):
           elrond=Elrond(src['connexion'])
-          nfts=elrond.get_nfts(src["owner"],limit=src["filter"]["limit"],with_attr=with_attributes)
+          if src["owner"]:
+            nfts=elrond.get_nfts(src["owner"],limit=src["filter"]["limit"],with_attr=with_attributes)
+          else:
+            nfts=elrond.get_nfts_from_collections(src["collections"],with_attr=with_attributes)
+          nfts=elrond.complete_collection(nfts)
+
           src["ntokens"]=len(nfts)
 
 
@@ -1162,7 +1165,7 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
 
   #vérification de la possibilité d'emettre
   dao=DAO(ope=_opes)
-  if dao.db:
+  if dao.db is None:
     rc=dao.db["histo"].aggregate([{"$match":{"command":"mint"}},{"$group":{"_id":"$operation","count": { "$sum": 1 }}}])
     for e in rc:
       if e["_id"]==_opes["id"]:
@@ -1180,6 +1183,7 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
 
     url=str(base64.b64decode(url_appli),"utf8")+"/dm/?"+setParams({
       "toolbar":"false",
+      "section":"lottery",
       "address":nft.address,
       "symbol":nft.symbol,
       "ope":_opes["id"]
@@ -1355,7 +1359,7 @@ def mint_for_contest(confirmation_code=""):
     _data=None
     nfts=get_nfts_from_src(_ope["data"]["sources"],with_attributes=True)
     for nft in nfts:
-      if nft.address==body["token"]["address"] and nft.marketplace["quantity"]>0:
+      if nft.id==body["nft_id"] and nft.marketplace["quantity"]>0:
         _data=nft.__dict__
 
   if _data is None: return jsonify({"error":"Ce NFT n'est plus disponible"})
@@ -1917,23 +1921,23 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
     old_amount=elrond.get_account(miner)["amount"]
 
     if nft.address.startswith("db_") or len(nft.address)==0:
-      collection_id=elrond.add_collection(miner,nft.collection["name"],type="NonFungible")
+      collection_id=nft.collection["id"]
       nonce,cid=elrond.mint(miner,
                               title=nft.name,
                               description=nft.description,
                               collection=collection_id,
                               properties=nft.attributes,
-                              files=[],
+                              files=nft.files,
                               ipfs=None,
                               quantity=nft.marketplace["quantity"],
-                              royalties=nft.royalties/100,  #On ne prend les royalties que pour le premier créator
+                              royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
                               visual=nft.visual
                               )
     else:
       collection_id,nonce = elrond.extract_from_tokenid(nft.address)
 
-    if nonce is None:
-      rc={"error":"Probleme de création"}
+    if "error" in nonce:
+      rc={"error":"Mint error: "+nonce["error"]}
     else:
       infos=elrond.get_account(miner)
       token_id=collection_id+"-"+nonce
@@ -2187,6 +2191,29 @@ def login():
   access_token = create_access_token(identity=username)
   return jsonify(access_token=access_token)
 
+
+
+@app.route('/api/validators/',methods=["GET"])
+@app.route('/api/validators/<validator>/',methods=["PUT"])
+def validators(validator=""):
+  if request.method=="GET":
+    rc=[]
+    for validator in list(dao.db["validators"].find()):
+      del validator["_id"]
+      validator["access_code"]=str(base64.b64encode(encrypt(validator["id"])),"utf8")
+      rc.append(validator)
+    return jsonify(rc)
+
+  if request.method=="PUT":
+    rc=dao.db["validators"].update_one({"id":validator},{"$set":request.json})
+    return jsonify({"message":"ok"})
+
+
+@app.route('/api/scan_for_access/',methods=["POST"])
+def scan_for_access():
+  _data=request.json
+  validator=decrypt(_data["validator"])
+  dao.db["validators"].update_one({"id":validator},{"$set": {"user":_data["address"]}})
 
 
 

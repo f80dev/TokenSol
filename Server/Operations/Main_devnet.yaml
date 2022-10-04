@@ -21,7 +21,7 @@ lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
   network: elrond-devnet
-  miner: nfluent
+  miner: paul
 
 
 #section détaillant l'événement associé à cette opération
@@ -36,19 +36,16 @@ event:
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "NFLUENT-518891"          #Id de la collection. A priori cet id doit se trouver dans les sources
-    name: "NFluenT"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
-    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
-    description: Une collection de NFTs by Nfluent
-
-  - id: "BAYARD-2018c7"
-    name: Bayard
+#  - id: "NFLUENT-518891"          #Id de la collection. A priori cet id doit se trouver dans les sources
+#    name: "NFluenT"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
+#    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
+#    description: Une collection de NFTs by Nfluent
 
 
-database:                 #base de données contenant les historiques
+
+database:                 #base de données générale de l'outil pour les historiques
   connexion: cloud
   dbname: nfluent
-
 
 #la section accounts contient les clés privées (cryptées) des comptes Ã utiliser pendant l'opération
 #accounts:
@@ -81,7 +78,9 @@ data:
       connexion: elrond-devnet
       filter:
         limit: 200
-      owner: herve
+      owner:                   #Tous les NGFt de l'owner
+      collections:             #Tous les NFT des collections ci-dessous
+        - "NFLUENTC-51396a"
 
 
     - type: database
@@ -128,11 +127,21 @@ validate:
 
   application: "$nfluent_appli$/validate"
 
-  users:                        #Liste des validateurs autorisé à modifier les NFTs
-    - "paul.dudule@gmail.com"
-    - "hhoareau@gmail.com"
-    - "sophie.dudule@gmail.com"
-    - "thomas@nfluent.io"
+  #Liste des validateurs autorisé à modifier les NFTs
+  #Si cette liste est vide, on fonctionne sur un principe d'autovalidation
+  users:
+#    - "paul.dudule@gmail.com"
+#    - "hhoareau@gmail.com"
+#    - "sophie.dudule@gmail.com"
+#    - "thomas@nfluent.io"
+
+  #Cette section regroupe les possibilités offerte au visiteur en phase d'autovalidation
+  authentification:
+    webcam: True
+    wallet_connect: True
+    google: False
+    address: False
+    validator: True
 
   support:
     #message affiché aux validateurs pour la détection du wallet
@@ -150,6 +159,7 @@ validate:
         <li>l'adresse du wallet du client</li>
       </ul>
       "
+
 
     #Section des points de contact présentés aux validateurs
     contacts:
@@ -176,11 +186,17 @@ validate:
 #          - "bayard"
 #          - "NFluenT"
 
+
     #Procédure déclenchée automatiquement si le visiteur dispose du NFT
     success:
-      message: "Le visiteur peut entrer"
+      message: "Passage autorisé"   #Message affiché sur l'écran de validation
       api: ""
+      redirect: ""                  #Permet la redirection du visiteur sur une page données
 
+    fault:
+      message: "Passage interdit. Autorisation manquante"   #Message affiché sur l'écran de validation en cas d'échec
+      redirect: ""                                          #Permet la redirection du visiteur sur une page données
+      api: ""
 
     #Cette section dédiée à la sécurité regroupe certains points permettant de renforcer la sécurité des APIs
     security:
@@ -198,10 +214,8 @@ validate:
   #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
   filters:
     mint_authority: ''
-
     collections:                #Liste des collections éligible à la validation
-      - "BAYARD-2018c7"
-
+      - "NFLUENTC-51396a"
     symbol: ''      #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
 
@@ -259,7 +273,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 #Section lié à la distribution nominative de NFT
 dispenser:
   visible: True
-  miner: nfluent                                       #mineur en charge de la création des tokens pour les non minés
+  miner: paul                                       #mineur en charge de la création des tokens pour les non minés
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
 
   collections:                                      #Liste des collections concernée par la distribution (si vide toutes les collections disponibles depuis la source sont prises en compte)
@@ -300,8 +314,8 @@ lottery:
   #Ensemble d'attribues pour la présentation de l'écran
   screen:
     background_style: {"background-color":"#494975FF","font-weight":"lighter","color":"white","height":"100vh","text-align":"center"}           #Style appliqué au fond de l'écran
-    qrcode_size: 70%                             #taille du qrcode
-    visual_size: 80%                             #taille du visuel
+    qrcode_size: '70%'                             #taille du qrcode
+    visual_size: '80%'                             #taille du visuel
     title: "Gagnez des NFTs exclusifs"             #titre en haut de la fenêtre
     bottom_title: "The NFluent NFT Candy-Machine"              #titre en bas de la fenêtre
     title_style: {"font-size":"x-large","margin":"10px"}   #style du titre
@@ -317,10 +331,20 @@ lottery:
       redirection: "https://www.calviontherocks.com/fr"
 
 
+  authentification:         #Cette section décrit le mode d'authentification retenu pour obtenir le token
+    on_device: True         #Authentification via la dealermachine sur le device qui flash le qrcode
+    wallet_connect: True   #Authentification via wallet connect
+    google: True            #Propose l'identification de l'email via google
+    address: True           #Propose la barre d'adresse pour l'authentifiation
+    webcam: False
+    validator: True         #Propose un qrcode qui doit être visé par le wallet nfluent pour authentification
+
+
+
+
   application: "$nfluent_appli$/contest"
 
-  collections: #Définie les limites sur le nombre de nft miner
-    - "NFLUENT-518891"
+  collections: #Définie les collections impliquées dans la distribution (si vide tous les tokens disponibles sont intégrés)
 
   limits:     #définis les quotas de minages toutes collections confondus
     by_day: 50
@@ -362,7 +386,7 @@ nftlive:
       value: "votre message"
 
   nft_target:               #désigne les caractéristiques du NFT qui sera miné
-    miner: nfluent
+    miner: paul
     name: monnft                      #nom du NFT qui sera miné
     description: ??
     collection: "BAYARD"              #collection auquel appartiendra le NFT

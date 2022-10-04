@@ -6,6 +6,8 @@ import {HttpClientModule} from "@angular/common/http";
 import {MatSnackBarModule} from "@angular/material/snack-bar";
 import {RouterTestingModule} from "@angular/router/testing";
 import {AliasPipe} from "../alias.pipe";
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
+import {commit} from "ipfs-core/types/src/version";
 
 describe('CollectionsComponent', () => {
   let component: CollectionsComponent;
@@ -14,7 +16,7 @@ describe('CollectionsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ CollectionsComponent ,AliasPipe],
-      imports: [HttpClientModule,MatSnackBarModule,RouterTestingModule],
+      imports: [HttpClientModule,MatSnackBarModule,RouterTestingModule,BrowserAnimationsModule],
       providers: [{provide:AliasPipe}]
     })
     .compileComponents();
@@ -28,9 +30,15 @@ describe('CollectionsComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it("recupérer des collections",()=>{
-    component.refresh();
-    expect()
+  it("Création de collection",async()=>{
+    component.network.get_collections("paul").subscribe((r:any)=>{
+      if(r.length==0){
+        component.new_collection.name="coltext";
+        component.create_collection();
+      }else{
+        expect(r.length).toEqual(15)
+      }
+    })
   })
 
 });

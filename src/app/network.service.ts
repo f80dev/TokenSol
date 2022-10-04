@@ -19,6 +19,7 @@ import {retry, timeout} from "rxjs";
 import {Collection, Operation} from "../operation";
 import {NFT, SolanaToken, SplTokenInfo} from "../nft";
 import {Layer} from "../create";
+import {Validator} from "./validators/validators.component";
 
 
 @Injectable({
@@ -553,10 +554,11 @@ export class NetworkService {
     return this.httpClient.get(url_api);
   }
 
-  mint_for_contest(addr: string,ope:any,miner:string,metadata_storage:string,network:string,nft:NFT){
+  mint_for_contest(addr: string,ope:any,miner:string,metadata_storage:string,network:string,nft:NFT | null=null,nft_id=""){
     let body:any={
       account:addr,
       token: nft,
+      nft_id:nft_id,
       network:network,
       miner:miner,
       ope:ope,
@@ -728,9 +730,9 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/extract_zip/",file);
   }
 
-  get_collections(owner: string,network="") {
+  get_collections(owner: string,network="",detail=false) {
     if(network.length==0)network=this.network;
-    return this.httpClient.get<Collection[]>(environment.server+"/api/collections/"+owner+"/?network="+network);
+    return this.httpClient.get<Collection[]>(environment.server+"/api/collections/"+owner+"/?network="+network+"&detail="+detail);
   }
 
   create_collection(owner: string, new_collection: Collection) {
@@ -747,5 +749,18 @@ export class NetworkService {
 
   cancel_mintpool_treatment(id: string) {
     return this.httpClient.delete(environment.server+"/api/minerpool/"+id+"/");
+  }
+
+  //Utilisé pour afficher la liste des validateurs
+  get_validators() {
+    return this.httpClient.get<Validator[]>(environment.server+"/api/validators/");
+  }
+
+  set_operation_for_validator(validator_id: string, operation_id:string) {
+    return this.httpClient.put(environment.server+"/api/validators/"+validator_id+"/",{operation:operation_id});
+  }
+
+  scan_for_access(data:string,address:string) {
+    return this.httpClient.post(environment.server+"/api/scan_for_access/",{validator:decodeURIComponent(data),address:address});
   }
 }

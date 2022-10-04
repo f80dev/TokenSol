@@ -23,7 +23,7 @@
     </tr>
     <tr *ngFor="let ask of asks">
       <td>{{ask.operation}} </td>
-      <td>{{ask.nft.name || ask.nft.collection.id}} </td>
+      <td>{{ask.nft.name || ask.nft.collection!.id}} </td>
       <td>{{ask.nft.creators[0] | alias}}</td>
       <td>{{ask.nft.owner | alias}} </td>
       <td>{{ask.dtWork}}</td>

@@ -78,6 +78,8 @@ import { IntroComponent } from './intro/intro.component';
 import { LoginComponent } from './login/login.component';
 import { CollectionsComponent } from './collections/collections.component';
 import { MinerpoolComponent } from './minerpool/minerpool.component';
+import { AutovalidateComponent } from './autovalidate/autovalidate.component';
+import { ValidatorsComponent } from './validators/validators.component';
 
 
 @NgModule({
@@ -121,7 +123,9 @@ import { MinerpoolComponent } from './minerpool/minerpool.component';
     IntroComponent,
     LoginComponent,
     CollectionsComponent,
-    MinerpoolComponent
+    MinerpoolComponent,
+    AutovalidateComponent,
+    ValidatorsComponent
   ],
     imports: [
         BrowserModule,

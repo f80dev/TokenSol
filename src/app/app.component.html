@@ -28,6 +28,7 @@
       <a mat-list-item [routerLink]="'build'">Gestion des opérations</a>
       <a mat-list-item [routerLink]="'manage'">Gestion des NFTs</a>
       <a mat-list-item [routerLink]="'pool'">Pool de minage</a>
+      <a mat-list-item [routerLink]="'validators'">Validateurs</a>
       <a mat-list-item [routerLink]="'wallet'">Mes NFTs</a>
       <a mat-list-item [routerLink]="'admin'">Administrateur</a>
       <a mat-list-item [routerLink]="'help'">Aide</a>
@@ -48,7 +49,9 @@
       </button>
 
       <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-subheading-2">
-        <mat-spinner style="display: inline-block;" color="warn" diameter="20"></mat-spinner>&nbsp;{{network_service.waiting}}
+        <mat-spinner *ngIf="!network_service.waiting.startsWith('!')" style="display: inline-block;" color="warn" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="network_service.waiting.startsWith('!')">danger</mat-icon>
+        &nbsp;{{network_service.waiting}}
       </div>
 
       <span class="example-spacer"></span>

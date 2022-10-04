@@ -1,12 +1,11 @@
 import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, getParams, showError, showMessage} from "../../tools";
+import {$$, getParams, isLocal, showError, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {environment} from "../../environments/environment";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Observable, Subject} from "rxjs";
 import {WalletConnectProvider} from '@elrondnetwork/erdjs-wallet-connect-provider';
-import {WalletProvider} from "@elrondnetwork/erdjs-web-wallet-provider"
 import {Location} from "@angular/common";
 import {NFT} from "../../nft";
 import {Collection, Operation} from "../../operation";
@@ -43,6 +42,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   owner: string="";
   attributes:string="";
   token_to_send: any=null;
+
   collections:Collection[]=[{
     description: undefined,
     id: "*",
@@ -51,6 +51,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
     price: undefined,
     visual: undefined,
     name:"Toutes"}];
+
   sel_collection: Collection=this.collections[0];
   image_for_token: string="";
   secret: string="";
@@ -102,10 +103,12 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
           this.network.get_tokens_from("owner",this.user.addr,250,true,null,0,this.network.network).then((r:NFT[])=>{
             for(let nft of r){
-              if(this.collections.map((x:Collection)=>{return x.name}).indexOf(nft.collection["name"])==-1)this.collections.push(nft.collection);
-              if(this.sel_collection.id=="*" || nft.collection.name==this.sel_collection.name){
-                this.message="";
-                this.nfts.push(nft);
+              if(nft.collection){
+                if(this.collections.map((x:Collection)=>{return x.name}).indexOf(nft.collection["name"])==-1)this.collections.push(nft.collection);
+                if(this.sel_collection.id=="*" || nft.collection.name==this.sel_collection.name){
+                  this.message="";
+                  this.nfts.push(nft);
+                }
               }
             }
 
@@ -142,6 +145,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
   //Envoi la photo pour fabrication de la collection
+  showScanner: boolean=false;
+  accescode_scan: string="";
+
   handleImage(event: any) {
     let rc=event;
     if(!rc.startsWith('data:'))rc="data:image/jpeg;base64,"+rc;
@@ -287,5 +293,14 @@ export class MywalletComponent implements OnInit,OnDestroy {
   on_disconnect(){
     showMessage(this,"Déconnexion");
     this.user.strong=false;
+  }
+
+  on_scan($event: any) {
+    this.showScanner=false;
+    this.network.scan_for_access($event.data,this.user.addr).subscribe(()=>{});
+  }
+
+  isProd() {
+    return !isLocal(environment.appli)
   }
 }

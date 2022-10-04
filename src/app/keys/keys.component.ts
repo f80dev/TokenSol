@@ -9,6 +9,7 @@ import {Location} from "@angular/common";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {Router} from "@angular/router";
+import {NFLUENT_WALLET} from "../../definitions";
 
 @Component({
   selector: 'app-keys',
@@ -107,7 +108,7 @@ export class KeysComponent implements OnInit {
   }
 
   open_extra_wallet(key: CryptoKey) {
-    open("https://wallet.nfluent.io/?param="+setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network}))
+    open(NFLUENT_WALLET+"/?param="+setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network}))
   }
 
   open_collections(key: CryptoKey) {

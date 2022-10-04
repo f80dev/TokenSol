@@ -1,24 +1,26 @@
 <div class="mainform">
-  <h1>Gestion des collections de {{addr | alias}}</h1>
+  <h1>Gestion des collections de {{user.addr | alias}}</h1>
 
-  <mat-form-field appearance="fill" style="width: 200px">
+  <mat-form-field appearance="fill" style="width: 200px" id="txtCollectionName">
     <mat-label>Nom de la collection</mat-label>
     <input matInput type="text" maxlength="20" [(ngModel)]="new_collection.name">
     <mat-hint>Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux</mat-hint>
   </mat-form-field>
 
-  <mat-form-field appearance="fill" style="max-width: 120px">
+  <mat-form-field appearance="fill" style="max-width: 120px" id="txtCollectionDescription">
     <mat-label>Description</mat-label>
     <input matInput type="text" max="20" [(ngModel)]="new_collection.description">
   </mat-form-field>
 
-  <button type="button" mat-raised-button mat-button (click)="create_collection()">
+  <button type="button" mat-raised-button mat-button (click)="create_collection()" id="cmdBuild">
     Fabriquer
   </button>
 
   <button type="button" mat-raised-button mat-button (click)="open_inspire()">
     Inspire.ART
   </button>
+
+
 
   <br><br>
 
@@ -38,6 +40,14 @@
       <td>
         <button type="button" mat-raised-button mat-button (click)="open_collection(col)">
           Voir les NFTs
+        </button>
+        &nbsp;
+        <button type="button" mat-raised-button mat-button (click)="open_miner(col)">
+          Utiliser pour Miner
+        </button>
+        &nbsp;
+        <button type="button" mat-raised-button mat-button (click)="open_explorer(col)">
+          Explorer
         </button>
 
       </td>

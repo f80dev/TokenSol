@@ -1,4 +1,4 @@
-import {AfterViewChecked, Component, OnInit} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
 import { $$, b64DecodeUnicode,
   base64ToArrayBuffer,
@@ -37,11 +37,7 @@ export class MintComponent implements OnInit {
   sel_platform: string=this.platforms[0].value;
   price: any=0;
   quantity: any=1;
-  seller_fee_basis_points: any=0;
-  collection: Collection | null=null;
-  sel_collection: Collection | null=null;
-  collections: Collection[]=[]
-
+  sel_collection: string="";
 
   constructor(
     public toast:MatSnackBar,
@@ -56,22 +52,25 @@ export class MintComponent implements OnInit {
 
 
   ngOnInit(): void {
-        this.init_form();
-    }
+    getParams(this.routes).then((params:any)=>{
+      if(params.hasOwnProperty("collection")){
+        this.sel_collection=params["collection"];
+      }
+      else{
+        if(this.user.collections.length>0){
+          this.sel_collection=this.user.collections[0].id || "";
+        }
+      }
 
-
+    })
+    this.init_form();
+  }
 
 
   init_form(){
     if(this.user.isConnected(true)){
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp);
-
-      this.network.get_collections(this.user.addr,this.network.network).subscribe((r:Collection[])=>{
-        this.collections=r;
-      })
-
-      if(!this.collection && this.tokens.length>0)this.collection=this.tokens[0].collection;
 
       getParams(this.routes).then((params:any)=>{
         if(params.hasOwnProperty("files")){
@@ -84,8 +83,6 @@ export class MintComponent implements OnInit {
       })
     } else this.user.login("Le minage nécessite une authentification");
   }
-
-
 
 
 
@@ -102,7 +99,6 @@ export class MintComponent implements OnInit {
     }
 
     let attributes:any[]=[];
-    let collection:any={};
 
     if(_infos.hasOwnProperty("properties")){
       for(let a of _infos.properties.split("\n")){
@@ -116,20 +112,16 @@ export class MintComponent implements OnInit {
       }
     }
 
-    if(_infos.hasOwnProperty("collection")){
-      collection={"name":_infos.collection}
-    }
-
 
     let rc:NFT={
+      collection: null,
       address: undefined,
       message:"",
       attributes: attributes,
-      collection: collection,
       creators: creators,
       description: _infos.description,
       symbol: _infos.symbol,
-      files: [],
+      files: _infos.files.split("\n"),
       marketplace: {price:this.price,quantity:this.quantity},
       name: _infos.title,
       network: this.network.network,
@@ -187,8 +179,6 @@ export class MintComponent implements OnInit {
           _infos= JSON.parse(b64DecodeUnicode(tags.mint.value));
         }
         this.tokens.push(this.get_token_from_xmp(_infos,url))
-        if(!this.collection)this.collection=this.tokens[0].collection;
-
       }
     }
   }
@@ -200,7 +190,7 @@ export class MintComponent implements OnInit {
       width: 'auto',data:
         {
           title: "Confirmer le minage",
-          question: "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+" par le compte <strong>"+this.user.key?.name+"</strong> ?",
+          question: "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.user.key?.name+"</strong> dans la collection "+this.sel_collection +" ?",
           onlyConfirm:true,
           lbl_ok:"Ok",
           lbl_cancel:"Annuler"
@@ -221,7 +211,6 @@ export class MintComponent implements OnInit {
     this.set_collection();
     let _t:NFT=this.tokens[index];
     _t.marketplace={price:this.price,quantity:this.quantity}
-    _t.royalties=this.seller_fee_basis_points*100;
     _t.message="hourglass:Minage";
     showMessage(this,"Minage de "+_t.name);
 
@@ -314,12 +303,13 @@ export class MintComponent implements OnInit {
         }
 
         if(this.user.key){
+          token.collection=this.user.find_collection(this.sel_collection);
           this.network.mint(token,this.user.key.name,this.user.key.name,this.sign, this.sel_platform,this.network.network).then((result:any)=>{
             if(!result.error || result.error==""){
               token.message="Minted for "+result.cost+" "+result.unity;
               resolve(token);
             } else {
-              token.message="Mint error";
+              token.message=result.error;
               reject(result.error);
             }
           }).catch((err)=>{
@@ -452,8 +442,11 @@ export class MintComponent implements OnInit {
 
 
   set_collection() {
-    for(let token of this.tokens){
-      if(this.collection)token.collection=this.collection;
+    if(this.sel_collection.length>0){
+      let col=this.user.find_collection(this.sel_collection);
+      for(let token of this.tokens){
+        token.collection=col;
+      }
     }
   }
 
@@ -538,5 +531,9 @@ export class MintComponent implements OnInit {
 
   open_collections() {
     this.router.navigate(["collections"],{queryParams:{owner:this.user.addr}});
+  }
+
+  clear_attribute() {
+    this.tokens[0].attributes=[];
   }
 }

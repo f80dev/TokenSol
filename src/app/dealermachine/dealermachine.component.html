@@ -10,7 +10,6 @@
          class="mat-elevation-z4">
     <br>
 
-
     <div *ngIf="!selfWalletConnexion">
       <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" >
         <mat-label>Indiquer l'adresse ou l'email du destinataire</mat-label>
@@ -21,16 +20,15 @@
       <button type="button" mat-raised-button mat-button
               title="Ne pas se connecter" color="primary"
               [disabled]="address.length<20 && address.indexOf('@')==-1 && !address.startsWith('\'') "
-              (click)="validate()">
+              (click)="validate_input_address()">
         Envoyer
       </button>
       <br>
 
-
       <div *ngIf="webcam">
         <br>
         Capturez l'adresse d'un wallet<br>
-        <app-scanner [size]="250" (flash)="onflash($event)"></app-scanner>
+        <app-scanner size="250px" (flash)="onflash($event)"></app-scanner>
       </div>
 
     </div>
@@ -55,21 +53,21 @@
           buttonType="buy"
           buttonColor="black"
           [paymentRequest]="{
-        apiVersion: 2,
-        apiVersionMinor: 0,
-        allowedPaymentMethods: [
-        {type: 'CARD',
-          parameters: {allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],allowedCardNetworks: ['VISA', 'MASTERCARD']},
-       tokenizationSpecification: {
-          type: 'PAYMENT_GATEWAY',
-          parameters: {gateway: 'example',gatewayMerchantId: 'exampleGatewayMerchantId'}
-          }
-         }
-        ],
-      merchantInfo: {merchantId: ope.payment.merchantId,merchantName: ope.payment.merchantName},
-      transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: nft.marketplace!.price.toString(5),currencyCode: ope.payment.currencyCode,countryCode: ope.payment.countryCode}}"
-          (loadpaymentdata)="onLoadPaymentData($event)">
-
+            apiVersion: 2,
+            apiVersionMinor: 0,
+            allowedPaymentMethods: [
+              {
+                type: 'CARD',
+                parameters: {allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],allowedCardNetworks: ['VISA', 'MASTERCARD']},
+                tokenizationSpecification: {
+                  type: 'PAYMENT_GATEWAY',
+                  parameters: {gateway: 'example',gatewayMerchantId: 'exampleGatewayMerchantId'}
+                }
+              }
+            ],
+            merchantInfo: {merchantId: ope.payment.merchantId,merchantName: ope.payment.merchantName},
+            transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: nft.marketplace!.price.toString(5),currencyCode: ope.payment.currencyCode,countryCode: ope.payment.countryCode}}"
+            (loadpaymentdata)="onLoadPaymentData($event)">
         </google-pay-button>
 
       </div>
@@ -77,27 +75,30 @@
     </div>
 
     <app-authent *ngIf="selfWalletConnexion"
+                 title=""
+                 [showGoogle]="authentification.google"
+                 [showAddress]="authentification.address"
+                 [showWebcam]="authentification.webcam"
+                 [showWalletConnect]="authentification.wallet_connect"
                  (authent)="valide($event)"
+                 (cancel)="cancel()"
                  style="max-height: 300px;">
     </app-authent>
 
 
-
   </div>
 
-  <div *ngIf="wallet_link.length>0">
-    <span *ngIf="address.indexOf('@')>-1">
-      Consulter votre email {{address}} pour retrouver votre nouveau NFT
-    </span>
-    <div *ngIf="address.indexOf('@')==-1">
-      Consulter votre wallet pour y retrouver votre nouveau NFT<br>
-      <a [href]="wallet_link" target="_blank">Ouvrir votre wallet</a>
-    </div>
 
-  </div>
 </div>
+
+
 <div class="mainform" style="text-align: center;" *ngIf="final_message!=''">
   <div style="font-size: xx-large;width:80%;margin:10%;text-align: center">
     {{final_message}}
+  </div>
+
+  <div *ngIf="selfWalletConnexion && wallet_link.length>0">
+    Consulter votre wallet pour y retrouver votre nouveau NFT<br>
+    <a [href]="wallet_link" target="_blank">Ouvrir votre wallet</a>
   </div>
 </div>

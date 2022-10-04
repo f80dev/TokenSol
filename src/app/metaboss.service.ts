@@ -28,6 +28,7 @@ export class MetabossService {
           this.network.wait();
           resolve(r);
         },(err:any)=>{
+          this.network.wait("!Probléme de chargement");
           $$("Probleme de chargement");
           reject();
         });

@@ -106,7 +106,7 @@ export class ValidateComponent implements OnInit {
             let filter_Ok=false;
             if(filters.collections){
               for(let filter_name of filters.collections){
-                if(filter_name=="*" || (t.hasOwnProperty("collection") && t.collection.id!.indexOf(filter_name)>-1)){
+                if(filter_name=="*" || (t.hasOwnProperty("collection") && t.collection!.id!.indexOf(filter_name)>-1)){
                   filter_Ok=true;
                   break;
                 }

@@ -10,10 +10,13 @@ export interface Collection {
 }
 
 interface Connexion {
+  on_device: boolean | false
+  address: boolean | false
   wallet_connect: boolean | false
   email: boolean | false
   google: boolean | false
   webcam: boolean | false
+  validator: boolean | false            //QRCode proposé par nfluent en substitution de Wallet Connect à utiliser depuis le wallet nfluent
 }
 
 //Description de la structure d'une opération
@@ -43,6 +46,7 @@ export interface Operation {
       filter: any | null
       owner: string | null
       dbname: string | null
+      collections: string[] | null
     }[]
   }
 
@@ -76,6 +80,7 @@ export interface Operation {
     manual_input: boolean
 
     application: string
+    authentification: Connexion
 
     users: string[]
     support: {
@@ -102,8 +107,16 @@ export interface Operation {
       ]
 
       success : {
-        message: string
-        api: string
+        message: string | ""
+        api: string | ""
+        redirect: string | ""
+        redirect_user: string | ""
+      }
+
+      fault: {
+        message: string | ""
+        api: string | ""
+        redirect: string | ""
       }
     }
 
@@ -220,7 +233,35 @@ export interface Operation {
     }[]
   } | null
 
-  lottery: any | null
+  lottery: {
+    image_code: string | ""
+    iframe_code: string | ""
+    visible: boolean
+    miner: string | null
+    screen: any
+    end_process:{
+      winner: {
+        message:string
+        redirection:string
+      }
+      looser:{
+        message:string
+        redirection: string
+      }
+    }
+    authentification: Connexion
+
+    application: string | "$nfluent_appli$/contest"
+    collections: [string]
+    limits:any | null
+    duration:number | 100
+    period:{
+      dtStart: string | "now"
+      dtEnd: string | ""
+      duration: number | 1
+    }
+
+  }
 
 }
 

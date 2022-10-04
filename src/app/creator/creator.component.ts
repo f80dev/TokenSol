@@ -191,12 +191,20 @@ export class CreatorComponent implements OnInit {
   }
 
 
-
-
-
-
   url_collection="";
   generate_collection(format="zip") {
+
+    //Vérification du format des datas
+    if(this.data.properties!=""){
+      for(let line of this.data.properties.split("\n")){
+        if(line.split("=").length!=2){
+          showMessage(this,"Format des propriétés/attributs incorrect. La syntaxe doit être attribut=valeur pour chaque ligne");
+          return;
+        }
+      }
+    }
+
+
     let i=0;
     this.show_collection=false;
     this.network.reset_collection().subscribe(()=>{

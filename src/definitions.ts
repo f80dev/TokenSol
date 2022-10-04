@@ -7,6 +7,8 @@
 
 export const NFT_STORAGE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweEQ4ZTk2MERCRDEwYjVlNTExMTU5REI5RDk3NzQ0MkI2ODI1OWU1MTQiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTY0NTcyMzU4MDU0MSwibmFtZSI6Im5mbHVlbnQifQ.5rzoF_fn5iZJLY2nD-yTIt3RoxWKoOuh_rPZ-prwnds';
 
+export const NFLUENT_WALLET="https://wallet.nfluent.io";
+
 export const QUOTA=800000
 
 export const NETWORKS=["solana-devnet","solana-mainnet","elrond-devnet","elrond-mainnet","database-cloud-nfluent","database-server-nfluent","prestashop"]

@@ -40,7 +40,7 @@
 
     <app-reversebloc *ngFor="let nft of nfts" [image]="nft.visual" width="300px" height="300px">
       <div style="padding: 10px;">
-        <div class="mat-body-2">{{nft.collection.name}}</div>
+        <div class="mat-body-2">{{nft.collection!.name}}</div>
         <div class="mat-title">{{nft.name}}</div>
         <br>
         <div class="mat-body-2">{{nft.description}}</div>
@@ -58,11 +58,39 @@
 
 
   <mat-tab label="Accès">
-    <br>
-    <h3>Utiliser ce QRCode pour accèder à vos événements</h3>
-    <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;" [cdkCopyToClipboard]="access_code">
-    <br>
-    <br>
+    <div *ngIf="!showScanner">
+      <br>
+      <h3>Utiliser ce QRCode pour accèder à vos événements</h3>
+      <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;" [cdkCopyToClipboard]="access_code">
+      <br>
+      <br>
+      <button  type="button" mat-raised-button mat-button (click)="showScanner=true">
+        Scanner un QRCode
+      </button>
+    </div>
+
+    <div *ngIf="showScanner">
+      <br><br>
+      <app-scanner style="margin-top: 50px;" (flash)="on_scan($event)"></app-scanner>
+
+      <div *ngIf="!isProd()">
+        <mat-form-field appearance="legacy" style="width: 50%;max-width: 300px;" >
+          <mat-label>Saisissez le code</mat-label>
+          <input matInput type="text" [(ngModel)]="accescode_scan" >
+        </mat-form-field>
+
+        <button type="button" mat-raised-button mat-button (click)="on_scan({data:accescode_scan})">
+          Envoyer
+        </button>
+
+      </div>
+
+      <br>
+      <button type="button" mat-raised-button mat-button (click)="showScanner=false">
+        Annuler
+      </button>
+    </div>
+
 
 
     <div style="width: 100%;text-align: center;height: 30px;vertical-align: middle;margin-top: 50px;">

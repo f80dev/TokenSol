@@ -92,7 +92,11 @@
               <ul class="mat-subheading-1">
                 <li *ngFor="let src of sources">
                   <span *ngIf="src.type=='web'">contenu dans le fichier <span class="color-accent">{{src.connexion}}</span></span>
-                  <span *ngIf="src.type=='network'"><span class="color-accent">{{src.connexion}}</span> et possédés par <span class="color-accent">{{src.owner | alias}}</span></span>
+                  <span *ngIf="src.type=='network'">
+                    <span class="color-accent">{{src.connexion}}</span>
+                    <span *ngIf="src.owner"> et possédés par <{{src.owner | alias}}</span>
+                    <span *ngIf="src.collections.length>0"> des collections {{src.collections.join(' - ')}}</span>
+                  </span>
                   <span *ngIf="src.type=='database'"> contenu dans la base <span class="color-accent">{{src.connexion}} / {{src.dbname}}</span></span>
                   ({{src.ntokens}})
                 </li>
@@ -162,11 +166,9 @@
             </table>
 
           </td>
-          <td *ngIf="operation.sel_ope.nftlive!.collections">
+          <td *ngIf="operation.sel_ope.nftlive && operation.sel_ope.nftlive!.collections">
             Collections: {{operation.sel_ope.nftlive!.collections.join(' - ')}}<br>
             Configuration: {{operation.sel_ope.nftlive!.configuration}}<br>
-
-
           </td>
         </tr>
       </table>
@@ -302,7 +304,7 @@
             <td>
               <ul>
                 <li *ngFor="let col of operation.sel_ope.lottery.collections">
-                  {{col.name}}
+                  {{col}}
                 </li>
               </ul>
             </td>
@@ -386,6 +388,8 @@
                       (click)="open_appli('validate')">
                 Ouvrir
               </button>
+
+
               <br>
 
               <button type="button" mat-raised-button mat-button color="primary"

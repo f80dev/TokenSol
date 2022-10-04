@@ -16,7 +16,12 @@
   </mat-form-field>
 
 
-  <app-scanner *ngIf="showWebcam" [size]="200" (flash)="on_flash($event)"></app-scanner>
+  <app-scanner *ngIf="showWebcam" [size]="size"
+               (flash)="on_flash($event)"
+               (click)="update_dynamic_token()">
+  </app-scanner>
+
+<!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
   <div *ngIf="showDynamicToken">
     <button type="button" color="primary"
             mat-raised-button
@@ -27,10 +32,12 @@
   </div>
 
 
+  <img *ngIf="showValidator" [src]="validator_qrcode" [style.width]="size">
+
   <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >
     <div *ngIf="showWalletConnect">
-      <h3>Connecter votre wallet via Wallet Connect</h3>
-      <img [src]="qrcode" style="max-width: 150px;width: 80%;">
+      <h3>{{title}}</h3>
+      <img [src]="qrcode" [style.width]="size+'px'" style="max-width: 150px;width: 80%;">
     </div>
 
     <div *ngIf="showNetwork">
@@ -59,7 +66,7 @@
 
 
 
-  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;">
+  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;" *ngIf="showAddress || showAccesCode">
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter"
             (click)="oncancel.emit()">
@@ -68,6 +75,7 @@
 
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter" color="primary"
+
             [disabled]="address.length<20 && user.addr.indexOf('@')==-1"
             (click)="validate()">
       Valider

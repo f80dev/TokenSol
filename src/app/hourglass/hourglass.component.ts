@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
 import {Router} from '@angular/router';
 
 @Component({
@@ -6,28 +6,35 @@ import {Router} from '@angular/router';
   templateUrl: './hourglass.component.html',
   styleUrls: ['./hourglass.component.css']
 })
-export class HourglassComponent implements OnInit,OnDestroy {
+export class HourglassComponent implements OnInit, OnDestroy, OnChanges {
+  @Input("diameter") diameter = 18;
+  @Input("message") message: string = "";
+  @Input("long_message") long_message = "";
+  @Input("anim") src = "";
+  @Input("br") _br = false;
+  @Input("tips") tips = [];
+  @Input("canCancel") canCancel = false;
+  @Input("maxwidth") maxwidth = "100vw";
+  @Input("faq") faq = "";
+  @Input("duration") duration = 0;
+  @Input("fontsize") fontsize = "medium";
+  @Output('cancel') oncancel: EventEmitter<any> = new EventEmitter();
+  @Input("marginTop") marginTop = "0px";
+  pos = 0;
+  showMessage = "";
+  showTips = "";
+  current = 0;
+  step = 0;
 
-  @Input("diameter") diameter=18;
-  @Input("message") message:string="";
-  @Input("long_message") long_message="";
-  @Input("anim") src="";
-  @Input("br") _br=false;
-  @Input("tips") tips=[];
-  @Input("canCancel") canCancel=false;
-  @Input("maxwidth") maxwidth="100vw";
-  @Input("faq") faq="";
-  @Input("duration") duration=0;
-  @Input("fontsize") fontsize="medium";
-  @Output('cancel') oncancel: EventEmitter<any>=new EventEmitter();
-  @Input("marginTop") marginTop="0px";
-  pos=0;
-  showMessage="";
-  showTips="";
-  current=0;
-  step=0;
+  constructor(public router: Router) {
+  }
 
-  constructor(public router:Router) { }
+  ngOnChanges(changes: SimpleChanges): void {
+    if(this.message.startsWith("(i)")){
+      this.message=this.message.replace("(i)","")
+      this.diameter=0;
+    }
+  }
 
   ngOnInit() {
     if(this.long_message.length>0){
@@ -43,6 +50,8 @@ export class HourglassComponent implements OnInit,OnDestroy {
       this.step=100/this.duration;
       this.decompte(0);
     }
+
+
   }
 
   handle:any=0;
@@ -57,7 +66,6 @@ export class HourglassComponent implements OnInit,OnDestroy {
         this.decompte(current+this.step);
         },1000);
     }
-
   }
 
   read_message(){

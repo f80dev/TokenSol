@@ -1,0 +1,18 @@
+<div class="mainform">
+  <br>
+  <app-authent (authent)="on_authent($event)" size="500px"
+               *ngIf="message?.length==0 && operation && operation!.validate && operation!.validate.authentification && operation.validate.filters"
+               [checknft]="operation.validate.filters.collections"
+               [showWalletConnect]="operation.validate.authentification.wallet_connect"
+               [showAddress]="operation.validate.authentification.address"
+               [showWebcam]="operation.validate.authentification.webcam"
+               [showValidator]="operation.validate.authentification.validator"
+               (disconnect)="on_disconnect()"
+  ></app-authent>
+
+  <div style="font-size: large;width: 100%;text-align: center;">
+    {{message}}
+  </div>
+
+
+</div>

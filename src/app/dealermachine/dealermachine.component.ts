@@ -7,6 +7,7 @@ import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
 import {UserService} from "../user.service";
 import {NFT} from "../../nft";
+import {NFLUENT_WALLET} from "../../definitions";
 
 @Component({
   selector: 'app-dealermachine',
@@ -21,6 +22,7 @@ export class DealermachineComponent implements OnInit {
   ope: any=null;
   webcam: boolean=true;
   mining: any={};
+  authentification: any;
 
   constructor(
     public routes:ActivatedRoute,
@@ -39,6 +41,8 @@ export class DealermachineComponent implements OnInit {
     getParams(this.routes).then((params:any)=>{
       this.nft=params["token"];
       let ope=params["ope"];
+      let section=params["section"];
+
       if(!this.nft){
         $$("On va chercher les NFTs dans le fichier d'opération");
         let address=params["address"] || "";
@@ -47,16 +51,19 @@ export class DealermachineComponent implements OnInit {
           for(let nft of r["nfts"]){
             if((nft.address==address && address.length>0) || (nft.symbol==symbol && nft.address?.length==0))this.nft=nft;
           }
-        })
+        });
       }
 
       this.mining=params["mining"];
-      this.selfWalletConnexion=params["selfWalletConnexion"] || false;
+      this.selfWalletConnexion=params["selfWalletConnexion"] || (section=="lottery");
 
       if(ope){
         this.network.get_operations(ope).subscribe((ope:any)=>{
           this.ope=ope;
           this.mining=params["mining"] || this.ope.lazy_mining;
+          if(section){
+            this.authentification=this.ope[section].authentification;
+          }
         })
       }
 
@@ -99,39 +106,40 @@ export class DealermachineComponent implements OnInit {
   }
 
 
-  valide(addr:string) {
+  valide(addr:any) {
+    if(addr.hasOwnProperty("addr"))addr=addr.addr;
     this.address=addr.replace("'","");
     addr=this.alias.transform(addr,"pubkey");
     if(this.nft!.address?.startsWith("db_")){
       $$("Ce token est issue d'une base de données, donc non miné");;
-        if(this.ope)this.message=this.ope.store.support.buy_message;
-        this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft!).subscribe((r:any)=>{;
-          this.message="";
-          if(r.error.length>0){
-            this.message=r.error+". ";
-          } else {
-            this.win();
-          }
-        },(err:any)=>{
-          showError(this,err);
-          this.message="";
-        })
-    }else{
-        if(this.nft!.address!=""){
-          $$("Ce token est déjà miné, on se contente de le transférer");
-          let mint_addr=this.nft!.address || "";
-          let owner=this.nft!.owner || "";
-          this.message="Envoi en cours";
-          this.network.transfer_to(mint_addr,addr,owner).subscribe(()=>{
-            this.message="";
-            showMessage(this,"Transféré");
-            this._location.back();
-          },(err:any)=>{
-            showMessage(this,"Impossible d'envoyer ce NFT");
-            this._location.back();
-          })
+      if(this.ope)this.message=this.ope.store.support.buy_message;
+      this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft!).subscribe((r:any)=>{;
+        this.message="";
+        if(r.error.length>0){
+          this.message=r.error+". ";
+        } else {
+          this.win();
         }
+      },(err:any)=>{
+        showError(this,err);
+        this.message="";
+      })
+    }else{
+      $$("Ce token est déjà miné, on se contente de le transférer");
+      if(this.nft!.address!=""){
+        let mint_addr=this.nft!.address || "";
+        let owner=this.nft!.owner || "";
+        this.message="Envoi en cours";
+        this.network.transfer_to(mint_addr,addr,owner).subscribe((r:any)=>{
+          this.message="";
+          this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;
+          this.final_message="Retrouver votre nouveau NFT dans votre wallet NFluenT";
+        },(err:any)=>{
+          showMessage(this,"Impossible d'envoyer ce NFT");
+          this.final_message="Problème technique: Envoi du NFT annulé";
+        })
       }
+    }
   }
 
   onLoadPaymentData($event: any) {
@@ -144,10 +152,10 @@ export class DealermachineComponent implements OnInit {
   }
 
   cancel() {
-    this._location.back();
+    this.final_message="Annulation. Vous pouvez fermer cette fenêtre";
   }
 
-  validate() {
+  validate_input_address() {
     if(this.address && this.address.indexOf("@")==-1 && !this.address.startsWith('\'') && !this.network.isElrond(this.address)){
       showMessage(this,"Le service n'est compatible qu'avec les adresses elrond");
     } else {

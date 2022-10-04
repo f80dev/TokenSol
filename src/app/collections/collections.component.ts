@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Collection} from "../../operation";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {showMessage} from "../../tools";
+import {Location} from "@angular/common";
 import {MatSnackBar} from "@angular/material/snack-bar";
 
 @Component({
@@ -12,11 +13,10 @@ import {MatSnackBar} from "@angular/material/snack-bar";
   styleUrls: ['./collections.component.css']
 })
 export class CollectionsComponent implements OnInit {
-  addr:string="";
   new_collection:Collection = {
     description: "description",
     id: undefined,
-    name: "son nom",
+    name: "MaCollection",
     owner: undefined,
     price: undefined,
     type: undefined,
@@ -25,7 +25,9 @@ export class CollectionsComponent implements OnInit {
 
   constructor(
     public network:NetworkService,
+    public router:Router,
     public toast:MatSnackBar,
+    public _location:Location,
     public routes:ActivatedRoute,
     public user:UserService
   ) { }
@@ -33,17 +35,21 @@ export class CollectionsComponent implements OnInit {
   ngOnInit(): void {
       this.routes.queryParams.subscribe((params:any)=>{
         if(params.hasOwnProperty("owner")){
-          this.addr=params["owner"]
-          this.user.init(this.addr);
-        } else {
-          this.addr=this.user.addr;
+          this.user.addr=params["owner"]
+          this.user.init(this.user.addr);
         }
-        this.refresh(this.addr)
+        setTimeout(()=>{
+          this.refresh(this.user.addr)
+        },1000)
+
       })
   }
 
   refresh(addr=""){
+    this.network.wait("Récupération des collections");
     this.network.get_collections(addr).subscribe((r:any)=>{
+      this._location.replaceState("./collections","owner="+addr);
+      this.network.wait();
       this.user.collections=r;
     })
   }
@@ -61,11 +67,21 @@ export class CollectionsComponent implements OnInit {
     this.network.wait("Fabrication de la collection sur la blochain")
     this.network.create_collection(this.user.addr,this.new_collection).subscribe((r:any)=>{
       this.user.collections.push(r.collection);
+      this.network.wait();
       showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
     })
   }
 
   open_inspire() {
-    open("https://"+(this.network.isMain() ? "" : "devnet.")+"inspire.art/"+this.addr+"/collections");
+    open("https://"+(this.network.isMain() ? "" : "devnet.")+"inspire.art/"+this.user.addr+"/collections");
+  }
+
+  open_miner(col: Collection) {
+    this.router.navigate(["miner"],{queryParams:{collection:col.id}})
+  }
+
+  open_explorer(col:Collection) {
+    https://devnet-explorer.elrond.com/collections/
+    open("https://"+(this.network.isMain() ? "" : "devnet")+"-explorer.elrond.com/collections/"+col.id);
   }
 }

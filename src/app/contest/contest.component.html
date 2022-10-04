@@ -1,4 +1,4 @@
-<div class="mainform" [ngStyle]="operation?.branding?.style">
+<div class="mainform" [ngStyle]="operation?.branding?.style" *ngIf="operation?.lottery">
 
   <div [ngStyle]="operation?.lottery?.screen?.title_style" >
     {{operation?.lottery?.screen?.title}}
@@ -7,21 +7,30 @@
 
   <table style="width: 100%;max-height:80%;">
     <tr *ngIf="visual">
-      <td style="width:50%;">
+      <td style="width:50%;" >
         <div *ngIf="delay>0" style="font-size: xx-large;">
-          {{minutes}}:{{secondes}}
+          {{minutes}}:<span *ngIf="secondes<10">0</span>{{secondes}}
         </div><br>
 
         <div style="display: inline-block;max-width: 70%;max-height: 60%;" [style.width]="operation?.lottery?.screen?.visual_size">
           <img *ngIf="visual.length>0" [src]="visual" style="object-fit: cover;width:100%;" class="mat-elevation-z4">
         </div>
       </td>
-      <td style="width:50%;">
+      <td style="width:50%;" *ngIf="operation?.lottery">
         <h2>Flasher ce QRCode pour récupérer gratuitement le NFT</h2>
 
-        <a *ngIf="url.length>0" [href]="url" target="_blank">
+        <a *ngIf="url.length>0 && operation?.lottery?.authentification?.on_device" [href]="url" target="_blank">
           <img [src]="qrcode" [style.width]="operation?.lottery?.screen?.qrcode_size" style="max-width: 60%;" class="mat-elevation-z4">
         </a>
+
+        <app-authent
+                     *ngIf="operation && operation?.lottery && operation.lottery.authentification"
+                     [showWalletConnect]="operation.lottery.authentification.wallet_connect && !operation.lottery.authentification.on_device"
+                     title=""
+                     size="500px"
+                     (authent)="on_authent($event)">
+        </app-authent>
+
       </td>
     </tr>
   </table>

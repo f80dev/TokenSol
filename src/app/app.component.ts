@@ -54,7 +54,7 @@ export class AppComponent implements OnInit {
         if(getBrowserName()=="firefox"){
           showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
         }
-
+        if(localStorage.getItem("addr"))this.user.init(localStorage.getItem("addr") || "")
         this.network_service.version=params["version"] || "main";
         if(params.hasOwnProperty("toolbar")){
           this.toolbar_visible=params["toolbar"];

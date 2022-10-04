@@ -25,15 +25,20 @@ import {PageNotFoundComponent} from "./page-not-found/page-not-found.component";
 import {IntroComponent} from "./intro/intro.component";
 import {LoginComponent} from "./login/login.component";
 import {CollectionsComponent} from "./collections/collections.component";
+import {AutovalidateComponent} from "./autovalidate/autovalidate.component";
+import {ValidatorsComponent} from "./validators/validators.component";
 
 
 const routes: Routes = [
   { path: 'wallet', component: MywalletComponent },
+  { path: 'autovalidate', component: AutovalidateComponent },
+  { path: 'mywallet', component: MywalletComponent },
   { path: 'candymachine', component:CandymachineComponent },
   { path: 'cm', component:CandymachineComponent,pathMatch:"prefix" },
   { path: 'dealermachine', component:DealermachineComponent ,pathMatch:"prefix"},
   { path: 'dm', component:DealermachineComponent },
   { path: 'help', component: HelpComponent },
+  { path: 'validators', component: ValidatorsComponent },
   { path: 'about', component: AboutComponent },
   { path: 'reload', component: FaucetComponent },
   { path: 'faqs', component: FaqsComponent },
@@ -44,6 +49,7 @@ const routes: Routes = [
   { path: 'keys', component: KeysComponent },
   { path: 'admin', component: AdminComponent },
   { path: 'contest', component: ContestComponent },
+  { path: 'lottery', component: ContestComponent },
   { path: 'pool', component: MinerpoolComponent },
   { path: 'dispenser', component: DispenserComponent,pathMatch:"prefix" },
   { path: 'creator', component: CreatorComponent },

@@ -1,8 +1,10 @@
+//Version 0.1
+
 import {WalletProvider} from "@elrondnetwork/erdjs-web-wallet-provider";
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
-import {$$, isLocal, showMessage} from "../../tools";
+import {$$, isLocal, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {WalletConnectProvider} from "@elrondnetwork/erdjs-wallet-connect-provider/out";
 import {environment} from "../../environments/environment";
@@ -11,7 +13,6 @@ import {Location} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {WALLET_PROVIDER_DEVNET, WALLET_PROVIDER_MAINNET} from "@elrondnetwork/erdjs-web-wallet-provider/out/constants";
 import {NFT} from "../../nft";
-import {Clipboard} from "@angular/cdk/clipboard";
 
 @Component({
   selector: 'app-authent',
@@ -22,7 +23,7 @@ export class AuthentComponent implements OnInit {
 
   @Input() intro_message:string="Email / Adresse de blockchaine";
   @Input() network:string="elrond-devnet";
-  @Input() checknft:string=""; //Vérifie si l'utilisateur dispose d'un ou plusieurs NFT
+  @Input() checknft:string[]=[]; //Vérifie si l'utilisateur dispose d'un ou plusieurs NFT
   @Input() explain_message:string="Adresse de votre wallet ou votre email si vous n'en avez pas encore";
   @Output('authent') onauthent: EventEmitter<any>=new EventEmitter();
   @Output('cancel') oncancel: EventEmitter<any>=new EventEmitter();
@@ -35,12 +36,17 @@ export class AuthentComponent implements OnInit {
   @Input() showWalletConnect=false;
   @Input() showAddress=false;
   @Input() showNetwork=false;
-  @Input() strong=true;                 //Demande à ce que l'authorisation soit forte
+  @Input() showValidator=false;
+
+  strong=false;                     //Niveau d'authentification
+  @Input() size="250px";
+  @Input() title="";
 
   qrcode: string="";
   access_code="";
   address: string="";
-  dynamic_token: string = "";
+  validator_qrcode:string="";
+
 
   constructor(
     public api:NetworkService,
@@ -111,11 +117,11 @@ export class AuthentComponent implements OnInit {
 
   check_condition(nfts:NFT[]){
     $$("Vérification des conditions d'accès "+this.checknft)
-    for(let elts of this.checknft.split(" | ")) {
+    for(let elts of this.checknft) {
       for (let elt of elts.split(" & ")) {
         let is_in = false;
         for (let nft of nfts) {
-          if (nft.collection.name) elt = elt.replace(nft.collection.name, "")
+          if (nft.collection && nft.collection.name) elt = elt.replace(nft.collection.name, "")
         }
         if (elt.length == 0) return true;
       }
@@ -129,6 +135,7 @@ export class AuthentComponent implements OnInit {
       showMessage(this,"Pour l'instant, Le service n'est compatible qu'avec les adresses elrond");
     } else {
       if(this.checknft.length>0){
+        $$("Recherche des tokens "+this.checknft+" pour l'adresse "+this.address);
         this.api.get_tokens_from("owner",this.address,1000,true,null,0,this.network).then((r:NFT[])=>{
           if(this.check_condition(r)){
             this.onauthent.emit({addr:this.address,nftcheck:true,strong:this.strong})
@@ -179,6 +186,8 @@ export class AuthentComponent implements OnInit {
         this.user.email=socialUser.email;
         this.user.name=socialUser.firstName + " "+ socialUser.lastName;
         this.strong=true;
+      },(err:any)=>{
+        showMessage(this,"Problème d'authentification, veuillez saisir manuellement votre email");
       })
     }
 
@@ -197,6 +206,7 @@ export class AuthentComponent implements OnInit {
   }
 
   on_flash($event: {data:string}) {
+    $$("Lecture de l'adresse "+$event.data);
     if($event.data.length>20){
       this.api.check_access_code($event.data).subscribe((result:any)=>{
         this.address=result.addr;

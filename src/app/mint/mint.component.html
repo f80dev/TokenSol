@@ -28,22 +28,19 @@
     <mat-form-field style="fontsize:small">
       <mat-label>Collection à utiliser</mat-label>
       <mat-select [(value)]="sel_collection">
-        <mat-option *ngFor="let collection of collections" [value]="collection">
-          {{collection.name}} ({{collection.id}})
+        <mat-option *ngFor="let collection of user.collections" [value]="collection.id">
+           {{collection.id}}
         </mat-option>
       </mat-select>
     </mat-form-field>
 
-    <button type="button"
-            mat-raised-button mat-button
+    <button type="button" mat-icon-button
+            mat-button
+            title="Voir les collections disponibles"
             (click)="open_collections()">
-      Mes collections
+      <mat-icon>visibility</mat-icon>
     </button>
 
-    <mat-form-field appearance="fill" style="max-width: 80px">
-      <mat-label>Royalties</mat-label>
-      <input matInput type="number" min="0" max="99" [(ngModel)]="seller_fee_basis_points" >
-    </mat-form-field>
 
   </div>
 
@@ -107,9 +104,12 @@
       <mat-icon title="recopie les attributs du premier NFT sur les autres"
                 style="cursor: pointer;font-size: medium;"
                 (click)="clone_attribute()">refresh</mat-icon>
-      <mat-icon title="recopie les attributs du premier NFT sur les autres"
+      <mat-icon title="Ajouter un attribut"
                 style="cursor: pointer;font-size: medium;"
                 (click)="add_attribute()">add_circle</mat-icon>
+        <mat-icon title="Effacer les attributs"
+                  style="cursor: pointer;font-size: medium;"
+                  (click)="clear_attribute()">clear</mat-icon>
       </th>
       <th>Créateurs
         <mat-icon (click)="add_miner_to_creator()" style="cursor: pointer;font-size: medium;">add</mat-icon>
@@ -150,15 +150,26 @@
       </td>
 
       <td style="max-width: 50px;">
-        <app-link *ngFor="let file of token.files" [content]="file.uri">
+        <app-link *ngFor="let file of token.files" [content]="file">
           <mat-icon>link</mat-icon>
         </app-link>
       </td>
 
       <td style="max-width: 50px;">
-        <input matInput type="number" style="max-width: 40px;" class="mat-elevation-z2" min="0" [(ngModel)]="token.marketplace!.price" >
-        /
-        <input matInput type="number" style="max-width: 40px;"  class="mat-elevation-z2" min="0" [(ngModel)]="token.marketplace!.quantity" >
+        <table>
+          <tr>
+            <td>Price</td><td><input matInput type="number" style="max-width: 50px;text-align: right;" class="mat-elevation-z2" min="0" [(ngModel)]="token.marketplace!.price" ></td><td>€</td>
+          </tr>
+          <tr>
+            <td>Quantity</td><td><input matInput type="number" style="max-width: 50px;text-align: right;"  class="mat-elevation-z2" min="0" [(ngModel)]="token.marketplace!.quantity" ></td>
+          </tr>
+          <tr>
+            <td>Royalties</td><td><input matInput type="number" style="max-width: 50px;text-align: right;"  class="mat-elevation-z2" min="0" max="100" [(ngModel)]="token.royalties" ></td><td>%</td>
+          </tr>
+        </table>
+
+        <br>
+
 
       </td>
 
@@ -187,7 +198,7 @@
 
       <td>
         <mat-icon style="cursor: pointer" (click)="upload_token(token)" title="upload du visuel" *ngIf="token.visual.startsWith('data')">upload</mat-icon>
-        <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="user.key">build</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="user.key && sel_collection">build</mat-icon>
         <mat-icon style="cursor: pointer" [title]="to_string(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <br>

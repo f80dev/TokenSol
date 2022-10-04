@@ -91,7 +91,7 @@ export class BuildOpeComponent implements OnInit {
       for(let _nft of r.nfts){
         let nft:NFT=_nft;
         nft.marketplace!.price=nft.marketplace!.price  || 0;
-        let k=nft.collection.id;
+        let k=nft.collection!.id;
         if(k && nft.marketplace!.quantity>0){
           if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
           if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
@@ -197,21 +197,13 @@ export class BuildOpeComponent implements OnInit {
     _d.toolbar=false
     _d.ope=this.operation.sel_ope.id;
 
-    // switch (appli) {
-    //   case "dispenser": {
-    //     break;
-    //   }
-    //   case "store": {
-    //     break;
-    //   }
-    // }
-
     let param = setParams(_d);
     return environment.appli+"/"+appli+"?param="+param;
   }
 
   open_appli(appli:string,add_param:any={}) {
     if(this.operation.sel_ope){
+      if(appli=="validate" && (!this.operation.sel_ope.validate?.users || this.operation.sel_ope.validate?.users.length==0))appli="autovalidate";
       this.refresh();
       open(this.get_url_for_appli(appli,add_param),"_self");
       }
@@ -246,10 +238,14 @@ export class BuildOpeComponent implements OnInit {
 
   open_validate() {
     if(this.operation.sel_ope){
-      let url=this.operation.sel_ope.validate!.application+"?param="+setParams({
-        toolbar:false,
-        ope:this.operation.sel_ope.id
-      })
+      let url=environment.appli+"/autovalidate?param="+setParams({toolbar:false,ope:this.operation.sel_ope.id});
+      if(this.operation.sel_ope.validate && this.operation.sel_ope.validate?.users.length>0){
+        url=this.operation.sel_ope.validate!.application+"?param="+setParams({
+          toolbar:false,
+          ope:this.operation.sel_ope.id
+        })
+      }
+
       this.open_appli(url,'_self');
     }
   }

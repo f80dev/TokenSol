@@ -9,7 +9,7 @@ import jsQR from "jsqr";
 })
 export class ScannerComponent implements OnInit,OnDestroy {
 
-  @Input("size") size=300;
+  @Input("size") size="300px";
   @Input("filter") filter="";
   @Input("caption") caption="Pointez vers le QRCode d'une adresse";
   @Output('flash') onflash: EventEmitter<any>=new EventEmitter();
@@ -17,9 +17,10 @@ export class ScannerComponent implements OnInit,OnDestroy {
   private trigger: Subject<void> = new Subject<void>();
   private nextWebcam: Subject<boolean|string> = new Subject<boolean|string>();
   handle:any;
+  _size: any;
 
   constructor() {
-
+    this._size=Number(this.size.replace("px",""));
   }
 
   ngOnInit() {

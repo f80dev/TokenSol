@@ -74,7 +74,7 @@ class DAO:
     :return:
     """
     _data=nft.__dict__
-    _data["address"]="db_"+hex(int(now()*10000000))[2:]     #l'addresse commençant par db_ permet de désigner une base de données
+    _data["address"]="db_"+now("hex")[2:]     #l'addresse commençant par db_ permet de désigner une base de données
     _data["ts"]=int(now()*1000)
     _data["ope"]=ope
     result=self.db["nfts"].replace_one(filter={"address":_data["address"]},replacement=_data,upsert=True)

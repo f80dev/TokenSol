@@ -68,7 +68,7 @@ def convert_to_gif(content:str,storage_platform=None,filename=None):
 class Element():
   name:str
   def __init__(self,name="",ext="png"):
-    self.name=name if len(name)>0 else str(int(1000*now()))+str(random()*1000000)
+    self.name=name if len(name)>0 else now("hex")+str(random()*1000000)
     self.ext=ext
 
   def fusion(self,to_concat):
@@ -206,7 +206,7 @@ class Sticker(Element):
       for k in dictionnary.keys():
         svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
 
-    filename=prefix_name+"_"+hex(int(now()*100000))+".svg"
+    filename=prefix_name+"_"+now(hex)+".svg"
     with open("./temp/"+filename,"w",encoding="utf8") as file:
       file.writelines(svg_code)
     file.close()
@@ -307,7 +307,7 @@ class Sticker(Element):
 
 
   def merge_animated_image(self,base:Image,to_paste:Image):
-    filename="./temp/temp_merge_"+hex(int(now()*100000))+".gif"
+    filename="./temp/temp_merge_"+now("hex")+".gif"
     wr=imageio.get_writer(filename,mode="I")
 
     frames_to_paste = [f.resize(base.size).convert("RGBA") for f in ImageSequence.Iterator(to_paste)]

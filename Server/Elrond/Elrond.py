@@ -10,7 +10,7 @@ from NFT import NFT
 import textwrap
 
 from nftstorage import NFTStorage
-from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file,setParams
+from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file,setParams,strip_accents
 from ipfs import IPFS
 from erdpy import config
 from erdpy.wallet.core import generate_mnemonic
@@ -123,7 +123,7 @@ class Elrond:
       return None
 
 
-  def get_collections(self,creator:Account,fields=list()):
+  def get_collections(self,creator:Account,detail:bool=True):
     """
     récupération des collections voir :
     :param creator:
@@ -132,25 +132,23 @@ class Elrond:
     """
     creator=self.toAccount(creator)
     if type(creator)==str:creator=Account(address=creator)
-    url=self._proxy.url+"/accounts/"+creator.address.bech32()+"/collections"
-    rc=list()
-    cols=api(url,"gateway=api")
-    if len(fields)>0:
-      for col in cols:
-        rc.append(col[fields])
-    else:
-      rc=cols
+    url=self._proxy.url+"/address/"+creator.address.bech32()+"/registered-nfts"
+    ids=api(url,"gateway=api")["data"]["tokens"]
+    rc=[]
+    for id in ids:
+      col=self.get_collection(id) if detail else {"id":id}
+      rc.append(col)
 
-    for item in rc:
-      item["id"]=item["ticker"]
-      item["option"]={
-        "canFreeze":item["canFreeze"],
-        "canWipe":item["canWipe"],
-        "canPause":item["canPause"]
-      }
+    if detail:
+      for item in rc:
+        item["id"]=item["ticker"]
+        item["option"]={
+          "canFreeze":item["canFreeze"],
+          "canWipe":item["canWipe"],
+          "canPause":item["canPause"]
+        }
 
     return rc
-
 
 
 
@@ -236,7 +234,7 @@ class Elrond:
 
     collection_id=None
     log("On recherche la collection de nom "+collection_name+" appartenant à "+owner.address.bech32())
-    for col in self.get_collections(owner):
+    for col in self.get_collections(owner,True):
       if col["name"].upper()==collection_name.upper() and owner.address.bech32()==col["owner"]:
         collection_id=col["collection"]
         break
@@ -302,6 +300,27 @@ class Elrond:
     return hex_to_str(collection_id)
 
 
+  def get_nfts_from_collections(self,collections:[str],with_attr=False):
+    """
+    voir https://api.elrond.com/#/collections/CollectionController_getNftCollection
+    :param collections:
+    :param miner:
+    :return:
+    """
+    rc=[]
+    for col in collections:
+      result=api(self._proxy.url+"/collections/"+col+"/nfts","gateway=api")
+      for item in result:
+        royalties=int(item["royalties"]*100) if "royalties" in item else 0
+        attributes,description=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
+        nft=NFT(item["name"],"",{"id":col},attributes,description,item["media"],[item["creator"]],item["identifier"],royalties=royalties)
+        nft.network=self.network_name
+        nft.marketplace={"quantity":1,"price":0}
+        rc.append(nft)
+    return rc
+
+
+
   def get_account(self,_user):
     _user=self.toAccount(_user)
     rc=self._proxy.get_account(_user.address)
@@ -328,7 +347,8 @@ class Elrond:
 
     return content
 
-
+  def nfluent_wallet_url(self,address:str,network="elrond-devnet"):
+    return "param="+setParams({"toolbar":"false","network":network,"addr":address})
 
   def create_account(self,email="",seed="",network="elrond-devnet",domain_appli="",subject="Votre compte Elrond est disponible"):
     """
@@ -366,7 +386,7 @@ class Elrond:
     if len(email)>0:
       send_mail(open_html_file("mail_new_account",{
         "wallet_address":address,
-        "mini_wallet":"?"+setParams({"toolbar":"false","network":network,"addr":address}),
+        "mini_wallet":"?"+self.nfluent_wallet_url(),
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
         "url_explorer":("https://explorer.elrond.com" if "mainnet" in network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
         "words":words,
@@ -382,7 +402,10 @@ class Elrond:
     :param body:
     :return: les attributs, description
     """
-    attr=str(base64.b64decode(bytes(body,"utf8")),"utf8")
+    try:
+      attr=str(base64.b64decode(bytes(body,"utf8")),"utf8")
+    except:
+      attr=str(base64.b64decode(body))
 
     if attr.startswith("{\""):attr=" - "+attr
 
@@ -427,9 +450,19 @@ class Elrond:
       return None
 
 
-  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=True):
+  def complete_collection(self,nfts:[NFT]):
+    collections=dict()
+    for nft in nfts:
+        collection_id=nft.collection["id"]
+        if not collection_id in collections: collections[collection_id]=self.get_collection(collection_id)
+        nft.collection=collections[collection_id]
+    return nfts
+
+
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0):
     """
     https://docs.elrond.com/developers/nft-tokens/
+    voir
     :param _user:
     :param limit:
     :param with_attr:
@@ -437,6 +470,7 @@ class Elrond:
     """
     _user=self.toAccount(_user)
     rc=list()
+
     nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
     if nfts is None:
       log("Le compte "+_user.address.bech32()+" n'existe pas")
@@ -456,13 +490,7 @@ class Elrond:
           log("Analyse de "+str(nft))
 
           collection_id,nonce=self.extract_from_tokenid(nft["tokenIdentifier"])
-          if with_collection:
-            if not collection_id in collections:
-              collections[collection_id]=self.get_collection(collection_id)
-
-            collection=collections[collection_id]
-          else:
-            collection={"id":collection_id}
+          collection={"id":collection_id}
 
           _nft=NFT(
             nft["name"],
@@ -557,25 +585,6 @@ class Elrond:
     #hash = hex(int(now() * 1000)).upper().replace("0X", "")
     hash="00"
 
-    # for col in self.get_collections(user_from,[]):
-    #     if col["name"]==collection:
-    #         collection_id=col["ticker"]
-    #         break
-
-    # if collection_id=="":
-    #     token_id=self.add_collection(user_from,collection)
-
-    #Voir https://docs.elrond.com/developers/nft-tokens/
-    #exemple de creation d'une collection de SFT
-    # Name=CalviOnTheRock collection=Calvi2022
-    # TransferCreateRole
-    #Résultat issueSemiFungible@43616c76694f6e546865526f636b32303232@43414c564932303232@63616e5472616e736665724e4654437265617465526f6c65@74727565
-    #Création de billet
-    #Exemple : issueSemiFungible@546f757245696666656c@544f555245494646454c@63616e467265657a65@74727565@63616e57697065@74727565@63616e5472616e736665724e4654437265617465526f6c65@74727565
-    #Transaction hash 3f002652038ba8aed2876809a9e019451770c740749c1047a5b4d354f5fb217a
-
-    # if visual.lower().endswith("webp"):
-    #   visual=convert_to_gif(visual,NFTStorage())
 
     if metadata_to_ipfs:
       if len(description)>0:properties["description"]=description
@@ -593,6 +602,11 @@ class Elrond:
         else:
           s=description
 
+    #Traitement de la problématique des caractères spéciaux
+    #voir
+    s=strip_accents(s.replace("\n"," "))
+    title=strip_accents(title)
+
     data = "ESDTNFTCreate" \
            + "@" + str_to_hex(collection,False) \
            + "@" + int_to_hex(quantity,2) \
@@ -603,9 +617,7 @@ class Elrond:
            + "@" + str_to_hex(visual,False)
 
     for f in files:
-      filename=f["files"]
-      if filename.lower().endswith(".webp"):filename=convert_to_gif(filename,NFTStorage())
-      data=data+"@"+str_to_hex(filename,False)
+      data=data+"@"+str_to_hex(f,False)
 
     #Exemple de minage: ESDTNFTCreate@544f5552454946462d323864383938@0a@4c6120746f75722071756920636c69676e6f7465@09c4@516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b@746167733a3b6d657461646174613a516d54713845666d36416634616a35383847694d716b4d44524c475658794133773439315052464e413471546165@68747470733a2f2f697066732e696f2f697066732f516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b
 
@@ -627,7 +639,9 @@ class Elrond:
     t = self.send_transaction(miner, miner, miner, 0, data)
     if t is None: return None,None
 
-    if t["status"]!="success":return None,None
+    if t["status"]!="success":
+      return {"error":hex_to_str(str(base64.b64decode(t["logs"]["events"][0]["data"])).split("@")[1])},None
+
     if "logs" in t:
       nonce = t["logs"]["events"][0]
       nonce = int_to_hex(base64.b64decode(nonce["topics"][1])[0],2)
