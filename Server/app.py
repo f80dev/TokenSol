@@ -1140,26 +1140,29 @@ def get_minerpool(id=""):
 
 
 def async_mint(nbr_items=3):
-  for ask in dao.get_nfts_to_mint(int(nbr_items)):
-    nft=ask["nft"] if "nft" in ask else None
-    operation=get_operation(ask["operation"])
-    if len(nft["address"])==0:
-      nfts=get_nfts_from_src(operation["data"]["sources"],nft["collection"],False)
-      nft_to_mint=None
-      if len(nfts)>0:
-        for i in range(200):
-          nft_to_mint=nfts[int(random()*len(nfts))]
-          if nft_to_mint.owner==operation["miner"]:
-            break
+  if not dao.isConnected():
+    log("Impossible de se connecter à la base")
+  else:
+    for ask in dao.get_nfts_to_mint(int(nbr_items)):
+      nft=ask["nft"] if "nft" in ask else None
+      operation=get_operation(ask["operation"])
+      if len(nft["address"])==0:
+        nfts=get_nfts_from_src(operation["data"]["sources"],nft["collection"],False)
+        nft_to_mint=None
+        if len(nfts)>0:
+          for i in range(200):
+            nft_to_mint=nfts[int(random()*len(nfts))]
+            if nft_to_mint.owner==operation["miner"]:
+              break
 
-    if not nft is None and not nft_to_mint is None:
-      rc=mint(nft_to_mint,ask["miner"],nft["owner"],nft["network"])
-      if not rc or rc["error"]!="":
-        log("Problème de minage pour "+ask["address"]+" sur "+ask["network"])
+      if not nft is None and not nft_to_mint is None:
+        rc=mint(nft_to_mint,ask["miner"],nft["owner"],nft["network"])
+        if not rc or rc["error"]!="":
+          log("Problème de minage pour "+ask["address"]+" sur "+ask["network"])
 
-      dao.edit_pool(ask["_id"],now(),rc["hash"])
-    else:
-      log("Probleme de minage asynchrone pour un item")
+        dao.edit_pool(ask["_id"],now(),rc["hash"])
+      else:
+        log("Probleme de minage asynchrone pour un item")
 
 
 # http://127.0.0.1:4242/api/async_mint/3/

@@ -36,6 +36,8 @@ class DAO:
       log("Tentative de connexion ok")
 
 
+  def isConnected(self) -> bool:
+    return not self.db is None
 
 
   def connect(self, domain, name):
