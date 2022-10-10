@@ -26,16 +26,16 @@ export class FaucetComponent implements OnInit {
   }
 
   refresh(){
-    this.balance=this.network.getBalance(<PublicKey>this.user.wallet.publicKey);
+    // this.balance=this.network.getBalance(<PublicKey>this.user.wallet.publicKey);
   }
 
   reload() {
     if(this.network.isElrond())
       open("https://r3d4.fr/elrond/devnet/index.php","_blank")
     else{
-      this.network.airdrop(this.user.wallet.publicKey!).then(()=>{
-        this.refresh();
-      });
+      // this.network.airdrop(this.user.wallet.publicKey!).then(()=>{
+      //   this.refresh();
+      // });
     }
 
   }

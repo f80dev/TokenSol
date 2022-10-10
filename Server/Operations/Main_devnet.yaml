@@ -20,7 +20,6 @@ wallet: "$nfluent_appli$/wallet"
 lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
-  network: elrond-devnet
   miner: paul
 
 
@@ -80,7 +79,7 @@ data:
         limit: 200
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
-        - "NFLUENTC-51396a"
+        - "NFLUXCAR-6018c8"
 
 
     - type: database
@@ -138,10 +137,10 @@ validate:
   #Cette section regroupe les possibilités offerte au visiteur en phase d'autovalidation
   authentification:
     webcam: True
-    wallet_connect: True
+    wallet_connect: False
     google: False
     address: False
-    validator: True
+    nfluent_wallet_connect: True
 
   support:
     #message affiché aux validateurs pour la détection du wallet
@@ -214,9 +213,9 @@ validate:
   #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
   filters:
     mint_authority: ''
-    collections:                #Liste des collections éligible à la validation
-      - "NFLUENTC-51396a"
-    symbol: ''      #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
+    collections:                #Liste des collections que le visiteur doit posséder pour avoir l'accès
+      - "NFLUXCAR-6018c8"
+    symbol: ''                  #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
 
 payment: #Section désignant le réceptionnaire des payment via google pay : https://www.npmjs.com/package/@google-pay/button-angular
@@ -234,7 +233,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "NFLUENTE-6dce97"
+    - "NFLUXCAR-6018c8"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -286,11 +285,14 @@ candymachine:
 
   connexion:
     wallet_connect: False      #Permet de se connecter à la candy machine via wallet connect
+    nfluent_wallet_connect: False
     webcam: False
+    network: True
     email: True
 
+
   collections:
-    - "NFLUENT-518891"
+    - "NFLUXCAR-6018c8"
 
   messages:
     title: "Flasher ce code pour obtenir un NFT de la collection NFLuenT"
@@ -338,7 +340,6 @@ lottery:
     address: True           #Propose la barre d'adresse pour l'authentifiation
     webcam: False
     validator: True         #Propose un qrcode qui doit être visé par le wallet nfluent pour authentification
-
 
 
 

@@ -76,11 +76,11 @@ export class ContestComponent implements OnInit,OnDestroy {
   }
 
 
-  on_authent($event: {data:string}) {
-    $$("Récupération de l'adresse "+$event.data);
+  on_authent(evt:{address:string}) {
+    $$("Récupération de l'adresse "+evt.address);
     if(this.operation && this.operation.lottery && this.nft_address.length>0){
       this.network.mint_for_contest(
-        $event.data,
+        evt.address,
         this.operation?.id,
         this.operation.lottery.miner || "",
         "ipfs",

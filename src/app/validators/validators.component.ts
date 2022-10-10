@@ -1,21 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {Operation} from "../../operation";
-import {setParams, showMessage} from "../../tools";
+import {showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {environment} from "../../environments/environment";
+import {Validator} from "../../nft";
 
-export interface Validator {
-  id:string
-  name: string | ""
-  operation: string | ""
-  user: string | ""
-  dtLastConnexion: number | 0
-  dtStart: Number | 0
-  nfts: Number | 0
-  qrcode_accesscode: string | ""
-  access_code:string | ""
-}
 
 @Component({
   selector: 'app-validators',
@@ -35,13 +25,18 @@ export class ValidatorsComponent implements OnInit {
   ngOnInit(): void {
     this.network.get_operations().subscribe((operations:any)=>{
       this.operations=operations;
-      this.network.get_validators().subscribe((validators:Validator[])=>{
-        this.validators=[];
-        for(let validator of validators){
-          validator.qrcode_accesscode=environment.server + "/api/qrcode/" + encodeURIComponent(validator.access_code);
-          this.validators.push(validator);
-        }
-      })
+      this.refresh();
+    })
+  }
+
+  refresh(){
+    this.network.get_validators().subscribe((validators:Validator[])=>{
+      this.validators=[];
+      for(let validator of validators){
+        validator.qrcode_accesscode=environment.server + "/api/qrcode/" + encodeURIComponent(validator.access_code);
+        validator.dtStart=Math.round((new Date().getTime()-1000*(Number(validator.dtStart)))/(60*1000))
+        this.validators.push(validator);
+      }
     })
   }
 
@@ -51,8 +46,29 @@ export class ValidatorsComponent implements OnInit {
 
 
   update_operation(validator:Validator) {
-      this.network.set_operation_for_validator(validator.id,validator.operation).subscribe(()=>{
+      this.network.set_operation_for_validator(validator.id,validator.ask).subscribe(()=>{
         showMessage(this,"Validateur à jour");
+        this.refresh();
+      })
+  }
+
+  delete(validator: Validator) {
+    this.network.remove_validator(validator.id).subscribe(()=>{
+      this.refresh();
+    })
+  }
+
+
+  delete_all() {
+    let i=0;
+    for(let val of this.validators)
+      this.network.remove_validator(val.id).subscribe(()=>{
+        i++;
+        if(i==this.validators.length){
+          this.refresh();
+          showMessage(this,"Validateurs supprimés");
+        }
+
       })
   }
 }

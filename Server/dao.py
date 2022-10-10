@@ -80,6 +80,7 @@ class DAO:
     result=self.db["nfts"].replace_one(filter={"address":_data["address"]},replacement=_data,upsert=True)
     rc={
       "error":"",
+      "tx":"",
       "result":{"transaction":"","mint":nft.address},
       "balance":0,
       "link_mint":"",
@@ -160,7 +161,7 @@ class DAO:
     :param dtWork:
     :return:
     """
-    rc=self.db["mintpool"].update_one({"_id":id},{"$set":{"dtWork":dtWork}})
+    rc=self.db["mintpool"].update_one({"_id":id},{"$set":{"dtWork":dtWork,"tx":transaction}})
     return rc.modified_count
 
 
@@ -176,6 +177,23 @@ class DAO:
     }
     tx=self.db["mintpool"].insert_one(obj)
     return tx.inserted_id
+
+
+
+  def add_validator(self, id,ask_for):
+    """
+    Ajout d'un nouveau validateur dans la liste
+    :param id:
+    :return:
+    """
+    self.db["validators"].update_one({"id":id},{"$set":{
+      "id":id,
+      "dtStart":now(),
+      "ask":ask_for,
+      "user":"",
+      "nfts":0
+    }
+    },upsert=True)
 
 
 

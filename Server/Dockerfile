@@ -71,6 +71,8 @@ RUN pip3 -v install apscheduler
 RUN pip3 -v install Flask-Caching
 RUN pip3 -v install requests-cache
 RUN pip3 -v install cryptography
+RUN pip3 -v install networkx
+RUN pip3 -v install flask-socketio
 
 WORKDIR /
 RUN mkdir Solana

@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import time
 from os import listdir
 from os.path import exists
 from time import sleep
@@ -67,6 +68,115 @@ class Elrond:
   def __init__(self,network="elrond_devnet"):
     self.network_name="devnet" if "devnet" in network else "mainnet"
     self._proxy=ElrondProxy(NETWORKS[self.network_name]["proxy"])
+    self.transactions=[]
+
+
+
+  def find_alias(self,addr,keys=[]):
+    if len(keys)==0:keys=self.get_keys()
+    for k in keys:
+      if k["pubkey"]==addr:
+        return k["name"]
+
+    result=api(self._proxy.url.replace("gateway","api")+"/accounts/"+addr)
+
+    if "username" in result and len(result["username"])>0:
+      keys.append({"pubkey":addr,"name":result["username"]})
+      return result["username"]
+
+    keys.append({"pubkey":addr,"name":addr})
+    return addr
+
+
+  def get_transactions_from_collection(self,address,size=300):
+    result=api(self._proxy.url.replace("gateway","api")+"/collections/"+address+"/transactions?status=success&from=0&size="+str(size))
+    if result:
+      for t in result:
+        sender=t["sender"]
+        value=int(t["value"])
+        method=t["action"]["name"]
+        collection=address
+        token=""
+        receiver=t["receiver"]
+        if method=="transfer":
+          receiver=t["action"]["arguments"]["receiver"]
+          token=t["action"]["arguments"]["transfers"][0]["identifier"]
+          method="Transfert"
+
+        if method=="ESDTNFTCreate":
+          token=""
+          method="Minage"
+
+        self.transactions.append({
+          "from":sender,
+          "to":receiver,
+          "id":t["txHash"],
+          "cost":int(t["fee"])/1e18,
+          "ts":t["timestamp"],
+          "method":method,
+          "token":token,
+          "collection":collection,
+          "value":value
+        })
+
+
+
+
+  def get_transactions(self,address,limit=1000,size=10,profondeur=0,profondeur_max=3,methods=[],exclude_addresses=[]):
+    """
+    voir
+    :return:
+    """
+    result=api(self._proxy.url.replace("gateway","api")+"/accounts/"+address+"/transactions?status=success&from=0&size="+str(size)) if len(self.transactions)<limit else None
+    if result:
+      time.sleep(1)
+      for t in result:
+        sender=t["sender"]
+        receiver=t["receiver"]
+        id=t["txHash"]
+        value=int(t["value"])
+        method=""
+        token=""
+        collection=""
+        if "data" in t:
+          data=str(base64.b64decode(t["data"])).replace("b\'","").replace("b\'","").split("@")
+          method=data[0]
+          if method=="ESDTNFTCreate":
+            collection=hex_to_str(data[1])
+
+          if method=="ESDTNFTTransfer":
+            try:
+              data[4]=data[4].replace("\'","")
+              addr=data[4] if len(data[4]) % 2==0 else "0"+data[4]
+              receiver=Account(address=addr).address.bech32()
+            except:
+              pass
+
+            collection=hex_to_str(data[1])
+            nonce=data[2]
+            token=collection+"-"+nonce
+
+        obj={
+          "from":sender,
+          "to":receiver,
+          "id":id,
+          "ts":t["timestamp"],
+          "method":method,
+          "token":token,
+          "collection":collection,
+          "value":value
+        }
+
+        if not obj in self.transactions and len(methods)==0 or method in methods and len(self.transactions)<limit:
+          self.transactions.append(obj)
+          log(str(int(100*len(self.transactions)/limit))+"% terminés")
+
+        if profondeur<=profondeur_max:
+          new_address=sender if sender!=address else receiver
+          if not new_address in exclude_addresses and new_address!=address:
+            exclude_addresses.append(new_address)
+            self.get_transactions(new_address,limit,size,profondeur+1,profondeur_max,methods,exclude_addresses)
+
 
 
 
@@ -123,20 +233,24 @@ class Elrond:
       return None
 
 
-  def get_collections(self,creator:Account,detail:bool=True):
+  def get_collections(self,creator_or_collection:str,detail:bool=True):
     """
     récupération des collections voir :
     :param creator:
     :param fields:
     :return:
     """
-    creator=self.toAccount(creator)
-    if type(creator)==str:creator=Account(address=creator)
-    url=self._proxy.url+"/address/"+creator.address.bech32()+"/registered-nfts"
-    ids=api(url,"gateway=api")["data"]["tokens"]
+    if type(creator_or_collection)==Account: creator_or_collection=creator_or_collection.address.bech32()
+    if creator_or_collection.startswith("erd"):
+      creator=self.toAccount(creator_or_collection)
+      url=self._proxy.url+"/address/"+creator.address.bech32()+"/registered-nfts"
+      ids=api(url,"gateway=api")["data"]["tokens"]
+    else:
+      ids=[creator_or_collection]
     rc=[]
     for id in ids:
       col=self.get_collection(id) if detail else {"id":id}
+      col["link"]="https://"+("devnet." if "devnet" in self.network_name else "")+"inspire.art/collections/"+id
       rc.append(col)
 
     if detail:
@@ -209,7 +323,7 @@ class Elrond:
            + "@" + _to.address.hex()
     t = self.send_transaction(_from, _from, _from, 0, data)
     if t is None or t["status"]!="success":
-      return {"error":"Echec du transfert"}
+      return {"error":"Echec du transfert","tx":t["hash"]}
     else:
       return t
 
@@ -310,11 +424,14 @@ class Elrond:
     rc=[]
     for col in collections:
       result=api(self._proxy.url+"/collections/"+col+"/nfts","gateway=api")
-      for item in result:
+      owners=self.get_owner_of_collections([col])
+      for i in range(len(result)):
+        item=result[i]
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
         attributes,description=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
-        nft=NFT(item["name"],"",{"id":col},attributes,description,item["media"],[item["creator"]],item["identifier"],royalties=royalties)
+        nft=NFT(item["name"],"",{"id":col},attributes,description,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
         nft.network=self.network_name
+        nft.owner=owners[i]["address"]
         nft.marketplace={"quantity":1,"price":0}
         rc.append(nft)
     return rc
@@ -348,7 +465,9 @@ class Elrond:
     return content
 
   def nfluent_wallet_url(self,address:str,network="elrond-devnet"):
-    return "param="+setParams({"toolbar":"false","network":network,"addr":address})
+    if type(address)==Account: address=address.address.bech32()
+    return setParams({"toolbar":"false","network":network,"addr":address})
+
 
   def create_account(self,email="",seed="",network="elrond-devnet",domain_appli="",subject="Votre compte Elrond est disponible"):
     """
@@ -386,7 +505,7 @@ class Elrond:
     if len(email)>0:
       send_mail(open_html_file("mail_new_account",{
         "wallet_address":address,
-        "mini_wallet":"?"+self.nfluent_wallet_url(),
+        "mini_wallet":"?"+self.nfluent_wallet_url(address,network),
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
         "url_explorer":("https://explorer.elrond.com" if "mainnet" in network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
         "words":words,
@@ -428,26 +547,30 @@ class Elrond:
     return {},attr
 
 
-  def get_nft(self,owner:Account,collection_id:str="",nonce:str="",token_id:str=""):
+  def get_nft(self,token_id:str,attr=False,transactions=False):
     """
-    retourne un NFT complet
+    retourne un NFT complet voir https://api.elrond.com/#/nfts
     :param address:
     :param collection_id:
     :param nonce:
     :return:
     """
-    if len(token_id)>0:
-      collection_id=token_id.split("-")[0]+"-"+token_id.split("-")[1]
-      nonce=token_id.split("-")[2]
+    item=api(self._proxy.url.replace("gateway","api")+"/nfts/"+token_id)
 
-    result=api(self._proxy.url+"/address/"+self.toAccount(owner).address.bech32()+"/nft/"+collection_id+"/nonce/"+nonce)
-    if result:
-      nft=result["data"]["tokenData"]
-      nft["attributes"],nft["description"]=self.analyse_attributes(nft["attributes"])
+    if item:
+      royalties=int(item["royalties"]*100) if "royalties" in item else 0
+      attributes,description=self.analyse_attributes(item["attributes"],with_ipfs=attr)
+      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
+      nft.owner=item["owner"]
+      nft.marketplace={"price":0,"quantity":int(item["supply"])}
+      nft.network=self.network_name
+
+      if transactions:
+        transactions=api(self._proxy.url+"/nfts/"+token_id+"/transactions","gateway=api")
 
       return nft
-    else:
-      return None
+
+    return item
 
 
   def complete_collection(self,nfts:[NFT]):
@@ -459,7 +582,21 @@ class Elrond:
     return nfts
 
 
-  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0):
+
+  def get_owner_of_collections(self,collections:[str]) -> [dict]:
+    """
+    voir https://api.elrond.com/#/collections/CollectionController_getNftAccounts
+    :param collections:
+    :return:
+    """
+    rc=[]
+    for col in collections:
+      rc=rc+api(self._proxy.url.replace("gateway","api")+"/collections/"+col+"/accounts")
+
+    return rc
+
+
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=False):
     """
     https://docs.elrond.com/developers/nft-tokens/
     voir
@@ -471,6 +608,7 @@ class Elrond:
     _user=self.toAccount(_user)
     rc=list()
 
+    collections=dict()
     nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
     if nfts is None:
       log("Le compte "+_user.address.bech32()+" n'existe pas")
@@ -490,7 +628,10 @@ class Elrond:
           log("Analyse de "+str(nft))
 
           collection_id,nonce=self.extract_from_tokenid(nft["tokenIdentifier"])
-          collection={"id":collection_id}
+          if not collection_id in collections.keys():
+            collections[collection_id]=self.get_collection(collection_id) if with_collection else {"id":collection_id}
+
+          collection=collections[collection_id]
 
           _nft=NFT(
             nft["name"],
@@ -721,6 +862,8 @@ class Elrond:
   def balance(self,account:Account):
     if type(account)!=Account: account=self.toAccount(account)
     return self._proxy.get_account_balance(account.address)/1e18
+
+
 
   def get_keys(self,qrcode_scale=0,with_balance=False):
     rc=[]

@@ -13,11 +13,14 @@ export class ScannerComponent implements OnInit,OnDestroy {
   @Input("filter") filter="";
   @Input("caption") caption="Pointez vers le QRCode d'une adresse";
   @Output('flash') onflash: EventEmitter<any>=new EventEmitter();
+  @Output('cancel') oncancel: EventEmitter<any>=new EventEmitter();
+  @Input("imageQuality") imageQuality=0.85;
 
   private trigger: Subject<void> = new Subject<void>();
   private nextWebcam: Subject<boolean|string> = new Subject<boolean|string>();
   handle:any;
   _size: any;
+
 
   constructor() {
     this._size=Number(this.size.replace("px",""));
@@ -53,4 +56,7 @@ export class ScannerComponent implements OnInit,OnDestroy {
     this.stopScanner();
   }
 
+  webcamError() {
+    this.oncancel.emit();
+  }
 }

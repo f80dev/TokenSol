@@ -20,7 +20,8 @@ export class CollectionsComponent implements OnInit {
     owner: undefined,
     price: undefined,
     type: undefined,
-    visual: undefined
+    visual: undefined,
+    link: ""
   };
 
   constructor(
@@ -30,25 +31,25 @@ export class CollectionsComponent implements OnInit {
     public _location:Location,
     public routes:ActivatedRoute,
     public user:UserService
-  ) { }
+  ) {}
 
   ngOnInit(): void {
-      this.routes.queryParams.subscribe((params:any)=>{
-        if(params.hasOwnProperty("owner")){
-          this.user.addr=params["owner"]
-          this.user.init(this.user.addr);
-        }
-        setTimeout(()=>{
-          this.refresh(this.user.addr)
-        },1000)
+    this.routes.queryParams.subscribe((params:any)=>{
+      if(params.hasOwnProperty("owner")){
+        this.user.addr=params["owner"]
+        this.user.init(this.user.addr);
+      }
+    })
 
-      })
+    this.user.addr_change.subscribe((addr)=>{
+      this.refresh(addr);
+    })
   }
 
   refresh(addr=""){
     this.network.wait("Récupération des collections");
+    this._location.replaceState("./collections","owner="+addr);
     this.network.get_collections(addr).subscribe((r:any)=>{
-      this._location.replaceState("./collections","owner="+addr);
       this.network.wait();
       this.user.collections=r;
     })
@@ -72,6 +73,8 @@ export class CollectionsComponent implements OnInit {
     })
   }
 
+
+
   open_inspire() {
     open("https://"+(this.network.isMain() ? "" : "devnet.")+"inspire.art/"+this.user.addr+"/collections");
   }
@@ -83,5 +86,9 @@ export class CollectionsComponent implements OnInit {
   open_explorer(col:Collection) {
     https://devnet-explorer.elrond.com/collections/
     open("https://"+(this.network.isMain() ? "" : "devnet")+"-explorer.elrond.com/collections/"+col.id);
+  }
+
+  open_analyser(col: Collection) {
+    this.router.navigate(["analytics"],{queryParams:{collection:col.id}});
   }
 }

@@ -48,7 +48,7 @@ export class CandymachineComponent implements OnInit {
   authent($event: any) {
     if(this.operation?.network){
       let body={
-        owner:$event.addr,
+        owner:$event.address,
         network:this.operation?.network,
         miner: this.operation.lazy_mining.miner,
         operation:this.operation.id,

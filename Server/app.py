@@ -18,6 +18,8 @@ from os.path import exists
 from random import random
 from zipfile import ZipFile
 
+from flask_socketio import SocketIO, emit
+
 import Tools
 from Tools import get_operation, decrypt
 
@@ -40,16 +42,15 @@ from GoogleCloudStorageTools import GoogleCloudStorageTools
 from NFT import NFT
 from PrestaTools import PrestaTools
 from Solana.Solana import SOLANA_KEY_DIR, Solana
-from Tools import log, now, is_email, send_mail, open_html_file, encrypt, setParams, get_access_code, check_access_code, \
-  get_fonts
+from Tools import setParams, get_access_code, check_access_code, get_fonts
+from Tools import log, now, is_email, send_mail, open_html_file, encrypt
+from TransactionsGraph import TransactionsGraph
 from dao import DAO
 from infura import Infura
 from ipfs import IPFS
 from nftstorage import NFTStorage
 from secret import GITHUB_TOKEN, SALT, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY, SECRETS_FILE
 from flask_jwt_extended import create_access_token, JWTManager
-
-from settings import NFTTOMINT_FILE
 
 
 
@@ -58,6 +59,9 @@ log("Initialisation du scheduler ok")
 
 app = Flask(__name__)
 log("Initialisation de l'app ok")
+
+socketio = SocketIO(app,cors_allowed_origins="*")
+log("Initialisation de la websocket")
 
 nft=ArtEngine()
 log("Initialisation de l'ArtEngine ok")
@@ -268,14 +272,19 @@ def generate_svg():
         "text": _data["sequence"][index]
       }
       s=master.clone()
-      rc.append(s.render_svg(dictionnary=replacements,with_picture=False,server_domain=_data["server"],prefix_name="svg"))
+      file=s.render_svg(dictionnary=replacements,
+                        with_picture=False,
+                        prefix_name="svg")
+      rc.append(file)
+  else:
+    rc.append(app.config["DOMAIN_SERVER"]+"/api/images/"+master.image)
 
   return jsonify(rc)
 
 
-@app.route('/api/collections/<owner>/')
+@app.route('/api/collections/<addresses>/')
 #test http://127.0.0.1:4242/api/collection/herve
-def get_collections(owner:str):
+def get_collections(addresses:str):
   """
   retourne l'ensemble des collections appartenant à un utilisateur
   :param owner:
@@ -285,7 +294,9 @@ def get_collections(owner:str):
   with_detail=(request.args.get("detail","true")=="true")
   if "elrond" in network:
     elrond=Elrond(network)
-    cols=elrond.get_collections(owner,with_detail)
+    cols=[]
+    for addr in addresses.split(","):
+      cols=cols+elrond.get_collections(addr,with_detail)
 
   return jsonify(cols)
 
@@ -499,6 +510,46 @@ def test2():
   return jsonify(_product)
 
 
+@app.route('/api/analyse_transaction/<address>/',methods=["GET"])
+#test http://127.0.0.1:4242/api/analyse_transaction/erd16ck62egnvmushkfkut3yltux30cvp5aluy69u8p5hezkx89a2enqf8plt8/?limit=200&profondeur_max=5&network=elrond-devnet&size=50
+def analyse_transaction(address:str):
+  elrond=Elrond(request.args.get("ope","elrond-devnet"))
+  if not address: return returnError("Pas d'adresse de départ")
+
+  limit=int(request.args.get("limit","100"))
+  profondeur_max=int(request.args.get("profondeur_max","10"))
+  format=request.args.get("format","graph")
+  methods=request.args.get("methods","ESDTNFTCreate,MultiESDTNFTTransfer,ESDTTransfer,issueNonFungible,ESDTNFTTransfer").split(",")
+  exclude_addresses=request.args.get("exclude","erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u").split(",")
+
+  elrond.transactions.clear()
+  if address.startswith("erd"):
+    elrond.get_transactions(address,
+                            limit=limit,
+                            size=int(request.args.get("size","50")),
+                            profondeur=0,
+                            profondeur_max=profondeur_max,methods=methods,
+                            exclude_addresses=exclude_addresses)
+  else:
+    elrond.get_transactions_from_collection(address,int(request.args.get("size","500")))
+
+  if format.startswith("transaction"):
+    return jsonify({"transactions":elrond.transactions})
+
+  if format=="graph":
+    G=TransactionsGraph()
+    keys=elrond.get_keys()
+    for t in elrond.transactions:
+      t["to"]=elrond.find_alias(t["to"],keys)
+      t["from"]=elrond.find_alias(t["from"],keys)
+
+    G.load(elrond.transactions)
+
+  return jsonify({"graph":G.export()})
+
+
+
+
 
 @app.route('/api/analyse_prestashop_orders/',methods=["GET"])
 #test http://127.0.0.1:4242/api/analyse_prestashop_orders/?ope=main_devnet
@@ -679,7 +730,7 @@ def get_operations() -> [dict]:
 
 
 
-@app.route('/api/transfer_to/<nft_addr>/<to>/<owner>',methods=["GET"])
+@app.route('/api/transfer_to/<nft_addr>/<to>/<owner>/',methods=["GET"])
 def transfer_to(nft_addr:str,to:str,owner:str):
   network=request.args.get("network","solana-devnet")
 
@@ -799,6 +850,12 @@ def action():
 
 
 def get_access_code_from_email(email:str):
+  """
+  fournis le mot de passe pour les validateurs sur la base de leur mail
+  seul les 6 premiers caractères sont transmis
+  :param email:
+  :return:
+  """
   return hashlib.md5((email+SALT).encode()).hexdigest().upper()[:6]
 
 
@@ -941,7 +998,12 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
           if src["owner"]:
             nfts=elrond.get_nfts(src["owner"],limit=src["filter"]["limit"],with_attr=with_attributes)
           else:
-            nfts=elrond.get_nfts_from_collections(src["collections"],with_attr=with_attributes)
+            nfts=[]
+            for nft in elrond.get_nfts_from_collections(src["collections"],with_attr=with_attributes):
+              if not nft.owner:
+                nft=elrond.get_nft(nft.address)
+              nfts.append(nft)
+
           nfts=elrond.complete_collection(nfts)
 
           src["ntokens"]=len(nfts)
@@ -1040,6 +1102,11 @@ def get_key(code=""):
 
 @app.route('/api/check_access_code/<code>',methods=["GET"])
 def api_check_access_code(code:str):
+  """
+  Vérifie l'access code des validateurs
+  :param code:
+  :return:
+  """
   addr=check_access_code(code)
   if addr is None:
     return returnError("Code incorrect")
@@ -1052,6 +1119,11 @@ def api_check_access_code(code:str):
 @app.route('/api/minerpool/<id>/',methods=["DELETE"])
 # http://127.0.0.1:4242/api/minerpool/
 def get_minerpool(id=""):
+  """
+  retourne le contenu de la pool de minage pour les NFTs obtenus via la dealermachine
+  :param id:
+  :return:
+  """
   asks=dao.db["mintpool"].find()
   rc=[]
   if request.method=="GET":
@@ -1073,15 +1145,21 @@ def async_mint(nbr_items=3):
     operation=get_operation(ask["operation"])
     if len(nft["address"])==0:
       nfts=get_nfts_from_src(operation["data"]["sources"],nft["collection"],False)
+      nft_to_mint=None
       if len(nfts)>0:
-        nft_to_mint=nfts[int(random()*len(nfts))]
+        for i in range(200):
+          nft_to_mint=nfts[int(random()*len(nfts))]
+          if nft_to_mint.owner==operation["miner"]:
+            break
 
-    if not nft is None:
+    if not nft is None and not nft_to_mint is None:
       rc=mint(nft_to_mint,ask["miner"],nft["owner"],nft["network"])
       if not rc or rc["error"]!="":
         log("Problème de minage pour "+ask["address"]+" sur "+ask["network"])
 
-      dao.edit_pool(ask["_id"],now(),rc)
+      dao.edit_pool(ask["_id"],now(),rc["hash"])
+    else:
+      log("Probleme de minage asynchrone pour un item")
 
 
 # http://127.0.0.1:4242/api/async_mint/3/
@@ -1113,6 +1191,11 @@ def add_user_for_nft():
 
 @app.route('/api/access_code/<addr>',methods=["GET"])
 def api_access_code(addr=""):
+  """
+  fournir le code d'accès pour l'usage de nfluent_wallet_connect
+  :param addr:
+  :return:
+  """
   format=request.args.get("format","base64")
   scale=request.args.get("scale",9)
 
@@ -1657,20 +1740,21 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
 
   return rc
 
-
-@app.route('/api/nft/<owner>/<tokenid>/',methods=["GET"])
-def get_nft(owner:str,tokenid:str):
-  network=request.args.get("network","solana-devnet")
-  if "elrond" in network:
-    nft=Elrond(network).get_nft(owner=owner,token_id=tokenid)
-  return jsonify(nft)
-
+#
+# @app.route('/api/nft/<owner>/<tokenid>/',methods=["GET"])
+# def get_nft(owner:str,tokenid:str):
+#   network=request.args.get("network","solana-devnet")
+#   if "elrond" in network:
+#     nft=Elrond(network).get_nft(owner=owner,token_id=tokenid)
+#   return jsonify(nft)
+#
 
 
 #https://server.f80lab.com:4242/api/nfts/
 #http://127.0.0.1:4242/api/nfts/
 @app.route('/api/nfts/',methods=["GET"])
-def nfts():
+@app.route('/api/nfts/<id>/',methods=["GET"])
+def nfts(id=""):
   network=request.args.get("network","solana-devnet")
   account=request.args.get("account","paul")
   with_attr="with_attr" in request.args
@@ -1681,7 +1765,10 @@ def nfts():
 
   rc=[]
   if "elrond" in network:
-    l_nfts=Elrond(network).get_nfts(account,limit,with_attr=with_attr,offset=offset)
+    if id=="":
+      l_nfts=Elrond(network).get_nfts(account,limit,with_attr=with_attr,offset=offset,with_collection=True)
+    else:
+      l_nfts=[Elrond(network).get_nft(token_id=id)]
   else:
     l_nfts=Solana(network).get_nfts(account,offset,limit)
 
@@ -2193,27 +2280,71 @@ def login():
 
 
 
-@app.route('/api/validators/',methods=["GET"])
-@app.route('/api/validators/<validator>/',methods=["PUT"])
+@app.route('/api/validators/',methods=["GET","POST"])
+@app.route('/api/validators/<validator>/',methods=["PUT","GET","DELETE"])
 def validators(validator=""):
   if request.method=="GET":
     rc=[]
-    for validator in list(dao.db["validators"].find()):
-      del validator["_id"]
-      validator["access_code"]=str(base64.b64encode(encrypt(validator["id"])),"utf8")
-      rc.append(validator)
+    log("On demande la liste des validateurs")
+    for val in list(dao.db["validators"].find()):
+      if len(validator)==0 or validator==val["id"]: #Validator opére comme un filtre
+        del val["_id"]
+        val["access_code"]=str(base64.b64encode(encrypt(val["id"])),"utf8")
+        rc.append(val)
     return jsonify(rc)
+
+  if request.method=="DELETE":
+    dao.db["validators"].delete_one({"id":validator})
+    return jsonify({"message":"deleted"})
+
+  if request.method=="POST":
+    log("Un validateur demande son inscription")
+    validator_name="val_"+now("hex")
+    access_code=str(base64.b64encode(encrypt(validator_name)),"utf8")
+    ask_for:str=request.json["ask_for"]
+    dao.add_validator(validator_name,ask_for)
+
+    nfts=[]
+    if ask_for.startswith("operation:"):
+      operation=open_operation(ask_for.split("operation:")[1])
+      elrond=Elrond(operation["network"])
+      for nft in get_nfts_from_src(operation["data"]["sources"]):
+        if len(operation["validate"]["filters"]["collections"])==0 or nft.collection in operation["validate"]["filters"]["collections"]:
+          if not nft.owner: nft=elrond.get_nft(nft.address)
+          nfts.append(nft)
+      owner=[x.owner for x in nfts]
+    else:
+      elrond=Elrond(request.json["network"])
+      owners=list(set([x["address"] for x in elrond.get_owner_of_collections(ask_for.split(","))]))
+
+    return jsonify({
+      "access_code":access_code,
+      "id":validator_name,
+      "addresses":owners
+    })
+
 
   if request.method=="PUT":
     rc=dao.db["validators"].update_one({"id":validator},{"$set":request.json})
     return jsonify({"message":"ok"})
 
 
+
 @app.route('/api/scan_for_access/',methods=["POST"])
 def scan_for_access():
+  """
+  Validation de la connexion via le nfluent wallet en mode wallet_connect
+  Cette api est appelé par le visiteur via la webcam du nfluent wallet
+  :return:
+  """
   _data=request.json
+  if "/api/qrcode/" in _data["validator"]:_data["validator"]=_data["validator"].split("/api/qrcode/")[1]
   validator=decrypt(_data["validator"])
+  Tools.send(socketio,validator, {"address":_data["address"]})
   dao.db["validators"].update_one({"id":validator},{"$set": {"user":_data["address"]}})
+  return jsonify({"message":"ok"})
+
+
 
 
 
@@ -2242,7 +2373,10 @@ if __name__ == '__main__':
   scheduler.start()
   atexit.register(lambda: scheduler.shutdown())
 
+  log("Mise a place du modele CORS")
   CORS(app)
+
+
 
   app.config.from_mapping({
     "DEBUG": True,                    # some Flask specific configs
@@ -2259,16 +2393,22 @@ if __name__ == '__main__':
   _port=int(app.config["DOMAIN_SERVER"][app.config["DOMAIN_SERVER"].rindex(":")+1:])
 
   if "debug" in sys.argv:
-    app.run(debug=True,port=_port)
+    socketio.run(app,debug=True,port=_port,allow_unsafe_werkzeug=True)
   else:
     if "ssl" in sys.argv:
       app.config.update(SESSION_COOKIE_SECURE=True,SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE='Lax')
 
       context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
       context.load_cert_chain("/certs/fullchain.pem", "/certs/privkey.pem")
-      app.run(debug=False,port=_port,ssl_context=context,host="0.0.0.0")
+      socketio.run(app,debug=False,port=_port,ssl_context=context,host="0.0.0.0")
+
+      log("Démarage du server")
     else:
-      app.run(debug=False,port=_port,host="0.0.0.0")
+      log("Démarage du server")
+      socketio.run(app,port=_port,host="0.0.0.0",debug=False)
+
+
+
 
 
 

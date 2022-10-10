@@ -1,5 +1,11 @@
-<div style="width: 100%;text-align: center;position: relative;height: 100%;">
-
+<div style="width: 100%;text-align: center;position: relative;">
+  <div *ngIf="collections.length>0">
+    Pour vous authentifier vous devez posséder un NFT de la collection
+    <span *ngFor="let col of collections">
+      <a [href]="col.link" target="_blank">{{col.name}}</a>,
+    </span>
+  </div>
+  <br>
 
   <mat-form-field appearance="fill" style="width:300px;font-size: large;" *ngIf="showAccesCode">
     <mat-label>Votre code d'accès</mat-label>
@@ -14,14 +20,17 @@
     <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
     <mat-hint>{{explain_message}}</mat-hint>
   </mat-form-field>
+  <br>
 
 
   <app-scanner *ngIf="showWebcam" [size]="size"
+               title="Montrer le QRcode de votre wallet à cette caméra"
                (flash)="on_flash($event)"
+               (cancel)="cancel_webcam()"
                (click)="update_dynamic_token()">
   </app-scanner>
 
-<!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
+  <!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
   <div *ngIf="showDynamicToken">
     <button type="button" color="primary"
             mat-raised-button
@@ -32,13 +41,36 @@
   </div>
 
 
-  <img *ngIf="showValidator" [src]="validator_qrcode" [style.width]="size">
+  <!--  Le validator est un qrcode équivalent à wallet connect mais destiné à nfluent wallet-->
+  <br>
+  <table style="width:100%;max-width: 600px;display: inline-block;margin-top: 10px;">
+    <tr>
+      <td style="width: fit-content">
+        <img *ngIf="showNfluentWalletConnect"
+             title="Flasher avec votre wallet nfluent"
+             [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
+             [src]="nfluent_wallet_connect_qrcode"
+             style="cursor: copy;" [style.width]="size">
+      </td>
+      <td *ngIf="showWalletConnect">
+          <img [src]="qrcode"
+               title="Flasher avec un wallet compatible wallet connect"
+               style="max-width: 150px;" [style.width]="size">
+
+      </td>
+    </tr>
+  </table>
+
+  <br>
+  <div style="width:250px;display: inline-block;">
+    <small>{{title}}</small>
+  </div>
+
+
+
+
 
   <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >
-    <div *ngIf="showWalletConnect">
-      <h3>{{title}}</h3>
-      <img [src]="qrcode" [style.width]="size+'px'" style="max-width: 150px;width: 80%;">
-    </div>
 
     <div *ngIf="showNetwork">
       Se connecter avec votre wallet sur<br>
@@ -75,8 +107,7 @@
 
     <button type="button" mat-raised-button mat-button
             title="Ne pas se connecter" color="primary"
-
-            [disabled]="address.length<20 && user.addr.indexOf('@')==-1"
+            [disabled]="address.length<20 && address.indexOf('@')==-1"
             (click)="validate()">
       Valider
     </button>

@@ -7,6 +7,7 @@ export interface Collection {
   owner : string | undefined
   price: number | undefined
   type: string | undefined
+  link: string | ""
 }
 
 interface Connexion {
@@ -16,7 +17,7 @@ interface Connexion {
   email: boolean | false
   google: boolean | false
   webcam: boolean | false
-  validator: boolean | false            //QRCode proposé par nfluent en substitution de Wallet Connect à utiliser depuis le wallet nfluent
+  nfluent_wallet_connect: boolean | false            //QRCode proposé par nfluent en substitution de Wallet Connect à utiliser depuis le wallet nfluent
 }
 
 //Description de la structure d'une opération
@@ -53,7 +54,6 @@ export interface Operation {
   lazy_mining :{
     metadata_storage: string
     content_storage: string
-    network: string
     miner: string
   }
 

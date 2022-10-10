@@ -400,6 +400,6 @@ class Solana:
       return False
 
   def nfluent_wallet_url(self, pubkey, network):
-    return "param="+setParams({"toolbar":"false","network":network,"addr":pubkey})
+    return setParams({"toolbar":"false","network":network,"addr":pubkey})
 
 

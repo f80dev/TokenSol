@@ -106,8 +106,8 @@ export class DealermachineComponent implements OnInit {
   }
 
 
-  valide(addr:any) {
-    if(addr.hasOwnProperty("addr"))addr=addr.addr;
+  valide(evt:any) {
+    let addr=evt.address;
     this.address=addr.replace("'","");
     addr=this.alias.transform(addr,"pubkey");
     if(this.nft!.address?.startsWith("db_")){
@@ -126,14 +126,18 @@ export class DealermachineComponent implements OnInit {
       })
     }else{
       $$("Ce token est déjà miné, on se contente de le transférer");
-      if(this.nft!.address!=""){
+      if(this.nft!.address!="" && this.nft!.owner!=""){
         let mint_addr=this.nft!.address || "";
-        let owner=this.nft!.owner || "";
         this.message="Envoi en cours";
-        this.network.transfer_to(mint_addr,addr,owner).subscribe((r:any)=>{
+        this.network.transfer_to(mint_addr,addr,this.nft!.owner!).subscribe((r:any)=>{
           this.message="";
           this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;
-          this.final_message="Retrouver votre nouveau NFT dans votre wallet NFluenT";
+          if(this.selfWalletConnexion){
+            this.final_message="Retrouver votre nouveau NFT dans votre wallet NFluenT";
+          } else {
+            this.final_message="Le NFT est livré à l'adresse "+addr;
+          }
+
         },(err:any)=>{
           showMessage(this,"Impossible d'envoyer ce NFT");
           this.final_message="Problème technique: Envoi du NFT annulé";

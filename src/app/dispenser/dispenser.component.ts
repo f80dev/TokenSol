@@ -41,10 +41,11 @@ export class DispenserComponent implements OnInit {
           this.nfts=[];
           this.message="";
           for(let nft of nfts){
-            if(nft.marketplace.quantity>0){
+            if(nft.marketplace.quantity>0 && nft.owner==nft.creators[0]){
               nft.style={opacity:1};
             } else {
-              nft.style={opacity:0.3};
+              nft.style={opacity:0.3,cursor:"not-allowed",pointerEvents:"none"};
+              nft.message="Déjà distribué"
             }
             if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
             if(operation.dispenser && nft.marketplace.price==0 && (!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1))

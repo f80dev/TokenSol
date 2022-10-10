@@ -129,6 +129,8 @@ class Sticker(Element):
           self.render_svg(with_picture=False)
           return
 
+
+
         if not image.startswith("http"):
           if "base64" in image:
             self.image=extract_image_from_string(image)
@@ -199,14 +201,14 @@ class Sticker(Element):
         pad(self.image,size=(self.image.width*scale[0],self.image.height*scale[1]),color=None,centering=(offset[0]+0.5,offset[1]+0.5))
 
 
-  def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,server_domain="",prefix_name="svg"):
+  def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,prefix_name="svg"):
     svg_code=self.text["text"]
     svg_code="<svg"+svg_code.split("<svg")[1]
     if dictionnary!={}:
       for k in dictionnary.keys():
         svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
 
-    filename=prefix_name+"_"+now(hex)+".svg"
+    filename=prefix_name+"_"+hex(hash(svg_code))+".svg"
     with open("./temp/"+filename,"w",encoding="utf8") as file:
       file.writelines(svg_code)
     file.close()
@@ -233,7 +235,7 @@ class Sticker(Element):
       else:
         self.text["dimension"]=(500,500)
 
-      self.image=server_domain+"/"+filename
+      self.image=filename
 
     return self.image
 

@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {getParams} from "../../tools";
+import {getParams, showMessage} from "../../tools";
 import {Operation} from "../../operation";
+import {MatSnackBar} from "@angular/material/snack-bar";
 
 @Component({
   selector: 'app-autovalidate',
@@ -15,6 +16,7 @@ export class AutovalidateComponent implements OnInit {
 
   constructor(
     public routes:ActivatedRoute,
+    public toast:MatSnackBar,
     public network:NetworkService
   ) { }
 
@@ -26,7 +28,7 @@ export class AutovalidateComponent implements OnInit {
     })
   }
 
-  on_authent($event: any) {
+  on_authent($event: { address:string,strong:boolean,nftchecked:boolean}) {
     if($event.strong){
       this.message=this.operation?.validate?.actions.success.message;
       let url=this.operation?.validate?.actions.success.redirect;
@@ -36,9 +38,14 @@ export class AutovalidateComponent implements OnInit {
       let url=this.operation?.validate?.actions.fault.redirect;
       if(url && url.length>0)open(url);
     }
+    showMessage(this,this.message);
   }
 
   on_disconnect() {
     this.message="";
+  }
+
+  on_invalid() {
+    showMessage(this,"NFT requis pour l'accès non présents")
   }
 }

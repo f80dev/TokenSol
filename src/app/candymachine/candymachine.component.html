@@ -11,7 +11,16 @@
     </div>
     <br>
 
-    <app-authent [showGoogle]="true" [showAddress]="true" (authent)="authent($event)"></app-authent>
+    <app-authent *ngIf="operation && operation.candymachine"
+                [showGoogle]="operation.candymachine.connexion.google"
+                [showWebcam]="operation.candymachine.connexion.webcam"
+                [showWalletConnect]="operation.candymachine.connexion.wallet_connect"
+                [showNfluentWalletConnect]="operation.candymachine.connexion.nfluent_wallet_connect"
+                [showNetwork]="operation.candymachine.connexion.on_device"
+      [showAddress]="true"
+      (authent)="authent($event)">
+
+    </app-authent>
 
 
   </div>

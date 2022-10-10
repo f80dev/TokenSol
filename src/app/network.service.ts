@@ -1,5 +1,3 @@
-
-
 import { Injectable } from '@angular/core';
 import {
   clusterApiUrl,
@@ -17,9 +15,9 @@ import {environment} from "../environments/environment";
 
 import {retry, timeout} from "rxjs";
 import {Collection, Operation} from "../operation";
-import {NFT, SolanaToken, SplTokenInfo} from "../nft";
+import {NFT, SolanaToken, SplTokenInfo, Validator} from "../nft";
 import {Layer} from "../create";
-import {Validator} from "./validators/validators.component";
+
 
 
 @Injectable({
@@ -643,7 +641,7 @@ export class NetworkService {
 
   transfer_to(mint_addr: string, to_addr: string,owner:string,network="") {
     if(network.length==0)network=this.network;
-    return this.httpClient.get(environment.server+"/api/transfer_to/"+mint_addr+"/"+to_addr+"/"+owner+"?network="+network);
+    return this.httpClient.get(environment.server+"/api/transfer_to/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network);
   }
 
   generate_svg(file_content:string,text_to_add:string,layer_name:string) {
@@ -679,8 +677,8 @@ export class NetworkService {
     return this.httpClient.get<string>(environment.server+"/api/check_access_code/"+access_code+"?format=base64");
   }
 
-  get_nft(owner: string, address: string, network: string) {
-    return this.httpClient.get<any>(environment.server+"/api/nft/"+owner+"/"+address+"?network="+network);
+  get_nft(address: string, network: string) {
+    return this.httpClient.get<any>(environment.server+"/api/nfts/"+address+"?network="+network);
   }
 
   add_user_for_nft(body:any) {
@@ -730,9 +728,9 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/extract_zip/",file);
   }
 
-  get_collections(owner: string,network="",detail=false) {
+  get_collections(owners_or_collections: string,network="",detail=false) {
     if(network.length==0)network=this.network;
-    return this.httpClient.get<Collection[]>(environment.server+"/api/collections/"+owner+"/?network="+network+"&detail="+detail);
+    return this.httpClient.get<Collection[]>(environment.server+"/api/collections/"+owners_or_collections+"/?network="+network+"&detail="+detail);
   }
 
   create_collection(owner: string, new_collection: Collection) {
@@ -756,6 +754,10 @@ export class NetworkService {
     return this.httpClient.get<Validator[]>(environment.server+"/api/validators/");
   }
 
+  subscribe_as_validator(ask_for="",network=""){
+    return this.httpClient.post<any>(environment.server+"/api/validators/",{"ask_for":ask_for,network:network});
+  }
+
   set_operation_for_validator(validator_id: string, operation_id:string) {
     return this.httpClient.put(environment.server+"/api/validators/"+validator_id+"/",{operation:operation_id});
   }
@@ -763,4 +765,14 @@ export class NetworkService {
   scan_for_access(data:string,address:string) {
     return this.httpClient.post(environment.server+"/api/scan_for_access/",{validator:decodeURIComponent(data),address:address});
   }
+
+  _get(url: string, param: string) {
+    return this.httpClient.get<any>(url+"?"+param)
+  }
+
+  remove_validator(id:string) {
+    return this.httpClient.delete(environment.server+"/api/validators/"+id+"/");
+  }
+
+
 }

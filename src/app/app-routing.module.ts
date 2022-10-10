@@ -27,6 +27,7 @@ import {LoginComponent} from "./login/login.component";
 import {CollectionsComponent} from "./collections/collections.component";
 import {AutovalidateComponent} from "./autovalidate/autovalidate.component";
 import {ValidatorsComponent} from "./validators/validators.component";
+import {AnalyticsComponent} from "./analytics/analytics.component";
 
 
 const routes: Routes = [
@@ -39,6 +40,7 @@ const routes: Routes = [
   { path: 'dm', component:DealermachineComponent },
   { path: 'help', component: HelpComponent },
   { path: 'validators', component: ValidatorsComponent },
+  { path: 'analytics', component: AnalyticsComponent },
   { path: 'about', component: AboutComponent },
   { path: 'reload', component: FaucetComponent },
   { path: 'faqs', component: FaqsComponent },

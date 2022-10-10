@@ -1,33 +1,39 @@
 //Version 0.1
 
 import {WalletProvider} from "@elrondnetwork/erdjs-web-wallet-provider";
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {$$, isLocal, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {WalletConnectProvider} from "@elrondnetwork/erdjs-wallet-connect-provider/out";
 import {environment} from "../../environments/environment";
-import {GoogleLoginProvider, SocialAuthService} from "angularx-social-login";
 import {Location} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {WALLET_PROVIDER_DEVNET, WALLET_PROVIDER_MAINNET} from "@elrondnetwork/erdjs-web-wallet-provider/out/constants";
 import {NFT} from "../../nft";
+import {GoogleLoginProvider, SocialAuthService} from "@abacritt/angularx-social-login";
+import {Collection} from "../../operation";
+import {Socket} from "ngx-socket-io";
 
 @Component({
   selector: 'app-authent',
   templateUrl: './authent.component.html',
   styleUrls: ['./authent.component.css']
 })
-export class AuthentComponent implements OnInit {
+export class AuthentComponent implements OnInit,OnDestroy {
 
   @Input() intro_message:string="Email / Adresse de blockchaine";
   @Input() network:string="elrond-devnet";
   @Input() checknft:string[]=[]; //Vérifie si l'utilisateur dispose d'un ou plusieurs NFT
+  @Input() showCollections:boolean=true; //Vérifie si l'utilisateur dispose d'un ou plusieurs NFT
   @Input() explain_message:string="Adresse de votre wallet ou votre email si vous n'en avez pas encore";
-  @Output('authent') onauthent: EventEmitter<any>=new EventEmitter();
+
+  @Output('authent') onauthent: EventEmitter<{strong:boolean,nftchecked:boolean,address:string}>=new EventEmitter();
+  @Output('invalid') oninvalid: EventEmitter<any>=new EventEmitter();
   @Output('cancel') oncancel: EventEmitter<any>=new EventEmitter();
   @Output('disconnect') onlogout: EventEmitter<any>=new EventEmitter();
+
 
   @Input() showAccesCode=false;         //Code secret d'accès (réservé)
   @Input() showWebcam=false;            //utilisation du QRCode dynamique du wallet nFluent
@@ -36,16 +42,19 @@ export class AuthentComponent implements OnInit {
   @Input() showWalletConnect=false;
   @Input() showAddress=false;
   @Input() showNetwork=false;
-  @Input() showValidator=false;
+  @Input() showNfluentWalletConnect=false;
 
   strong=false;                     //Niveau d'authentification
-  @Input() size="250px";
-  @Input() title="";
+  @Input() size="350px";
+  @Input() title=""
 
   qrcode: string="";
   access_code="";
   address: string="";
-  validator_qrcode:string="";
+  collections: Collection[]=[];
+  nfluent_wallet_connect_qrcode="";
+  autorized_users:string[]=[];        //Liste de l'ensemble des utilisateurs autorisé
+  validator: string="";
 
 
   constructor(
@@ -53,6 +62,7 @@ export class AuthentComponent implements OnInit {
     public user:UserService,
     public _location:Location,
     public routes:ActivatedRoute,
+    public socket:Socket,
     public socialAuthService: SocialAuthService,
     public toast:MatSnackBar
   ) {
@@ -68,7 +78,6 @@ export class AuthentComponent implements OnInit {
                 this.user.provider.getSignature().then((sign:string)=>{
                   $$("signature="+sign);
                 })
-              this.validate();
             })
           }
         },
@@ -81,22 +90,63 @@ export class AuthentComponent implements OnInit {
     );
   }
 
+  ngOnDestroy(): void {
+    $$("Desenregistrement de "+this.validator);
+        this.api.remove_validator(this.validator).subscribe(()=>{})
+    }
+
+  subscribe_as_validator(){
+    $$("Le systeme d'authent demande le QRCode en mode wallet_connect")
+    this.api.subscribe_as_validator(this.checknft.join(","),this.network).subscribe((result:any)=>{
+      //On inscrit le systeme à la reception de message
+      this.validator=result.id;
+      $$("Le validator est enregistré sour "+this.validator)
+      this.autorized_users=result.addresses;
+      this.socket.on(result.id,(data:any) => {
+        let user_to_validate=data.address;
+        if(this.autorized_users.indexOf(user_to_validate)>-1){
+          this.onauthent.emit({address:user_to_validate,strong:true,nftchecked:true});
+        } else {
+          this.oninvalid.emit();
+        }
+      });
+      this.nfluent_wallet_connect_qrcode=environment.server+"/api/qrcode/"+encodeURIComponent(result.access_code);
+    })
+  }
+
   ngOnInit(): void {
-    if (this.user.provider){
+
+    window.onbeforeunload = () => this.ngOnDestroy();
+
+    if(this.title=="" && this.showWalletConnect)this.title="Pointer ce QRcode avec un wallet compatible 'Wallet Connect'";
+    if(this.title=="" && this.showNfluentWalletConnect)this.title="Pointer ce QRcode avec votre 'NFluent Wallet'";
+
+    if (this.user.provider) {
+      if (this.showCollections && this.checknft && this.checknft.length > 0) {
+        this.api.get_collections(this.checknft.join(","),this.network,true).subscribe((cols: Collection[]) => {
+          this.collections = cols;
+        })
+      }
+
+      if(this.showNfluentWalletConnect){
+        this.subscribe_as_validator();
+      }
+
       this.user.provider.init().then((b: boolean) => {
-        if(this.user.provider){
+        if (this.user.provider) {
           this.user.provider.login().then((s: string) => {
             this.qrcode = environment.server + "/api/qrcode/" + encodeURIComponent(s);
           });
         }
       });
-    }
 
-    if(isLocal(environment.appli) && this.showAccesCode){
-      this.user.email="hhoareau@gmail.com";
-      this.user.addr="herve";
-      this.user.strong=true;
-      this.onauthent.emit({addr:this.user.addr});
+
+      if (isLocal(environment.appli) && this.showAccesCode) {
+        this.user.email = "hhoareau@gmail.com";
+        this.user.addr = "herve";
+        this.user.strong = true;
+        this.onauthent.emit({address: this.user.addr,nftchecked:false,strong:true});
+      }
     }
   }
 
@@ -110,7 +160,7 @@ export class AuthentComponent implements OnInit {
       }).then((result) => {
         this.address = result;
         this.strong = true;
-        this.onauthent.emit();
+        this.onauthent.emit({address:this.address,strong:true,nftchecked:false});
       })
     }
   }
@@ -138,13 +188,13 @@ export class AuthentComponent implements OnInit {
         $$("Recherche des tokens "+this.checknft+" pour l'adresse "+this.address);
         this.api.get_tokens_from("owner",this.address,1000,true,null,0,this.network).then((r:NFT[])=>{
           if(this.check_condition(r)){
-            this.onauthent.emit({addr:this.address,nftcheck:true,strong:this.strong})
+            this.onauthent.emit({address:this.address,nftchecked:true,strong:this.strong})
           } else {
-            this.onauthent.emit({addr:this.address,nftcheck:false,strong:this.strong})
+            this.onauthent.emit({address:this.address,nftchecked:false,strong:this.strong})
           }
         })
       } else {
-        this.onauthent.emit({addr:this.address,nftcheck:true,strong:this.strong});
+        this.onauthent.emit({address:this.address,nftchecked:true,strong:this.strong});
       }
 
     }
@@ -182,7 +232,7 @@ export class AuthentComponent implements OnInit {
 
     if(network=="google"){
       let servicePlatform = GoogleLoginProvider.PROVIDER_ID;
-      this.socialAuthService.signIn(servicePlatform).then((socialUser) => {
+      this.socialAuthService.signIn(servicePlatform).then((socialUser:any) => {
         this.user.email=socialUser.email;
         this.user.name=socialUser.firstName + " "+ socialUser.lastName;
         this.strong=true;
@@ -234,4 +284,8 @@ export class AuthentComponent implements OnInit {
 
   }
 
+  cancel_webcam() {
+    showMessage(this,"Impossible de démarrer la webcam");
+    this.showWebcam=false;
+  }
 }

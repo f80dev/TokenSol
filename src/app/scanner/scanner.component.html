@@ -4,9 +4,10 @@
   [width]="_size"
   [trigger]="triggerObservable"
   [allowCameraSwitch]="false"
-  [imageQuality]="0.85"
+  [imageQuality]="imageQuality"
   [captureImageData]="true"
   imageType="image/jpeg"
+  (initError)="webcamError()"
   (imageCapture)="handleImage($event)">
 </webcam><br>
   <span style="font-size: x-small">{{caption}}</span>

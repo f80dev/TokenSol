@@ -16,25 +16,22 @@
         <mat-form-field style="min-width: 100px;width: 60%;max-width:500px;font-size: medium;">
           <mat-label>Collections:</mat-label>
           <mat-select [(value)]="sel_collection" (selectionChange)="force_refresh()">
-            <mat-option *ngFor="let col of collections" [value]="col" >
+            <mat-option *ngFor="let col of collections" [value]="col">
               {{col.name}}
             </mat-option>
           </mat-select>
         </mat-form-field>
-
       </td>
     </tr></table>
-
 
     <br>
     <app-hourglass [message]="message"></app-hourglass>
     <br>
 
-
     <div *ngIf="qrcode_addr.length>0">
       <br>
       Utiliser ce QRCode pour recevoir des NFT<br>
-      <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="user.addr">
+      <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="addr" (click)="qrcode_addr=''">
     </div>
 
 
@@ -71,12 +68,15 @@
 
     <div *ngIf="showScanner">
       <br><br>
-      <app-scanner style="margin-top: 50px;" (flash)="on_scan($event)"></app-scanner>
+<!--      scanner pour assusrer la connexion au nfluent wallet connect-->
+      <app-scanner style="margin-top: 50px;"
+                   (flash)="on_scan($event)">
+      </app-scanner>
 
       <div *ngIf="!isProd()">
         <mat-form-field appearance="legacy" style="width: 50%;max-width: 300px;" >
           <mat-label>Saisissez le code</mat-label>
-          <input matInput type="text" [(ngModel)]="accescode_scan" >
+          <input matInput type="text" [(ngModel)]="accescode_scan">
         </mat-form-field>
 
         <button type="button" mat-raised-button mat-button (click)="on_scan({data:accescode_scan})">
@@ -97,8 +97,11 @@
       <table style="display: inline-block;">
         <tr>
           <td>(c) NFluenT 2022</td><td>-</td>
-          <td><a href="mailto:contact@nfluent.io"><mat-icon>mail</mat-icon></a></td><td>-</td>
+          <td><a href="mailto:contact@nfluent.io"><mat-icon>mail</mat-icon></a></td>
+          <td>-</td>
           <td>{{network.network}}</td>
+          <td>-</td>
+          <td>v{{version}}</td>
         </tr>
       </table>
     </div>
@@ -233,17 +236,18 @@
   </mat-tab>
 
   <mat-tab label="Préférences">
-    <app-authent *ngIf="!user.strong"
+    <app-authent *ngIf="!strong"
                  message="La mise a jour de vos préférences nécéssite une authentification"
                  [showNetwork]="true"
                  [showGoogle]="true"
+                 [showWebcam]="true"
                  (authent)="on_authent($event)"
                  (disconnect)="on_disconnect()"
                  [showAccesCode]="false">
     </app-authent>
 
 
-    <div *ngIf="user.strong">
+    <div *ngIf="strong">
       <div style="max-width: 600px;width: 90%;display: inline-block;margin: 50px;font-size: medium;text-align: left;">
         Afin de mieux sécuriser votre wallet vous pouvez inscrire ici un mot de passe ou enregistrez une photo d'identité.<br>
         Lors de l'accès aux événements, l'agent vérifiera que vous êtes bien le propriétaire du wallet :<br>
@@ -278,7 +282,7 @@
 
 
 
-      <button type="button" mat-raised-button mat-button (click)="user.strong=false">
+      <button type="button" mat-raised-button mat-button (click)="strong=false">
         Annuler
       </button>
 

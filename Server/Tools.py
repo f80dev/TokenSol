@@ -61,6 +61,13 @@ def setParams(_d:dict,prefix="param="):
 
 
 
+def send(socketio,event_name: str, message=dict()):
+  rc = socketio.emit(event_name,message, broadcast=True)
+  log("WebSocket.send de " + event_name)
+  return rc
+
+
+
 def open_html_file(name:str,replace=dict(),domain_appli=""):
   if not name.endswith("html"):name=name+".html"
   with open("./"+name, 'r', encoding='utf-8') as f: body = f.read()

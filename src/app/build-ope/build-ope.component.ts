@@ -44,7 +44,7 @@ export class BuildOpeComponent implements OnInit {
     public user:UserService,
     public clipboardService:Clipboard,
     public router:Router,
-    public ngNavigatorShareService: NgNavigatorShareService
+    public ngShare:NgNavigatorShareService
   ) {
 
   }
@@ -178,15 +178,15 @@ export class BuildOpeComponent implements OnInit {
   share_link(appli:string,title:string,text:string) {
     this.refresh();
     let url=this.get_url_for_appli(appli);
-    this.ngNavigatorShareService.share({
+    this.ngShare.share({
       title: title,
       text: text,
       url: url
     })
-      .then( (response) => {console.log(response);},()=>{
+      .then( (response:any) => {console.log(response);},()=>{
         this.clipboardService.copy(url);
       })
-      .catch( (error) => {
+      .catch( (error:any) => {
         this.clipboardService.copy(url);
       });
   }

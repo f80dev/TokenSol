@@ -88,8 +88,10 @@ export class AppComponent implements OnInit {
 
 
   refresh_ope($event: MatSelectChange) {
-    if(this._location.path(true).indexOf('/build')>-1)
+    if(this._location.path(true).indexOf('/build')>-1){
       this._location.replaceState("/build","ope="+$event.value.id,true);
+    }
+    this.operation.sel_ope_change.next($event.value);
   }
 
 }

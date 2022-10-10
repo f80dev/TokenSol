@@ -1,13 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import {
-  SocialLoginModule,
-  SocialAuthServiceConfig, GoogleLoginProvider,
-} from 'angularx-social-login';
-
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {SolWalletsModule} from "angular-sol-wallets";
 import {HttpClientModule} from "@angular/common/http";
 import { AppRoutingModule } from './app-routing.module';
 import {MatIconModule} from "@angular/material/icon";
@@ -80,7 +74,12 @@ import { CollectionsComponent } from './collections/collections.component';
 import { MinerpoolComponent } from './minerpool/minerpool.component';
 import { AutovalidateComponent } from './autovalidate/autovalidate.component';
 import { ValidatorsComponent } from './validators/validators.component';
+import { AnalyticsComponent } from './analytics/analytics.component';
+import {VisgraphComponent} from "./visgraph/visgraph.component";
+import {GoogleLoginProvider, SocialAuthServiceConfig, SocialLoginModule} from "@abacritt/angularx-social-login";
+import {SocketIoConfig, SocketIoModule} from "ngx-socket-io";
 
+const config: SocketIoConfig = { url: environment.server, options: {} };
 
 @NgModule({
   declarations: [
@@ -97,6 +96,7 @@ import { ValidatorsComponent } from './validators/validators.component';
     MintComponent,
     SelectkeyComponent,
     ManageComponent,
+    VisgraphComponent,
     LinkComponent,
     FilterPipe,
     AliasPipe,
@@ -125,14 +125,15 @@ import { ValidatorsComponent } from './validators/validators.component';
     CollectionsComponent,
     MinerpoolComponent,
     AutovalidateComponent,
-    ValidatorsComponent
+    ValidatorsComponent,
+    AnalyticsComponent
   ],
     imports: [
         BrowserModule,
       ShareButtonsModule,
       SocialLoginModule,
+      SocketIoModule.forRoot(config),
         BrowserAnimationsModule,
-        SolWalletsModule,
         ColorPickerModule,
       ClipboardModule,
         HttpClientModule,

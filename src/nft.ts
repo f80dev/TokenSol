@@ -101,3 +101,18 @@ export interface SolanaToken {
   metadataOffchain:MetadataExternal,
   search:Search
 }
+
+
+
+export interface Validator {
+  id:string
+  name: string | ""
+  ask: string | ""
+  user: string | ""
+  dtLastConnexion: number | 0
+  dtStart: Number | 0
+  nfts: Number | 0
+  qrcode_accesscode: string | ""
+  access_code:string | ""
+}
+

@@ -117,10 +117,10 @@ export class CreatorComponent implements OnInit {
       if(profil.perms.indexOf("free_build")>-1 || profil.perms.indexOf("*")>-1){
         resolve("ok")
       } else {
-        this.user.wallet.sendTransaction(TOKEN_FACTORY_WALLET, nTokenToMint * PRICE_PER_TOKEN).then((result) => {
-          showMessage(this, "Paiement ok");
-          resolve(result);
-        }).catch(()=>{reject();})
+        // this.user.wallet.sendTransaction(TOKEN_FACTORY_WALLET, nTokenToMint * PRICE_PER_TOKEN).then((result) => {
+        //   showMessage(this, "Paiement ok");
+        //   resolve(result);
+        // }).catch(()=>{reject();})
       }
 
     });

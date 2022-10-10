@@ -16,14 +16,8 @@ class Validator:
 
   def __init__(self,id=""):
     self.id=id if len(id)>0 else "validator_"+now("hex")
-    self.dao.db["validators"].update_one({"id":self.id},{"$set":{
-      "id":self.id,
-      "dtStart":now(),
-      "operation":"",
-      "user":"",
-      "nfts":0
-    }
-    },upsert=True)
+    self.dao.add_validator(id)
+
 
 
   def init_operation(self):
@@ -40,9 +34,21 @@ class Validator:
 
 
   def get_nfts(self):
+    """
+    On récupére l'ensemble des NFT en local
+    :return:
+    """
     if self.init_operation():
-      self.nfts=Elrond(self.operation["network"]).get_nfts_from_collections(self.operation["validate"]["filters"]["collections"])
-      self.dao.db["validators"].update_one({"id":self.id},{"$set":{"dtLastConnexion":now(),"nfts":len(self.nfts)}})
+      self.nfts=[]
+      elrond=Elrond(self.operation["network"])
+      for nft in elrond.get_nfts_from_collections(self.operation["validate"]["filters"]["collections"]):
+        if nft.owner=="": nft=elrond.get_nft(nft.address)
+
+        self.nfts.append(nft)
+
+    #On informe de la dernière connexion et du nombre de nft possédé
+    self.dao.db["validators"].update_one({"id":self.id},{"$set":{"dtLastConnexion":now(),"nfts":len(self.nfts)}})
+
 
 
   def success(self):
@@ -51,13 +57,22 @@ class Validator:
 
 
   def run(self):
+    """
+    Cette fonction vérifie que le user_to_validate possède bien les NFT requis par l'opération
+    :return:
+    """
     if self.init_operation():
       user_to_validate=self.dao.db["validators"].find_one({"id":self.id})["user"]
       if len(user_to_validate)>0:
-        for nft in self.nfts:
-          if nft["owner"]==user_to_validate:
-            self.dao.db["validators"].update_one({"id":self.id},{"$set":{"user":""}})
-            self.success()
+        if user_to_validate in [x.owner for x in self.nfts]:
+          self.dao.db["validators"].update_one({"id":self.id},{"$set":{"user":""}})
+          self.success()
+          return True
+
+      return True
+    else:
+      return False
+
 
 
 scheduler = BackgroundScheduler()
@@ -70,9 +85,9 @@ def destroy():
 
 if __name__ == '__main__':
   validator=Validator(argv[1])
-  nfts=Elrond("elrond-devnet").get_nfts_from_collections(["BAYARD-2018c7"])
+  validator.get_nfts()
 
-  scheduler.add_job(func=validator.get_nfts, trigger="interval", seconds=20)
+  scheduler.add_job(func=validator.get_nfts, trigger="interval", seconds=20)      #Récupération de l'ensemble des NFT à fréquence régulière
   scheduler.add_job(func=validator.run, trigger="interval", seconds=2)
   scheduler.start()
 
