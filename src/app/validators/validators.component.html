@@ -20,7 +20,7 @@
     </tr>
     <tr *ngFor="let validator of validators">
       <td>{{validator.id}}</td>
-      <td>{{validator.dtStart}}</td>
+      <td>{{validator.dtStart | date:'dd/MM HH:mm'}} ({{validator.delayFromStart}})</td>
 
       <td>
 <!--        <mat-select [(ngModel)]="validator.operation" (ngModelChange)="update_operation(validator)">-->

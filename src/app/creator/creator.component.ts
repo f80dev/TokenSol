@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
-import {PromptComponent} from "../prompt/prompt.component";
+import {_prompt, PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
@@ -69,7 +69,9 @@ export class CreatorComponent implements OnInit {
     public safe:SafePipe,
     public _location:Location,
     public clipboard:ClipboardModule
-  ) {}
+  ) {
+    this.init_data();
+  }
 
 
 
@@ -95,14 +97,12 @@ export class CreatorComponent implements OnInit {
         this.sel_platform="nfluent"
       }
       this.layers=[];
-      this.build_sample([{files:"",text:""},{files:"",text:""},{files:"",text:""}]);
       this.network.get_palettes().subscribe((p)=>{
         this.palette_names=Object.keys(p);
         this.palette=p;
         this.sel_palette=this.palette_names[0];
       })
       this.refresh();
-
   }
 
 
@@ -143,38 +143,42 @@ export class CreatorComponent implements OnInit {
           layer.elements.push({image:img});
       })
     }else{
+      this.network.wait("Chargement des visuels");
       this.network.upload(body,this.sel_platform).subscribe((r:any)=>{
+        this.network.wait();
         layer.elements.push({image:r.url});
+      },(err:any)=>{
+        showError(this,err);
       })
     }
   }
 
-  add_layer() {
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Nom du calque ?",
-          type: "text",
-          result:"layer"+this.layers.length,
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((name:string) => {
-      if(name && name.length>2){
-        this.layers.push({
-          params:{},
-          name:name,
-          elements:[],
-          text:"",
-          unique:false,
-          indexed:true,
-          position:this.layers.length,
-          translation: {x:0,y:0},
-          scale: {x:1,y:1}
-        })
-      }
-    });
+
+
+  add_layer(name="",force=false) {
+    if(name.length == 0)name="layer"+this.layers.length;
+
+    let new_layer={
+      params:{},
+      name:name,
+      elements:[],
+      text:"",
+      unique:false,
+      indexed:true,
+      position:this.layers.length,
+      translation: {x:0,y:0},
+      scale: {x:1,y:1}
+    }
+
+    if(force){
+      this.layers.push(new_layer)
+    } else {
+      _prompt(this,"Nom du calque ?",name).then((name)=> {
+        new_layer.name = name;
+        this.layers.push(new_layer)
+      });
+    }
+
   }
 
 
@@ -195,7 +199,7 @@ export class CreatorComponent implements OnInit {
   generate_collection(format="zip") {
 
     //Vérification du format des datas
-    if(this.data.properties!=""){
+    if(this.data.properties && this.data.properties!=""){
       for(let line of this.data.properties.split("\n")){
         if(line.split("=").length!=2){
           showMessage(this,"Format des propriétés/attributs incorrect. La syntaxe doit être attribut=valeur pour chaque ligne");
@@ -443,35 +447,25 @@ export class CreatorComponent implements OnInit {
           this.show_collection=true;
           this.fontsize=r.fontstyle.size;
           this.font=this.find_font(r.fontstyle.name);
-          this.color=r.fontstyle.color;
-
+          this.color=r.fontstyle.color
         }
-
         this.previews=[];
-
-        this.network.wait("");
       },(err=>{
         showError(this,err);
-        this._location.replaceState("./creator");
-      }));
+        this.reset()
+      }),()=>{
+        this.network.wait("");
+      });
     }
   }
 
   //https://server.f80lab.com/api/configs/?format=file
   quality=98;
   config_with_image=true;
-  data: any={
-    title:"MonTitre",
-    symbol:"token__idx__",
-    description:"madescription",
-    collection:"macollection",
-    properties:"propriete=valeur",
-    files:"http://monfichier",
-    operation:""
-  };
+  data: any={};
 
 
-  save_config() {
+  save_config() : Promise<string> {
     return new Promise((resolve,reject) => {
       let body = {
         layers: this.layers,
@@ -494,8 +488,12 @@ export class CreatorComponent implements OnInit {
       }
 
       for (let l of body.layers) {
-        for (let f of l.elements)
-          f = "\"" + f + "\""
+        if(l.elements){
+          for (let f of l.elements)
+            f = "\"" + f + "\""
+        } else {
+          reject("Couche invalide");
+        }
       }
 
       this.config_name = this.config_name.replace(".yaml.yaml", ".yaml");
@@ -523,38 +521,20 @@ export class CreatorComponent implements OnInit {
   }
 
   add_serial(layer: Layer) {
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Début de la série",
-          type: "number",
-          result:"1",
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((start:number) => {
-      this.dialog.open(PromptComponent,{
-        width: 'auto',data:
-          {
-            title: "Fin de la série",
-            type: "number",
-            result:100,
-            onlyConfirm:false,
-            lbl_ok:"Ok",
-            lbl_cancel:"Annuler"
-          }
-      }).afterClosed().subscribe((end:number) => {
+    _prompt(this,"Début de la série","1","","number").then((txtStart:string)=>{
+      _prompt(this,"Fin de la série","100","","number").then((txtEnd:string)=> {
         let modele=this.text_to_add;
         if(modele.indexOf("_idx_")==-1)modele=modele+"_idx_";
         this.text_to_add="";
-        let nbr_digits=end.toString().length;
-        for(let i=start;i<=end;i++){
+        let nbr_digits=txtEnd.length;
+        for(let i=Number(txtStart);i<=Number(txtEnd);i++){
           this.text_to_add=this.text_to_add+modele.replace("_idx_",i.toString().padStart(nbr_digits,'0'))+"|";
         }
       });
-    });
+    })
   }
+
+
 
   clear_layer(layer: Layer) {
     for(let f of layer.elements){
@@ -617,36 +597,47 @@ export class CreatorComponent implements OnInit {
     }
   }
 
-  reset() {
-    this.save_config().then(()=>{
-      this.layers=[]
-      this.config_name=""
-      this._location.replaceState("/creator");
-    });
+  new_conf(){
+    _prompt(this,"Nom de la configuration").then((resp)=>{
+      this.add_layer("fond",true);
+      this.add_layer("image",true);
+      this.add_layer("texte",true);
+      this.config_name=resp;
+      this._location.replaceState("/creator?config="+resp);
+    })
+  }
+
+  init_data(){
+    this.data={
+      title:"MonTitre",
+      symbol:"token__idx__",
+      description:"madescription",
+      collection:"macollection",
+      properties:"propriete=valeur",
+      files:"http://monfichier",
+      operation:""}
+  }
+
+  reset(new_conf=true) {
+    _prompt(this,"Effacer la configuration actuelle ?","","","","ok","annuler",true).then(()=>{
+      this.layers=[];
+      this._location.replaceState("./creator");
+      this.config_name="";
+      this.init_data();
+      if(new_conf)this.new_conf();
+    })
   }
 
   find_image() {
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Terme à trouver",
-          type: "text",
-          value:"",
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe(resp => {
-      if(resp){
-        open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
-        open("https://emojipedia.org/search/?q="+resp,"search_emoji")
-        open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
-        open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
-        open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
-        open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
-        open("https://all-free-download.com/free-vector/"+resp+".html/","search_vectors")
-      }
-    });
+    _prompt(this,"Terme à trouver").then((resp)=>{
+      open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
+      open("https://emojipedia.org/search/?q="+resp,"search_emoji")
+      open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
+      open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
+      open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
+      open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
+      open("https://all-free-download.com/free-vector/"+resp+".html/","search_vectors")
+    })
   }
 
   paste_picture(layer: Layer) {
@@ -692,29 +683,15 @@ export class CreatorComponent implements OnInit {
       {label:"Mirroir",value:"mirror"},
       {label:"Contraster",value:"contrast"}
     ]
-    this.dialog.open(PromptComponent, {
-      width: 'auto', data:
-        {
-          title: "Choisir un filtre",
-          type: "list",
-          options:filters,
-          value:"blur",
-          onlyConfirm: false,
-          lbl_ok: "Ok",
-          lbl_cancel: "Annuler"
-        }
-    }).afterClosed().subscribe((filter: string) => {
-      if(filter){
-        this.network.add_layer(layer,this.col_width,this.col_height).subscribe(()=> {
-          this.network.apply_filter(layer.name,filter).subscribe((r:any)=>{
-            for(let i of r.images)
-              layer.elements.push({image:i})
-            this.refresh();
-          })
-        });
-      }
-
-    });
+    _prompt(this,"Choisir un filtre","","","list","ok","Annuler",false,filters).then((filter:any)=>{
+      this.network.add_layer(layer,this.col_width,this.col_height).subscribe(()=> {
+        this.network.apply_filter(layer.name,filter).subscribe((r:any)=>{
+          for(let i of r.images)
+            layer.elements.push({image:i})
+          this.refresh();
+        })
+      });
+    })
   }
 
   miner() {
@@ -733,38 +710,14 @@ export class CreatorComponent implements OnInit {
     if(!layer.translation)layer.translation={x:0,y:0};
     if(!layer.scale)layer.scale={x:1,y:1};
 
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Translation (x,y) ?",
-          type: "text",
-          result:layer.translation.x+","+layer.translation.y,
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((translation:string) => {
-      if(translation){
-        layer.translation.x=Number(translation.split(",")[0]);
-        layer.translation.y=Number(translation.split(",")[1]);
-      }
-      this.dialog.open(PromptComponent,{
-        width: 'auto',data:
-          {
-            title: "Echelle (x,y) ?",
-            type: "text",
-            result:layer.scale.x+","+layer.scale.y,
-            onlyConfirm:false,
-            lbl_ok:"Ok",
-            lbl_cancel:"Annuler"
-          }
-      }).afterClosed().subscribe((scale:string) => {
-        if (scale) {
-          layer.scale.x = Number(scale.split(",")[0]);
-          layer.scale.y = Number(scale.split(",")[1]);
-        }
-      })
+    _prompt(this,"Translation (x,y) ?",layer.translation.x+","+layer.translation.y).then((translation:any)=>{
+      layer.translation.x=Number(translation.split(",")[0]);
+      layer.translation.y=Number(translation.split(",")[1]);
 
+      _prompt(this,"Echelle (x,y) ?",layer.scale.x+","+layer.scale.y).then((scale:any)=> {
+        layer.scale.x = Number(scale.split(",")[0]);
+        layer.scale.y = Number(scale.split(",")[1]);
+      });
     })
   }
 }

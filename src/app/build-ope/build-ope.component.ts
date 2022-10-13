@@ -50,8 +50,6 @@ export class BuildOpeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
-
     if(this.user.isConnected()){
 
       setTimeout(()=>{
@@ -128,12 +126,15 @@ export class BuildOpeComponent implements OnInit {
         //     _c.price=find_collection(this.operation.sel_ope,_c.name)?.price; //On va chercher le prix
         //   this.store_collections.push(_c);
         // }
+
+        if(this.operation.sel_ope.candymachine){
+          this.candymachine_url=environment.appli+"/cm?param="+setParams({ope:this.operation.sel_ope.id,toolbar:false});
+          this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.candymachine_url)+"&scale=13";
+          $$("URL de la candymachine "+this.candymachine_url)
+        }
       }
 
-      if(this.operation.sel_ope?.candymachine){
-        this.candymachine_url=environment.appli+"/cm?param="+setParams({ope:this.operation.sel_ope.id,toolbar:false});
-        this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.candymachine_url)+"&scale=13";
-      }
+
     });
   }
 
@@ -177,7 +178,7 @@ export class BuildOpeComponent implements OnInit {
 
   share_link(appli:string,title:string,text:string) {
     this.refresh();
-    let url=this.get_url_for_appli(appli);
+    let url=appli.startsWith("http") ? appli : this.get_url_for_appli(appli);
     this.ngShare.share({
       title: title,
       text: text,

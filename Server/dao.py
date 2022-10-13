@@ -31,7 +31,7 @@ class DAO:
       self.dbname=dbname
       self.domain=domain
 
-    log("Initialisation de la base de données")
+    log("Initialisation de la base de données "+self.domain+"/"+self.dbname)
     if self.connect(self.domain,self.dbname):
       log("Tentative de connexion ok")
 
@@ -83,7 +83,7 @@ class DAO:
     rc={
       "error":"",
       "tx":"",
-      "result":{"transaction":"","mint":nft.address},
+      "result":{"transaction":str(result.upserted_id),"mint":nft.address},
       "balance":0,
       "link_mint":"",
       "link_transaction":"",
@@ -95,7 +95,7 @@ class DAO:
   def nfts_from_collection(self, col):
     rc=[]
     if col:
-      nfts=self.db["nfts"].find(filter={"collection":col})
+      nfts=self.db["nfts"].find(filter={"collection.id":col})
     else:
       nfts=self.db["nfts"].find()
 
@@ -136,6 +136,7 @@ class DAO:
       })
 
 
+
   def update(self, _data,field="quantity"):
     """
     Mise a jour de la quantité
@@ -147,38 +148,47 @@ class DAO:
 
 
 
-  def get_nfts_to_mint(self,limit=100):
-    nfts=[]
+  def get_nfts_to_mint(self,limit=100,filter_id=""):
+    """
+    retourne la file d'attente de minage
+    :param limit:
+    :return:
+    """
+    asks=[]
     for transaction in self.db["mintpool"].find({"dtWork":None}):
-      if transaction["dtStart"]<now():
-        nfts.append(transaction)
+      if transaction["dtStart"]<now() and (len(filter_id)==0 or str(transaction["_id"])==filter_id):
+        asks.append(transaction)
 
-    return nfts[:limit]
+    return asks[:limit]
 
 
-  def edit_pool(self,id,dtWork,transaction):
+
+  def edit_pool(self,id,dtWork,message):
     """
     Confirme la réalisation d'un travail
     :param id:
     :param dtWork:
     :return:
     """
-    rc=self.db["mintpool"].update_one({"_id":id},{"$set":{"dtWork":dtWork,"tx":transaction}})
+    rc=self.db["mintpool"].update_one({"_id":id},{"$set":{"dtWork":dtWork,"message":message}})
     return rc.modified_count
 
 
 
-  def add_nft_to_mint(self,nft:NFT,miner:str,operation_id,dtStart=now()):
+  def add_nft_to_mint(self,miner:str,sources:dict,network,collections,dest,dtStart=now()):
     obj={
+      "dtCreate":now(),
       "dtStart":dtStart,
-      "nft":nft.__dict__,
       "dtWork":None,
-      "tx":None,
+      "network":network,
+      "message":"",
       "miner":miner,
-      "operation":operation_id
+      "dest":dest,
+      "filter":collections,
+      "sources":sources
     }
     tx=self.db["mintpool"].insert_one(obj)
-    return tx.inserted_id
+    return str(tx.inserted_id)
 
 
 

@@ -17,8 +17,9 @@ import {NFT} from "../../nft";
 export class DispenserComponent implements OnInit {
   nfts: NFT[]=[];
   message="";
-  operation: any;
+  operation: Operation | undefined;
   dest="";
+  miner="";
 
 
   constructor(
@@ -34,19 +35,22 @@ export class DispenserComponent implements OnInit {
   ngOnInit(): void {
     let limit=Number(this.routes.snapshot.queryParamMap.get("limit") || "1000") ;
     getParams(this.routes).then((params:any)=>{
+
       this.network.get_operations(params["ope"]).subscribe((operation:Operation)=>{
         this.operation=operation;
+        this.miner=params.hasOwnProperty("miner") ? params["miner"] : operation.lazy_mining?.miner;
         this.message="Chargement des NFTs";
         this.network.get_tokens_to_send(operation.id,"dispenser",limit).subscribe((nfts:any) => {
           this.nfts=[];
           this.message="";
           for(let nft of nfts){
-            if(nft.marketplace.quantity>0 && nft.owner==nft.creators[0]){
+            if(nft.marketplace.quantity>0 && (nft.owner=='' || nft.owner==this.miner)){
               nft.style={opacity:1};
             } else {
               nft.style={opacity:0.3,cursor:"not-allowed",pointerEvents:"none"};
               nft.message="Déjà distribué"
             }
+            nft.message=nft.owner+" - "+nft.address;
             if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
             if(operation.dispenser && nft.marketplace.price==0 && (!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1))
               this.nfts.push(nft);
@@ -63,13 +67,16 @@ export class DispenserComponent implements OnInit {
     }
 
     nft.price=0;
-    this.router.navigate(["dealermachine"],{queryParams:{param:setParams({
-          token:nft,
-          price:0,
-          ope: this.operation.id,
-          selfWalletConnexion:false,
-          mining:this.operation.lazy_mining
-        })}})
+    if(this.operation){
+      this.router.navigate(["dealermachine"],{queryParams:{param:setParams({
+            token:nft,
+            price:0,
+            ope: this.operation.id,
+            selfWalletConnexion:false,
+            mining:this.operation.lazy_mining
+          })}})
+    }
+
 
       // if(this.dest){
       //   this.alias.transform(this.dest,"pubkey")

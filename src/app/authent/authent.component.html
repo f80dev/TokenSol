@@ -13,6 +13,16 @@
   </mat-form-field>
   <br>
 
+  <button type="button"  mat-raised-button mat-button (click)="connect('google')"
+          title="Authentification simplifiée pour les utisateurs de gmail"
+          *ngIf="showGoogle">
+    Via Google
+  </button>
+
+  <span *ngIf="showGoogle && showAddress">
+    ou
+  </span>
+
 
   <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" *ngIf="showAddress">
     <mat-label>{{intro_message}}</mat-label>
@@ -20,6 +30,8 @@
     <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
     <mat-hint>{{explain_message}}</mat-hint>
   </mat-form-field>
+
+
   <br>
 
 
@@ -71,7 +83,6 @@
 
 
   <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >
-
     <div *ngIf="showNetwork">
       Se connecter avec votre wallet sur<br>
       <button type="button" mat-raised-button mat-button
@@ -85,17 +96,9 @@
               (click)="open_wallet()">
         Elrond
       </button>
-
     </div>
 
-    <button type="button"  mat-raised-button mat-button (click)="connect('google')"
-            title="Authentification simplifiée pour les utisateurs de gmail"
-            *ngIf="showGoogle">
-      S'authentifier via Google
-    </button>
-
   </div>
-
 
 
   <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;" *ngIf="showAddress || showAccesCode">

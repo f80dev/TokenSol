@@ -1,5 +1,6 @@
 import {environment} from "./environments/environment";
 import {ActivatedRoute} from "@angular/router";
+import {PromptComponent} from "./app/prompt/prompt.component";
 
 export interface CryptoKey {
   name: string
@@ -97,6 +98,12 @@ function analyse_params(params:string):any {
   }
   return rc;
 }
+
+export function now(){
+  let rc=new Date().getTime();
+  return rc
+}
+
 
 
 export function getParams(routes:ActivatedRoute,local_setting_params="") {

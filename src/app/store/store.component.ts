@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
-import {setParams, showMessage} from "../../tools";
+import {getParams, setParams, showMessage} from "../../tools";
 import {NFT} from "../../nft";
 
 
@@ -26,25 +26,28 @@ export class StoreComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.bgcolor=this.routes.snapshot.queryParamMap.get("bgcolor") || "white";
-    this.title=this.routes.snapshot.queryParamMap.get("title") || "";
-    this.network.get_operations(this.routes.snapshot.queryParamMap.get("ope") || "").subscribe((ope:any)=> {
-      this.operation = ope;
-      this.message="Chargement des NFTs";
-      this.network.get_tokens_to_send(ope.id,"store",50).subscribe((nfts:any) => {
-        this.nfts=[];
-        for(let nft of nfts){
-          nft.marketplace={price:0,quantity:1};
-          for(let c of this.operation.store.collections || []){
-            if(c.name==nft.collection)nft.marketplace={price:c.price,quantity:nft.balance};
+    getParams(this.routes).then((params:any)=>{
+      this.bgcolor=params.bgcolor || "white";
+      this.title=params.title || "";
+      this.network.get_operations(params.ope).subscribe((ope:any)=> {
+        this.operation = ope;
+        this.message="Chargement des NFTs";
+        this.network.get_tokens_to_send(ope.id,"store",50).subscribe((nfts:any) => {
+          this.nfts=[];
+          for(let nft of nfts){
+            nft.marketplace={price:0,quantity:1};
+            for(let c of this.operation.store.collections || []){
+              if(c.name==nft.collection)nft.marketplace={price:c.price,quantity:nft.balance};
+            }
+            this.nfts.push(nft);
           }
-          this.nfts.push(nft);
-        }
-        this.message="";
-      });
-    },(err)=>{
-      showMessage(this,"Operation impossible à charger");
+          this.message="";
+        });
+      },(err)=>{
+        showMessage(this,"Operation impossible à charger");
+      })
     })
+
   }
 
   buy(nft: NFT) {

@@ -1,6 +1,7 @@
 import base64
 import io
 import os
+import re
 from io import BytesIO
 from os.path import exists
 from random import random,seed
@@ -231,7 +232,8 @@ class Sticker(Element):
       self.text["dimension"]=(self.image.width,self.image.height)
     else:
       if "width=" in svg_code and "height=" in svg_code:
-        self.text["dimension"]=(int(svg_code.split("width=\"")[1].split("\"")[0]),int(svg_code.split("height=\"")[1].split("\"")[0]))
+        numbers=re.findall(r'\d+',svg_code.split("viewBox")[1])
+        self.text["dimension"]=(int(numbers[2]),int(numbers[3]))
       else:
         self.text["dimension"]=(500,500)
 
@@ -246,12 +248,15 @@ class Sticker(Element):
 
   def open(self):
     if not self.image is None:
-      if self.image.readonly==0 and self.image.format:
-        if self.image.filename!="":
-          self.image=Image.open(self.image.filename)
-        else:
-          if self.image.fp:
-            self.image.fp.open()
+      if type(self.image)==str:
+        self.image=Image.open("./temp/"+self.image)
+      else:
+        if self.image.readonly==0 and self.image.format:
+          if self.image.filename!="":
+            self.image=Image.open(self.image.filename)
+          else:
+            if self.image.fp:
+              self.image.fp.open()
 
 
   def close(self):
@@ -341,10 +346,10 @@ class Sticker(Element):
 
 
   def convert_image_to_animated(self,base:Image,n_frames:int):
-    filename="./temp/temp_convert_"+str(now())+".gif"
+    filename="./temp/temp_convert_"+now("hex")+".gif"
 
     base=self.convertImageFormat(base,"GIF")
-    images=[base]*(n_frames-1)
+    images=[base]*(n_frames)
 
     images[0].save(filename, save_all=True,append_images=images[1:],disposal=2,loop=0)
     base.close()
@@ -360,6 +365,7 @@ class Sticker(Element):
     # wr.close()
     #
     # base.close()
+
     rc= Image.open(filename)
     return rc
 
@@ -404,7 +410,7 @@ class Sticker(Element):
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp pour le Webp
     _data_to_add=self.data
     if len(self.data)>0:
-      for i in range(10):
+      for i in range(10): #Jusqu'a 10 remplacements
         _data_to_add=_data_to_add.replace("_idx_",str(index))
 
       xmp="<?xpacket begin='' id=''?><x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description rdf:mint='"\
@@ -722,7 +728,12 @@ class ArtEngine:
           filename=collage.toStr()
           rc.append(filename)
 
-        collage.close()
+        try:
+          collage.close()
+        except:
+          log("L'image "+str(collage.name)+" est déjà closed")
+          pass
+
         collage.delete()
 
     return rc

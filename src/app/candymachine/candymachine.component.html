@@ -17,7 +17,8 @@
                 [showWalletConnect]="operation.candymachine.connexion.wallet_connect"
                 [showNfluentWalletConnect]="operation.candymachine.connexion.nfluent_wallet_connect"
                 [showNetwork]="operation.candymachine.connexion.on_device"
-      [showAddress]="true"
+                [showAddress]="operation.candymachine.connexion.address"
+                 (invalid)="invalid()"
       (authent)="authent($event)">
 
     </app-authent>
@@ -29,7 +30,10 @@
 
     <p style="font-size: medium;">
       Votre demande de NFT est en cours de traitement. Cela peut prendre de 1 à 5 minutes<br>
-      Un mail vous sera envoyé dès la fin de traitement.<br>
+      <span *ngIf="is_email">Un mail vous sera envoyé dès la fin de traitement.</span>
+      <span *ngIf="!is_email">Rafraichissez votre wallet dans 1 à 2 minutes</span>
+      <br><br>
+
       Vous pouvez maintenant fermer cette fenêtre
     </p>
 

@@ -1,13 +1,14 @@
 import {Component, OnInit} from '@angular/core';
 import {MetabossService} from "../metaboss.service";
-import { $$, b64DecodeUnicode,
+import {
+  $$,  b64DecodeUnicode,
   base64ToArrayBuffer,
-  getParams,
+  getParams,now,
   showError,
   showMessage
 } from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {PromptComponent} from "../prompt/prompt.component";
+import {_prompt, PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {PLATFORMS} from "../../definitions";
 import {NetworkService} from "../network.service";
@@ -18,7 +19,9 @@ import {ActivatedRoute, Router} from "@angular/router";
 
 import {OperationService} from "../operation.service";
 import {NFT} from "../../nft";
-import {Collection} from "../../operation";
+import {Clipboard} from "@angular/cdk/clipboard";
+import {environment} from "../../environments/environment";
+
 
 
 @Component({
@@ -38,6 +41,7 @@ export class MintComponent implements OnInit {
   price: any=0;
   quantity: any=1;
   sel_collection: string="";
+  mintfile: string="sf_"+now()+".yaml";
 
   constructor(
     public toast:MatSnackBar,
@@ -47,6 +51,7 @@ export class MintComponent implements OnInit {
     public operation:OperationService,
     public metaboss:MetabossService,
     public router:Router,
+    public clipboard:Clipboard,
     public routes:ActivatedRoute,
   ) { }
 
@@ -186,20 +191,22 @@ export class MintComponent implements OnInit {
 
   confirm_mint(){
     let nbtokens=this.tokens.length;
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Confirmer le minage",
-          question: "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.user.key?.name+"</strong> dans la collection "+this.sel_collection +" ?",
-          onlyConfirm:true,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
+    _prompt(this,
+      "Confirmer le minage","",
+      "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.user.key?.name+"</strong> dans la collection "+this.sel_collection +" ?",
+      "","Ok","Annuler",true
+      ).then((rep)=>{
+        if(rep=="yes"){
+          showMessage(this,"Lancement du processus de minage");
+          this.mintfile="sf_"+now()+".yaml";
+          this.network.wait("Production du fichier");
+          this.mint(0);
+          setTimeout(()=>{
+            this.network.wait();
+            open(environment.server+"/api/images/"+this.mintfile,"mintfile")
+          },5000);
+
         }
-    }).afterClosed().subscribe((rep:string) => {
-      if(rep=="yes"){
-        showMessage(this,"Lancement du processus de minage");
-        this.mint(0);
-      }
     });
   }
 
@@ -304,10 +311,15 @@ export class MintComponent implements OnInit {
 
         if(this.user.key){
           token.collection=this.user.find_collection(this.sel_collection);
-          this.network.mint(token,this.user.key.name,this.user.key.name,this.sign, this.sel_platform,this.network.network).then((result:any)=>{
+          this.network.mint(token,this.user.key.name,this.user.key.name,this.sign, this.sel_platform,this.network.network,this.mintfile).then((result:any)=>{
             if(!result.error || result.error==""){
-              token.message="Minted for "+result.cost+" "+result.unity;
               resolve(token);
+              if(this.network.network=="file"){
+                this.clipboard.copy(result.out);
+                token.message="Le code est dans votre presse-papier"
+              } else {
+                token.message="Minted for "+result.cost+" "+result.unity;
+              }
             } else {
               token.message=result.error;
               reject(result.error);

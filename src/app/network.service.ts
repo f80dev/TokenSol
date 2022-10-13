@@ -632,7 +632,7 @@ export class NetworkService {
   }
 
   get_tokens_to_send(ope="",section="dispenser", limit=1000) {
-    return this.httpClient.get(environment.server+"/api/get_tokens_to_send/"+ope+"?limit="+limit+"&section="+section);
+    return this.httpClient.get(environment.server+"/api/get_tokens_to_send/"+ope+"/?limit="+limit+"&section="+section);
   }
 
   get_nfts_from_operation(ope:string){
@@ -707,10 +707,10 @@ export class NetworkService {
   }
 
 
-  mint(token:NFT, miner:string, owner:string,sign=false, platform="nftstorage", network=""){
+  mint(token:NFT, miner:string, owner:string,sign=false, platform="nftstorage", network="",storage_file=""){
     return new Promise((resolve, reject) => {
       this.wait("Minage en cours sur "+network);
-      this.httpClient.post(environment.server+"/api/mint/?keyfile="+miner+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network,token).subscribe((r)=>{
+      this.httpClient.post(environment.server+"/api/mint/?storage_file="+storage_file+"&keyfile="+miner+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network,token).subscribe((r)=>{
         this.wait();
         resolve(r);
       },(err)=>{
@@ -741,12 +741,17 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/minerpool/");
   }
 
-  run_mintpool(limit: number=3) {
-    return this.httpClient.get(environment.server+"/api/async_mint/"+limit+"/");
+  run_mintpool(limit: number=3,filter="") {
+    if(filter.length>0)filter="?filter="+filter
+    return this.httpClient.get(environment.server+"/api/async_mint/"+limit+"/"+filter);
   }
 
   cancel_mintpool_treatment(id: string) {
     return this.httpClient.delete(environment.server+"/api/minerpool/"+id+"/");
+  }
+
+  edit_mintpool(ask_id:string,new_value:any) {
+    return this.httpClient.post(environment.server+"/api/minerpool/"+ask_id+"/",new_value);
   }
 
   //Utilisé pour afficher la liste des validateurs
@@ -775,4 +780,7 @@ export class NetworkService {
   }
 
 
+  getyaml(filename:string) {
+    return this.httpClient.get<string>(environment.server+"/api/getyaml/"+filename)
+  }
 }

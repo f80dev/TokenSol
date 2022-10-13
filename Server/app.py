@@ -16,11 +16,14 @@ from io import BytesIO
 from os import listdir
 from os.path import exists
 from random import random
+from xml.dom import minidom
+from xml.dom.minidom import Element
 from zipfile import ZipFile
 
 from flask_socketio import SocketIO, emit
 
 import Tools
+from StoreFile import StoreFile
 from Tools import get_operation, decrypt
 
 import py7zr
@@ -52,7 +55,7 @@ from nftstorage import NFTStorage
 from secret import GITHUB_TOKEN, SALT, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY, SECRETS_FILE
 from flask_jwt_extended import create_access_token, JWTManager
 
-
+from settings import DBSERVER_SYSTEM, DBNAME_SYSTEM
 
 scheduler = BackgroundScheduler()
 log("Initialisation du scheduler ok")
@@ -66,7 +69,7 @@ log("Initialisation de la websocket")
 nft=ArtEngine()
 log("Initialisation de l'ArtEngine ok")
 
-dao=DAO()
+dao=DAO(DBSERVER_SYSTEM,DBNAME_SYSTEM)
 
 
 #voir la documentation de metaboss:
@@ -265,19 +268,38 @@ def generate_svg():
   _data=request.json
   master=Sticker(image=_data["file"],ext="svg")
 
-  if "_idx_" in master.text["text"] or "_text_" in master.text["text"]:
-    for index in range(len(_data["sequence"])):
-      replacements={
-        "idx":index+1,
-        "text": _data["sequence"][index]
-      }
-      s=master.clone()
-      file=s.render_svg(dictionnary=replacements,
-                        with_picture=False,
-                        prefix_name="svg")
-      rc.append(file)
-  else:
+  #voir https://docs.python.org/fr/3/library/xml.dom.html#dom-element-objects
+  doc=minidom.parseString(master.text["text"])
+  bCreateFromMaster=False
+  for elt in doc.getElementsByTagName("desc"):
+    for node in elt.childNodes:
+      if len(node.data.split("|"))>1:
+        bCreateFromMaster=True
+        for text in node.data.split("|"):
+          s=master.clone()
+          pere:Element=node.parentNode.parentNode
+          pere.getElementsByTagName("tspan")[0].childNodes[0].data=text
+          s.text["text"]=doc.toxml()
+          file=s.render_svg(with_picture=False,prefix_name="svg")
+          rc.append(app.config["DOMAIN_SERVER"]+"/api/images/"+file)
+
+  if not bCreateFromMaster:
     rc.append(app.config["DOMAIN_SERVER"]+"/api/images/"+master.image)
+
+  # if "_idx_" in master.text["text"] or "_text_" in master.text["text"]:
+  #   limit=len(_data["sequence"])
+  #   for index in range(limit):
+  #     replacements={
+  #       "idx":index+1,
+  #       "text": _data["sequence"][index]
+  #     }
+  #     s=master.clone()
+  #     file=s.render_svg(dictionnary=replacements,
+  #                       with_picture=False,
+  #                       prefix_name="svg")
+  #     rc.append(app.config["DOMAIN_SERVER"]+"/api/images/"+file)
+  # else:
+  #   rc.append(app.config["DOMAIN_SERVER"]+"/api/images/"+master.image)
 
   return jsonify(rc)
 
@@ -476,13 +498,16 @@ def nftlive_access(addr:str):
 
 @app.route('/api/infos/')
 #test http://127.0.0.1:4242/api/infos/
+#test http://75.119.159.46:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
 def infos():
-  rc={"Solana":{"keys":len(Solana().get_keys(with_balance=True))},
-      "Elrond":{},
+  rc={"Solana":{"keys":len(Solana("devnet").get_keys())},
+      "Elrond":{"keys":len(Elrond("devnet").get_keys())},
       "Secret":{},
       "Database":{
-        "tokens":dao.db["nfts"].find().count(True)
+        "tokens":dao.db["nfts"].count_documents(filter={}),
+        "validators":dao.db["validators"].count_documents(filter={}),
+        "mintpool":dao.db["mintpool"].count_documents(filter={})
       }
       }
   return jsonify(rc)
@@ -972,19 +997,26 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
           log("Probleme de lecture de "+src["connexion"])
 
 
-      if src["type"]=="web":
-        #TODO: a terminer
-        if src["connexion"].startswith("http"):
-          r=requests.get(src["connexion"])
-          if src["connexion"].endswith(".json"):nfts=nfts+json.loads(r.text)
-          if src["connexion"].endswith(".yaml"):nfts=nfts+yaml.load(r.text,Loader=yaml.FullLoader)
+      if src["type"]=="file":
+        l_nfts=[]
+        if not "connexion" in src or len(src["connexion"])==0:
+          for nft in src["nfts"]:
+            l_nfts.append(NFT(object=nft))
+        else:
+          if src["connexion"].startswith("http"):
+            r=requests.get(src["connexion"])
+            if src["connexion"].endswith(".json"):l_nfts=l_nfts+json.loads(r.text)
+            if src["connexion"].endswith(".yaml"):l_nfts=l_nfts+yaml.load(r.text,Loader=yaml.FullLoader)
+          else:
+            sf=StoreFile(src["connexion"])
 
-
-      if src["type"]=="json":
-        try:
-          nfts=nfts+json.load(open(src["connexion"]))
-        except:
-          log("Probleme de lecture de "+src["connexion"])
+        #On retrouve l'intégralité des collections en utilisant une technique de cache
+        collections=dict()
+        for nft in l_nfts:
+          if not nft.collection["id"] in collections:
+            collections[nft.collection["id"]]=Elrond(nft.network).get_collection(nft.collection["id"]) if "elrond" in nft.network else nft.collection
+          nft.collection=collections[nft.collection["id"]]
+        nfts=nfts+l_nfts
 
 
       if src["type"]=="network":
@@ -998,11 +1030,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
           if src["owner"]:
             nfts=elrond.get_nfts(src["owner"],limit=src["filter"]["limit"],with_attr=with_attributes)
           else:
-            nfts=[]
-            for nft in elrond.get_nfts_from_collections(src["collections"],with_attr=with_attributes):
-              if not nft.owner:
-                nft=elrond.get_nft(nft.address)
-              nfts.append(nft)
+            nfts=elrond.get_nfts_from_collections(src["collections"],with_attr=with_attributes)
 
           nfts=elrond.complete_collection(nfts)
 
@@ -1062,7 +1090,7 @@ def save_privacy():
 
 
 
-@app.route('/api/get_tokens_to_send/<ope>',methods=["GET"])
+@app.route('/api/get_tokens_to_send/<ope>/',methods=["GET"])
 #test http://127.0.0.1:4242/api/get_tokens_for_dispenser/calvi22_devnet?limit=10
 def get_tokens_to_send(ope:str):
   section=request.args.get("section","dispenser")
@@ -1116,7 +1144,7 @@ def api_check_access_code(code:str):
 
 
 @app.route('/api/minerpool/',methods=["GET"])
-@app.route('/api/minerpool/<id>/',methods=["DELETE"])
+@app.route('/api/minerpool/<id>/',methods=["DELETE","POST"])
 # http://127.0.0.1:4242/api/minerpool/
 def get_minerpool(id=""):
   """
@@ -1126,6 +1154,9 @@ def get_minerpool(id=""):
   """
   asks=dao.db["mintpool"].find()
   rc=[]
+  if request.method=="POST":
+    rc={"updated":dao.edit_pool(ObjectId(id),None,"")}
+
   if request.method=="GET":
     for ask in list(asks):
       ask["id"]=str(ask["_id"])
@@ -1139,36 +1170,49 @@ def get_minerpool(id=""):
   return jsonify(rc)
 
 
-def async_mint(nbr_items=3):
+def async_mint(nbr_items=3,filter=""):
   if not dao.isConnected():
     log("Impossible de se connecter à la base")
   else:
-    for ask in dao.get_nfts_to_mint(int(nbr_items)):
-      nft=ask["nft"] if "nft" in ask else None
-      operation=get_operation(ask["operation"])
-      if len(nft["address"])==0:
-        nfts=get_nfts_from_src(operation["data"]["sources"],nft["collection"],False)
-        nft_to_mint=None
-        if len(nfts)>0:
-          for i in range(200):
-            nft_to_mint=nfts[int(random()*len(nfts))]
-            if nft_to_mint.owner==operation["miner"]:
-              break
+    for ask in dao.get_nfts_to_mint(int(nbr_items),filter):
+      # if len(nft["address"])==0:
+      #   nfts=get_nfts_from_src(operation["data"]["sources"],nft["collection"],False)
+      dao.edit_pool(ask["_id"],now(),"traitement en cours")
+      nfts=get_nfts_from_src(ask["sources"],ask["filter"],False)
 
-      if not nft is None and not nft_to_mint is None:
-        rc=mint(nft_to_mint,ask["miner"],nft["owner"],nft["network"])
+      nft_to_mint=None
+      elrond=Elrond(ask["network"])
+      _miner=elrond.toAccount(ask["miner"])
+      if len(nfts)>0:
+        for i in range(200):
+          nft_to_mint=nfts[int(random()*len(nfts))]
+          if _miner is None: _miner=elrond.toAccount(nft_to_mint.collection["owner"])
+          if nft_to_mint.owner=="":
+            if elrond.canMint(nft_to_mint): break
+          else:
+            if nft_to_mint.owner==_miner.address.bech32(): break
+
+      if not nft_to_mint is None:
+        if ask["miner"] is None or len(ask["miner"])==0: ask["miner"]=nft_to_mint.collection["owner"]
+        nft_to_mint.attributes.append({"trait_type":"lazymint","value":nft_to_mint.address})
+        rc=mint(nft_to_mint,ask["miner"],ask["dest"],ask["network"])
         if not rc or rc["error"]!="":
-          log("Problème de minage pour "+ask["address"]+" sur "+ask["network"])
+          log("Problème de minage voir "+rc["hash"])
+          message="Error"+rc["error"]+" voir "+rc["hash"]
+        else:
+          message="Ok: "+rc["hash"]
 
-        dao.edit_pool(ask["_id"],now(),rc["hash"])
+        dao.edit_pool(ask["_id"],now(),message)
+
       else:
-        log("Probleme de minage asynchrone pour un item")
+        log("Aucun NFT disponible pour le minage")
+        dao.edit_pool(ask["_id"],now(),"Error: Aucun NFT disponible pour le minage")
 
 
 # http://127.0.0.1:4242/api/async_mint/3/
 @app.route('/api/async_mint/<nbr_items>/',methods=["GET"])
 def api_async_mint(nbr_items:str="3"):
-  async_mint()
+  async_mint(nbr_items=int(nbr_items),filter=request.args.get("filter",""))
   return jsonify({"message":"ok"})
 
 
@@ -1183,12 +1227,17 @@ def add_user_for_nft():
   :return:
   """
   miner=request.json["miner"]
-  _nft=NFT(collection={"id":request.json["collection"]},creators=[miner])
-  _nft.network=request.json["network"]
-  _nft.owner=request.json["owner"]
-  dao.add_nft_to_mint(_nft,request.json["miner"],request.json["operation"])
+  # _nft=NFT(collection={"id":request.json["collections"][0]},creators=[miner])
+  # _nft.network=request.json["network"]
+  # _nft.owner=request.json["owner"]
+  id=dao.add_nft_to_mint(
+                      miner=request.json["miner"],
+                      sources=request.json["operation"]["data"]["sources"],
+                      network=request.json["network"],
+                      collections=request.json["collections"],
+                      dest=request.json["owner"])
 
-  return jsonify({"message":"ok"})
+  return jsonify({"message":"ok","ask_id":id})
 
 
 
@@ -1434,7 +1483,7 @@ def mint_for_contest(confirmation_code=""):
   #l'id est utile pour retrouver le token afin de mettre a jour sa quantité
   account=body["account"]
   network=body["network"]
-  miner=body["miner"]
+  miner=body["miner"] if body["miner"] and len(body["miner"])>0 else body["token"]["collection"]["owner"]
   metadata_storage=body["metadata_storage"]
 
   _ope=open_operation(body["ope"])
@@ -1445,17 +1494,17 @@ def mint_for_contest(confirmation_code=""):
     _data=None
     nfts=get_nfts_from_src(_ope["data"]["sources"],with_attributes=True)
     for nft in nfts:
-      if nft.id==body["nft_id"] and nft.marketplace["quantity"]>0:
-        _data=nft.__dict__
+      if nft.address==body["token"]["address"] and nft.marketplace["quantity"]>0:
+        _data=nft
+        break
 
   if _data is None: return jsonify({"error":"Ce NFT n'est plus disponible"})
 
   rc=mint(_data,miner,account,network,metadata_storage)
 
-  collection_name=_data["collection"] if "collection" in _data else nft["collection"]
   if len(rc["error"])==0:
     if not _ope is None:
-      dao.add_histo(_ope["id"],"mint",account,collection_name,rc["result"]["transaction"],_ope["network"],"minage pour loterie")
+      dao.add_histo(_ope["id"],"mint",account,nft.collection["name"],rc["result"]["transaction"],_ope["network"],"minage pour loterie")
 
     DAO(_data["domain"],_data["dbname"]).update(_data,"quantity")
 
@@ -1494,6 +1543,8 @@ def configs(name:str="",format=""):
       if exists(filename):
         with open(filename,"r",encoding="utf8") as file:
           rc=yaml.load(file,Loader=yaml.FullLoader)
+      else:
+        return returnError("File not exist")
 
       if format=="json": return jsonify(rc)
       if format=="dict": return rc
@@ -1650,8 +1701,13 @@ def get_image(cid:str=""):
     else:
       filename="./temp/"+cid
       if exists(filename):
-        f=open(filename,"r" if cid.endswith(".svg") else "rb")
-        format="image/svg+xml" if cid.endswith(".svg") else "image/webp"
+        if filename.endswith(".yaml"):
+          f=open(filename,"r")
+          format="text/yaml"
+        else:
+          f=open(filename,"r" if cid.endswith(".svg") else "rb")
+          format="image/svg+xml" if cid.endswith(".svg") else "image/webp"
+
         response = make_response(f.read())
         response.headers.set('Content-Type', format)
         return response
@@ -1965,7 +2021,7 @@ def create_collection(owner:str):
   if "elrond" in network:
     elrond=Elrond(network)
     solde=elrond.balance(owner)
-    collection_id=elrond.add_collection(owner,_data["name"],type="NonFungible")
+    collection_id=elrond.add_collection(owner,_data["name"],_data["options"],type="NonFungible")
     new_collection=elrond.get_collection(collection_id)
     new_solde=elrond.balance(owner)
 
@@ -1977,9 +2033,11 @@ def create_collection(owner:str):
 
 
 
-def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
+def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""):
   rc= {"error":"Problème technique"}
   account=None
+  collection_id=nft.collection["id"]
+
   if is_email(owner):
     email=owner
     if "elrond" in network:
@@ -2010,8 +2068,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
     elrond=Elrond(network)
     old_amount=elrond.get_account(miner)["amount"]
 
-    if nft.address.startswith("db_") or len(nft.address)==0:
-      collection_id=nft.collection["id"]
+    if nft.address.startswith("file_") or nft.address.startswith("db_") or len(nft.address)==0:
       nonce,cid=elrond.mint(miner,
                               title=nft.name,
                               description=nft.description,
@@ -2027,15 +2084,15 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
       collection_id,nonce = elrond.extract_from_tokenid(nft.address)
 
     if "error" in nonce:
-      rc={"error":"Mint error: "+nonce["error"]}
+      rc={"error":"Mint error: "+nonce["error"],"hash":nonce["hash"]}
     else:
       infos=elrond.get_account(miner)
       token_id=collection_id+"-"+nonce
 
       if elrond.toAccount(miner).address.bech32()!=account:
-        rc=elrond.transfer(collection_id,nonce,elrond.toAccount(miner),account)
-        if not rc:
-          return {"error":"Erreur de transfert"}
+        rc=elrond.transfer(collection_id,nonce,miner,account)
+        if not rc or len(rc["error"])>0:
+          return rc
 
       solde=elrond.get_account(miner)["amount"]-old_amount
       rc={"command":"ESDTCreate",
@@ -2043,6 +2100,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
           "link":elrond.getExplorer(token_id,"nfts"),
           "uri":"",
           "out":"",
+          "hash":rc["hash"],
           "cost":solde,
           "result":{
             "transaction":token_id,
@@ -2070,7 +2128,6 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
       solana.sign(rc["result"]["mint"],signers)
 
   if "database" in network.lower():
-    collection_id=nft.collection
     db_loc=request.args.get("db_loc","")
     if len(db_loc)==0: db_loc=network.split("-")[1]
     db_name=request.args.get("db_name","")
@@ -2078,6 +2135,13 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
 
     if dao.connect(db_loc,db_name):
       rc=dao.lazy_mint(nft,"",app.config["APPLICATION_ROOT"])
+
+
+  if "file" in network.lower():
+    if not storagefile.startswith("./temp/"): storagefile="./temp/"+storagefile
+    storefile=StoreFile(storagefile)
+    rc=storefile.lazymint(nft)
+    storefile.export_to_yaml()
 
   # if "jsonfiles" in network.lower():
   #   filename=_data["name"]+"_"+_data["symbol"]+"_"+_data["collection"]+".json"
@@ -2094,7 +2158,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS"):
   #     "command":"file"
   #   }
 
-  if "result" in rc and "transaction" in rc["result"]:
+  if ("result" in rc) and ("transaction" in rc["result"]) and (network!="file"):
     dao.add_histo(request.args.get("ope",""),"mint",miner,collection_id,rc["result"]["transaction"],network,"Minage")
 
   return rc
@@ -2109,19 +2173,17 @@ def api_mint():
   Minage des NFT sur les différents réseaux possibles : elrond, solana, base de donnée, fichier json
   :return:
   """
-  rc={}
   keyfile=request.args.get("keyfile","paul").lower()
+  storagefile=request.args.get("storage_file","./temp/storagefile.yaml").lower()
   network=request.args.get("network","elrond-devnet")
   owner=request.args.get("owner",keyfile)
   offchaindata_platform=request.args.get("offchaindata_platform","ipfs").replace(" ","").lower()
   _data=NFT(object=request.json)
 
-  rc=mint(_data,keyfile,owner,network,offchaindata_platform)
+  rc=mint(_data,keyfile,owner,network,offchaindata_platform,storagefile)
 
   if not _data.visual.startswith("http"):
     return jsonify({"error":"Vous devez uploader les images avant le minage"})
-
-
 
   return jsonify(rc)
 
@@ -2372,13 +2434,12 @@ def burn():
 
 if __name__ == '__main__':
 
-  scheduler.add_job(func=async_mint, trigger="interval", seconds=30)
+  scheduler.add_job(func=async_mint, trigger="interval", seconds=30,max_instances=1)
   scheduler.start()
   atexit.register(lambda: scheduler.shutdown())
 
   log("Mise a place du modele CORS")
   CORS(app)
-
 
 
   app.config.from_mapping({
@@ -2395,20 +2456,14 @@ if __name__ == '__main__':
 
   _port=int(app.config["DOMAIN_SERVER"][app.config["DOMAIN_SERVER"].rindex(":")+1:])
 
-  if "debug" in sys.argv:
-    socketio.run(app,debug=True,port=_port,allow_unsafe_werkzeug=True)
+  app.config.update(SESSION_COOKIE_SECURE=True,SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE='Lax')
+  log("Démarage du server")
+  if "ssl" in sys.argv:
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    context.load_cert_chain("/certs/fullchain.pem", "/certs/privkey.pem")
+    socketio.run(app,debug=("debug" in sys.argv),port=_port,ssl_context=context,host="0.0.0.0",allow_unsafe_werkzeug=True)
   else:
-    if "ssl" in sys.argv:
-      app.config.update(SESSION_COOKIE_SECURE=True,SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE='Lax')
-
-      context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-      context.load_cert_chain("/certs/fullchain.pem", "/certs/privkey.pem")
-      socketio.run(app,debug=False,port=_port,ssl_context=context,host="0.0.0.0")
-
-      log("Démarage du server")
-    else:
-      log("Démarage du server")
-      socketio.run(app,port=_port,host="0.0.0.0",debug=False)
+    socketio.run(app,port=_port,host="0.0.0.0",debug=("debug" in sys.argv),allow_unsafe_werkzeug=True)
 
 
 

@@ -104,7 +104,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
       this.autorized_users=result.addresses;
       this.socket.on(result.id,(data:any) => {
         let user_to_validate=data.address;
-        if(this.autorized_users.indexOf(user_to_validate)>-1){
+        if(this.autorized_users.length==0 || this.autorized_users.indexOf(user_to_validate)>-1){
           this.onauthent.emit({address:user_to_validate,strong:true,nftchecked:true});
         } else {
           this.oninvalid.emit();

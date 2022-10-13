@@ -110,8 +110,9 @@ export interface Validator {
   ask: string | ""
   user: string | ""
   dtLastConnexion: number | 0
-  dtStart: Number | 0
-  nfts: Number | 0
+  delayFromStart: number | 0
+  dtStart: number | 0
+  nfts: number | 0
   qrcode_accesscode: string | ""
   access_code:string | ""
 }

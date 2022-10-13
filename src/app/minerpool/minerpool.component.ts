@@ -1,16 +1,18 @@
 import { Component, OnInit } from '@angular/core';
-import {NFT} from "../../nft";
 import {NetworkService} from "../network.service";
-import {resolveAny} from "dns";
-import {showMessage} from "../../tools";
+import {Source} from "../../operation";
 
 interface Ask {
   id:string
-  nft:NFT
-  dtWork: Number
-  tx: string
-  operation:string
+  dtCreate: number
+  dtStart: number
+  dtWork: number
+  dest:string
+  message: string
+  filter:string[]
+  network:string
   miner:string
+  sources:Source[]
 }
 
 @Component({
@@ -21,6 +23,7 @@ interface Ask {
 export class MinerpoolComponent implements OnInit {
   asks: Ask[]=[];
   message: string="";
+  showAll: boolean=false;
 
   constructor(
     public network:NetworkService
@@ -32,13 +35,18 @@ export class MinerpoolComponent implements OnInit {
 
   refresh(){
     this.network.get_minerpool().subscribe((r:any)=>{
-      this.asks=r;
+      if(!this.showAll && r.length<10)this.showAll=true;
+      this.asks=[];
+      for(let ask of r){
+        ask.sources=ask.sources.filter((x:Source) => x.active)
+        if(this.showAll || ask.dtWord )this.asks.push(ask);
+      }
     })
   }
 
-  run() {
+  run(filter="") {
     this.message="Traitement en cours";
-    this.network.run_mintpool(10).subscribe(()=>{
+    this.network.run_mintpool(10,filter).subscribe(()=>{
       this.message="";
       this.refresh();
     });
@@ -48,5 +56,17 @@ export class MinerpoolComponent implements OnInit {
     this.network.cancel_mintpool_treatment(ask.id).subscribe(()=>{
       this.refresh();
     })
+  }
+
+  reset_pool() {
+
+  }
+
+  ConvertDate(dt: number) {
+    return new Date().setTime(dt);
+  }
+
+  retry(ask: Ask) {
+    this.network.edit_mintpool(ask.id,{dtWork:"",message:"to_mint"}).subscribe(()=>{this.refresh()});
   }
 }

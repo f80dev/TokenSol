@@ -1,5 +1,6 @@
 import json
 
+import yaml
 from fontTools.ttLib import TTFont
 from reportlab.pdfbase import pdfmetrics
 
@@ -80,6 +81,11 @@ class NFT:
     self.attributes.append({"trait_type":key,"value":value})
 
   def is_minted(self):
-	  return len(self.address)>0 and not self.address.startswith("db_")
+    return len(self.address)>0 and not self.address.startswith("db_")
+
+  def toYAML(self):
+    _d=self.__dict__
+    return yaml.safe_dump(_d)
+
 
 

@@ -16,6 +16,8 @@ export class CandymachineComponent implements OnInit {
   operation: Operation | null=null;
   showEnd: boolean=false;
   collections: Collection[]=[];
+  miner="";
+  is_email=false;
 
 
   constructor(
@@ -31,9 +33,12 @@ export class CandymachineComponent implements OnInit {
     getParams(this.routes).then((params:any)=>{
       this.network.get_operations(params["ope"]).subscribe((operation:any)=>{
         this.operation=operation;
-        for(let col of operation.collections){
-          if(operation.candymachine.collections.indexOf(col.id)>-1){
-            this.collections.push(col);
+        this.miner=(params.hasOwnProperty('miner') ? params["miner"] : operation.lazy_mining.miner)
+        if(operation.collections){
+          for(let col of operation.collections){
+            if(operation.candymachine.collections.indexOf(col.id)>-1){
+              this.collections.push(col);
+            }
           }
         }
       },(err:any)=>{
@@ -45,14 +50,15 @@ export class CandymachineComponent implements OnInit {
   }
 
 
-  authent($event: any) {
+  authent($event:any) {
     if(this.operation?.network){
+      this.is_email=$event.address.indexOf("@")>-1;
       let body={
         owner:$event.address,
         network:this.operation?.network,
-        miner: this.operation.lazy_mining.miner,
-        operation:this.operation.id,
-        collection:this.operation.candymachine.collections[0]
+        miner: this.miner,
+        operation:this.operation,
+        collections:this.operation.candymachine.collections
       }
       this.network.add_user_for_nft(body).subscribe(()=>{
         this.showEnd=true;
@@ -65,4 +71,7 @@ export class CandymachineComponent implements OnInit {
   }
 
 
+  invalid() {
+    showMessage(this,"Connexion non valide");
+  }
 }

@@ -88,10 +88,14 @@
           </tr>
           <tr>
             <td>
-              Les NFTs disponibles pour cette opérations sont extraits de: <br><br>
+              Les NFTs disponibles pour cette opérations sont extraits <br><br>
               <ul class="mat-subheading-1">
                 <li *ngFor="let src of sources">
-                  <span *ngIf="src.type=='web'">contenu dans le fichier <span class="color-accent">{{src.connexion}}</span></span>
+                  <span *ngIf="src.type=='file'">
+                    <span *ngIf="src.connexion!.length>0" class="color-accent">du fichier {{src.connexion}}</span>
+                    <span *ngIf="src.connexion==''">du fichier d'opération</span>
+                  </span>
+
                   <span *ngIf="src.type=='network'">
                     <span class="color-accent">{{src.connexion}}</span>
                     <span *ngIf="src.owner"> et possédés par <{{src.owner | alias}}</span>
@@ -198,7 +202,7 @@
 
       <!-- Section lié au dispenser / a la distribution -->
       <mat-expansion-panel *ngIf="operation.sel_ope.dispenser?.visible">
-        <mat-expansion-panel-header class="color-primary">Distribution par le propriétaire</mat-expansion-panel-header>
+        <mat-expansion-panel-header class="color-primary">Distribution par {{user.addr | alias}}</mat-expansion-panel-header>
         <table>
           <tr>
             <th>Propriétés</th>
@@ -207,7 +211,7 @@
 
           <tr>
             <td>
-              Mineur: {{operation.sel_ope.dispenser?.miner}}<br>
+              Mineur: {{operation.sel_ope.lazy_mining.miner}}<br>
               Network: {{operation.sel_ope.network}}
             </td>
             <td>
@@ -219,7 +223,7 @@
             </td>
             <td style="text-align: right;">
               <button type="button" mat-raised-button mat-button color="primary"
-                      (click)="open_appli('dispenser')">
+                      (click)="open_appli('dispenser',{miner:user.addr})">
                 Ouvrir
               </button>
 
@@ -263,7 +267,7 @@
           </td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="open_appli('cm')">
+                    (click)="open_appli('cm',{miner:user.addr})">
               Ouvrir
             </button>
             <br>

@@ -71,6 +71,20 @@ class Elrond:
     self.transactions=[]
 
 
+  def canMint(self,nft_to_check:NFT):
+    """
+    Vérifie si un NFT a déjà été miné ou pas
+    TODO: fonction à coder
+    :param nft_to_check:
+    :return:
+    """
+    nfts=self.get_nfts_from_collections([nft_to_check.collection["id"]],False)
+    occ=0 #Contient le nombre de fois ou le nft a été miné
+    for nft in nfts:
+      if nft_to_check.address in [x.values for x in nft.attributes]:occ=occ+1
+
+    return nft_to_check.marketplace["quantity"]>occ
+
 
   def find_alias(self,addr,keys=[]):
     if len(keys)==0:keys=self.get_keys()
@@ -86,6 +100,8 @@ class Elrond:
 
     keys.append({"pubkey":addr,"name":addr})
     return addr
+
+
 
 
   def get_transactions_from_collection(self,address,size=300):
@@ -233,6 +249,8 @@ class Elrond:
       return None
 
 
+
+
   def get_collections(self,creator_or_collection:str,detail:bool=True):
     """
     récupération des collections voir :
@@ -256,10 +274,11 @@ class Elrond:
     if detail:
       for item in rc:
         item["id"]=item["ticker"]
-        item["option"]={
+        item["options"]={
           "canFreeze":item["canFreeze"],
           "canWipe":item["canWipe"],
-          "canPause":item["canPause"]
+          "canPause":item["canPause"],
+          "canTranferNftCreateRole":item["canTransferNftCreateRole"]
         }
 
     return rc
@@ -323,14 +342,15 @@ class Elrond:
            + "@" + _to.address.hex()
     t = self.send_transaction(_from, _from, _from, 0, data)
     if t is None or t["status"]!="success":
-      return {"error":"Echec du transfert","tx":t["hash"]}
+      return {"error":"Echec du transfert","hash":t["hash"]}
     else:
+      t["error"]=""
       return t
 
 
 
 
-  def add_collection(self, owner:Account, collection_name:str,type="SemiFungible"):
+  def add_collection(self, owner:Account, collection_name:str,options:dict,type="SemiFungible"):
     """
     gestion des collections sur Elrond
     voir
@@ -360,14 +380,10 @@ class Elrond:
       #Résultat : https://devnet-explorer.elrond.com/transactions/1e7ac5f911cffce2b846c3f98b8abad636b2958a32df6bebde0ee0b83f087a94
       data = "issue"+type \
              + "@" + str_to_hex(collection_name, False) \
-             + "@" + str_to_hex(collection_id, False) \
-             + "@" + str_to_hex("canFreeze", False)+"@"+str_to_hex("true",False) \
-             + "@" + str_to_hex("canChangeOwner", False)+"@"+str_to_hex("true",False) \
-             + "@" + str_to_hex("canUpgrade", False)+"@"+str_to_hex("true",False) \
-             + "@" + str_to_hex("canWipe", False)+"@"+str_to_hex("true",False) \
-             + "@" + str_to_hex("canTransferNFTCreateRole", False)+"@"+str_to_hex("true",False) \
-             + "@" + str_to_hex("canPause", False)+"@"+str_to_hex("true",False) \
-             + "@" + str_to_hex("canAddSpecialRoles", False)+"@"+str_to_hex("true",False)
+             + "@" + str_to_hex(collection_id, False)
+
+      for key in options.keys():
+        data=data + "@" + str_to_hex(key, False)+"@"+str_to_hex(str(options[key]).lower(),False)
 
       t = self.send_transaction(owner,
                                 Account(address=NETWORKS[self.network_name]["nft"]),
@@ -424,6 +440,7 @@ class Elrond:
     rc=[]
     for col in collections:
       result=api(self._proxy.url+"/collections/"+col+"/nfts","gateway=api")
+      result=sorted(list(result),key=lambda x:x["nonce"])
       owners=self.get_owner_of_collections([col])
       for i in range(len(result)):
         item=result[i]
@@ -431,8 +448,8 @@ class Elrond:
         attributes,description=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
         nft=NFT(item["name"],"",{"id":col},attributes,description,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
         nft.network=self.network_name
-        nft.owner=owners[i]["address"]
-        nft.marketplace={"quantity":1,"price":0}
+        nft.owner=owners[i]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
+        nft.marketplace={"quantity":int(owners[i]["balance"]),"price":0}
         rc.append(nft)
     return rc
 
@@ -591,7 +608,8 @@ class Elrond:
     """
     rc=[]
     for col in collections:
-      rc=rc+api(self._proxy.url.replace("gateway","api")+"/collections/"+col+"/accounts")
+      if len(col)>0:
+        rc=rc+api(self._proxy.url.replace("gateway","api")+"/collections/"+col+"/accounts")
 
     return rc
 
@@ -781,7 +799,10 @@ class Elrond:
     if t is None: return None,None
 
     if t["status"]!="success":
-      return {"error":hex_to_str(str(base64.b64decode(t["logs"]["events"][0]["data"])).split("@")[1])},None
+      return {
+               "error":hex_to_str(str(base64.b64decode(t["logs"]["events"][0]["data"])).split("@")[1]),
+               "hash":t["hash"]
+             },None
 
     if "logs" in t:
       nonce = t["logs"]["events"][0]

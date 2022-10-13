@@ -34,7 +34,7 @@ export class ValidatorsComponent implements OnInit {
       this.validators=[];
       for(let validator of validators){
         validator.qrcode_accesscode=environment.server + "/api/qrcode/" + encodeURIComponent(validator.access_code);
-        validator.dtStart=Math.round((new Date().getTime()-1000*(Number(validator.dtStart)))/(60*1000))
+        validator.delayFromStart=Math.round((new Date().getTime()-1000*(Number(validator.dtStart)))/(60*1000))
         this.validators.push(validator);
       }
     })

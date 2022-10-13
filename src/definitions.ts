@@ -11,7 +11,7 @@ export const NFLUENT_WALLET="https://wallet.nfluent.io";
 
 export const QUOTA=800000
 
-export const NETWORKS=["solana-devnet","solana-mainnet","elrond-devnet","elrond-mainnet","database-cloud-nfluent","database-server-nfluent","prestashop"]
+export const NETWORKS=["solana-devnet","solana-mainnet","elrond-devnet","elrond-mainnet","database-cloud-nfluent","database-server-nfluent","prestashop","file"]
 
 export const PLATFORMS=[
   {label:"NFT storage",value:"nftstorage"},

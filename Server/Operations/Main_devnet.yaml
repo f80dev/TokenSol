@@ -20,7 +20,8 @@ wallet: "$nfluent_appli$/wallet"
 lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
-  miner: paul
+  miner:                              #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection
+#!!!!! Attention le mineur doit être propriétaire de la collection de minage
 
 
 #section détaillant l'événement associé à cette opération
@@ -43,7 +44,7 @@ collections:
 
 
 database:                 #base de données générale de l'outil pour les historiques
-  connexion: cloud
+  connexion: server
   dbname: nfluent
 
 #la section accounts contient les clés privées (cryptées) des comptes Ã utiliser pendant l'opération
@@ -58,6 +59,8 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
     color: white
     font-size: medium
     text-align: center
+    height: fit-content
+    min-height: 100vh
 
 
 #Fonctionnement de la section data ______________________________________________________________________________________________________________________________
@@ -73,32 +76,565 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 data:
   sources:
     - type: network
-      active: True
+      active: False
       connexion: elrond-devnet
       filter:
         limit: 200
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
-        - "NFLUXCAR-6018c8"
+        - "NFLUENTA-ccc051"
 
 
     - type: database
-      active: false
+      active: False
       connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
       dbname: nfluent           #Nom de la base de données contenant les NFTS
       filter:
         limit: 200
 
 
-    - type: json              #Les NFTs sont contenus dans un fichier json
-      active: False
-      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+#    - type: json              #Les NFTs sont contenus dans un fichier json
+#      active: False
+#      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
 
 
-    - type: web              #Les NFTs sont contenus dans un fichier json
-      active: False
-      connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
+#    - type: web              #Les NFTs sont contenus dans un fichier json
+#      active: False
+      #connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
 
+
+    - type: file            #permet d'aller chercher les NFT dans un fichier
+      active: true
+      connexion: ""         #designe la localisation du fichier contenant les NFT
+      nfts:
+        - address: file_0xf262fd3bb1c
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_2_
+          visual: https://bafkreigbfga7qmlbldqnjprheg4ylznjneyrgg4nelvs73epzjj7ystdk4.ipfs.nftstorage.link
+        - address: file_0xf262fd3bd10
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_3_
+          visual: https://bafkreifahvf735xqy53dxeoprt47ofy2d7mxclfr225p3vgjinm766oioa.ipfs.nftstorage.link
+        - address: file_0xf262fd3bf9c
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_4_
+          visual: https://bafkreict4omjm6dl2jvqankk2keieybpn57sdnpdh74imbzhot43s2xday.ipfs.nftstorage.link
+        - address: file_0xf262fd3c2e2
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_5_
+          visual: https://bafkreibnvzaslvwdbd2i7o3dvmneyebrh22rvinrbjem64tsqy2p5bnfq4.ipfs.nftstorage.link
+        - address: file_0xf262fd3c6bf
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_6_
+          visual: https://bafkreid2jcqgevtgp7ke45gxuyzyawgrj33cq72uf7nzmqcuz4knzes53a.ipfs.nftstorage.link
+        - address: file_0xf262fd3cb2f
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_7_
+          visual: https://bafkreidrjscz7a7l4gshaeca7pwu4z32dwraa6ylyztz4otsjvcxxoqwpa.ipfs.nftstorage.link
+        - address: file_0xf262fd3d084
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_8_
+          visual: https://bafkreicmoucrhrlmbvi7hqn27toseumuhqo4wiamsltjf246rx5ehhlmfi.ipfs.nftstorage.link
+        - address: file_0xf262fd3d632
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_9_
+          visual: https://bafkreie37qx6fjst5q7apiaoz6psm7uwzly53ufijtr3gtmyiwemx7or3a.ipfs.nftstorage.link
+        - address: file_0xf262fd3dc77
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_10_
+          visual: https://bafkreih6q6nxd67kiod7qlnvgplx5oqwhwizfyjncpsacyssgj7f2x2vwi.ipfs.nftstorage.link
+        - address: file_0xf262fd3e394
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_11_
+          visual: https://bafkreibwuulzkheiqouspqjslpuqoohqc3anghf3uphp3wveaoej5haadi.ipfs.nftstorage.link
+        - address: file_0xf262fd3eb42
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_12_
+          visual: https://bafkreiggwxesffo4vmark74yxhfgzhbtjxz5bi52ht2hdomsmvpweblm4m.ipfs.nftstorage.link
+        - address: file_0xf262fd3f40f
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_13_
+          visual: https://bafkreiaxglopgdisgm6fqr6sbz2lu4jacvtgj2fzb6dai5pquxme5ihnnu.ipfs.nftstorage.link
+        - address: file_0xf262fd3fd15
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_14_
+          visual: https://bafkreih4jkvutwy3ps4iddh7t74xups7ezb5hesbgcp3slc2fs4ng7snlu.ipfs.nftstorage.link
+        - address: file_0xf262fd406c5
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_15_
+          visual: https://bafkreicirqye73a64kxia6koztqvxs7vwm63noacnctppwtrohsjo3mtxe.ipfs.nftstorage.link
+        - address: file_0xf262fd41122
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_16_
+          visual: https://bafkreid7d2pek6rv4yhceracultoqroene2wh4tya24n7jxrphpfodmnae.ipfs.nftstorage.link
+        - address: file_0xf262fd41c24
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_17_
+          visual: https://bafkreihoohuovwig7wm3ihecib5ykbegdh63scej67oxefpfsl4kf2smfm.ipfs.nftstorage.link
+        - address: file_0xf262fd4278c
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_18_
+          visual: https://bafkreibqzppkjfvutbudjeky6racjqilhpfx55ttyd7h6ohj5iishljn54.ipfs.nftstorage.link
+        - address: file_0xf262fd433c5
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_19_
+          visual: https://bafkreidk5xsnmt4k7m4pywjxd3u72xefczq7ege6lumao36qh673tm2l2a.ipfs.nftstorage.link
+        - address: file_0xf262fd44096
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_20_
+          visual: https://bafkreidsotj72uehvo3jqlftv6c6kcjtmsj7tffhdiqdyi7ctyllr2ckoa.ipfs.nftstorage.link
+        - address: file_0xf262fd44e1c
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_21_
+          visual: https://bafkreidefafp24hwf7vcn3zxhsyv4s2odqwrxxljirfthovvdzm6nmsu6a.ipfs.nftstorage.link
+        - address: file_0xf262fd45cab
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_22_
+          visual: https://bafkreifwdahv7r2pyetefwlql5f44wlqvcmhgumf5usy2jrjc3cx2ldrva.ipfs.nftstorage.link
+        - address: file_0xf262fd46b81
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_23_
+          visual: https://bafkreiagvvxjo4jqnwzuzcnlokebnyt62qsrqzbfchlvcwfs5kaes5knai.ipfs.nftstorage.link
+        - address: file_0xf262fd47ab0
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_24_
+          visual: https://bafkreic5qpt4vrmkjm7odkhxjxnsejpvsrgtmblk53qa7b4vkhkm3m4nfe.ipfs.nftstorage.link
+        - address: file_0xf262fd48be0
+          attributes: [ ]
+          collection:
+            id: NFLUENTA-ccc051
+            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+          creators:
+            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_25_
+          visual: https://bafkreihpsxszbci27oddh5xqskdur4jphdy3jigoojybkropnsymi3nzn4.ipfs.nftstorage.link
 
     - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
       active: False
@@ -233,7 +769,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "NFLUXCAR-6018c8"
+    - "NFLUENTA-ccc051"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -272,9 +808,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 #Section lié à la distribution nominative de NFT
 dispenser:
   visible: True
-  miner: paul                                       #mineur en charge de la création des tokens pour les non minés
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
-
   collections:                                      #Liste des collections concernée par la distribution (si vide toutes les collections disponibles depuis la source sont prises en compte)
 
 
@@ -284,15 +818,17 @@ candymachine:
   visible: True
 
   connexion:
-    wallet_connect: False      #Permet de se connecter à la candy machine via wallet connect
-    nfluent_wallet_connect: False
+    wallet_connect: False          #Permet de se connecter à la candy machine via wallet connect
+    nfluent_wallet_connect: True
     webcam: False
-    network: True
+    network: False
     email: True
+    address: True
+    on_device: False
+    google: True
 
-
-  collections:
-    - "NFLUXCAR-6018c8"
+  collections:                  #Liste les collections disponibles via la candy machine
+#    - "NFLUENTA-ccc051"         #le champs collections doit contenir au moins une collection
 
   messages:
     title: "Flasher ce code pour obtenir un NFT de la collection NFLuenT"

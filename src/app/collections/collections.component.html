@@ -12,6 +12,12 @@
     <input matInput type="text" max="20" [(ngModel)]="new_collection.description">
   </mat-form-field>
 
+  <div style="width: fit-content;display: inline-block;">
+    <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">
+      {{collection_option.label}}
+    </mat-checkbox>
+  </div>
+
   <button type="button" mat-raised-button mat-button (click)="create_collection()" id="cmdBuild">
     Fabriquer
   </button>
@@ -28,22 +34,22 @@
     <tr>
       <th>Name</th>
       <th>Identifiant</th>
-      <th>Description</th>
-      <th>Visual</th>
+      <th>Propriétés</th>
       <th>Actions</th>
     </tr>
     <tr *ngFor="let col of user.collections">
       <td>{{col.name}}</td>
       <td ><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
-      <td>{{col.description}}</td>
-      <td></td>
+      <td>
+        {{col.options | json}}
+      </td>
       <td>
         <button type="button" mat-raised-button mat-button (click)="open_collection(col)">
           Voir les NFTs
         </button>
         &nbsp;
-        <button type="button" mat-raised-button mat-button (click)="open_miner(col)">
-          Utiliser pour Miner
+        <button type="button" mat-raised-button mat-button (click)="open_miner(col)" title="Utiliser cette collection pour miner des NFT">
+          Miner
         </button>
         &nbsp;
         <button type="button" mat-raised-button mat-button (click)="open_explorer(col)">

@@ -8,6 +8,7 @@ import {Location} from "@angular/common";
 import {UserService} from "../user.service";
 import {NFT} from "../../nft";
 import {NFLUENT_WALLET} from "../../definitions";
+import {Operation} from "../../operation";
 
 @Component({
   selector: 'app-dealermachine',
@@ -19,7 +20,7 @@ export class DealermachineComponent implements OnInit {
   wallet_link: string="";
   nft:NFT | null=null;
   final_message="";
-  ope: any=null;
+  ope: Operation | null=null;
   webcam: boolean=true;
   mining: any={};
   authentification: any;
@@ -60,9 +61,13 @@ export class DealermachineComponent implements OnInit {
       if(ope){
         this.network.get_operations(ope).subscribe((ope:any)=>{
           this.ope=ope;
-          this.mining=params["mining"] || this.ope.lazy_mining;
-          if(section){
-            this.authentification=this.ope[section].authentification;
+          if(this.ope){
+            // @ts-ignore
+            if(section && this.ope[section]){
+              // @ts-ignore
+              this.authentification=this.ope[section].authentification;
+            }
+            this.mining=params["mining"] || this.ope.lazy_mining;
           }
         })
       }
@@ -94,11 +99,11 @@ export class DealermachineComponent implements OnInit {
     }
   }
 
-  end_process(sMessage:string,rediction=null){
+  end_process(sMessage:string,rediction:string | null=null){
     if(rediction){
       showMessage(this,sMessage);
       setTimeout(()=>{
-        open(this.ope.lottery.end_process.winner.redirection);
+        open(this.ope!.lottery.end_process.winner.redirection);
         },3500);
     } else {
       this.message=sMessage+". Vous pouvez fermer cette écran";
@@ -106,24 +111,26 @@ export class DealermachineComponent implements OnInit {
   }
 
 
-  valide(evt:any) {
+  valide(evt: { address:string }) {
     let addr=evt.address;
     this.address=addr.replace("'","");
     addr=this.alias.transform(addr,"pubkey");
-    if(this.nft!.address?.startsWith("db_")){
-      $$("Ce token est issue d'une base de données, donc non miné");;
-      if(this.ope)this.message=this.ope.store.support.buy_message;
-      this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.mining.network,this.nft!).subscribe((r:any)=>{;
-        this.message="";
-        if(r.error.length>0){
-          this.message=r.error+". ";
-        } else {
-          this.win();
-        }
-      },(err:any)=>{
-        showError(this,err);
-        this.message="";
-      })
+    if(this.nft!.address?.startsWith("db_") || this.nft!.address?.startsWith("file_")){
+      $$("Ce token est issue d'une base de données, donc non miné");
+      if(this.ope){
+        this.message=this.ope.store!.support.buy_message;
+        this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.ope.network,this.nft!).subscribe((r:any)=>{;
+          this.message="";
+          if(r.error.length>0){
+            this.message=r.error+". ";
+          } else {
+            this.win();
+          }
+        },(err:any)=>{
+          showError(this,err);
+          this.message="";
+        })
+      }
     }else{
       $$("Ce token est déjà miné, on se contente de le transférer");
       if(this.nft!.address!="" && this.nft!.owner!=""){
@@ -148,7 +155,7 @@ export class DealermachineComponent implements OnInit {
 
   onLoadPaymentData($event: any) {
     if($event.returnValue)
-      this.valide(this.address);
+      this.valide({address:this.address});
   }
 
   onflash($event: any) {
@@ -163,7 +170,7 @@ export class DealermachineComponent implements OnInit {
     if(this.address && this.address.indexOf("@")==-1 && !this.address.startsWith('\'') && !this.network.isElrond(this.address)){
       showMessage(this,"Le service n'est compatible qu'avec les adresses elrond");
     } else {
-      this.valide(this.address);
+      this.valide({address:this.address});
     }
   }
 }

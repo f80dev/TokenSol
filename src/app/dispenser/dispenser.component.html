@@ -4,8 +4,8 @@
 
   <app-hourglass [message]="message"></app-hourglass>
 
-  <div *ngIf="message.length==0" style="width: 100%;font-size: 10px;">
-    <br>Cliquez sur le NFT à envoyer<br>
+  <div *ngIf="message.length==0" style="width: 100%;font-size: 15px;">
+    <br>{{miner | alias}}, cliquez sur le NFT à envoyer<br>
     <div *ngFor="let nft of nfts" style="display: inline-block;margin:10px;cursor: pointer;line-height: 105%;" (click)="send(nft)" [title]="nft.message" [style]="nft.style">
       <div class="mat-subheading-1">{{nft.name}}</div>
       <img class="mat-elevation-z4"

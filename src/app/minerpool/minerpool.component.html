@@ -4,8 +4,24 @@
   <div id="cmdPanel" style="width: 100%;" *ngIf="message.length==0">
     <button type="button" mat-raised-button mat-button
             (click)="run()">
-      Déclencher le traitement
+      Traitement
     </button>
+
+    <button type="button" mat-raised-button mat-button
+            (click)="reset_pool()">
+      Reset
+    </button>
+
+    <button type="button" mat-raised-button mat-button
+            (click)="refresh()">
+      Actualiser
+    </button>
+
+    <mat-checkbox *ngIf="asks.length>=10"
+                  [(ngModel)]="showAll"
+                  (ngModelChange)="refresh()">
+      Tous les traitements
+    </mat-checkbox>
 
 
     <br>
@@ -13,26 +29,51 @@
   </div>
   <table style="width: 96%;text-align: center;padding: 1%;margin:1%;" class="mat-elevation-z4">
     <tr>
-      <th>Operation</th>
-      <th>Nom / Collection du NFT</th>
+      <th>Ajouter le</th>
+      <th>Network</th>
+      <th>Sources</th>
+      <th>Filtre</th>
       <th>Mineur</th>
       <th>Destinataire</th>
+      <th>Prévu pour</th>
       <th>Réalisé le</th>
-      <th>Transaction</th>
+      <th>Résultat</th>
       <th>Commande</th>
     </tr>
     <tr *ngFor="let ask of asks">
-      <td>{{ask.operation}} </td>
-      <td>{{ask.nft.name || ask.nft.collection!.id}} </td>
-      <td>{{ask.nft.creators[0] | alias}}</td>
-      <td>{{ask.nft.owner | alias}} </td>
-      <td>{{ask.dtWork}}</td>
-      <td></td>
+      <td>{{ask.dtCreate*1000 | date:'dd/MM HH:mm'}} </td>
+      <td>{{ask.network}} </td>
       <td>
-        <button type="button" mat-raised-button mat-button
+        <ul>
+          <li *ngFor="let s of ask.sources">
+            {{s.connexion}} / {{s.owner}} {{s.collections}}
+          </li>
+        </ul>
+      </td>
+      <td>{{ask.filter}}</td>
+      <td style="max-width: 200px;">{{ask.miner | alias | slice:0:20}}</td>
+      <td style="max-width: 200px;">{{ask.dest | alias | slice:0:20}} </td>
+      <td>{{ask.dtStart*1000 | date:'dd/MM HH:mm'}}</td>
+      <td><span *ngIf="ask.dtWork">{{ask.dtWork*1000 | date:'dd/MM HH:mm'}}</span></td>
+      <td style="max-width: 200px;">{{ask.message | slice:0:40}}</td>
+      <td>
+        <button type="button" mat-raised-button mat-icon-button mat-button *ngIf="!ask.dtWork"
+                title="supprimer le traitement"
                 (click)="cancel(ask)">
-          Annuler
+          <mat-icon>delete</mat-icon>
         </button>
+        <button type="button" mat-icon-button mat-raised-button mat-button *ngIf="!ask.dtWork"
+                title="Exécuter le traitement"
+                (click)="run(ask.id)">
+          <mat-icon>play_circle</mat-icon>
+        </button>
+        <button type="button" mat-icon-button mat-raised-button mat-button
+                title="Recommencer le traitement"
+                *ngIf="ask.dtWork"
+                (click)="retry(ask)">
+          <mat-icon>refresh</mat-icon>
+        </button>
+
       </td>
     </tr>
   </table>

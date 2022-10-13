@@ -52,7 +52,18 @@ export class MywalletComponent implements OnInit,OnDestroy {
     price: undefined,
     link:"",
     visual: undefined,
-    name:"Toutes"}];
+    name:"Toutes",
+    options: {
+      canAddSpecialRoles: true,
+      canChangeOwner: true,
+      canFreeze: true,
+      canPause: true,
+      canWipe: true,
+      canUpgrade: true,
+      canTransferNFTCreateRole: true
+    }
+
+  }];
 
   sel_collection: Collection=this.collections[0];
   image_for_token: string="";
@@ -193,7 +204,16 @@ export class MywalletComponent implements OnInit,OnDestroy {
         owner: undefined,
         price: undefined,
         type:"NFT",
-        link:""
+        link:"",
+        options:{
+          canWipe:true,
+          canTransferNFTCreateRole:true,
+          canUpgrade:true,
+          canPause:true,
+          canFreeze:true,
+          canChangeOwner:true,
+          canAddSpecialRoles:true
+        }
       };
 
       let token:NFT= {

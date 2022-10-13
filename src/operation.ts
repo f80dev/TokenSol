@@ -8,6 +8,16 @@ export interface Collection {
   price: number | undefined
   type: string | undefined
   link: string | ""
+
+  options: {
+    canFreeze: boolean | true
+    canWipe: boolean | true
+    canPause: boolean | true
+    canTransferNFTCreateRole: boolean | true
+    canChangeOwner: boolean | true
+    canUpgrade: boolean | true
+    canAddSpecialRoles: boolean | true
+  }
 }
 
 interface Connexion {
@@ -18,6 +28,16 @@ interface Connexion {
   google: boolean | false
   webcam: boolean | false
   nfluent_wallet_connect: boolean | false            //QRCode proposé par nfluent en substitution de Wallet Connect à utiliser depuis le wallet nfluent
+}
+
+export interface Source {
+  active: boolean
+  type: "database" | "network" | "file"
+  connexion: string
+  filter: any | null
+  owner: string | null
+  dbname: string | null
+  collections: string[] | null
 }
 
 //Description de la structure d'une opération
@@ -41,14 +61,7 @@ export interface Operation {
   } | null
 
   data: {
-    sources: {
-      type: string
-      connexion: string
-      filter: any | null
-      owner: string | null
-      dbname: string | null
-      collections: string[] | null
-    }[]
+    sources: Source[]
   }
 
   lazy_mining :{
@@ -224,7 +237,6 @@ export interface Operation {
 
   dispenser: {
     visible: boolean
-    miner: string
     application: string
 
     collections:       {
