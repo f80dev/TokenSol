@@ -7,11 +7,15 @@ import {Component, Input, OnInit} from '@angular/core';
 })
 export class LinkComponent implements OnInit {
 
-  @Input("content") content="";
+  @Input() content="";
+  @Input() network="elrond-devnet";
 
   constructor() { }
 
   ngOnInit(): void {
   }
 
+  get_explorer(content: string) {
+    return "https://"+(this.network.indexOf('devnet')>-1 ? "devnet-" : "")+"explorer.elrond.com/address/"+content;
+  }
 }

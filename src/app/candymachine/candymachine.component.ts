@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {getParams, setParams, showError, showMessage} from "../../tools";
+import {$$, getParams, setParams, showError, showMessage} from "../../tools";
 import {Collection, Operation} from "../../operation";
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
@@ -34,6 +34,7 @@ export class CandymachineComponent implements OnInit {
       this.network.get_operations(params["ope"]).subscribe((operation:any)=>{
         this.operation=operation;
         this.miner=(params.hasOwnProperty('miner') ? params["miner"] : operation.lazy_mining.miner)
+        $$("Le miner de la transaction est "+this.miner);
         if(operation.collections){
           for(let col of operation.collections){
             if(operation.candymachine.collections.indexOf(col.id)>-1){
@@ -60,6 +61,7 @@ export class CandymachineComponent implements OnInit {
         operation:this.operation,
         collections:this.operation.candymachine.collections
       }
+      $$("Ajout de la demande de minage ",body)
       this.network.add_user_for_nft(body).subscribe(()=>{
         this.showEnd=true;
       })

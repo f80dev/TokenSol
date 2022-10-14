@@ -122,6 +122,7 @@ export class MintComponent implements OnInit {
       collection: null,
       address: undefined,
       message:"",
+      tags:_infos.tags,
       attributes: attributes,
       creators: creators,
       description: _infos.description,
@@ -314,6 +315,7 @@ export class MintComponent implements OnInit {
           this.network.mint(token,this.user.key.name,this.user.key.name,this.sign, this.sel_platform,this.network.network,this.mintfile).then((result:any)=>{
             if(!result.error || result.error==""){
               resolve(token);
+              token.address=result.result.mint;
               if(this.network.network=="file"){
                 this.clipboard.copy(result.out);
                 token.message="Le code est dans votre presse-papier"
@@ -344,9 +346,12 @@ export class MintComponent implements OnInit {
   }
 
 
+  see_in_hub(nft:NFT){
+    open("https://"+(this.network.network.indexOf("devnet")>-1 ? "devnet" : "")+".inspire.art/nfts/"+nft.address)
+  }
+
   to_string(token: any) {
-    let rc=JSON.stringify(token,null,'\t');
-    return rc;
+
   }
 
   download(token: any) {

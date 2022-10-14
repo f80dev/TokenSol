@@ -212,7 +212,7 @@ class Elrond:
                        _receiver: Account,
                        _sign: Account,
                        value: str, data: str,
-                       gas_limit=LIMIT_GAS, timeout=60):
+                       gas_limit=LIMIT_GAS, timeout=120):
     """
     Envoi d'une transaction signée
     :param _sender:
@@ -445,8 +445,8 @@ class Elrond:
       for i in range(len(result)):
         item=result[i]
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
-        attributes,description=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
-        nft=NFT(item["name"],"",{"id":col},attributes,description,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
+        attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
+        nft=NFT(item["name"],"",tags,{"id":col},attributes,description,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
         nft.network=self.network_name
         nft.owner=owners[i]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
         nft.marketplace={"quantity":int(owners[i]["balance"]),"price":0}
@@ -536,7 +536,7 @@ class Elrond:
     """
     analyse du champs attributes des NFT elrond (qui peut contenir les données onchain ou via IPFS)
     :param body:
-    :return: les attributs, description
+    :return: les attributs, description, les tags
     """
     try:
       attr=str(base64.b64decode(bytes(body,"utf8")),"utf8")
@@ -561,7 +561,11 @@ class Elrond:
       result=api(ipfs_url,timeout=1000) if with_ipfs else ipfs_url
       return result,""
 
-    return {},attr
+    tag_position=attr.index("tags:")
+    if tag_position>0:
+      tags=attr.split("tags:")[1].split(";")[0]
+
+    return {},attr,tags
 
 
   def get_nft(self,token_id:str,attr=False,transactions=False):
@@ -576,8 +580,8 @@ class Elrond:
 
     if item:
       royalties=int(item["royalties"]*100) if "royalties" in item else 0
-      attributes,description=self.analyse_attributes(item["attributes"],with_ipfs=attr)
-      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
+      attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=attr)
+      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,tags,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
       nft.owner=item["owner"]
       nft.marketplace={"price":0,"quantity":int(item["supply"])}
       nft.network=self.network_name
@@ -641,7 +645,7 @@ class Elrond:
         if "attributes" in nft:
           _data={}
           nft["tags"]=""
-          nft["attributes"],nft["description"]=self.analyse_attributes(nft["attributes"],with_attr)
+          nft["attributes"],nft["description"],nft["tags"]=self.analyse_attributes(nft["attributes"],with_attr)
 
           log("Analyse de "+str(nft))
 
@@ -730,7 +734,7 @@ class Elrond:
   def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", file="", tags="",metadata_to_ipfs=False):
     """
     Fabriquer un NFT au standard elrond
-    https://docs.elrond.com/developers/nft-tokens/
+    https://docs.elrond.com/tokens/nft-tokens/#nftsft-fields
     :type ipfs: object
     :param contract:
     :param user_from:
@@ -744,25 +748,17 @@ class Elrond:
     #hash = hex(int(now() * 1000)).upper().replace("0X", "")
     hash="00"
 
+    _d={
+      "description":description,
+      "attributes":properties,
+      "collection":collection
+    }
+    cid=ipfs.add(_d)
 
-    if metadata_to_ipfs:
-      if len(description)>0:properties["description"]=description
-      cid_metadata=ipfs.add(properties)
-      s="metadata:"+cid_metadata["Hash"]+"/props.json;tags:"+("" if len(tags)==0 else " ".join(tags))
-    else:
-      cid_metadata={"url":"","Hash":""}
-      _d=dict()
-      if type(properties)==list:
-        if len(properties)>0:
-          for prop in properties:
-            _d[prop["trait_type"]]=prop["value"]
-
-          s=description+" - "+json.dumps(_d)
-        else:
-          s=description
+    log("Address des metadata: "+cid["url"])
+    s="metadata:"+cid["Hash"]+"/prop.json;tags:"+tags
 
     #Traitement de la problématique des caractères spéciaux
-    #voir
     s=strip_accents(s.replace("\n"," "))
     title=strip_accents(title)
 
@@ -799,17 +795,17 @@ class Elrond:
     if t is None: return None,None
 
     if t["status"]!="success":
-      return {
+      return None,{
                "error":hex_to_str(str(base64.b64decode(t["logs"]["events"][0]["data"])).split("@")[1]),
                "hash":t["hash"]
-             },None
+             }
 
     if "logs" in t:
       nonce = t["logs"]["events"][0]
       nonce = int_to_hex(base64.b64decode(nonce["topics"][1])[0],2)
-      return nonce,cid_metadata
+      return nonce,t
 
-    return None,None
+    return None,t
 
 
   def getRoleForToken(self,collection):

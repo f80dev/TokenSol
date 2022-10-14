@@ -138,8 +138,12 @@
           </tr>
           <tr>
 
-            <td>Description</td>
-            <td><textarea rows="4" col="40" matInput class="mat-elevation-z2" [(ngModel)]="token.description"></textarea></td>
+            <td>Desc.</td>
+            <td><textarea rows="2" col="40" matInput class="mat-elevation-z2" [(ngModel)]="token.description"></textarea></td>
+          </tr>
+          <tr>
+            <td>Tags</td>
+            <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.tags"></td>
           </tr>
           <tr *ngIf="!network.isElrond()">
             <td>Symbole</td>
@@ -199,7 +203,7 @@
       <td>
         <mat-icon style="cursor: pointer" (click)="upload_token(token)" title="upload du visuel" *ngIf="token.visual.startsWith('data')">upload</mat-icon>
         <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="user.key && sel_collection">build</mat-icon>
-        <mat-icon style="cursor: pointer" [title]="to_string(token)">visibility</mat-icon>
+        <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0" (click)="see_in_hub(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <br>
         <mat-icon style="cursor: pointer" >content_copy</mat-icon>

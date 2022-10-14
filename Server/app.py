@@ -1142,7 +1142,7 @@ def api_check_access_code(code:str):
     return jsonify({"address":addr})
 
 
-
+@app.route('/api/mintpool/',methods=["GET"])
 @app.route('/api/minerpool/',methods=["GET"])
 @app.route('/api/minerpool/<id>/',methods=["DELETE","POST"])
 # http://127.0.0.1:4242/api/minerpool/
@@ -1183,19 +1183,23 @@ def async_mint(nbr_items=3,filter=""):
       nft_to_mint=None
       elrond=Elrond(ask["network"])
       _miner=elrond.toAccount(ask["miner"])
+
       if len(nfts)>0:
         for i in range(200):
           nft_to_mint=nfts[int(random()*len(nfts))]
-          if _miner is None: _miner=elrond.toAccount(nft_to_mint.collection["owner"])
+
           if nft_to_mint.owner=="":
             if elrond.canMint(nft_to_mint): break
           else:
-            if nft_to_mint.owner==_miner.address.bech32(): break
+            if not _miner is None and nft_to_mint.owner==_miner.address.bech32(): break
 
       if not nft_to_mint is None:
-        if ask["miner"] is None or len(ask["miner"])==0: ask["miner"]=nft_to_mint.collection["owner"]
+        if _miner is None:
+          log("Le miner est fixé sur le propriétaire de la collection "+nft_to_mint.collection["id"])
+          _miner=elrond.toAccount(nft_to_mint.collection["owner"])
+
         nft_to_mint.attributes.append({"trait_type":"lazymint","value":nft_to_mint.address})
-        rc=mint(nft_to_mint,ask["miner"],ask["dest"],ask["network"])
+        rc=mint(nft_to_mint,_miner.address.bech32(),ask["dest"],ask["network"])
         if not rc or rc["error"]!="":
           log("Problème de minage voir "+rc["hash"])
           message="Error"+rc["error"]+" voir "+rc["hash"]
@@ -1226,10 +1230,6 @@ def add_user_for_nft():
   Insere une demande de minage ou transfert d'un NFT d'une collection
   :return:
   """
-  miner=request.json["miner"]
-  # _nft=NFT(collection={"id":request.json["collections"][0]},creators=[miner])
-  # _nft.network=request.json["network"]
-  # _nft.owner=request.json["owner"]
   id=dao.add_nft_to_mint(
                       miner=request.json["miner"],
                       sources=request.json["operation"]["data"]["sources"],
@@ -1415,7 +1415,7 @@ def mint_for_prestashop():
 
 
       collection_id=elrond.add_collection(miner,collection,type="NonFungible")
-      nonce,cid=elrond.mint(miner,_p["name"],_p["description"],collection_id,attributes,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
+      nonce,rc=elrond.mint(miner,_p["name"],_p["description"],collection_id,attributes,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
       t=elrond.transfer(collection_id,nonce,miner,_account)
     else:
       collection_id,nonce=elrond.extract_from_tokenid(_p["address"])
@@ -2031,8 +2031,6 @@ def create_collection(owner:str):
   })
 
 
-
-
 def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""):
   rc= {"error":"Problème technique"}
   account=None
@@ -2069,22 +2067,24 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
     old_amount=elrond.get_account(miner)["amount"]
 
     if nft.address.startswith("file_") or nft.address.startswith("db_") or len(nft.address)==0:
-      nonce,cid=elrond.mint(miner,
+      nonce,rc=elrond.mint(miner,
                               title=nft.name,
                               description=nft.description,
+                              tags=nft.tags,
                               collection=collection_id,
                               properties=nft.attributes,
                               files=nft.files,
-                              ipfs=None,
+                              ipfs=IPFS(IPFS_SERVER),
                               quantity=nft.marketplace["quantity"],
                               royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
                               visual=nft.visual
                               )
     else:
+      rc={"error":"NFT deja miné","hash":"","result":{"mint":nft.address}}
       collection_id,nonce = elrond.extract_from_tokenid(nft.address)
 
-    if "error" in nonce:
-      rc={"error":"Mint error: "+nonce["error"],"hash":nonce["hash"]}
+    if nonce is None:
+      rc={"error":"Mint error: "+rc["error"],"hash":rc["hash"]}
     else:
       infos=elrond.get_account(miner)
       token_id=collection_id+"-"+nonce

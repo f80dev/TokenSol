@@ -1,6 +1,5 @@
 import {environment} from "./environments/environment";
 import {ActivatedRoute} from "@angular/router";
-import {PromptComponent} from "./app/prompt/prompt.component";
 
 export interface CryptoKey {
   name: string

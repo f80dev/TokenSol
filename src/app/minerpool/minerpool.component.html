@@ -13,6 +13,11 @@
     </button>
 
     <button type="button" mat-raised-button mat-button
+              (click)="export_pool()">
+      Export
+    </button>
+
+    <button type="button" mat-raised-button mat-button
             (click)="refresh()">
       Actualiser
     </button>
@@ -51,7 +56,7 @@
         </ul>
       </td>
       <td>{{ask.filter}}</td>
-      <td style="max-width: 200px;">{{ask.miner | alias | slice:0:20}}</td>
+      <td style="max-width: 200px;"><app-link [content]="ask.miner" [network]="network.network"></app-link></td>
       <td style="max-width: 200px;">{{ask.dest | alias | slice:0:20}} </td>
       <td>{{ask.dtStart*1000 | date:'dd/MM HH:mm'}}</td>
       <td><span *ngIf="ask.dtWork">{{ask.dtWork*1000 | date:'dd/MM HH:mm'}}</span></td>

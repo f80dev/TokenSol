@@ -187,6 +187,7 @@ class DAO:
       "filter":collections,
       "sources":sources
     }
+    log("Ajout dans le mintpool de "+str(obj))
     tx=self.db["mintpool"].insert_one(obj)
     return str(tx.inserted_id)
 

@@ -82,7 +82,7 @@ data:
         limit: 200
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
-        - "NFLUENTA-ccc051"
+        - "NFLUENTA-4fcc6c"
 
 
     - type: database
@@ -106,14 +106,41 @@ data:
     - type: file            #permet d'aller chercher les NFT dans un fichier
       active: true
       connexion: ""         #designe la localisation du fichier contenant les NFT
-      nfts:
-        - address: file_0xf262fd3bb1c
+      nfts:                 #Cette section contient l'ensemble des NFTs a miner
+        - address: file_0xf26453a7798
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -127,15 +154,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_2_
-          visual: https://bafkreigbfga7qmlbldqnjprheg4ylznjneyrgg4nelvs73epzjj7ystdk4.ipfs.nftstorage.link
-        - address: file_0xf262fd3bd10
+          symbol: token_56_
+          visual: https://bafkreigzjxbkor3nu4a572qgc2r3wo4zesqx7n2qc4ajn4nhufdv2dahli.ipfs.nftstorage.link
+        - address: file_0xf26453a7bf8
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -149,15 +203,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_3_
-          visual: https://bafkreifahvf735xqy53dxeoprt47ofy2d7mxclfr225p3vgjinm766oioa.ipfs.nftstorage.link
-        - address: file_0xf262fd3bf9c
+          symbol: token_57_
+          visual: https://bafkreidym7eojmejv7zkbr2bgbt3dfqmuacsnwl4dyhyvwswhsiktw32lm.ipfs.nftstorage.link
+        - address: file_0xf26453a83a3
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -171,15 +252,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_4_
-          visual: https://bafkreict4omjm6dl2jvqankk2keieybpn57sdnpdh74imbzhot43s2xday.ipfs.nftstorage.link
-        - address: file_0xf262fd3c2e2
+          symbol: token_58_
+          visual: https://bafkreigbmtr7bz77iwuaaezlzrvaiyndzcndyoiy5n226dxlelzbbo3xuu.ipfs.nftstorage.link
+        - address: file_0xf26453a890a
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -193,15 +301,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_5_
-          visual: https://bafkreibnvzaslvwdbd2i7o3dvmneyebrh22rvinrbjem64tsqy2p5bnfq4.ipfs.nftstorage.link
-        - address: file_0xf262fd3c6bf
+          symbol: token_59_
+          visual: https://bafkreihlj3kwziiaa4yb3sk32ip6xab75yg75px3gkfvtzvyrmwzax5a2q.ipfs.nftstorage.link
+        - address: file_0xf26453a9882
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -215,15 +350,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_6_
-          visual: https://bafkreid2jcqgevtgp7ke45gxuyzyawgrj33cq72uf7nzmqcuz4knzes53a.ipfs.nftstorage.link
-        - address: file_0xf262fd3cb2f
+          symbol: token_60_
+          visual: https://bafkreiff5omebamkila3hklh47urahehzw7gdgyrz26bmn7zumvs3dbhni.ipfs.nftstorage.link
+        - address: file_0xf26453aa090
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -237,15 +399,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_7_
-          visual: https://bafkreidrjscz7a7l4gshaeca7pwu4z32dwraa6ylyztz4otsjvcxxoqwpa.ipfs.nftstorage.link
-        - address: file_0xf262fd3d084
+          symbol: token_61_
+          visual: https://bafkreidmr76jq3worfpbjryvf7kf3d3hzan2brczyha7e7s7wiqogql4na.ipfs.nftstorage.link
+        - address: file_0xf26453aaa0f
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -259,15 +448,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_8_
-          visual: https://bafkreicmoucrhrlmbvi7hqn27toseumuhqo4wiamsltjf246rx5ehhlmfi.ipfs.nftstorage.link
-        - address: file_0xf262fd3d632
+          symbol: token_62_
+          visual: https://bafkreihzpuw3pdav6lqncuc6mxhg7xzsfbz3ft2pr3fh2dzgfojhkdccue.ipfs.nftstorage.link
+        - address: file_0xf26453ab516
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -281,15 +497,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_9_
-          visual: https://bafkreie37qx6fjst5q7apiaoz6psm7uwzly53ufijtr3gtmyiwemx7or3a.ipfs.nftstorage.link
-        - address: file_0xf262fd3dc77
+          symbol: token_63_
+          visual: https://bafkreiblrpgyjbggycfdkqonbxnh4lpgq7j5vcky5ae5br6j5dinwpmfyq.ipfs.nftstorage.link
+        - address: file_0xf26453abd1a
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -303,15 +546,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_10_
-          visual: https://bafkreih6q6nxd67kiod7qlnvgplx5oqwhwizfyjncpsacyssgj7f2x2vwi.ipfs.nftstorage.link
-        - address: file_0xf262fd3e394
+          symbol: token_64_
+          visual: https://bafkreiee7afmi2x5a6hnhrre4eq2wv5hwh2hgossvcjkjc2tvmm6glu5ry.ipfs.nftstorage.link
+        - address: file_0xf26453ac74d
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -325,15 +595,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_11_
-          visual: https://bafkreibwuulzkheiqouspqjslpuqoohqc3anghf3uphp3wveaoej5haadi.ipfs.nftstorage.link
-        - address: file_0xf262fd3eb42
+          symbol: token_65_
+          visual: https://bafkreiaaztqyay5g2ovqldha27am4365rlzr7d5bunon5rc6wk2exx2xiq.ipfs.nftstorage.link
+        - address: file_0xf26453ad0d5
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -347,15 +644,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_12_
-          visual: https://bafkreiggwxesffo4vmark74yxhfgzhbtjxz5bi52ht2hdomsmvpweblm4m.ipfs.nftstorage.link
-        - address: file_0xf262fd3f40f
+          symbol: token_66_
+          visual: https://bafkreieosahmoqpromdmlhxw5r4aibnnez77bmki5ylqt7gcnh47y6rwrm.ipfs.nftstorage.link
+        - address: file_0xf26453ada52
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -369,15 +693,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_13_
-          visual: https://bafkreiaxglopgdisgm6fqr6sbz2lu4jacvtgj2fzb6dai5pquxme5ihnnu.ipfs.nftstorage.link
-        - address: file_0xf262fd3fd15
+          symbol: token_67_
+          visual: https://bafkreieuordiyrnhrgoumghejd2u77gnbmv55et753nrq2rjcfjg27hhgm.ipfs.nftstorage.link
+        - address: file_0xf26453aee12
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -391,15 +742,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_14_
-          visual: https://bafkreih4jkvutwy3ps4iddh7t74xups7ezb5hesbgcp3slc2fs4ng7snlu.ipfs.nftstorage.link
-        - address: file_0xf262fd406c5
+          symbol: token_68_
+          visual: https://bafkreigzfhmdoksj5ejmqt6thx5syfgfqghoe2ygj54udzby262bw35exa.ipfs.nftstorage.link
+        - address: file_0xf26453b0081
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -413,15 +791,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_15_
-          visual: https://bafkreicirqye73a64kxia6koztqvxs7vwm63noacnctppwtrohsjo3mtxe.ipfs.nftstorage.link
-        - address: file_0xf262fd41122
+          symbol: token_69_
+          visual: https://bafkreihnpgu7mytaoroznssv76nvuujc5byxcj2ywkesipcv7raiqcjhkm.ipfs.nftstorage.link
+        - address: file_0xf26453b7f88
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -435,15 +840,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_16_
-          visual: https://bafkreid7d2pek6rv4yhceracultoqroene2wh4tya24n7jxrphpfodmnae.ipfs.nftstorage.link
-        - address: file_0xf262fd41c24
+          symbol: token_70_
+          visual: https://bafkreicjloaujyduecpu4z3wythuivy6jhrkjgs27zlwrowm6l3wsvfa2u.ipfs.nftstorage.link
+        - address: file_0xf26453b9893
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -457,15 +889,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_17_
-          visual: https://bafkreihoohuovwig7wm3ihecib5ykbegdh63scej67oxefpfsl4kf2smfm.ipfs.nftstorage.link
-        - address: file_0xf262fd4278c
+          symbol: token_71_
+          visual: https://bafkreicker74mjjelcoxyfjelw4amxh3zmwvsobw65gg3vqptzblnjrcdq.ipfs.nftstorage.link
+        - address: file_0xf26453bb9ea
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -479,15 +938,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_18_
-          visual: https://bafkreibqzppkjfvutbudjeky6racjqilhpfx55ttyd7h6ohj5iishljn54.ipfs.nftstorage.link
-        - address: file_0xf262fd433c5
+          symbol: token_72_
+          visual: https://bafkreie3xg2q73glrec6egtoqr5cnxm2f5smozjp4vmzxhisc3xq4dqjvq.ipfs.nftstorage.link
+        - address: file_0xf26453bcb6c
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -501,15 +987,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_19_
-          visual: https://bafkreidk5xsnmt4k7m4pywjxd3u72xefczq7ege6lumao36qh673tm2l2a.ipfs.nftstorage.link
-        - address: file_0xf262fd44096
+          symbol: token_73_
+          visual: https://bafkreigxnanaswsizsevqrdwte724kpsf5jjlogg2qucqp7v35ruljnh3m.ipfs.nftstorage.link
+        - address: file_0xf26453bddac
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -523,15 +1036,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_20_
-          visual: https://bafkreidsotj72uehvo3jqlftv6c6kcjtmsj7tffhdiqdyi7ctyllr2ckoa.ipfs.nftstorage.link
-        - address: file_0xf262fd44e1c
+          symbol: token_74_
+          visual: https://bafkreicwamqiib6dsdnpohx6gz7fscfgklkpxgvdsd6vr54wndg4tzhaqy.ipfs.nftstorage.link
+        - address: file_0xf26453bf0e4
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -545,15 +1085,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_21_
-          visual: https://bafkreidefafp24hwf7vcn3zxhsyv4s2odqwrxxljirfthovvdzm6nmsu6a.ipfs.nftstorage.link
-        - address: file_0xf262fd45cab
+          symbol: token_75_
+          visual: https://bafkreiba6xepppwvboix6fqdethdco4dhlngar6jo4js7wnf5boyc2qipm.ipfs.nftstorage.link
+        - address: file_0xf26453c068e
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -567,15 +1134,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_22_
-          visual: https://bafkreifwdahv7r2pyetefwlql5f44wlqvcmhgumf5usy2jrjc3cx2ldrva.ipfs.nftstorage.link
-        - address: file_0xf262fd46b81
+          symbol: token_76_
+          visual: https://bafkreie65ndhk4uniia7mt5mnen6tbasx6qppktb4joqd4d35yykuphuxe.ipfs.nftstorage.link
+        - address: file_0xf26453c2349
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -589,15 +1183,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_23_
-          visual: https://bafkreiagvvxjo4jqnwzuzcnlokebnyt62qsrqzbfchlvcwfs5kaes5knai.ipfs.nftstorage.link
-        - address: file_0xf262fd47ab0
+          symbol: token_77_
+          visual: https://bafkreidl5nsxp7acojuflzdy77cjlpvepm4rk72jfhxjt5iuqqohajtbei.ipfs.nftstorage.link
+        - address: file_0xf26453c5a16
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -611,15 +1232,42 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_24_
-          visual: https://bafkreic5qpt4vrmkjm7odkhxjxnsejpvsrgtmblk53qa7b4vkhkm3m4nfe.ipfs.nftstorage.link
-        - address: file_0xf262fd48be0
+          symbol: token_78_
+          visual: https://bafkreihxjc44wsunwpxglfbhhwjew2pjds3gggti4akywlslzmbna52cfe.ipfs.nftstorage.link
+        - address: file_0xf26453c7f7e
           attributes: [ ]
           collection:
-            id: NFLUENTA-ccc051
-            link: https://devnet.inspire.art/collections/NFLUENTA-ccc051
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
           creators:
-            - address: erd18avnl3s6m75jjk99xuh5ymv890p37jd2rlmtxtp7x7wp60gytfxs7gd0kf
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
               share: 100
               verified: 0
           description: "Carte d'acc\xE8s au site NFLUENT"
@@ -633,8 +1281,549 @@ data:
           other: { }
           owner: ''
           royalties: 0
-          symbol: token_25_
-          visual: https://bafkreihpsxszbci27oddh5xqskdur4jphdy3jigoojybkropnsymi3nzn4.ipfs.nftstorage.link
+          symbol: token_79_
+          visual: https://bafkreieyom4j3dfqh76glzfhalcrasccunvqk2aa753poac4mo7k7bsx3u.ipfs.nftstorage.link
+        - address: file_0xf26453ca0c6
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_80_
+          visual: https://bafkreiaotovbwnjjqqsuvmijwjjpfy27zpt35abbcndxuqj4phsnq2klvm.ipfs.nftstorage.link
+        - address: file_0xf26453cbe83
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_81_
+          visual: https://bafkreigestfj7brbxsawrujam3v7yqdrlphdp5ysxjltjbpset23yotd2u.ipfs.nftstorage.link
+        - address: file_0xf26453cd630
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_82_
+          visual: https://bafkreifz4luxr6y2gho6vxnpwkgidqfvolivw7sivrb4emmkmconvtn2om.ipfs.nftstorage.link
+        - address: file_0xf26453cf45f
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_83_
+          visual: https://bafkreigbefs6tpaet6ynoib5nt6zdciiipjemvngfajcrqddqga7hpm5a4.ipfs.nftstorage.link
+        - address: file_0xf26453d09a2
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_84_
+          visual: https://bafkreidsog2gx53qf7ztzbgwdwp5yumx347ojbl6erm6wy6na7kq4wwy6a.ipfs.nftstorage.link
+        - address: file_0xf26453d3479
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_85_
+          visual: https://bafkreibhk3dwsucne6ir2jlghbjq67qlvuak2u6mogktfzcaoeiuxtji64.ipfs.nftstorage.link
+        - address: file_0xf26453d7bae
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_86_
+          visual: https://bafkreibeegkc37cjycwfl4j4zkdqsp3gxsdcm3a2q2gku4s37g3othirdu.ipfs.nftstorage.link
+        - address: file_0xf26453db6d3
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_87_
+          visual: https://bafkreiabrjittm6haydups5l52bxbzube2v3n45a7glwl6bywkmpeq3cxa.ipfs.nftstorage.link
+        - address: file_0xf26453de92e
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_88_
+          visual: https://bafkreie2dtjvrauk4fbyf74ie66hyfudsuswh4jqe2u3pfsje2y53jjqtu.ipfs.nftstorage.link
+        - address: file_0xf26453e03b2
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_89_
+          visual: https://bafkreibzznjsfqrwhw354t7crtwcvga2z7uwp4wkpbhnlykcjzwozoru6u.ipfs.nftstorage.link
+        - address: file_0xf26453e25fc
+          attributes: [ ]
+          collection:
+            canFreeze: true
+            canPause: true
+            canTransferNftCreateRole: true
+            canWipe: true
+            collection: NFLUENTA-4fcc6c
+            id: NFLUENTA-4fcc6c
+            link: https://devnet.inspire.art/collections/NFLUENTA-4fcc6c
+            name: NfluentAccessCard2
+            options:
+              canFreeze: true
+              canPause: true
+              canTranferNftCreateRole: true
+              canWipe: true
+            owner: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+            roles:
+              - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+                canAddQuantity: true
+                canAddUri: false
+                canBurn: true
+                canCreate: true
+                canTransferRole: false
+                canUpdateAttributes: false
+                roles:
+                  - ESDTRoleNFTUpdateAttributes
+                  - ESDTRoleNFTCreate
+                  - ESDTRoleNFTBurn
+            ticker: NFLUENTA-4fcc6c
+            timestamp: 1665704160
+            type: NonFungibleESDT
+          creators:
+            - address: erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt
+              share: 100
+              verified: 0
+          description: "Carte d'acc\xE8s au site NFLUENT"
+          files:
+            - https://nfluent.io
+          marketplace:
+            price: 0
+            quantity: 1
+          name: NFluenT Access Card
+          network: elrond-devnet
+          other: { }
+          owner: ''
+          royalties: 0
+          symbol: token_90_
+          visual: https://bafkreieudbio4lnknilyevrz4earaf4wgvrr3p4ge2db2hsbow35goyy3y.ipfs.nftstorage.link
+
+
 
     - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
       active: False
@@ -750,7 +1939,7 @@ validate:
   filters:
     mint_authority: ''
     collections:                #Liste des collections que le visiteur doit posséder pour avoir l'accès
-      - "NFLUXCAR-6018c8"
+      - "NFLUENTA-4fcc6c"
     symbol: ''                  #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
 
@@ -909,7 +2098,7 @@ security:
 #section détaillant la possibilité de faire des photos
 nftlive:
   collections: #design la collection qui donne le droit d'utiliser NFTLive
-    - "BAYARD-2018c7"
+    - "NFLUENTA-4fcc6c"
 
   configuration: nftlive    #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
   limit: 10                 #nombre de NFT à proposer à l'utilisateurs

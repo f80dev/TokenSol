@@ -12,6 +12,7 @@ class NFT:
   attributes:list
   name:str
   description:str
+  tags:str
   visual:str
   creators:list
   address:str
@@ -28,6 +29,7 @@ class NFT:
                collection: dict={},
                attributes: list=list(),
                description: str="",
+               tags:str="",
                visual: str="",
                creators: list=list(),
                address: str="",
@@ -43,6 +45,7 @@ class NFT:
       self.visual=visual
       self.creators=creators
       self.address=address
+      self.tags=tags
       self.royalties=royalties
       self.marketplace=marketplace
     else:
@@ -62,6 +65,7 @@ class NFT:
       self.network=object["network"]
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
+      self.tags=object["tags"]
 
 
 

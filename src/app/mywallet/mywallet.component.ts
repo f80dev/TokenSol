@@ -218,6 +218,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
       let token:NFT= {
         attributes: [],
+        tags:"",
         collection: collection,
         description: "description",
         files: [],

@@ -36,6 +36,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
 
 
   @Input() showAccesCode=false;         //Code secret d'accès (réservé)
+  @Input() showCancel=false;         //Code secret d'accès (réservé)
   @Input() showWebcam=false;            //utilisation du QRCode dynamique du wallet nFluent
   @Input() showDynamicToken=false;      //Code dynamique utilisable en copié collé (a priori pas d'usage)
   @Input() showGoogle=false;            //Authentification via Google (pour les personnes souhaitant laissé un mail)

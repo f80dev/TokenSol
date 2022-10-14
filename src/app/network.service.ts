@@ -783,4 +783,8 @@ export class NetworkService {
   getyaml(filename:string) {
     return this.httpClient.get<string>(environment.server+"/api/getyaml/"+filename)
   }
+
+  delete_ask(id: string) {
+    return this.httpClient.delete(environment.server+"/api/minerpool/"+id+"/");
+  }
 }

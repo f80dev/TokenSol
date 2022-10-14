@@ -1,4 +1,6 @@
-<mat-sidenav-container class="sidenav-container">
+<app-splash *ngIf="showSplash" appname="Token Forge" description="From design to implementation"></app-splash>
+
+<mat-sidenav-container class="sidenav-container" *ngIf="!showSplash">
   <mat-sidenav #drawer class="sidenav sidemenu" fixedInViewport
                [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
                [mode]="(isHandset$ | async) ? 'over' : 'side'"

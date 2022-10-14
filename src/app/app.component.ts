@@ -22,6 +22,7 @@ import {MatSelectChange} from "@angular/material/select";
 export class AppComponent implements OnInit {
   title = environment.appname;
   version=environment.version;
+  showSplash=true;
 
   isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
     .pipe(
@@ -41,7 +42,9 @@ export class AppComponent implements OnInit {
     public toast:MatSnackBar,
     public operation:OperationService,
     public metaboss:MetabossService
-  ) {}
+  ) {
+
+  }
 
   //test: https://tokenfactory.nfluent.io/contest?ope=
   ngOnInit(): void {
@@ -51,6 +54,7 @@ export class AppComponent implements OnInit {
     setTimeout(()=>{
 
       getParams(this.routes).then((params:any)=>{
+
         if(getBrowserName()=="firefox"){
           showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
         }
@@ -62,6 +66,7 @@ export class AppComponent implements OnInit {
         else {
           this.toolbar_visible="true";
         }
+        setTimeout(()=>{this.showSplash=false;},1000);
 
       }).catch(()=>{
         debugger

@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {Source} from "../../operation";
+import {_prompt} from "../prompt/prompt.component";
+import {environment} from "../../environments/environment";
 
 interface Ask {
   id:string
@@ -39,7 +41,7 @@ export class MinerpoolComponent implements OnInit {
       this.asks=[];
       for(let ask of r){
         ask.sources=ask.sources.filter((x:Source) => x.active)
-        if(this.showAll || ask.dtWord )this.asks.push(ask);
+        if(this.showAll || ask.dtWork )this.asks.push(ask);
       }
     })
   }
@@ -58,8 +60,12 @@ export class MinerpoolComponent implements OnInit {
     })
   }
 
-  reset_pool() {
-
+  reset_pool(all=false) {
+    for(let ask of this.asks){
+      if(all || (ask.dtWork && ask.dtWork>0)){
+        this.network.delete_ask(ask.id).subscribe(()=>{});
+      }
+    }
   }
 
   ConvertDate(dt: number) {
@@ -68,5 +74,9 @@ export class MinerpoolComponent implements OnInit {
 
   retry(ask: Ask) {
     this.network.edit_mintpool(ask.id,{dtWork:"",message:"to_mint"}).subscribe(()=>{this.refresh()});
+  }
+
+  export_pool() {
+    open(environment.server+"/api/minerpool?format=csv","export");
   }
 }

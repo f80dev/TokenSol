@@ -24,7 +24,7 @@
   </span>
 
 
-  <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" *ngIf="showAddress">
+  <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 500px;" *ngIf="showAddress">
     <mat-label>{{intro_message}}</mat-label>
     <input matInput type="text" [(ngModel)]="address" (ngModelChange)="update_address()">
     <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
@@ -54,31 +54,19 @@
 
 
   <!--  Le validator est un qrcode équivalent à wallet connect mais destiné à nfluent wallet-->
-  <br>
-  <table style="width:100%;max-width: 600px;display: inline-block;margin-top: 10px;">
-    <tr>
-      <td style="width: fit-content">
-        <img *ngIf="showNfluentWalletConnect"
-             title="Flasher avec votre wallet nfluent"
-             [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
-             [src]="nfluent_wallet_connect_qrcode"
-             style="cursor: copy;" [style.width]="size">
-      </td>
-      <td *ngIf="showWalletConnect">
-          <img [src]="qrcode"
-               title="Flasher avec un wallet compatible wallet connect"
-               style="max-width: 150px;" [style.width]="size">
-
-      </td>
-    </tr>
-  </table>
-
-  <br>
-  <div style="width:250px;display: inline-block;">
-    <small>{{title}}</small>
+  <div style="width: 100%;text-align: center">
+    <div style="width: fit-content;display: inline-block" *ngIf="showNfluentWalletConnect">
+      <img
+        title="Flasher avec votre wallet nfluent"
+        [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
+        [src]="nfluent_wallet_connect_qrcode"
+        style="cursor: copy;margin: 10px;" [style.width]="size"><br>
+      <small>{{title}}</small>
+    </div>
+    <img [src]="qrcode" *ngIf="showWalletConnect"
+         title="Flasher avec un wallet compatible wallet connect"
+         style="max-width: 150px;margin: 10px;" [style.width]="size">
   </div>
-
-
 
 
 
@@ -97,13 +85,12 @@
         Elrond
       </button>
     </div>
-
   </div>
 
 
-  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;" *ngIf="showAddress || showAccesCode">
+  <div id="cmdPanel" style="margin-left:10%;margin-top:5%;width: 80%;text-align: center;" *ngIf="(showAddress || showAccesCode)">
     <button type="button" mat-raised-button mat-button
-            title="Ne pas se connecter"
+            title="Ne pas se connecter" *ngIf="showCancel"
             (click)="oncancel.emit()">
       Annuler
     </button>

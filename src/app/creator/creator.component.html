@@ -334,6 +334,7 @@
         <th>Description</th>
         <th *ngIf="!network.isElrond()">Symbole</th>
         <th>Propriétés / Attributs</th>
+        <th>Tags</th>
         <th>Liens / fichiers</th>
       </tr>
       <tr>
@@ -358,6 +359,13 @@
           <textarea class="mat-elevation-z2"
                     title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
                     matInput [(ngModel)]="data.properties" rows="5" cols="40"></textarea>
+        </td>
+        <td>
+          <mat-form-field appearance="fill" style="max-width: 200px">
+            <mat-label>Mots clés associés (tags)</mat-label>
+            <input matInput type="text" [(ngModel)]="data.tags" >
+            <mat-hint>Séparé les mots clés par une virgule</mat-hint>
+          </mat-form-field>
         </td>
         <td>
           <textarea class="mat-elevation-z2"

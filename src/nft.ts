@@ -74,6 +74,7 @@ export interface NFT {
     value: string
   }[]
   name:string
+  tags:string | ""
   description:string
   visual:string
   creators: any[]
