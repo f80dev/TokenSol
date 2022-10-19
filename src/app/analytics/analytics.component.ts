@@ -29,6 +29,7 @@ export class AnalyticsComponent implements OnInit {
       if(params.hasOwnProperty("collection"))
         this.from_collection(params.collection);
       else{
+        if(this.operation.sel_ope)this.from_operation(this.operation.sel_ope.id);
         this.operation.sel_ope_change.subscribe((new_sel:Operation)=>{
           this.from_operation(new_sel.id);
         })

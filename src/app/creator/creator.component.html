@@ -4,7 +4,64 @@
   </div>
   <app-hourglass [message]="message"></app-hourglass>
 
-<!--  Travail sur les textes -->
+  <mat-expansion-panel [expanded]="!sel_config">
+    <mat-expansion-panel-header>Configurations</mat-expansion-panel-header>
+    <table>
+      <tr>
+        <th>Charger une configuration</th>
+        <th *ngIf="sel_config">Enregistrer une configuration</th>
+      </tr>
+      <tr>
+        <td>
+          <app-upload-file (uploaded)="on_upload_config($event)"
+                           format="text"
+                           title="Chargée une configuration depuis votre ordinateur"
+                           extensions=".yaml">
+            Importer
+          </app-upload-file>
+
+          <button type="button" mat-raised-button mat-button (click)="new_config()">
+            Nouvelle
+          </button>
+
+          <br>
+
+          <mat-form-field style="fontsize:small">
+            <mat-label>Depuis le serveur</mat-label>
+            <mat-select [(ngModel)]="sel_config">
+              <mat-option *ngFor="let config of configs" [value]="config">
+                {{config}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <button type="button" mat-raised-button mat-button (click)="load_config(sel_config)">
+            Charger
+          </button>
+
+          <button type="button" mat-raised-button mat-button (click)="del_config(sel_config)">
+            Supprimer
+          </button>
+
+
+        </td>
+
+        <td *ngIf="sel_config">
+          <button type="button" mat-raised-button mat-button
+                  (click)="save_config(true)">
+            Enregistrer
+          </button>
+        </td>
+        <td>
+          <mat-checkbox [(ngModel)]="config_with_image">Inclure les images</mat-checkbox>
+        </td>
+      </tr>
+    </table>
+
+  </mat-expansion-panel>
+
+
+  <!--  Travail sur les textes -->
   <mat-expansion-panel [expanded]="show_addtext!=null">
     <mat-expansion-panel-header>Ajout de texte</mat-expansion-panel-header>
     <table style="width: 100%;vertical-align: middle;">
@@ -73,7 +130,7 @@
 
 
 
-  <mat-expansion-panel [expanded]="show_collection">
+  <mat-expansion-panel [expanded]="sel_config">
     <mat-expansion-panel-header>Visuels / Images</mat-expansion-panel-header>
     <button type="button" mat-raised-button mat-button
             (click)="generate_collection()">
@@ -96,7 +153,7 @@
 
     <mat-form-field style="fontsize:small">
       <mat-label>Plateforme de stockage</mat-label>
-      <mat-select [(value)]="sel_platform">
+      <mat-select [(ngModel)]="sel_platform">
         <mat-option *ngFor="let platform of platforms" [value]="platform.value">
           {{platform.label}}
         </mat-option>
@@ -328,6 +385,17 @@
   <mat-expansion-panel>
     <mat-expansion-panel-header>Datas</mat-expansion-panel-header>
     <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
+  <br>
+    <app-upload-file (uploaded)="on_upload_attributs($event)"
+                     title="Associer aux visuels un fichier de descriptions / attributs"
+                     extensions=".csv,.txt">
+      Associer des propriétés
+    </app-upload-file>
+
+    <button type="button" mat-raised-button mat-button (click)="clear_data()">
+      Effacer tout
+    </button>
+
     <table>
       <tr>
         <th>Titre</th>
@@ -399,60 +467,6 @@
 
     </mat-expansion-panel>
 
-  <mat-expansion-panel>
-    <mat-expansion-panel-header>Configurations</mat-expansion-panel-header>
-    <table>
-      <tr>
-        <th>Charger une configuration</th>
-        <th>Enregistrer une configuration</th>
-      </tr>
-      <tr>
-        <td>
-          <app-upload-file (uploaded)="on_upload_config($event)"
-                           format="text"
-                           title="Chargée une configuration depuis votre ordinateur"
-                           extensions=".yaml">
-            Depuis votre ordinateur
-          </app-upload-file>
-          <br>
-
-          <mat-form-field style="fontsize:small">
-            <mat-label>Depuis le serveur</mat-label>
-            <mat-select [(value)]="sel_config">
-              <mat-option *ngFor="let config of configs" [value]="config">
-                {{config}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <button type="button" mat-raised-button mat-button (click)="load_config(sel_config)">
-            Charger
-          </button>
-
-          <button type="button" mat-raised-button mat-button (click)="del_config(sel_config)">
-           Supprimer
-          </button>
-
-
-        </td>
-
-        <td>
-          <mat-form-field appearance="fill" style="max-width: 200px">
-            <mat-label>Nom de la configuration</mat-label>
-            <input matInput type="text" [(ngModel)]="config_name" >
-          </mat-form-field>
-          <button type="button" mat-raised-button mat-button
-                  (click)="save_config()">
-            Enregistrer
-          </button>
-        </td>
-        <td>
-          <mat-checkbox [(ngModel)]="config_with_image">Inclure les images</mat-checkbox>
-        </td>
-      </tr>
-    </table>
-
-  </mat-expansion-panel>
 
   <mat-expansion-panel>
     <mat-expansion-panel-header>Options avancées</mat-expansion-panel-header>

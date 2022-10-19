@@ -9,17 +9,27 @@
 
   <mat-form-field appearance="fill" style="width:300px;font-size: large;" *ngIf="showAccesCode">
     <mat-label>Votre code d'accès</mat-label>
-    <input matInput type="number" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
+    <input matInput type="text" maxlength="8" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
+    <mat-hint>Ce code se trouve dans le mail reçu à la création de votre wallet</mat-hint>
   </mat-form-field>
   <br>
 
-  <button type="button"  mat-raised-button mat-button (click)="connect('google')"
-          title="Authentification simplifiée pour les utisateurs de gmail"
-          *ngIf="showGoogle">
-    Via Google
-  </button>
 
-  <span *ngIf="showGoogle && showAddress">
+  <div style="display: inline-block;">
+    <asl-google-signin-button *ngIf="showGoogle" type="standard" size="medium" style="display: inline-block;"
+                              title="Authentification simplifiée pour les utisateurs de gmail">
+    </asl-google-signin-button>
+  </div>
+
+
+
+<!--  <button type="button"  mat-raised-button mat-button (click)="connect('google')"-->
+<!--          title="Authentification simplifiée pour les utisateurs de gmail"-->
+<!--          *ngIf="showGoogle">-->
+<!--    Via Google-->
+<!--  </button>-->
+
+  <span *ngIf="showGoogle && showAddress" style="margin: 10px;">
     ou
   </span>
 
@@ -30,6 +40,7 @@
     <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
     <mat-hint>{{explain_message}}</mat-hint>
   </mat-form-field>
+
 
 
   <br>

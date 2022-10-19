@@ -4,7 +4,7 @@ import {_prompt, PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
-import {$$, setParams, showError, showMessage} from "../../tools";
+import {$$, getParams, normalize, setParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PLATFORMS, PRICE_PER_TOKEN, TOKEN_FACTORY_WALLET} from "../../definitions";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -52,7 +52,7 @@ export class CreatorComponent implements OnInit {
   fontfiles: any;
   position_text: { x: any; y: any }={x:10,y:10};
   filename_format: string ="image";
-  show_collection: boolean=false;
+
   message="";
   max_items: number=8;
   config_name: string="maconfig";
@@ -74,16 +74,7 @@ export class CreatorComponent implements OnInit {
   }
 
 
-
-
   refresh(){
-    this.network.list_config().subscribe((r:any)=>{
-      this.configs=r.files;
-      if(!this.sel_config && r.files.length>0){
-        this.sel_config=this.routes.snapshot.queryParamMap.get("config") || this.configs[0];
-        this.load_config(this.sel_config);
-      }
-    })
     this.network.list_installed_fonts().subscribe((r:any)=>{
       this.fontfiles=r.fonts;
       this.font=r.fonts[0];
@@ -92,17 +83,39 @@ export class CreatorComponent implements OnInit {
 
 
 
+  load_configs(){
+    return new Promise((resolve, reject) => {
+      this.network.list_config().subscribe((r:any)=> {
+        this.configs = r.files;
+        resolve(r.files);
+      });
+    });
+  }
+
+
+
   ngOnInit(): void {
       if(environment.appli.indexOf("127.0.0.1")>-1 || environment.appli.indexOf("localhost")>-1){
         this.sel_platform="nfluent"
       }
+
       this.layers=[];
       this.network.get_palettes().subscribe((p)=>{
         this.palette_names=Object.keys(p);
         this.palette=p;
         this.sel_palette=this.palette_names[0];
       })
-      this.refresh();
+    getParams(this.routes).then((params:any)=>{
+      this.load_configs().then(()=>{
+        if(this.configs.length>0){
+          this.sel_config=params["config"];
+          if(this.sel_config)this.load_config(this.sel_config);
+        }
+        this.refresh();
+      })
+
+    })
+
   }
 
 
@@ -140,13 +153,13 @@ export class CreatorComponent implements OnInit {
       this.network.generate_svg(evt.file,this.text_to_add,layer.name).subscribe((r:any)=>{
         layer.elements=[];
         for(let img of r)
-          layer.elements.push({image:img});
+          layer.elements.push({"image":img,"name":normalize(evt.filename)});
       })
     }else{
       this.network.wait("Chargement des visuels");
       this.network.upload(body,this.sel_platform).subscribe((r:any)=>{
         this.network.wait();
-        layer.elements.push({image:r.url});
+        layer.elements.push({image:r.url,name:normalize(evt.filename)});
       },(err:any)=>{
         showError(this,err);
       })
@@ -210,7 +223,7 @@ export class CreatorComponent implements OnInit {
 
 
     let i=0;
-    this.show_collection=false;
+
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
 
@@ -412,10 +425,12 @@ export class CreatorComponent implements OnInit {
 
   load_config(name="config") {
     if(name){
-      this.network.wait("Chargement en cours ...");
+      this.network.wait("Chargement de "+name+" en cours ...");
       this.config_name=name;
+      this.sel_config=name+".yaml";
       this._location.replaceState("./creator?config="+name);
       this.network.load_config(name).subscribe((r:any)=>{
+        this.sel_platform=r.platform;
         if(r.layers){
           for(let l of r.layers){
             for(let e of l.elements){
@@ -443,8 +458,6 @@ export class CreatorComponent implements OnInit {
           this.position_text.x=r.x || 10;
           this.text_to_add=r.text_to_add || "";
           this.position_text.y=r.y || 10;
-          this.sel_platform=r.platform;
-          this.show_collection=true;
           this.fontsize=r.fontstyle.size;
           this.font=this.find_font(r.fontstyle.name);
           this.color=r.fontstyle.color
@@ -465,7 +478,7 @@ export class CreatorComponent implements OnInit {
   data: any={};
 
 
-  save_config() : Promise<string> {
+  save_config(with_file=false) : Promise<string> {
     return new Promise((resolve,reject) => {
       let body = {
         layers: this.layers,
@@ -502,7 +515,7 @@ export class CreatorComponent implements OnInit {
         setTimeout(() => {
           this.refresh()
         }, 1000);
-        open(environment.server + "/api/configs/" + this.config_name + "/?format=file", "config");
+        if(with_file)open(environment.server + "/api/configs/" + this.config_name + "/?format=file", "config");
         resolve("ok")
       });
     });
@@ -663,9 +676,11 @@ export class CreatorComponent implements OnInit {
     })
   }
 
-  del_config(sel_config: any) {
+  async del_config(sel_config: any) {
     this.network.del_config(sel_config).subscribe(()=>{
       showMessage(this,"Configuration supprimé");
+      this.load_configs();
+      this._location.replaceState("/creator");
       this.refresh();
     })
   }
@@ -719,5 +734,33 @@ export class CreatorComponent implements OnInit {
         layer.scale.y = Number(scale.split(",")[1]);
       });
     })
+  }
+
+  on_upload_attributs($event: any) {
+    this.fill_layer(0,200,200,0,()=>{
+      this.network.upload_attributes(this.config_name,$event.file.split("base64,")[1]).subscribe((resp:any)=>{
+        showMessage(this,"Fichier d'attributs associés")
+      })
+    });
+  }
+
+  clear_data() {
+    this.data = {
+      title: "",
+      symbol: "",
+      description: "",
+      collection: "",
+      properties: "",
+      files: ""
+    }
+  }
+
+  async new_config() {
+    let name=_prompt(this,"Nom de la configuration","maconfig");
+    this.config_name=await name;
+
+    await this.save_config(false);
+    await this.load_configs();
+    await this.load_config(this.config_name);
   }
 }

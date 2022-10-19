@@ -3,8 +3,7 @@
 import {WalletProvider} from "@elrondnetwork/erdjs-web-wallet-provider";
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {UserService} from "../user.service";
-import {$$, isLocal, showError, showMessage} from "../../tools";
+import {$$, isLocal, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {WalletConnectProvider} from "@elrondnetwork/erdjs-wallet-connect-provider/out";
 import {environment} from "../../environments/environment";
@@ -28,6 +27,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
   @Input() checknft:string[]=[]; //Vérifie si l'utilisateur dispose d'un ou plusieurs NFT
   @Input() showCollections:boolean=true; //Vérifie si l'utilisateur dispose d'un ou plusieurs NFT
   @Input() explain_message:string="Adresse de votre wallet ou votre email si vous n'en avez pas encore";
+  @Input() autoconnect_for_localhost=false;   //Connection automatique sur le localhost
 
   @Output('authent') onauthent: EventEmitter<{strong:boolean,nftchecked:boolean,address:string}>=new EventEmitter();
   @Output('invalid') oninvalid: EventEmitter<any>=new EventEmitter();
@@ -43,7 +43,9 @@ export class AuthentComponent implements OnInit,OnDestroy {
   @Input() showWalletConnect=false;
   @Input() showAddress=false;
   @Input() showNetwork=false;
+  @Input() showEmail=false;             //Code d'accès envoyé par email
   @Input() showNfluentWalletConnect=false;
+  @Input() address: string="";
 
   strong=false;                     //Niveau d'authentification
   @Input() size="350px";
@@ -51,32 +53,32 @@ export class AuthentComponent implements OnInit,OnDestroy {
 
   qrcode: string="";
   access_code="";
-  address: string="";
+
   collections: Collection[]=[];
   nfluent_wallet_connect_qrcode="";
   autorized_users:string[]=[];        //Liste de l'ensemble des utilisateurs autorisé
   validator: string="";
+  provider: WalletConnectProvider;
 
 
   constructor(
     public api:NetworkService,
-    public user:UserService,
     public _location:Location,
     public routes:ActivatedRoute,
     public socket:Socket,
     public socialAuthService: SocialAuthService,
     public toast:MatSnackBar
   ) {
-    this.user.provider=new WalletConnectProvider(
+    this.provider=new WalletConnectProvider(
       "https://bridge.walletconnect.org",
       {
         onClientLogin: ()=> {
-          if(this.user.provider){
-            this.user.provider.getAddress().then((addr:string)=>{
+          if(this.provider){
+            this.provider.getAddress().then((addr:string)=>{
               this.address=addr;
               this.strong=true;
-              if(this.user.provider)
-                this.user.provider.getSignature().then((sign:string)=>{
+              if(this.provider)
+                this.provider.getSignature().then((sign:string)=>{
                   $$("signature="+sign);
                 })
             })
@@ -84,7 +86,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
         },
         onClientLogout: ()=> {
           $$("Déconnection");
-          this.user.strong=false;
+          this.strong=false;
           this.onlogout.emit();
         }
       }
@@ -116,39 +118,49 @@ export class AuthentComponent implements OnInit,OnDestroy {
   }
 
   ngOnInit(): void {
-
     window.onbeforeunload = () => this.ngOnDestroy();
 
     if(this.title=="" && this.showWalletConnect)this.title="Pointer ce QRcode avec un wallet compatible 'Wallet Connect'";
     if(this.title=="" && this.showNfluentWalletConnect)this.title="Pointer ce QRcode avec votre 'NFluent Wallet'";
 
-    if (this.user.provider) {
+    if (this.provider) {
       if (this.showCollections && this.checknft && this.checknft.length > 0) {
         this.api.get_collections(this.checknft.join(","),this.network,true).subscribe((cols: Collection[]) => {
           this.collections = cols;
         })
       }
 
+
       if(this.showNfluentWalletConnect){
         this.subscribe_as_validator();
       }
 
-      this.user.provider.init().then((b: boolean) => {
-        if (this.user.provider) {
-          this.user.provider.login().then((s: string) => {
+
+      this.provider.init().then((b: boolean) => {
+        if (this.provider) {
+          this.provider.login().then((s: string) => {
             this.qrcode = environment.server + "/api/qrcode/" + encodeURIComponent(s);
           });
         }
       });
 
 
-      if (isLocal(environment.appli) && this.showAccesCode) {
-        this.user.email = "hhoareau@gmail.com";
-        this.user.addr = "herve";
-        this.user.strong = true;
-        this.onauthent.emit({address: this.user.addr,nftchecked:false,strong:true});
+      if (isLocal(environment.appli) && this.showAccesCode && this.autoconnect_for_localhost) {
+        this.onauthent.emit({address: "erd16ck62egnvmushkfkut3yltux30cvp5aluy69u8p5hezkx89a2enqf8plt8",nftchecked:false,strong:true});
       }
     }
+
+    if(this.showGoogle){
+      this.socialAuthService.authState.subscribe((socialUser) => {
+        this.strong=true;
+        this.onauthent.emit({
+          address: socialUser.email,
+          nftchecked:false,strong:true});
+      },(err)=>{
+        $$("Erreur de connexion",err);
+      });
+    }
+
   }
 
 
@@ -182,7 +194,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
 
 
   validate() {
-    if(this.user && this.address && this.address.indexOf("@")==-1 && !this.api.isElrond(this.address)){
+    if(this.address && this.address.indexOf("@")==-1 && !this.api.isElrond(this.address)){
       showMessage(this,"Pour l'instant, Le service n'est compatible qu'avec les adresses elrond");
     } else {
       if(this.checknft.length>0){
@@ -209,7 +221,6 @@ export class AuthentComponent implements OnInit,OnDestroy {
     if(network=="elrond"){
       // @ts-ignore
       open(this.network.url_wallet(),"walletElrond")
-
     }
 
     if(network=="solana"){
@@ -217,7 +228,6 @@ export class AuthentComponent implements OnInit,OnDestroy {
       if(window.solflare || window.phantom){
         // this.solWalletS.connect().then( (wallet:Wallet) => {
         //   this.user.init(wallet).then((profil:any)=>{
-        //     this.back();
         //     // if(requis.length>0){
         //     //   if(profil.perms.indexOf("*")==-1 && profil.perms.indexOf(requis)==-1)
         //     //     this.router.navigate(["faqs"],{queryParams:{"open":"not_authorized"}});
@@ -231,30 +241,34 @@ export class AuthentComponent implements OnInit,OnDestroy {
       }
     }
 
-    if(network=="google"){
-      let servicePlatform = GoogleLoginProvider.PROVIDER_ID;
-      this.socialAuthService.signIn(servicePlatform).then((socialUser:any) => {
-        this.user.email=socialUser.email;
-        this.user.name=socialUser.firstName + " "+ socialUser.lastName;
-        this.strong=true;
-      },(err:any)=>{
-        showMessage(this,"Problème d'authentification, veuillez saisir manuellement votre email");
-      })
-    }
+    // if(network=="google"){
+    //   let servicePlatform = GoogleLoginProvider.PROVIDER_ID;
+    //   this.socialAuthService.signIn(servicePlatform).then((socialUser:any) => {
+    //     this.user.email=socialUser.email;
+    //     this.user.name=socialUser.firstName + " "+ socialUser.lastName;
+    //     this.strong=true;
+    //   },(err:any)=>{
+    //     $$("Erreur de connexion via google ",err);
+    //     showMessage(this,"Problème d'authentification, veuillez saisir manuellement votre email");
+    //   })
+    // }
 
     if(network=="code"){
       if(this.access_code=="4271"){
-        this.user.email="paul.dudule@gmail.com";
-        this.user.name="paul";
+        this.address="erd16ck62egnvmushkfkut3yltux30cvp5aluy69u8p5hezkx89a2enqf8plt8";
         this.strong_connect();
-        this.back();
+      } else {
+        if(this.access_code.length==8){
+          this.api.access_code_checking(this.access_code,this.address).subscribe(()=>{
+            this.strong_connect();
+          },(err:any)=>{
+            showMessage(this,'Code incorrect');
+          })
+        }
       }
     }
   }
 
-  back(){
-    this._location.back();
-  }
 
   on_flash($event: {data:string}) {
     $$("Lecture de l'adresse "+$event.data);
@@ -269,7 +283,9 @@ export class AuthentComponent implements OnInit,OnDestroy {
   }
 
   private strong_connect() {
+    this.strong=true;
     showMessage(this,"Authentification validée.")
+    this.validate()
   }
 
   update_dynamic_token() {

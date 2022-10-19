@@ -16,6 +16,8 @@ import {UserService} from "../user.service";
 export class SelectkeyComponent implements OnChanges {
   selected: CryptoKey | undefined;
   @Input("fontsize") fontsize = "x-small";
+  @Input("selected_addr") selected_addr="";
+  @Input() network="elrond-mainnet";
   @Input("keys") keys: CryptoKey[] = [];
   @Output('refresh') onrefresh: EventEmitter<any> = new EventEmitter();
 
@@ -25,11 +27,9 @@ export class SelectkeyComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    let fix_key=localStorage.getItem("key") || "paul";
-    // @ts-ignore
     try {
       for(let k of this.keys){
-        if(k.name==fix_key){
+        if(k.pubkey==this.selected_addr){
           this.user.key=k;
           this.selected=k;
         }
@@ -59,7 +59,7 @@ export class SelectkeyComponent implements OnChanges {
   }
 
   open_wallet() {
-    let url=environment.wallet+"/wallet/?param="+setParams({addr:this.selected?.pubkey,toolbar:true});
+    let url=environment.wallet+"/wallet/?param="+setParams({addr:this.selected?.pubkey,toolbar:true,network:this.network});
     open(url,"wallet");
   }
 }

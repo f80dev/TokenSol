@@ -55,7 +55,8 @@ export class StoreComponent implements OnInit {
       token:nft,
       ope:this.operation.id,
       selfWalletConnexion:true,
-      mining:this.operation.store.miner
+      mining:this.operation.store.miner,
+      section:"store"
     })
     this.router.navigate(["dealermachine"],{queryParams:{param:param}});
   }

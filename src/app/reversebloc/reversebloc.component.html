@@ -1,4 +1,4 @@
-<div class="surbloc" [style.width]="width" [style.height]="height">
+<div class="surbloc" [style.width]="width" [style.height]="height" (mouseenter)="on_reverse(true)" (mouseleave)="on_reverse(false)">
   <div class="flip-card-inner">
     <div class="flip-card-front">
       <img [src]="image" style="width:100%;object-fit: cover;">

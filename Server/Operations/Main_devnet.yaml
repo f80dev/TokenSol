@@ -26,7 +26,7 @@ lazy_mining:
 
 #section détaillant l'événement associé à cette opération
 event:
-  title: Réunion bayard jeunnesse
+  title: Ventes aux enchères
   place: 12 rue Martel, 75010 Paris   #Lieu de l'événement
   dates:                              #Liste des périodes d'ouvertures
     - start: 04/02/1971 20:00
@@ -36,10 +36,10 @@ event:
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-#  - id: "NFLUENT-518891"          #Id de la collection. A priori cet id doit se trouver dans les sources
-#    name: "NFluenT"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
-#    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
-#    description: Une collection de NFTs by Nfluent
+  - id: "ENCHERES-4c7520"          #Id de la collection. A priori cet id doit se trouver dans les sources
+    name: "Ventes aux enchere"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
+    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
+    description: Une collection de NFTs
 
 
 
@@ -76,13 +76,13 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 data:
   sources:
     - type: network
-      active: False
+      active: True
       connexion: elrond-devnet
       filter:
         limit: 200
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
-        - "NFLUENTA-4fcc6c"
+        - "ENCHERES-4c7520"
 
 
     - type: database
@@ -104,7 +104,7 @@ data:
 
 
     - type: file            #permet d'aller chercher les NFT dans un fichier
-      active: true
+      active: False
       connexion: ""         #designe la localisation du fichier contenant les NFT
       nfts:                 #Cette section contient l'ensemble des NFTs a miner
         - address: file_0xf26453a7798
@@ -1824,7 +1824,6 @@ data:
           visual: https://bafkreieudbio4lnknilyevrz4earaf4wgvrr3p4ge2db2hsbow35goyy3y.ipfs.nftstorage.link
 
 
-
     - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
       active: False
       connexion: "Exemple.yaml"
@@ -1956,9 +1955,15 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
   visible: True
   application: '$nfluent_appli$/store'    #Désigne l'application en charge de la vente
 
+  authentification:
+    google: True
+    address: True
+    email: True
+    nfluent_wallet_connect: True
+
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "NFLUENTA-ccc051"
+    - "ENCHERES-4c7520"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -1968,8 +1973,12 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
   support:      #Section regroupant les différents messages d'aides aux utilisateur
     buy_message: "Achat en cours"
 
+# section regroupant l'ensemble des propriétés liés à une boutique prestashop
+# Sur prestashop il faut installer le module web service, avec les permissions sur
+# categories, contacts, customers, images, order_details, order_states, images, order_details, order_histories, order_states,
+# orders, product_feature_values,product_feature,product_option_values, product_options, products, stock_available
 
-#  prestashop:                                     #section regroupant l'ensemble des propriétés liés à une boutique prestashop
+#  prestashop:
 #    server: "http://127.0.0.1:8080"              #adresse du serveur Prestashop
 #    #server: "http://161.97.75.165:8080"              #adresse du serveur Prestashop
 #    address: "$server$/fr/"                         #page de la boutique ($server$ reprend le contenu de la propriété server (ci-dessus) de la section
@@ -1977,12 +1986,18 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 #    #api_key: "IN87FZBSUZCD3QPVXU2WSDI2MI9T8JVL"       #clé d'usage des API : https://devdocs.prestashop.com/1.7/webservice/getting-started/
 #    api_key: "H8T5U4U45T7XBM5L52TG4LKHXM7X6C4H"
 
-
   prestashop:
-    server: "https://shop.nfluent.io/"
-    address: "$server$/fr/"
-    admin: "$server$/admin4280/"
-    api_key: "DLHZSTR7IB5X68BW4HZGDCIWBIYC9F32"
+    server: http://192.168.1.46/dev.domainhere.info
+    address: $server$
+    admin: $server$/admin0350wjass5jk2cfodh7
+    api_key: SVVPEQP65QDYAUQX7S3HWFTPX1TIEDJ7
+
+
+#  prestashop:
+#    server: "https://shop.nfluent.io/"
+#    address: "$server$/fr/"
+#    admin: "$server$/admin4280/"
+#    api_key: "DLHZSTR7IB5X68BW4HZGDCIWBIYC9F32"
 
     root_category:                                    #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
       name: NFTs                                      #Catégorie utilisé pour l'ensemble des NFT, la collection étant utilisé en sous catégorie
@@ -1999,6 +2014,15 @@ dispenser:
   visible: True
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
   collections:                                      #Liste des collections concernée par la distribution (si vide toutes les collections disponibles depuis la source sont prises en compte)
+  authentification:                                 #il s'agit d'authentifier le destinataire (et non une auto-authentification)
+    address: True
+    webcam: True
+    email: True
+
+
+airdrop:
+  visible: True
+  collections: []
 
 
 #Distribution de NFT au sein d'une ou plusieurs collecion à l'aveugle
@@ -2016,8 +2040,7 @@ candymachine:
     on_device: False
     google: True
 
-  collections:                  #Liste les collections disponibles via la candy machine
-#    - "NFLUENTA-ccc051"         #le champs collections doit contenir au moins une collection
+  collections: []                 #Liste les collections disponibles via la candy machine
 
   messages:
     title: "Flasher ce code pour obtenir un NFT de la collection NFLuenT"
@@ -2031,12 +2054,14 @@ candymachine:
 
 
 
-
 #Fonctionnement de la section lottery ________________________________________________________________________________________________________________________________
 #Section destinée la distribution de NFT gratuitement
 lottery:
   visible: True     #Rends la section visible ou pas en production
   miner: paul
+
+  messages:
+    title: "Flasher ce QRCode pour récupérer gratuitement le NFT"
 
   #Ensemble d'attribues pour la présentation de l'écran
   screen:
@@ -2067,10 +2092,9 @@ lottery:
     validator: True         #Propose un qrcode qui doit être visé par le wallet nfluent pour authentification
 
 
-
   application: "$nfluent_appli$/contest"
 
-  collections: #Définie les collections impliquées dans la distribution (si vide tous les tokens disponibles sont intégrés)
+  collections: [] #Définie les collections impliquées dans la distribution (si vide tous les tokens disponibles sont intégrés)
 
   limits:     #définis les quotas de minages toutes collections confondus
     by_day: 50

@@ -1,7 +1,7 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 
-export function _prompt(vm:any,title:string,_default="",description="",_type="text",lbl_ok="ok",lbl_cancel="Annuler",onlyConfirm=false,options:any=null):Promise<string> {
+export function _prompt(vm:any,title:string,_default:string="",description="",_type="text",lbl_ok="ok",lbl_cancel="Annuler",onlyConfirm=false,options:any=null):Promise<string> {
   return new Promise((resolve, reject) => {
     vm.dialog.open(PromptComponent,{
       width: 'auto',data:

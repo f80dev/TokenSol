@@ -3,10 +3,10 @@ import io
 import os
 import re
 from io import BytesIO
+from json import loads, dump, dumps
 from os.path import exists
 from random import random,seed
 
-import cairo
 import ffmpeg
 import imageio
 import numpy
@@ -18,11 +18,9 @@ from PIL.ImageDraw import Draw
 from PIL.ImageFont import truetype
 from PIL.ImageOps import pad
 from reportlab.graphics import renderPM
-
-from reportlab.pdfbase.ttfonts import TTFont
 from svglib.svglib import svg2rlg
 
-from Tools import now, log, get_fonts
+from Tools import now, log, get_fonts,normalize
 
 
 
@@ -67,7 +65,9 @@ def convert_to_gif(content:str,storage_platform=None,filename=None):
 
 
 class Element():
-  name:str
+  name:str=""
+  attributes:dict=dict()
+
   def __init__(self,name="",ext="png"):
     self.name=name if len(name)>0 else now("hex")+str(random()*1000000)
     self.ext=ext
@@ -102,6 +102,7 @@ class Sticker(Element):
                ext="WEBP",data=""):
     super().__init__(name,ext)
     self.data=data
+    self.attributes=dict()
 
     if not dimension is None:     #accepte la syntaxe 800x800
       if type(dimension)==str:
@@ -371,6 +372,14 @@ class Sticker(Element):
 
 
   def fusion(self,to_concat:Element,factor:float,replacement:dict):
+
+      log("Fusion des propriétés")
+      for k in to_concat.attributes.keys():
+        if k!="file":
+          if not k in self.attributes:self.attributes[k]=[]
+          if not to_concat.attributes[k] in self.attributes[k]:
+            self.attributes[k].append(to_concat.attributes[k])
+
       #log("Fusion de "+self.name+" avec "+to_concat.name)
       if to_concat.image is None and not to_concat.text is None:
         if "<svg" in to_concat.text["text"]:
@@ -412,6 +421,20 @@ class Sticker(Element):
     if len(self.data)>0:
       for i in range(10): #Jusqu'a 10 remplacements
         _data_to_add=_data_to_add.replace("_idx_",str(index))
+
+      _data=loads(_data_to_add)
+      if not "title" in _data:_data["title"]=""
+      if not "description" in _data:_data["description"]=""
+
+      #Ajout des attributs collecté depuis les elements
+      if "description" in self.attributes: _data["description"]=_data["description"]+" ".join(self.attributes["description"])
+      if "name" in self.attributes: _data["title"]=_data["title"]+" ".join(self.attributes["name"])
+      if "links" in self.attributes: _data["files"]=_data["files"]+"\n".join(self.attributes["links"])
+      for k in self.attributes.keys():
+        if k!="name" and k!="description" and k!="links":
+          _data["properties"]=_data["properties"]+"\n"+k+"="+" ".join(self.attributes[k])
+      _data_to_add=dumps(_data)
+
 
       xmp="<?xpacket begin='' id=''?><x:xmpmeta xmlns:x='adobe:ns:meta/'><rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'><rdf:Description rdf:mint='"\
           +str(base64.b64encode(bytes(_data_to_add,"utf8")),"utf8")\
@@ -534,6 +557,11 @@ class Layer:
     if element:self.add(element)
 
 
+  def find_element(self,name):
+    for e in self.elements:
+      if normalize(e.name).startswith(normalize(name)): return e
+    return None
+
   def order(self) -> int:
     pass
 
@@ -546,7 +574,7 @@ class Layer:
 
   def add(self,elt:Element):
     if elt is None: return self
-    elt.name=self.name+"-"+str(len(self.elements))
+    if elt.name=="": elt.name=self.name+"-"+str(len(self.elements))
     self.elements.append(elt)
     return self
 
@@ -616,13 +644,10 @@ class ArtEngine:
   Moteur de génération
   """
   layers=[]
-  #filenames=[]
+  attributes=[]
 
   def __init__(self,name="collage"):
     self.name=name
-
-
-
 
   def register_fonts(self,filter=""):
     log("Enregistrement des polices")
@@ -687,6 +712,10 @@ class ArtEngine:
 
     histo=[]
     index=0
+
+    log("Association des attributes")
+    self.associate_attributes()
+
     log("Lancement de la génération de "+str(limit)+" images")
     while index<limit:
       collage=Sticker("collage",dimension=(width,height),ext=ext,data=data)
@@ -749,6 +778,15 @@ class ArtEngine:
 
 
   def delete(self, name):
-    for l in self.layers:
-      if l.name==name:
-        self.layers.remove(l)
+    filter(lambda l:l.name!=name,self.layers)
+
+
+  def associate_attributes(self):
+    for layer in self.layers:
+      for attribute in self.attributes:
+        e=layer.find_element(attribute["file"])
+        if e:
+          pos=layer.elements.index(e)
+          layer.elements[pos].attributes=attribute
+
+    return True

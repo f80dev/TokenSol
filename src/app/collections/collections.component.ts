@@ -83,8 +83,7 @@ export class CollectionsComponent implements OnInit {
 
 
   open_collection(col: Collection) {
-    if(this.network.isElrond())
-      open("https://"+(this.network.isMain() ? "" : "devnet.")+"inspire.art/collections/"+col.id);
+    this.network.open_gallery(col.id);
   }
 
 
@@ -110,7 +109,8 @@ export class CollectionsComponent implements OnInit {
 
 
   open_inspire() {
-    open("https://"+(this.network.isMain() ? "" : "devnet.")+"inspire.art/"+this.user.addr+"/collections");
+    this.network.open_gallery(this.user.addr);
+
   }
 
 

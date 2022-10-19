@@ -1,7 +1,9 @@
-<div *ngIf="!content.startsWith('erd') && !content.startsWith('http') && !content.startsWith('mailto')">{{content}}</div>
-<a *ngIf="content.startsWith('http') || content.startsWith('mailto')" target="_blank" [href]="content" [title]="content">
-  <ng-content></ng-content>
-</a>
-<a *ngIf="content.startsWith('erd')" [href]="get_explorer(content)" [title]="content">
-  {{content | alias | slice:0:20}}
-</a>
+<div *ngIf="content">
+  <div *ngIf="!content.startsWith('erd') && !content.startsWith('http') && !content.startsWith('mailto')">{{content}}</div>
+  <a *ngIf="content.startsWith('http') || content.startsWith('mailto')" target="_blank" [href]="content" [title]="content">
+    <ng-content></ng-content>
+  </a>
+  <a *ngIf="content.startsWith('erd')" [href]="get_explorer(content)" [title]="content">
+    {{content | alias | slice:0:20}}
+  </a>
+</div>

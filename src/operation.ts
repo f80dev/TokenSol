@@ -20,7 +20,7 @@ export interface Collection {
   }
 }
 
-interface Connexion {
+export interface Connexion {
   on_device: boolean | false
   address: boolean | false
   wallet_connect: boolean | false
@@ -68,7 +68,7 @@ export interface Operation {
     metadata_storage: string
     content_storage: string
     miner: string
-  }
+  } | null
 
   candymachine : {
     visible: boolean
@@ -238,11 +238,13 @@ export interface Operation {
   dispenser: {
     visible: boolean
     application: string
+    collections: string[]
+    authentification: Connexion
+  } | null
 
-    collections:       {
-      name: string
-      limit: number
-    }[]
+  airdrop: {
+    visible: boolean
+    collections: string[]
   } | null
 
   lottery: {
@@ -263,6 +265,10 @@ export interface Operation {
     }
     authentification: Connexion
 
+    messages:{
+      title:string | "Flasher ce QRCode pour recevoir ce NFT"
+    } | undefined
+
     application: string | "$nfluent_appli$/contest"
     collections: [string]
     limits:any | null
@@ -272,8 +278,7 @@ export interface Operation {
       dtEnd: string | ""
       duration: number | 1
     }
-
-  }
+  } | null
 
 }
 

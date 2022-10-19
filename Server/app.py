@@ -4,7 +4,6 @@ import urllib.parse
 import base64
 import csv
 import datetime
-import hashlib
 import json
 import os
 import ssl
@@ -12,7 +11,7 @@ import sys
 import urllib
 from asyncio import sleep
 from copy import copy
-from io import BytesIO
+from io import BytesIO, StringIO
 from os import listdir
 from os.path import exists
 from random import random
@@ -21,10 +20,8 @@ from xml.dom.minidom import Element
 from zipfile import ZipFile
 
 from flask_socketio import SocketIO, emit
-
-import Tools
 from StoreFile import StoreFile
-from Tools import get_operation, decrypt
+from Tools import get_operation, decrypt, get_access_code_from_email,normalize
 
 import py7zr
 import pyqrcode
@@ -69,8 +66,8 @@ log("Initialisation de la websocket")
 nft=ArtEngine()
 log("Initialisation de l'ArtEngine ok")
 
-dao=DAO(DBSERVER_SYSTEM,DBNAME_SYSTEM)
-
+dao=DAO(DBSERVER_SYSTEM,DBNAME_SYSTEM+"_debug" if "debug" in sys.argv else "")
+log("Initialisation de la base de donnée OK")
 
 #voir la documentation de metaboss:
 
@@ -229,7 +226,8 @@ def layers(body=None):
       else:
         if elt["image"] and len(elt["image"])>0:
           ext=elt["image"].split("?")[1] if "?" in elt["image"] else elt["image"][elt["image"].rindex(".")+1:]
-          s=Sticker(image=elt["image"],ext=ext)
+          name=elt["image"].split("images/")[1].split("_0x")[0]
+          s=Sticker(name=name,image=elt["image"],ext=ext)
 
 
 
@@ -757,7 +755,8 @@ def get_operations() -> [dict]:
 
 @app.route('/api/transfer_to/<nft_addr>/<to>/<owner>/',methods=["GET"])
 def transfer_to(nft_addr:str,to:str,owner:str):
-  network=request.args.get("network","solana-devnet")
+  network=request.args.get("network","elrond-devnet")
+
 
   if "solana" in network:
     solana=Solana(network)
@@ -873,15 +872,6 @@ def action():
   return jsonify({"error":"","status":"ko","message":"Aucun passe disponible pour ce nft"})
 
 
-
-def get_access_code_from_email(email:str):
-  """
-  fournis le mot de passe pour les validateurs sur la base de leur mail
-  seul les 6 premiers caractères sont transmis
-  :param email:
-  :return:
-  """
-  return hashlib.md5((email+SALT).encode()).hexdigest().upper()[:6]
 
 
 @app.route('/api/operations/',methods=["GET","POST"])
@@ -1030,6 +1020,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
           if src["owner"]:
             nfts=elrond.get_nfts(src["owner"],limit=src["filter"]["limit"],with_attr=with_attributes)
           else:
+            log("Récupération depuis les collections "+" ".join(src["collections"]))
             nfts=elrond.get_nfts_from_collections(src["collections"],with_attr=with_attributes)
 
           nfts=elrond.complete_collection(nfts)
@@ -1175,8 +1166,7 @@ def async_mint(nbr_items=3,filter=""):
     log("Impossible de se connecter à la base")
   else:
     for ask in dao.get_nfts_to_mint(int(nbr_items),filter):
-      # if len(nft["address"])==0:
-      #   nfts=get_nfts_from_src(operation["data"]["sources"],nft["collection"],False)
+      log("Traitement de la demande "+str(ask["_id"]))
       dao.edit_pool(ask["_id"],now(),"traitement en cours")
       nfts=get_nfts_from_src(ask["sources"],ask["filter"],False)
 
@@ -1185,6 +1175,7 @@ def async_mint(nbr_items=3,filter=""):
       _miner=elrond.toAccount(ask["miner"])
 
       if len(nfts)>0:
+        log("Tirage au sort d'un NFT parmis la liste de "+str(len(nfts)))
         for i in range(200):
           nft_to_mint=nfts[int(random()*len(nfts))]
 
@@ -1192,20 +1183,25 @@ def async_mint(nbr_items=3,filter=""):
             if elrond.canMint(nft_to_mint): break
           else:
             if not _miner is None and nft_to_mint.owner==_miner.address.bech32(): break
+      else:
+        log("Aucun NFT à miner")
 
       if not nft_to_mint is None:
+        log("Minage de "+nft_to_mint.name+" en cours")
         if _miner is None:
           log("Le miner est fixé sur le propriétaire de la collection "+nft_to_mint.collection["id"])
           _miner=elrond.toAccount(nft_to_mint.collection["owner"])
 
+        log("Ajout de l'attribut lazymint pour ne pas risquer de re-minté")
         nft_to_mint.attributes.append({"trait_type":"lazymint","value":nft_to_mint.address})
-        rc=mint(nft_to_mint,_miner.address.bech32(),ask["dest"],ask["network"])
+        rc=mint(nft_to_mint,_miner.address.bech32(),ask["dest"],ask["network"],wallet_appli=ask["wallet"])
         if not rc or rc["error"]!="":
           log("Problème de minage voir "+rc["hash"])
           message="Error"+rc["error"]+" voir "+rc["hash"]
         else:
           message="Ok: "+rc["hash"]
 
+        log("Mise a jour des données de la pool de minage")
         dao.edit_pool(ask["_id"],now(),message)
 
       else:
@@ -1235,7 +1231,8 @@ def add_user_for_nft():
                       sources=request.json["operation"]["data"]["sources"],
                       network=request.json["network"],
                       collections=request.json["collections"],
-                      dest=request.json["owner"])
+                      destinataires=request.json["owner"],
+                      wallet=request.json["wallet"])
 
   return jsonify({"message":"ok","ask_id":id})
 
@@ -1293,26 +1290,27 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
   lottery=_opes["lottery"]
 
   #chargement des NFTs
-  nfts=get_nfts_from_src(_opes["data"]["sources"],lottery["collections"],with_attributes=True)
+  nfts=get_nfts_from_src(_opes["data"]["sources"],lottery["collections"],with_attributes=False)
   if len(nfts)==0:
     log("Aucun NFT n'est disponible")
     return "Aucun NFT",404
 
-  #vérification de la possibilité d'emettre
-  dao=DAO(ope=_opes)
-  if dao.db is None:
-    rc=dao.db["histo"].aggregate([{"$match":{"command":"mint"}},{"$group":{"_id":"$operation","count": { "$sum": 1 }}}])
-    for e in rc:
-      if e["_id"]==_opes["id"]:
-        if "limits" in lottery and lottery["limits"]["by_year"]<e["count"]:
-          nfts=[]
+  # #vérification de la possibilité d'emettre
+  # dao=DAO(ope=_opes)
+  # if dao.db is None:
+  #   rc=dao.db["histo"].aggregate([{"$match":{"command":"mint"}},{"$group":{"_id":"$operation","count": { "$sum": 1 }}}])
+  #   for e in rc:
+  #     if e["_id"]==_opes["id"]:
+  #       if "limits" in lottery and lottery["limits"]["by_year"]<e["count"]:
+  #         nfts=[]
 
 
   if not "dtStart" in lottery or lottery["dtStart"]=="now":
     nft=None
-    while True:
+    for i in range(200):
       nft=nfts[int(random()*len(nfts))]
-      if nft.marketplace["quantity"]>0:break
+      if "elrond" in nft.network:
+        if nft.owner==nft.creators[0] or Elrond(nft.network).canMint(nft):break
 
     visual=nft.visual if lottery["screen"]["showVisual"] else ""
 
@@ -1466,6 +1464,19 @@ def mint_for_prestashop():
   return jsonify({"result":"ok","address":account_addr,"mint":nonce})
 
 
+
+
+#http://127.0.0.1:4200/dealermachine/?id=symbol2LesGratuits
+@app.route('/api/upload_attributes_file/<config_id>/',methods=["POST"])
+def upload_attributes_file(config_id:str):
+  txt=str(base64.b64decode(request.data),"utf8")
+  attributes=csv.DictReader(StringIO(txt),delimiter="\t")
+  nft.attributes=list(attributes)
+  return jsonify({"message":"ok"})
+
+
+
+
 #http://127.0.0.1:4200/dealermachine/?id=symbol2LesGratuits
 @app.route('/api/mint_for_contest/<confirmation_code>/',methods=["GET"])
 @app.route('/api/mint_for_contest/',methods=["POST"])
@@ -1491,7 +1502,7 @@ def mint_for_contest(confirmation_code=""):
     _data=body["token"]
     if _data["marketplace"]["quantity"]==0: _data=None
   else:
-    _data=None
+    _data:NFT=None
     nfts=get_nfts_from_src(_ope["data"]["sources"],with_attributes=True)
     for nft in nfts:
       if nft.address==body["token"]["address"] and nft.marketplace["quantity"]>0:
@@ -1506,7 +1517,7 @@ def mint_for_contest(confirmation_code=""):
     if not _ope is None:
       dao.add_histo(_ope["id"],"mint",account,nft.collection["name"],rc["result"]["transaction"],_ope["network"],"minage pour loterie")
 
-    DAO(_data["domain"],_data["dbname"]).update(_data,"quantity")
+    DAO(_data["domain"],_data["dbname"]).update(_data.__dict__,"quantity")
 
   return jsonify(rc)
 
@@ -1560,6 +1571,9 @@ def configs(name:str="",format=""):
       filename="./Configs/"+name+(".yaml" if not name.endswith(".yaml") else "")
       log("Ouverture en ecriture du fichier de destination "+filename)
       s=request.json["file"]
+
+      s["attributes"]=nft.attributes
+
       if type(s)==dict:
         s=str(yaml.dump(s,default_flow_style=False,indent=4,encoding="utf8"),"utf8")
 
@@ -1571,6 +1585,7 @@ def configs(name:str="",format=""):
       log("Fermeture du fichier")
 
       return jsonify({"error":"","content":s})
+
 
     return jsonify({"error":""})
 
@@ -1772,16 +1787,17 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
     b=base64.b64decode(data["content"].split("base64,")[1])
     #if ext=="gif" or ext=="png": ext="webp"
     cid=hex(hash(data["content"]))+"."+ext
-    filename="./temp/"+cid
+    filename=normalize(data["filename"].split(".")[0]+"_"+cid)
 
     if ext=="svg":
       s=Sticker(cid,text=str(b,"utf8"))
     else:
       s=Sticker(cid,data["content"],ext=ext)
 
-    s.save(filename)
+    s.save("./temp/"+filename)
+    rc={"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+filename+"?"+ext}
 
-    rc={"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+cid+"?"+ext}
+
 
   if platform=="nftstorage":
     if "content" in data:
@@ -1827,7 +1843,7 @@ def nfts(id=""):
     if id=="":
       l_nfts=Elrond(network).get_nfts(account,limit,with_attr=with_attr,offset=offset,with_collection=True)
     else:
-      l_nfts=[Elrond(network).get_nft(token_id=id)]
+      l_nfts=[Elrond(network).get_nft(token_id=id,attr=True)]
   else:
     l_nfts=Solana(network).get_nfts(account,offset,limit)
 
@@ -1839,6 +1855,17 @@ def nfts(id=""):
     nfts.append(nft.__dict__)
 
   return jsonify(nfts)
+
+
+
+
+@app.route('/api/access_code_checking/<access_code>/<addr>/',methods=["GET"])
+#http://127.0.0.1:4242/api/access_code_checking/
+def access_code_checking(access_code:str,addr:str):
+  if get_access_code_from_email(addr)==access_code:
+    return jsonify({"message":"ok"})
+  else:
+    return returnError("Incorrect access code")
 
 
 
@@ -1895,7 +1922,7 @@ def send_email_to_validateur(user=""):
 
   for validateur in validate_section["users"]:
     if len(user)==0 or user==validateur:
-      access_code=get_access_code_from_email(validateur)
+      access_code= get_access_code_from_email(validateur)
       url=validate_section["application"]+"&access_code="+access_code+"&ope="+operation["id"]
       url_help=validate_section["support"]["faq"]
       send_mail(open_html_file("mail_validateur",{
@@ -1906,6 +1933,7 @@ def send_email_to_validateur(user=""):
       },domain_appli=app.config["DOMAIN_APPLI"]),validateur,subject=operation["title"]+" connexion à l'application de validation")
 
   return jsonify({"error":""})
+
 
 
 
@@ -2031,7 +2059,7 @@ def create_collection(owner:str):
   })
 
 
-def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""):
+def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile="",wallet_appli="https://wallet.nfluent.io"):
   rc= {"error":"Problème technique"}
   account=None
   collection_id=nft.collection["id"]
@@ -2040,7 +2068,10 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
     email=owner
     if "elrond" in network:
       elrond=Elrond(network)
-      _account,pem,words,qrcode=elrond.create_account(email=email,network=network,subject="Votre NFT '"+nft.name+"' est disponible", domain_appli=app.config["DOMAIN_APPLI"])
+      _account,pem,words,qrcode=elrond.create_account(email=email,
+                                                      network=network,
+                                                      subject="Votre NFT '"+nft.name+"' est disponible",
+                                                      domain_appli=app.config["DOMAIN_APPLI"])
       account=_account.address.bech32()
       log("Notification de "+owner+" que son compte "+elrond.getExplorer(account,"account")+" est disponible")
     else:
@@ -2404,8 +2435,12 @@ def scan_for_access():
   """
   _data=request.json
   if "/api/qrcode/" in _data["validator"]:_data["validator"]=_data["validator"].split("/api/qrcode/")[1]
+
   validator=decrypt(_data["validator"])
+  log("Validateur en charge de la validation : "+validator)
   Tools.send(socketio,validator, {"address":_data["address"]})
+
+  log("Ajout de l'adresse "+_data["address"]+" pour validation")
   dao.db["validators"].update_one({"id":validator},{"$set": {"user":_data["address"]}})
   return jsonify({"message":"ok"})
 

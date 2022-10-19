@@ -10,6 +10,8 @@ import {NgNavigatorShareService } from 'ng-navigator-share';
 
 import {OperationService} from "../operation.service";
 import {NFT} from "../../nft";
+import {_prompt} from "../prompt/prompt.component";
+import {MatDialog} from "@angular/material/dialog";
 
 @Component({
   selector: 'app-build-ope',
@@ -19,10 +21,7 @@ import {NFT} from "../../nft";
 export class BuildOpeComponent implements OnInit {
 
   url: string = "";
-
-  iframe_code: string="";
-  image_code: string="";
-  url_ope: string="";
+  url_ope: string="https://raw.githubusercontent.com/f80dev/TokenSol/master/Server/Operations/Main_devnet.yaml";
   url_dispenser_app: string="";
   collections_lottery: any[]=[];
   nfts: NFT[]=[];
@@ -31,8 +30,12 @@ export class BuildOpeComponent implements OnInit {
   url_store="";
   store_collections: any[]=[];
   sources: any;
+
   candymachine_qrcode: string="";
   candymachine_url: string="";
+
+  airdrop_url:string=""
+
   title: string="NFluenT Candy Machine";
 
 
@@ -42,6 +45,7 @@ export class BuildOpeComponent implements OnInit {
     public operation:OperationService,
     public toast:MatSnackBar,
     public user:UserService,
+    public dialog:MatDialog,
     public clipboardService:Clipboard,
     public router:Router,
     public ngShare:NgNavigatorShareService
@@ -127,11 +131,10 @@ export class BuildOpeComponent implements OnInit {
         //   this.store_collections.push(_c);
         // }
 
-        if(this.operation.sel_ope.candymachine){
-          this.candymachine_url=environment.appli+"/cm?param="+setParams({ope:this.operation.sel_ope.id,toolbar:false});
-          this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.candymachine_url)+"&scale=13";
-          $$("URL de la candymachine "+this.candymachine_url)
-        }
+        this.airdrop_url=environment.appli+"/cm?param="+setParams({airdrop:true,ope:this.operation.sel_ope.id,toolbar:false});
+        this.candymachine_url=environment.appli+"/cm?param="+setParams({airdrop:false,ope:this.operation.sel_ope.id,toolbar:false});
+        this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.candymachine_url)+"&scale=13";
+
       }
 
 
@@ -162,12 +165,17 @@ export class BuildOpeComponent implements OnInit {
     });
   }
 
-  update_url_ope(evt:any) {
-    this.url=environment.appli+"/validate?toolbar=false&ope=b64:"+btoa(this.url_ope);
-    this.network.get_operations(this.url_ope).subscribe((ope:any)=>{
-      this.operation.sel_ope=ope;
-      showMessage(this,"Operation chargée");
+  update_url_ope() {
+    _prompt(this,
+      "Utiliser une opération depuis un lien web",
+      "https://raw.githubusercontent.com/f80dev/TokenSol/master/Server/Operations/Main_devnet.yaml",
+      "Saisissez l'url du fichier d'opération","text").then((rep:any)=>{
+      if(rep){
+        this.operation.select("b64:"+btoa(this.url_ope));
+
+      }
     })
+
   }
 
   download_ope() {

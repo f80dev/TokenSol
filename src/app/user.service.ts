@@ -50,25 +50,33 @@ export class UserService {
       this.router.navigate(["login"],{queryParams:{message:message}});
   }
 
+  get_collection(){
+    return new Promise((resolve, reject) => {
+      this.network.get_collections(this.addr, this.network.network, false).subscribe((cols: any) => {
+        this.collections = cols;
+        resolve(cols);
+      });
+    });
+  }
+
 
   init(addr:string,route=""){
     return new Promise((resolve, reject) => {
-      this.addr=addr
-      this.addr_change.next(addr);
       if(addr.length>0){
-        this.network.get_collections(this.addr,this.network.network,false).subscribe((cols:any)=>{
-          this.collections=cols;
-          this.httpClient.get(environment.server+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
-            this.profil = r;
-            r.address=addr;
-            resolve(r);
-          },(err)=>{
-            $$("!probleme de récupération des permissions")
-            reject(err);
+        this.addr=addr
+        if(addr.indexOf("@")>-1)this.email=addr;
+          this.get_collection().then(()=>{
+            this.httpClient.get(environment.server+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
+              this.profil = r;
+              r.address=addr;
+              this.addr_change.next(addr);
+              resolve(r);
+            },(err)=>{
+              $$("!probleme de récupération des permissions")
+              reject(err);
+            });
           });
-        });
       }
-
     });
   }
 

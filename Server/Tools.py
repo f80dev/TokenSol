@@ -1,5 +1,6 @@
 import base64
 import datetime as datetime
+import hashlib
 import json
 import os
 import smtplib
@@ -18,7 +19,7 @@ from cryptography.fernet import Fernet
 from fontTools import ttLib
 
 
-from secret import USERNAME, PASSWORD
+from secret import USERNAME, PASSWORD, SALT
 from settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
 
 
@@ -259,9 +260,9 @@ def str_to_hex(letters,zerox=True):
 
 
 def get_operation(name:str):
-  if name.startswith("b64:"): name=str(base64.b64decode(name.split("b64:")[1]),"utf8")
-  if name.startswith("http"):
-    rc=requests.get(name).text
+  if name.startswith("b64:"):
+    url=str(base64.b64decode(name.split("b64:")[1]),"utf8")
+    rc=requests.get(url).text
     rc=yaml.load(rc,Loader=yaml.FullLoader)
   else:
     name=name.replace(".yaml","")
@@ -302,7 +303,27 @@ def get_timestamp_for_access_code():
   return int(datetime.datetime.now().timestamp()/60)
 
 def get_access_code(addr:str) -> str:
+  """
+  fournis un qrcode temporaire pour la connexion via nfluent_wallet_connect
+  :param addr:
+  :return:
+  """
   return encrypt(addr+"ts:"+str(get_timestamp_for_access_code()))
+
+
+def get_access_code_from_email(email:str):
+  """
+  fournis le mot de passe pour les validateurs sur la base de leur mail
+  seul les 6 premiers caractères sont transmis
+  :param email:
+  :return:
+  """
+  return hashlib.md5((email+SALT).encode()).hexdigest().upper()[:8]
+
+
+def normalize(s:str) -> str:
+  return s.lower().replace(" ","")
+
 
 def check_access_code(code:str) -> str:
   s=decrypt(bytes(code,"utf8"))

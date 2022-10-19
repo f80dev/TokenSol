@@ -60,6 +60,18 @@ content:
     "
 
 
+  - index: nfluent_wallet
+    title: Qu'est ce que le wallet nfluent ?
+    order: 0
+    format: html
+    content: "
+      Le wallet nfluent est une web application qui permet de
+      <ul>
+      <li>Visualiser l'ensemble de vos NFT</li>
+      <li>Utiliser certains de vos NFTs comme billet pour certains événements à accès restreint</li>
+      </ul>
+    "
+
   - index: add_nfluent_component
     title: Comment ajouter le composant d'authentification nfluent à mon application angular
     order: 0

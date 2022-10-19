@@ -1,8 +1,6 @@
 <div class="mainform">
   <app-authent [showAccesCode]="true"
-               [showGoogle]="false"
-               [showNetwork]="true"
-               [showWebcam]="true"
-               [showDynamicToken]="true"
-               (authent)="_location.back()"></app-authent>
+               [showNfluentWalletConnect]="true"
+               [autoconnect_for_localhost]="true"
+               (authent)="authent($event)"></app-authent>
 </div>

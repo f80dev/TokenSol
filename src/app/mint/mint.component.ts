@@ -53,20 +53,23 @@ export class MintComponent implements OnInit {
     public router:Router,
     public clipboard:Clipboard,
     public routes:ActivatedRoute,
-  ) { }
+  ) {
+
+  }
 
 
   ngOnInit(): void {
+
+    this.user.addr_change.subscribe((addr)=>{
+      this.user.get_collection().then(()=>{
+        this.sel_collection=this.user.collections[0].id || "";
+      });
+    })
+
     getParams(this.routes).then((params:any)=>{
       if(params.hasOwnProperty("collection")){
         this.sel_collection=params["collection"];
       }
-      else{
-        if(this.user.collections.length>0){
-          this.sel_collection=this.user.collections[0].id || "";
-        }
-      }
-
     })
     this.init_form();
   }
@@ -310,6 +313,15 @@ export class MintComponent implements OnInit {
           });
         }
 
+        let error_message="";
+        if(!token.visual.startsWith("https"))error_message="Le visuel n'est pas en ligne";
+        if(!this.user.key)error_message="Vous devez avoir sélectionné une clé";
+        if(error_message.length>0){
+          showMessage(this,error_message);
+          reject(error_message);
+          token.message="Error: "+error_message;
+        }
+
         if(this.user.key){
           token.collection=this.user.find_collection(this.sel_collection);
           this.network.mint(token,this.user.key.name,this.user.key.name,this.sign, this.sel_platform,this.network.network,this.mintfile).then((result:any)=>{
@@ -329,8 +341,6 @@ export class MintComponent implements OnInit {
           }).catch((err)=>{
             showError(err);
           })
-        } else {
-          showMessage(this,"Vous devez avoir sélectionné une clé");
         }
       } else {
         reject(token);
@@ -347,7 +357,7 @@ export class MintComponent implements OnInit {
 
 
   see_in_hub(nft:NFT){
-    open("https://"+(this.network.network.indexOf("devnet")>-1 ? "devnet" : "")+".inspire.art/nfts/"+nft.address)
+    this.network.open_gallery(nft.address);
   }
 
   to_string(token: any) {
@@ -552,5 +562,13 @@ export class MintComponent implements OnInit {
 
   clear_attribute() {
     this.tokens[0].attributes=[];
+  }
+
+  clone_marketplace() {
+    for(let i=1;i<this.tokens.length;i++){
+      this.tokens[i].marketplace=this.tokens[0].marketplace;
+      this.tokens[i].royalties=this.tokens[0].royalties;
+    }
+    showMessage(this,"Recopie terminée")
   }
 }

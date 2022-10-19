@@ -229,6 +229,11 @@ export function isLocal(domain:string) : boolean {
 }
 
 
+export function normalize(s:string) : string {
+  return s.toLowerCase().replace(" ","").split(".")[0]
+}
+
+
 export function words(objs:any,rc=""){
   if(!objs)return rc;
   for(let it of Object.values(objs)) {

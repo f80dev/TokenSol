@@ -43,22 +43,22 @@ export class AppComponent implements OnInit {
     public operation:OperationService,
     public metaboss:MetabossService
   ) {
-
   }
 
   //test: https://tokenfactory.nfluent.io/contest?ope=
   ngOnInit(): void {
-
-    this.metaboss.init_keys();
-
     setTimeout(()=>{
 
       getParams(this.routes).then((params:any)=>{
+        this.metaboss.init_keys();
 
         if(getBrowserName()=="firefox"){
           showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
         }
-        if(localStorage.getItem("addr"))this.user.init(localStorage.getItem("addr") || "")
+        if(params.hasOwnProperty("addr")){
+          this.user.init(params["addr"]);
+        }
+        //if(localStorage.getItem("addr"))this.user.init(localStorage.getItem("addr") || "")
         this.network_service.version=params["version"] || "main";
         if(params.hasOwnProperty("toolbar")){
           this.toolbar_visible=params["toolbar"];

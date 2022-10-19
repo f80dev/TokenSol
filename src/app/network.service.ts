@@ -521,8 +521,8 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/reset_collection/");
   }
 
-  save_config_on_server(name:string,body:any) {
-    return this.httpClient.post(environment.server+"/api/configs/"+encodeURIComponent(name)+"/",{filename:name,file:body});
+  save_config_on_server(name:string,body:any,with_file=false) {
+    return this.httpClient.post(environment.server+"/api/configs/"+encodeURIComponent(name)+"/?with_file="+with_file,{filename:name,file:body});
   }
 
   load_config(name:string) {
@@ -569,7 +569,6 @@ export class NetworkService {
 
 
   get_operations(ope="") {
-    if(ope.startsWith("http"))ope="b64:"+btoa(ope);
     return this.httpClient.get<Operation>(environment.server+"/api/operations/"+ope);
   }
 
@@ -786,5 +785,29 @@ export class NetworkService {
 
   delete_ask(id: string) {
     return this.httpClient.delete(environment.server+"/api/minerpool/"+id+"/");
+  }
+
+  open_gallery(id: string | undefined) {
+    let url="";
+    if(this.isElrond() && id){
+      let suffixe="/"+id;
+      if(id.split("-").length==2){
+        suffixe="/nfts/"+id;
+      }else {
+        if (!id.startsWith("erd")) suffixe = "/collections/" + id;
+      }
+      url="https://"+(this.isMain() ? "" : "devnet.")+"inspire.art"+suffixe;
+    }
+
+    open(url,"gallery")
+  }
+
+  access_code_checking(access_code: string, address: string) {
+    return this.httpClient.get(environment.server+"/api/access_code_checking/"+access_code+"/"+address+"/");
+  }
+
+  upload_attributes(config_name:string,file:string) {
+    //Associer un fichier d'attributs au visuel des calques
+    return this.httpClient.post(environment.server+"/api/upload_attributes_file/"+config_name+"/",file);
   }
 }

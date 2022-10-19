@@ -18,13 +18,25 @@ export class OperationService {
     this.refresh();
   }
 
+  get_operation_from_web(url:string){
+    this.network.get_operations(url).subscribe((ope:Operation)=>{
+      this.opes.push(ope);
+      this.sel_ope=this.opes[0]
+    })
+  }
+
   select(operation_id:string) {
-    for(let sel of this.opes){
-      if(sel.id==operation_id){
-        this.sel_ope=sel;
-        this.sel_ope_change.next(sel);
+    if(operation_id && operation_id.startsWith("b64:")){
+      this.get_operation_from_web(operation_id);
+    }else{
+      for(let sel of this.opes){
+        if(sel.id==operation_id){
+          this.sel_ope=sel;
+          this.sel_ope_change.next(sel);
+        }
       }
     }
+
   }
 
   refresh(){

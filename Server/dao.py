@@ -175,20 +175,26 @@ class DAO:
 
 
 
-  def add_nft_to_mint(self,miner:str,sources:dict,network,collections,dest,dtStart=now()):
-    obj={
-      "dtCreate":now(),
-      "dtStart":dtStart,
-      "dtWork":None,
-      "network":network,
-      "message":"",
-      "miner":miner,
-      "dest":dest,
-      "filter":collections,
-      "sources":sources
-    }
-    log("Ajout dans le mintpool de "+str(obj))
-    tx=self.db["mintpool"].insert_one(obj)
+  def add_nft_to_mint(self,miner:str,sources:dict,network,collections,destinataires,wallet,dtStart=now()):
+    if type(destinataires)==str:destinataires=[destinataires]
+
+    for d in destinataires:
+      if len(d)>3:
+        obj={
+          "dtCreate":now(),
+          "dtStart":dtStart,
+          "dtWork":None,
+          "network":network,
+          "message":"",
+          "miner":miner,
+          "dest":d,
+          "filter":collections,
+          "sources":sources,
+          "wallet":wallet
+        }
+        log("Ajout dans le mintpool de "+str(obj))
+        tx=self.db["mintpool"].insert_one(obj)
+
     return str(tx.inserted_id)
 
 

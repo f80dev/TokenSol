@@ -8,7 +8,7 @@ import {Location} from "@angular/common";
 import {UserService} from "../user.service";
 import {NFT} from "../../nft";
 import {NFLUENT_WALLET} from "../../definitions";
-import {Operation} from "../../operation";
+import {Operation,Connexion} from "../../operation";
 
 @Component({
   selector: 'app-dealermachine',
@@ -23,7 +23,7 @@ export class DealermachineComponent implements OnInit {
   ope: Operation | null=null;
   webcam: boolean=true;
   mining: any={};
-  authentification: any;
+  authentification: Connexion | undefined;
 
   constructor(
     public routes:ActivatedRoute,
@@ -43,11 +43,13 @@ export class DealermachineComponent implements OnInit {
       this.nft=params["token"];
       let ope=params["ope"];
       let section=params["section"];
+      if(!section)$$("!La section n'est pas renseignée");
 
       if(!this.nft){
         $$("On va chercher les NFTs dans le fichier d'opération");
         let address=params["address"] || "";
         let symbol=params["symbol"] || "";
+
         this.network.get_nfts_from_operation(ope).subscribe((r:any)=>{
           for(let nft of r["nfts"]){
             if((nft.address==address && address.length>0) || (nft.symbol==symbol && nft.address?.length==0))this.nft=nft;
@@ -83,7 +85,7 @@ export class DealermachineComponent implements OnInit {
 
   lost(){
     $$("Lost")
-    if(this.ope && this.ope.lottery.hasOwnProperty("end_process")){
+    if(this.ope && this.ope.lottery && this.ope.lottery.hasOwnProperty("end_process")){
       this.end_process(this.ope.lottery.end_process.looser.message,this.ope.lottery.end_process.looser.redirection)
     } else {
       this.end_process("Ce NFT vous a échapé");
@@ -92,7 +94,7 @@ export class DealermachineComponent implements OnInit {
 
   win(){
     $$("Win")
-    if(this.ope && this.ope.lottery.hasOwnProperty("end_process")){
+    if(this.ope && this.ope.lottery && this.ope.lottery.hasOwnProperty("end_process")){
       this.end_process(this.ope.lottery.end_process.winner.message,this.ope.lottery.end_process.winner.redirection)
     } else {
       this.end_process("Ce NFT est le votre.");
@@ -103,7 +105,7 @@ export class DealermachineComponent implements OnInit {
     if(rediction){
       showMessage(this,sMessage);
       setTimeout(()=>{
-        open(this.ope!.lottery.end_process.winner.redirection);
+        if(this.ope && this.ope.lottery) open(this.ope!.lottery.end_process.winner.redirection);
         },3500);
     } else {
       this.message=sMessage+". Vous pouvez fermer cette écran";
@@ -132,11 +134,11 @@ export class DealermachineComponent implements OnInit {
         })
       }
     }else{
-      $$("Ce token est déjà miné, on se contente de le transférer");
-      if(this.nft!.address!="" && this.nft!.owner!=""){
-        let mint_addr=this.nft!.address || "";
+      let mint_addr=this.nft!.address;
+      if(mint_addr!=""){
+        $$("Ce token est déjà miné, on se contente de le transférer");
         this.message="Envoi en cours";
-        this.network.transfer_to(mint_addr,addr,this.nft!.owner!).subscribe((r:any)=>{
+        this.network.transfer_to(mint_addr!,addr,this.nft!.owner!).subscribe((r:any)=>{
           this.message="";
           this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;
           if(this.selfWalletConnexion){

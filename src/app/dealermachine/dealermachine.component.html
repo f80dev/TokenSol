@@ -74,8 +74,7 @@
 
     </div>
 
-    <app-authent *ngIf="selfWalletConnexion"
-                 title=""
+    <app-authent *ngIf="selfWalletConnexion && authentification"
                  [showGoogle]="authentification.google"
                  [showAddress]="authentification.address"
                  [showWebcam]="authentification.webcam"

@@ -53,7 +53,7 @@ export class ContestComponent implements OnInit,OnDestroy {
         this.operation=ope;
 
         this.handle=setInterval(()=>{
-          if(this.delay==0 && this.operation){
+          if(this.delay==0 && this.operation && this.operation.lottery){
             this.delay=this.operation.lottery.duration;
             this.ask_token()
           }

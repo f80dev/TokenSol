@@ -22,8 +22,10 @@ export const PLATFORMS=[
   {label:"La configuration",value:"infile"}
 ]
 
-export const GOOGLE_CLIENT_ID="167299914377-p8vuf2f6npqnigl5kpqrh34cqjd81eko.apps.googleusercontent.com"
-export const GOOGLE_SECRET_ID="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"
+//Voir https://console.cloud.google.com/apis/credentials/oauthclient/1047581333959-f7rub1f23lkhuts4ig50pabhv3cakf6u.apps.googleusercontent.com?project=nfluenttokenfactory
+//export const GOOGLE_CLIENT_ID="167299914377-p8vuf2f6npqnigl5kpqrh34cqjd81eko.apps.googleusercontent.com"
+export const GOOGLE_CLIENT_ID="374328672254-kgeau4348kfsdogmh1glktv3ihj6ui56.apps.googleusercontent.com"
+export const GOOGLE_SECRET_ID="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"
 
 export const SALT="sel"
 export const TOKEN_FACTORY_WALLET="BjW8USn6XpyCW5dg95bNKey5XZ6KWaTox1nPDFYr4fdc";

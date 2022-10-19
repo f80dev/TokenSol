@@ -5,7 +5,7 @@
                        *ngFor="let faq of faqs"
                        name="faq">
 
-    <mat-expansion-panel-header collapsedHeight="60px" expandedHeight="60px">
+    <mat-expansion-panel-header collapsedHeight="60px" expandedHeight="60px" style="text-align: left;">
       <span *ngIf="!faq.visible" class="faq-title">
         {{faq.title}}
       </span>
@@ -21,7 +21,7 @@
         {{faq.content}}
       </div>
 
-      <iframe style="border:none;width:100%;"
+      <iframe style="border:none;width:100%;text-align: left;"
               *ngIf="faq.content.endsWith('html')"
               [src]="faq.content">
       </iframe>

@@ -1,10 +1,11 @@
 <div class="mainform" [ngStyle]="operation?.branding?.style">
+
   <div *ngIf="title!.length>0" class="mat-display-2">{{title}}</div>
   <app-hourglass [message]="message"></app-hourglass>
   <div *ngIf="message?.length==0">
     <app-reversebloc *ngFor="let nft of nfts" [image]="nft.visual" [title]="nft.name + ' ('+nft.collection+')'">
       <div style="width: 100%;height:100%;background-color: gray;padding: 15px;position: relative;">
-        <div class="mat-body-1">{{nft.collection}}</div>
+        <div class="mat-body-1">{{nft.collection!.name}}</div>
         <div class="mat-subheading-2">{{nft.name}}</div>
 
         <button type="button" mat-raised-button mat-button color="primary" style="display: inline-block;position: absolute;right: 20px;bottom: 20px;"
@@ -13,9 +14,6 @@
           <span *ngIf="nft.marketplace!.price==0">Acquérir</span>
         </button>
       </div>
-
-
-
     </app-reversebloc>
 
     <div *ngIf="nfts?.length==0">Aucun NFT à vendre</div>

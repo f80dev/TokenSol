@@ -91,6 +91,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   ngOnInit(): void {
     getParams(this.routes,"wallet_params").then((params:any)=>{
+      $$("Récupération des paramètres: ",params);
       this.addr=params["addr"];
       if(!this.addr)this.addr=this.user.addr;
       if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
@@ -302,11 +303,15 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   on_authent($event: any) {
     //Cette fonction est déclenché dans le cadre du nfluent_wallet_connect
-    if($event.addr==this.addr){
-      showMessage(this,"Vous êtes maintenant pleinement connecté à votre wallet");
-      this.strong=true;
-    } else {
-      showMessage(this,"Ce wallet ne correspond pas à votre wallet actuelle");
+    this.strong=$event.strong;
+    if($event.strong){
+      if(this.addr=="")this.addr=$event.address;
+      if(this.addr==$event.address){
+        showMessage(this,"Vous êtes maintenant pleinement connecté à votre wallet");
+      }else{
+        showMessage(this,"Ce wallet ne correspond pas à votre wallet actuelle");
+        this.strong=false;
+      }
     }
   }
 
@@ -335,5 +340,19 @@ export class MywalletComponent implements OnInit,OnDestroy {
       this.on_scan({data:evt.clipboardData.getData("text")});
     }
 
+  }
+
+  open_inspire() {
+    this.network.open_gallery(this.addr);
+  }
+
+
+  on_reverse(evt:any) {
+    if(evt.side && evt.data.description.length==0 && (!evt.data.attributes || evt.data.attributes.length==0)){
+      this.network.get_nft(evt.data.address,this.network.network).subscribe((result:any)=>{
+        let index=this.nfts.indexOf(evt.data);
+        this.nfts[index]=result[0];
+     })
+    }
   }
 }

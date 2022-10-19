@@ -9,7 +9,6 @@
 
   <div style="width: 300px;display: inline-block;text-align: center;margin-top: 20px;">
     <app-upload-file (uploaded)="onFileSelected($event)" width="200px" extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels</app-upload-file><br>
-<!--    <app-upload-file (uploaded)="onCollectionSelected($event)" width="200px" extensions=".zip,.7z">Charger une collection</app-upload-file><br>-->
   </div>
 
   <mat-form-field style="fontsize:small">
@@ -98,7 +97,13 @@
 
       </th>
       <th>Fichiers</th>
-      <th>Price / Quantity</th>
+      <th>
+        Price / Quantity
+        <mat-icon title="recopie les attributs du premier NFT sur les autres"
+                  style="cursor: pointer;font-size: medium;"
+                  (click)="clone_marketplace()">refresh</mat-icon>
+
+      </th>
       <th style="vertical-align: center;">
         Attributs
       <mat-icon title="recopie les attributs du premier NFT sur les autres"

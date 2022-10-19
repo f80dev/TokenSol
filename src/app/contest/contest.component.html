@@ -16,8 +16,8 @@
           <img *ngIf="visual.length>0" [src]="visual" style="object-fit: cover;width:100%;" class="mat-elevation-z4">
         </div>
       </td>
-      <td style="width:50%;" *ngIf="operation?.lottery">
-        <h2>Flasher ce QRCode pour récupérer gratuitement le NFT</h2>
+      <td style="width:50%;" *ngIf="operation!.lottery">
+        <h2>{{operation!.lottery!.messages!.title}}</h2>
 
         <a *ngIf="url.length>0 && operation?.lottery?.authentification?.on_device" [href]="url" target="_blank">
           <img [src]="qrcode" [style.width]="operation?.lottery?.screen?.qrcode_size" style="max-width: 60%;" class="mat-elevation-z4">

@@ -6,11 +6,10 @@ from os import listdir
 from os.path import exists
 from time import sleep
 import pyqrcode
-from Tools import get_qrcode,hex_to_str
+from Tools import get_qrcode,hex_to_str,now, get_access_code_from_email
 from NFT import NFT
 import textwrap
 
-from nftstorage import NFTStorage
 from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file,setParams,strip_accents
 from ipfs import IPFS
 from erdpy import config
@@ -78,10 +77,12 @@ class Elrond:
     :param nft_to_check:
     :return:
     """
-    nfts=self.get_nfts_from_collections([nft_to_check.collection["id"]],False)
+    if nft.address!="": return False
+    nfts=self.get_nfts_from_collections([nft_to_check.collection],False)
     occ=0 #Contient le nombre de fois ou le nft a été miné
     for nft in nfts:
-      if nft_to_check.address in [x.values for x in nft.attributes]:occ=occ+1
+      for attr in nft.attributes:
+        if type(attr)==dict and attr["trait_type"]=="lazymint" and nft_to_check.address==attr["value"]: occ=occ+1
 
     return nft_to_check.marketplace["quantity"]>occ
 
@@ -438,16 +439,20 @@ class Elrond:
     :return:
     """
     rc=[]
-    for col in collections:
-      result=api(self._proxy.url+"/collections/"+col+"/nfts","gateway=api")
+    for col_id in collections:
+      result=api(self._proxy.url+"/collections/"+col_id+"/nfts","gateway=api")
       result=sorted(list(result),key=lambda x:x["nonce"])
-      owners=self.get_owner_of_collections([col])
+      owners=self.get_owner_of_collections([col_id])
       for i in range(len(result)):
         item=result[i]
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
         attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
-        nft=NFT(item["name"],"",tags,{"id":col},attributes,description,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
-        nft.network=self.network_name
+        nft=NFT(
+          name=item["name"],symbol="",tags=tags,collection={"id":col_id},attributes=attributes,
+          description=description,visual=item["media"][0]["url"],
+          creators=[item["creator"]],royalties=royalties)
+        nft.network="elrond-"+self.network_name
+        nft.address=item["identifier"]
         nft.owner=owners[i]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
         nft.marketplace={"quantity":int(owners[i]["balance"]),"price":0}
         rc.append(nft)
@@ -481,9 +486,10 @@ class Elrond:
 
     return content
 
-  def nfluent_wallet_url(self,address:str,network="elrond-devnet"):
+  def nfluent_wallet_url(self,address:str,network="elrond-devnet",domain_appli=""):
+    url=domain_appli+"/wallet/?" if "localhost" in domain_appli or "127.0.0.1" in domain_appli else "https://wallet.nfluent.io/?"
     if type(address)==Account: address=address.address.bech32()
-    return setParams({"toolbar":"false","network":network,"addr":address})
+    return url+setParams({"toolbar":"false","network":network,"addr":address})
 
 
   def create_account(self,email="",seed="",network="elrond-devnet",domain_appli="",subject="Votre compte Elrond est disponible"):
@@ -520,13 +526,16 @@ class Elrond:
     log("Création du compte "+self.getExplorer(Address(pubkey).bech32(),"address"))
 
     if len(email)>0:
+      wallet_appli=self.nfluent_wallet_url(address,network,domain_appli)
+
       send_mail(open_html_file("mail_new_account",{
         "wallet_address":address,
-        "mini_wallet":"?"+self.nfluent_wallet_url(address,network),
+        "mini_wallet":wallet_appli,
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
         "url_explorer":("https://explorer.elrond.com" if "mainnet" in network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
         "words":words,
-        "qrcode":"cid:qrcode"
+        "qrcode":"cid:qrcode",
+        "access_code":get_access_code_from_email(address)
       },domain_appli=domain_appli),email,subject=subject ,attach=qrcode,filename="qrcode.png")
 
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
@@ -538,13 +547,19 @@ class Elrond:
     :param body:
     :return: les attributs, description, les tags
     """
+    tags=""
     try:
       attr=str(base64.b64decode(bytes(body,"utf8")),"utf8")
     except:
       attr=str(base64.b64decode(body))
 
-    if attr.startswith("{\""):attr=" - "+attr
+    log("Pour les attributs, analyse de la chaine "+attr)
 
+    if "tags:" in attr:
+      tags=attr.split("tags:")[1].split(";")[0]
+
+    #Analyse d'un fichier json d'attribut dans la description onchain
+    if attr.startswith("{\""):attr=" - "+attr
     if " - {\"" in attr:
       desc=attr.split(" - {\"")[0]
       attr="{\""+attr.split(" - {\"")[1]
@@ -552,18 +567,17 @@ class Elrond:
       rc=[]
       for k in _d.keys():
         rc.append({"trait_type":k,"value":_d[k]})
-      return rc,desc
+      return rc,desc,tags
 
-    if attr.startswith("metadata"):
+    if "metadata" in attr:
       cid=attr.split("metadata:")[1].split(";")[0]
       log("Recherche des attributs via "+cid)
+      cid=cid.split("/")[0]                                         #Au cas ou le nom du fichier aurait été ajouté dans le cid
       ipfs_url="https://ipfs.io/ipfs/"+cid
       result=api(ipfs_url,timeout=1000) if with_ipfs else ipfs_url
-      return result,""
-
-    tag_position=attr.index("tags:")
-    if tag_position>0:
-      tags=attr.split("tags:")[1].split(";")[0]
+      return result["attributes"] if "attributes" in result else "",\
+             result["description"] if "description" in result else "",\
+             tags
 
     return {},attr,tags
 
@@ -581,7 +595,7 @@ class Elrond:
     if item:
       royalties=int(item["royalties"]*100) if "royalties" in item else 0
       attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=attr)
-      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,tags,item["media"][0]["url"],[item["creator"]],item["identifier"],royalties=royalties)
+      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,tags,item["url"],[item["creator"]],item["identifier"],royalties=royalties)
       nft.owner=item["owner"]
       nft.marketplace={"price":0,"quantity":int(item["supply"])}
       nft.network=self.network_name
@@ -630,13 +644,13 @@ class Elrond:
     _user=self.toAccount(_user)
     rc=list()
 
-    collections=dict()
-    nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
+    #nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
+    nfts:dict=api(self._proxy.url.replace("gateway","api")+"/accounts/"+_user.address.bech32()+"/nfts")
     if nfts is None:
       log("Le compte "+_user.address.bech32()+" n'existe pas")
       return []
 
-    nfts=list(nfts["data"]["esdts"].values())
+    #nfts=list(nfts["data"]["esdts"].values())
     if len(nfts)<offset:return []
 
     if nfts:
@@ -644,28 +658,28 @@ class Elrond:
       for nft in nfts[offset:limit]:
         if "attributes" in nft:
           _data={}
-          nft["tags"]=""
           nft["attributes"],nft["description"],nft["tags"]=self.analyse_attributes(nft["attributes"],with_attr)
 
           log("Analyse de "+str(nft))
 
-          collection_id,nonce=self.extract_from_tokenid(nft["tokenIdentifier"])
+          collection_id,nonce=self.extract_from_tokenid(nft["identifier"])
           if not collection_id in collections.keys():
             collections[collection_id]=self.get_collection(collection_id) if with_collection else {"id":collection_id}
 
           collection=collections[collection_id]
 
           _nft=NFT(
-            nft["name"],
-            nft["tokenIdentifier"].split("-")[1],
-            collection,
-            nft["attributes"] if 'attributes' in nft else [],
-            nft["description"] if "description" in nft else "",
-            str(base64.b64decode(nft["uris"][0]),"utf8"),
-            [{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
-            nft["tokenIdentifier"],
-            int(nft["royalties"]),
-            {"quantity":int(nft["balance"])}
+            name=nft["name"],
+            symbol=nft["identifier"].split("-")[1],
+            collection=collection,
+            attributes=nft["attributes"] if 'attributes' in nft else [],
+            description=nft["description"] if "description" in nft else "",
+            tags=nft["tags"],
+            visual=str(base64.b64decode(nft["uris"][0]),"utf8"),
+            creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
+            address=nft["identifier"],
+            royalties=int(nft["royalties"]),
+            marketplace={"quantity":1}
           )
           _nft.network="elrond-"+self.network_name
           _nft.owner=_user.address.bech32()
@@ -731,7 +745,7 @@ class Elrond:
 
 
 
-  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", file="", tags="",metadata_to_ipfs=False):
+  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", file="", tags=""):
     """
     Fabriquer un NFT au standard elrond
     https://docs.elrond.com/tokens/nft-tokens/#nftsft-fields
@@ -746,21 +760,29 @@ class Elrond:
     miner=self.toAccount(miner)
 
     #hash = hex(int(now() * 1000)).upper().replace("0X", "")
-    hash="00"
+    hash=""
 
-    _d={
-      "description":description,
-      "attributes":properties,
-      "collection":collection
-    }
-    cid=ipfs.add(_d)
 
-    log("Address des metadata: "+cid["url"])
-    s="metadata:"+cid["Hash"]+"/prop.json;tags:"+tags
+    if len(properties)>0 or len(tags)>0:
+      _metadata={
+        "id":now("hex"),
+        "description":description,
+        "attributes":properties
+      }
+      cid=ipfs.add(_metadata)
+
+      log("Address des metadata: "+cid["url"])
+      s="tags:"+tags+";metadata:"+cid["Hash"]+"/"+_metadata["id"]+".json"
+    else:
+      s=description
 
     #Traitement de la problématique des caractères spéciaux
     s=strip_accents(s.replace("\n"," "))
     title=strip_accents(title)
+    log("tags et attributes : "+s)
+
+    #Exemple de creation:
+    #ESDTNFTCreate@4d41434f4c4c4543542d323565666366@01@4d6f6e546f6b656e@09c4@516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252@746167733a3b6d657461646174613a516d5947397a6e724c7a735252594d436d6e52444a7931436f7478676e4a384b6a5668746870485a553775436d59@68747470733a2f2f697066732e696f2f697066732f516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252
 
     data = "ESDTNFTCreate" \
            + "@" + str_to_hex(collection,False) \

@@ -1,16 +1,18 @@
-
+<div style="position: fixed;right:0px;top:0px;display: block;height:20px;color: lightgray;" *ngIf="network.network.indexOf('devnet')>-1">DevNet</div>
 <mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)"
                style="padding: 10px;width:100%;  text-align: center;">
   <mat-tab [label]="tab_title">
 
     <table style="display: inline-block;width:fit-content;width:100%;"><tr>
-      <td><button type="button" mat-raised-button mat-button style="width: 90px;"
+      <td>
+        <button type="button" mat-raised-button mat-button style="width: 90px;"
                   *ngIf="qrcode_addr.length==0"
                   (click)="show_elrond_addr()">
         Recevoir
       </button></td>
       <td>
         <mat-icon (click)="force_refresh()" style="cursor: pointer;font-size: x-large;">refresh</mat-icon>
+        <mat-icon (click)="open_inspire()" style="cursor: pointer;font-size: x-large;">visibility</mat-icon>
       </td>
       <td>
         <mat-form-field style="min-width: 100px;width: 60%;max-width:500px;font-size: medium;">
@@ -35,12 +37,17 @@
     </div>
 
 
-    <app-reversebloc *ngFor="let nft of nfts" [image]="nft.visual" width="300px" height="300px">
+    <app-reversebloc *ngFor="let nft of nfts"
+                     [image]="nft.visual"
+                     width="300px" height="300px"
+                     [data]="nft"
+                     (onreverse)="on_reverse($event)">
+
       <div style="padding: 10px;">
         <div class="mat-body-2">{{nft.collection!.name}}</div>
         <div class="mat-title">{{nft.name}}</div>
         <br>
-        <div class="mat-body-2">{{nft.description}}</div>
+        <div class="mat-body-2">{{nft.description}}</div><br>
         <table style="width: 100%;">
           <tr *ngFor="let attr of nft.attributes" class="mat-body-2">
             <td>{{attr.trait_type}}</td>
@@ -235,15 +242,15 @@
 
   </mat-tab>
 
+
+
   <mat-tab label="Préférences">
     <app-authent *ngIf="!strong"
                  message="La mise a jour de vos préférences nécéssite une authentification"
-                 [showNetwork]="true"
-                 [showGoogle]="true"
-                 [showWebcam]="true"
+                 [address]="addr"
                  (authent)="on_authent($event)"
                  (disconnect)="on_disconnect()"
-                 [showAccesCode]="false">
+                 [showAccesCode]="true">
     </app-authent>
 
 
@@ -292,9 +299,12 @@
 
 
 
-
     </div>
 
+  </mat-tab>
+
+  <mat-tab label="Aide">
+    <app-faqs filter="nfluent_wallet"></app-faqs>
   </mat-tab>
 
 

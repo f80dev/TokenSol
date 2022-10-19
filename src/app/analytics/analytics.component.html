@@ -1,50 +1,58 @@
 <div class="mainform">
-  <table *ngIf="nfts.length>0" style="width: 100%;text-align: center;" class="mat-elevation-z4">
-    <tr>
-      <th>Address</th>
-      <th>Name</th>
-      <th>Visuel</th>
-      <th>Propriétaire</th>
-      <th>Commandes</th>
-    </tr>
-    <tr *ngFor="let nft of nfts">
-      <td *ngIf="nft.address" [cdkCopyToClipboard]="nft.address" style="cursor: copy">{{nft.address}}</td>
-      <td style="text-align: left;"><strong>{{nft.name}}</strong><br>{{nft.description}}</td>
-      <td><img [title]="nft.visual" [src]="nft.visual" style="width: 50px"></td>
-      <td>{{nft.owner | alias}}</td>
-      <td>
-        <button type="button" mat-raised-button mat-button (click)="open_explorer(nft)" id="cmdExplorer">
-          Voir sur Explorer
-        </button>
-      </td>
-    </tr>
-  </table>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Les NFTS</mat-expansion-panel-header>
+    <table *ngIf="nfts.length>0" style="width: 100%;text-align: center;" class="mat-elevation-z4">
+      <tr>
+        <th>Address</th>
+        <th>Name</th>
+        <th>Visuel</th>
+        <th>Propriétaire</th>
+        <th>Commandes</th>
+      </tr>
+      <tr *ngFor="let nft of nfts">
+        <td *ngIf="nft.address" [cdkCopyToClipboard]="nft.address" style="cursor: copy">{{nft.address}}</td>
+        <td style="text-align: left;"><strong>{{nft.name}}</strong><br>{{nft.description}}</td>
+        <td><img [title]="nft.visual" [src]="nft.visual" style="width: 50px"></td>
+        <td>{{nft.owner | alias}}</td>
+        <td>
+          <button type="button" mat-raised-button mat-button (click)="open_explorer(nft)" id="cmdExplorer">
+            Voir sur Explorer
+          </button>
+        </td>
+      </tr>
+    </table>
+  </mat-expansion-panel>
+
   <br>
 
-  <table style="width: 100%;text-align: center;" class="mat-elevation-z4">
-    <tr>
-      <th>Date</th>
-      <th>Action</th>
-      <th>From</th>
-      <th>To</th>
-      <th>Token</th>
-      <th>Coût</th>
-      <th>Commandes</th>
-    </tr>
-    <tr *ngFor="let transaction of transactions">
-      <td>{{transaction.ts_date}}</td>
-      <td>{{transaction.method}}</td>
-      <td>{{transaction.from | alias}}</td>
-      <td>{{transaction.to | alias}}</td>
-      <td>{{transaction.token}}</td>
-      <td>{{transaction.cost}}</td>
-      <td>
-        <button type="button" mat-raised-button mat-button (click)="open_transaction(transaction)" id="cmdExplorerTransaction">
-          Voir sur Explorer
-        </button>
-      </td>
-    </tr>
-  </table>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Requetes</mat-expansion-panel-header>
+    <table style="width: 100%;text-align: center;" class="mat-elevation-z4">
+      <tr>
+        <th>Date</th>
+        <th>Action</th>
+        <th>From</th>
+        <th>To</th>
+        <th>Token</th>
+        <th>Coût</th>
+        <th>Commandes</th>
+      </tr>
+      <tr *ngFor="let transaction of transactions">
+        <td>{{transaction.ts_date}}</td>
+        <td>{{transaction.method}}</td>
+        <td>{{transaction.from | alias}}</td>
+        <td>{{transaction.to | alias}}</td>
+        <td>{{transaction.token}}</td>
+        <td>{{transaction.cost}}</td>
+        <td>
+          <button type="button" mat-raised-button mat-button (click)="open_transaction(transaction)" id="cmdExplorerTransaction">
+            Voir sur Explorer
+          </button>
+        </td>
+      </tr>
+    </table>
+
+  </mat-expansion-panel>
 
   <div class="mat-elevation-z4">
     <button type="button" mat-raised-button mat-button (click)="open_graph()" id="cmdOpen">

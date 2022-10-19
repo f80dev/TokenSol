@@ -65,7 +65,7 @@ class NFT:
       self.network=object["network"]
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
-      self.tags=object["tags"]
+      self.tags=object["tags"] if "tags" in object else ""
 
 
 

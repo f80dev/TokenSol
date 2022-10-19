@@ -11,7 +11,6 @@
 #certbot certonly --standalone --email hhoareau@gmail.com -d server.f80lab.com
 #cp /etc/letsencrypt/live/server.f80lab.com/* /root/certs
 
-
 #Installation locale : user paul.dudule@gmail.com / mot de passe habituel
 
 FROM prestashop/prestashop:latest

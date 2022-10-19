@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --open --live-reload",
+    "start_4201": "ng serve --port 4201 --open --live-reload",
     "build": "ng build",
     "deploy": "ng build && gh-pages -d ./docs --repo https://github.com/f80dev/TokenSol.git -f -t true -b gh-pages -m \"update from gh-pages\"",
     "watch": "ng build --watch --configuration development",
