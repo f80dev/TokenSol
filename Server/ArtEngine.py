@@ -1,5 +1,4 @@
 import base64
-import io
 import os
 import re
 from io import BytesIO
@@ -20,46 +19,7 @@ from PIL.ImageOps import pad
 from reportlab.graphics import renderPM
 from svglib.svglib import svg2rlg
 
-from Tools import now, log, get_fonts,normalize
-
-
-
-def extract_image_from_string(content:str) -> Image:
-  if type(content)==bytes:
-    return Image.open(io.BytesIO(content))
-
-  if "base64" in content:
-    content=content.split("base64,")[1]
-
-  return Image.open(io.BytesIO(base64.b64decode(content)))
-
-
-def convert_to_gif(content:str,storage_platform=None,filename=None):
-  if content.startswith("http"):
-    image:Image=Image.open(io.BytesIO(requests.get(content).content))
-  else:
-    image:Image=extract_image_from_string(content)
-
-  if filename:
-    buffered=open(filename,"wb")
-  else:
-    buffered =io.BytesIO()
-
-  if image.is_animated:
-    frames = [f.convert("RGBA") for f in ImageSequence.Iterator(image)]
-    frames[0].save(buffered,format="GIF",save_all=True,append_images=frames[1:],optimize=True,quality=90)
-  else:
-    image.save(buffered, format="GIF",quality=90)
-
-  if storage_platform:
-    url=storage_platform.add(bytes(buffered.getvalue()),"image/gif")["url"]
-    return url
-
-  if filename:
-    buffered.close()
-    return filename
-
-  return buffered
+from Tools import now, log, get_fonts,normalize,extract_image_from_string
 
 
 
@@ -334,16 +294,6 @@ class Sticker(Element):
     to_paste.close()
     rc=Image.open(filename,"r")
     return rc
-
-
-  def convertImageFormat(self,imgObj, outputFormat=None):
-    newImgObj = imgObj
-    if outputFormat and (imgObj.format != outputFormat):
-      imageBytesIO = BytesIO()
-      imgObj.save(imageBytesIO, outputFormat)
-      newImgObj = Image.open(imageBytesIO)
-
-    return newImgObj
 
 
   def convert_image_to_animated(self,base:Image,n_frames:int):
@@ -690,7 +640,7 @@ class ArtEngine:
 
 
 
-  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp",data="",replacements={}):
+  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp",data="",replacements={},attributes=list()):
     """
     Génération des collections
     :param dir:
@@ -709,6 +659,7 @@ class ArtEngine:
     rc=list()
 
     self.sort()
+    self.attributes=attributes
 
     histo=[]
     index=0

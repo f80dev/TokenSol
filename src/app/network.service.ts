@@ -13,7 +13,7 @@ import {HttpClient, HttpHeaders} from "@angular/common/http";
 import {$$, encrypt, words} from "../tools";
 import {environment} from "../environments/environment";
 
-import {retry, timeout} from "rxjs";
+import {retry, Subject, timeout} from "rxjs";
 import {Collection, Operation} from "../operation";
 import {NFT, SolanaToken, SplTokenInfo, Validator} from "../nft";
 import {Layer} from "../create";
@@ -31,6 +31,7 @@ export class NetworkService {
   complement: string | undefined ="";
   fiat_unity: string="$";
   version: string="0.1";
+  network_change=new Subject<string>();
 
   constructor(
     private httpClient : HttpClient
@@ -66,6 +67,7 @@ export class NetworkService {
       let network_name=(value=="solana-devnet") ? "devnet" : "mainnet-beta";
       // @ts-ignore
       this._connection=new Connection(clusterApiUrl(network_name), 'confirmed');
+      this.network_change.next(value);
     }
 
   }
@@ -487,13 +489,12 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/layers/?preview="+preview,  _l);
   }
 
-  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98,target="preview",data={},platform="nftstorage") {
+  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98,target="preview",data={},attributes:any=[],platform="nftstorage") {
     let url=environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format="+target+"&limit="+limit+"&quality="+quality+"&platform="+platform;
 
-    let s_data=JSON.stringify(data)
-    s_data=btoa(encodeURIComponent(s_data))
+    url=url+"&data="+btoa(encodeURIComponent(JSON.stringify(data)));
+    url=url+"&attributes="+btoa(encodeURIComponent(JSON.stringify(attributes)));
 
-    url=url+"&data="+s_data;
     return this.httpClient.get(
       url,
       { headers: new HttpHeaders({ timeout: `${200000}` }) }
@@ -505,11 +506,11 @@ export class NetworkService {
   }
 
   //recoit un objet aux propriétés filename & content
-  upload(file: any ,platform="nftstorage",type="image/png"){
+  upload(file: any ,platform="nftstorage",type="image/png",convert=""){
     if(platform!="nfluent"){
-      return this.httpClient.post(environment.server+"/api/upload/?platform="+platform+"&type="+type,file);
+      return this.httpClient.post(environment.server+"/api/upload/?convert="+convert+"&platform="+platform+"&type="+type,file);
     }else{
-      return this.httpClient.post("https://server.f80lab.com:4242/api/upload/?platform="+platform+"&type="+type,file);
+      return this.httpClient.post("https://server.f80lab.com:4242/api/upload/?convert="+convert+"&platform="+platform+"&type="+type,file);
     }
   }
 
@@ -791,7 +792,7 @@ export class NetworkService {
     let url="";
     if(this.isElrond() && id){
       let suffixe="/"+id;
-      if(id.split("-").length==2){
+      if(id.split("-").length==3){
         suffixe="/nfts/"+id;
       }else {
         if (!id.startsWith("erd")) suffixe = "/collections/" + id;

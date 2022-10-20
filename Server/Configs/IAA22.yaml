@@ -1,0 +1,196 @@
+attributes:
+-   artiste: "G\xE9rard ZLOTYKAMIEN"
+    description: "2017- AEROSOL SUR PAPIER 76*51 (dimension papier) encadr\xE9 "
+    file: 1-
+    links: https://fr.wikipedia.org/wiki/G%C3%A9rard_Zlotykamien
+    name: EPHEMERE
+-   artiste: RNST
+    description: "Technique mixte sur carton31*59 cadre 73*45 2021 pi\xE8ce unique "
+    file: 2-
+    links: ''
+    name: SEDITION
+-   artiste: STOUL
+    description: "2021 peinture spray acrylique et enduit pierre sur disque vynile\
+        \ - encadr\xE9 30*30"
+    file: 3-
+    links: ''
+    name: ORU 331VII
+-   artiste: MOMIES 76
+    description: '2020 , Acrylique sur toile '
+    file: 4-
+    links: ''
+    name: MODULES 20.04
+-   artiste: JONONE
+    description: "S\xE9rigraphie, aquarelle et acrylique sur papier ARCHES 121*81"
+    file: 5-
+    links: ''
+    name: HPM 2018
+-   artiste: L'ATLAS
+    description: "100*100 - 2020 - acrylique et a\xE9rosol sur toile "
+    file: 6-
+    links: ''
+    name: WITHOUT FRONTIER
+-   artiste: Jordane SAGET
+    description: Acrylique sur toile 50*50
+    file: 7-
+    links: https://www.jordanesaget.com/
+    name: SANS TITRE
+-   artiste: L'ATLAS et SAGET (4 mains)
+    description: "100*100 - 2020 - acrylique et a\xE9rosol sur toile "
+    file: 8-
+    links: ''
+    name: SANS TITRE
+-   artiste: TANC
+    description: Acrylique sur toile 100*80
+    file: 9-
+    links: ''
+    name: SANS TITRE
+-   artiste: MAMBO
+    description: Peintures sur papier artisanal mexicain  30*42 cm
+    file: 10-
+    links: ''
+    name: SERIE STROKES
+-   artiste: MAMBO
+    description: Peintures sur papier artisanal mexicain  30*42 cm
+    file: 11-
+    links: ''
+    name: SERIE STROKES
+-   artiste: ORLINSKI
+    description: ''
+    file: 12-
+    links: ''
+    name: SANS TITRE
+-   artiste: BAUDELOCQUE
+    description: "Pastel \xE0 l'huile sur toile "
+    file: 13-
+    links: ''
+    name: MAGMA
+-   artiste: Maho
+    description: "Sculpture soudure plasma acier et inox 83*42 cm - aout 2022 - \"\
+        \ Ouvre ta bouche,  juge avec  justice et d\xE9fend le maheureux et le pauvre\"\
+        \ "
+    file: 14-
+    links: ''
+    name: PROVERBES 13:9
+-   artiste: Florent MAUSSION
+    description: "Tableau sur toile sommier s\xE9rie \" les endormis\" - encadrement\
+        \ 100% upcycling- "
+    file: 15-
+    links: ''
+    name: ANTOINE ET MATTHIEU
+-   artiste: Claudie LAKS
+    description: ''
+    file: 16-
+    links: https://www.claudielaks.info/
+    name: SANS TITRE
+-   artiste: Claudie LAKS
+    description: ''
+    file: 17-
+    links: https://www.claudielaks.info/
+    name: SANS TITRE
+-   artiste: CAILLAUD d'ANGERS
+    description: 1982 - 60*80
+    file: 18-
+    links: ''
+    name: EBLOUISSEMENT
+-   artiste: Jessica LESCS
+    description: Poudre de fusain et pierre noire 265*150
+    file: 19-
+    links: ''
+    name: PARTICULE VII
+-   artiste: Illes Sarkantyu
+    description: "Feuillets n\xB0 34, 2018, 29 \xD7 51 cm, tirage pigmentaire signe\u0301\
+        , e\u0301dition de 5 exemplaires + 2 E.A. (1/5)"
+    file: 20-
+    links: https://sarkantyu.com/
+    name: SANS TITRE
+-   artiste: BAMBA SOURANG
+    description: "Gabi - 120*50 encadr\xE9 "
+    file: 21-
+    links: ''
+    name: SANS TITRE
+-   artiste: 'BANGA '
+    description: 'Toile - aerosol et aerographe - 2021 - 100/80 '
+    file: 22-
+    links: ''
+    name: ART 4 PEACE
+-   artiste: 'IZA ZARO '
+    description: Toile - aerosol/posca/53x35
+    file: 23-
+    links: ''
+    name: SANS TITRE
+data:
+    collection: ''
+    description: ''
+    files: ''
+    nftlive:
+        datestart: ''
+        duration: 120
+        timestart: ''
+    operation: Main_devnet
+    properties: ''
+    sequence:
+    - Texte ici
+    symbol: ''
+    title: ''
+filename_format: image
+fontstyle:
+    color: '#FFFFFF'
+    name: AGENCYB.TTF
+    size: 12
+height: 2000
+layers:
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/16-claudielaks_-0x274e18a833a52c82.png?png
+        name: 16- claudie laks
+    -   image: https://server.f80lab.com:4242/api/images/10-mambo1_-0x229db8a43b556ee.png?png
+        name: 10- mambo 1
+    -   image: https://server.f80lab.com:4242/api/images/14-maho_0x5a937c91ffb8c373.png?png
+        name: 14- maho
+    -   image: https://server.f80lab.com:4242/api/images/19-jessicalescs_-0x3bf708328d8013bc.png?png
+        name: 19- jessica lescs
+    -   image: https://server.f80lab.com:4242/api/images/11-mambo2_0x5d403a836b36cc91.png?png
+        name: 11- mambo 2
+    -   image: https://server.f80lab.com:4242/api/images/17-claudielaks_-0x7df6a2d5929533cc.png?png
+        name: 17- claudie laks
+    -   image: https://server.f80lab.com:4242/api/images/20-illessarkantyu_0x7dd8286e5c00837c.png?png
+        name: 20- illes sarkantyu
+    -   image: https://server.f80lab.com:4242/api/images/2-rnst_0x116ebd86e7d6ec88.png?png
+        name: 2- rnst
+    -   image: https://server.f80lab.com:4242/api/images/23-izazaro_0x4e8032416e5a1595.png?png
+        name: '23- iza zaro '
+    -   image: https://server.f80lab.com:4242/api/images/18-cailleaud_angers_-0x2fe059f3ce29433b.png?png
+        name: 18- cailleau d_angers
+    -   image: https://server.f80lab.com:4242/api/images/4-momies_0x7d5a96ac0962f351.png?png
+        name: 4- momies
+    -   image: https://server.f80lab.com:4242/api/images/3-stoul_0x6df3ec747f4f8bc3.png?png
+        name: 3- stoul
+    -   image: https://server.f80lab.com:4242/api/images/22-banga_-0x76ca3e8515ea02e3.png?png
+        name: 22- banga
+    -   image: https://server.f80lab.com:4242/api/images/15-florentmaussion_-0x7ac881ac1bf8b0e9.png?png
+        name: 15- florent maussion
+    -   image: https://server.f80lab.com:4242/api/images/13-baudelocq_-0x7de538d622c04c1c.png?png
+        name: 13- baudelocq
+    indexed: true
+    name: oeuvres
+    params: {}
+    position: 0
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+limit: 20
+nftlive:
+    datestart: ''
+    duration: 120
+    timestart: ''
+platform: nfluent
+seed: 0
+text_to_add: Texte ici
+width: 2000
+x: 10
+y: 10

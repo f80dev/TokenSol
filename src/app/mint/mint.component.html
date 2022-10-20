@@ -40,13 +40,6 @@
       <mat-icon>visibility</mat-icon>
     </button>
 
-
-  </div>
-
-  <div id="command_panel" style="display: inline-block;margin:10px;">
-    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>
-    <br>
-
     <button type="button"
             mat-raised-button mat-button
             (click)="upload_all_tokens()">
@@ -58,7 +51,6 @@
             (click)="confirm_mint()">
       Tout miner
     </button>
-
 
     <button type="button"
             mat-raised-button mat-button
@@ -78,6 +70,20 @@
             (click)="clear()">
       Effacer
     </button>
+
+
+  </div>
+
+  <div id="command_panel" style="display: inline-block;margin:10px;">
+    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>
+
+
+    <div style="width: fit-content;display: inline-block;">
+      <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
+        {{create_option.label}}
+      </mat-checkbox>
+    </div>
+
 
   </div>
 

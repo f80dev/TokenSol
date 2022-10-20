@@ -1,6 +1,7 @@
 import base64
 import io
 import json
+import sys
 import time
 from os import listdir
 from os.path import exists
@@ -18,11 +19,10 @@ from erdpy.proxy import ElrondProxy
 from erdpy.transactions import Transaction
 from erdpy.accounts import Account,Address
 from erdpy.wallet import derive_keys
-from ArtEngine import convert_to_gif
 
 
 RESULT_SECTION="smartContractResults"
-LIMIT_GAS=200000000
+LIMIT_GAS=2000000
 PRICE_FOR_STANDARD_NFT=50000000000000000
 ELROND_KEY_DIR="./Elrond/PEM/"
 
@@ -263,7 +263,7 @@ class Elrond:
     if creator_or_collection.startswith("erd"):
       creator=self.toAccount(creator_or_collection)
       url=self._proxy.url+"/address/"+creator.address.bech32()+"/registered-nfts"
-      ids=api(url,"gateway=api")["data"]["tokens"]
+      ids=api(url,"api=gateway")["data"]["tokens"]
     else:
       ids=[creator_or_collection]
     rc=[]
@@ -448,9 +448,16 @@ class Elrond:
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
         attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
         nft=NFT(
-          name=item["name"],symbol="",tags=tags,collection={"id":col_id},attributes=attributes,
-          description=description,visual=item["media"][0]["url"],
-          creators=[item["creator"]],royalties=royalties)
+          name=item["name"],symbol="",
+          tags=tags,
+          collection={"id":col_id},
+          attributes=attributes,
+          description=description,
+          visual=item["media"][0]["url"],
+          creators=[item["creator"]],
+          royalties=royalties,
+          files=item["uris"]
+        )
         nft.network="elrond-"+self.network_name
         nft.address=item["identifier"]
         nft.owner=owners[i]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
@@ -595,7 +602,7 @@ class Elrond:
     if item:
       royalties=int(item["royalties"]*100) if "royalties" in item else 0
       attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=attr)
-      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,tags,item["url"],[item["creator"]],item["identifier"],royalties=royalties)
+      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,tags,item["url"],[item["creator"]],item["identifier"],royalties=royalties,files=item["uris"])
       nft.owner=item["owner"]
       nft.marketplace={"price":0,"quantity":int(item["supply"])}
       nft.network=self.network_name
@@ -679,14 +686,11 @@ class Elrond:
             creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
             address=nft["identifier"],
             royalties=int(nft["royalties"]),
-            marketplace={"quantity":1}
+            marketplace={"quantity":1},
+            files=nft["uris"]
           )
           _nft.network="elrond-"+self.network_name
           _nft.owner=_user.address.bech32()
-
-          # for role in self.getRoleForToken(collection["collection"]):
-          #   if "ESDTRoleNFTUpdateAttributes" in role["roles"]:nft["metadataOnchain"]["updateAuthority"].append(role["account"])
-          # nft["metadataOnchain"]["updateAuthority"]=",".join(nft["metadataOnchain"]["updateAuthority"])
 
           rc.append(_nft)
           if len(rc)>limit:break
@@ -745,7 +749,7 @@ class Elrond:
 
 
 
-  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", file="", tags=""):
+  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags=""):
     """
     Fabriquer un NFT au standard elrond
     https://docs.elrond.com/tokens/nft-tokens/#nftsft-fields
@@ -759,12 +763,9 @@ class Elrond:
     if collection is None:return None,None
     miner=self.toAccount(miner)
 
-    #hash = hex(int(now() * 1000)).upper().replace("0X", "")
-    hash=""
-
-
     if len(properties)>0 or len(tags)>0:
       _metadata={
+        "name":title,
         "id":now("hex"),
         "description":description,
         "attributes":properties
@@ -772,7 +773,9 @@ class Elrond:
       cid=ipfs.add(_metadata)
 
       log("Address des metadata: "+cid["url"])
-      s="tags:"+tags+";metadata:"+cid["Hash"]+"/"+_metadata["id"]+".json"
+      url_metadata=cid["url"]
+      s="metadata:"+cid["Hash"]
+      if len(tags)>0: s=s+"tags:"+tags
     else:
       s=description
 
@@ -780,6 +783,9 @@ class Elrond:
     s=strip_accents(s.replace("\n"," "))
     title=strip_accents(title)
     log("tags et attributes : "+s)
+
+    #hash = hex(int(now() * 1000)).upper().replace("0X", "")
+    _h=hex(hash(s) & sys.maxsize).replace("0x","")
 
     #Exemple de creation:
     #ESDTNFTCreate@4d41434f4c4c4543542d323565666366@01@4d6f6e546f6b656e@09c4@516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252@746167733a3b6d657461646174613a516d5947397a6e724c7a735252594d436d6e52444a7931436f7478676e4a384b6a5668746870485a553775436d59@68747470733a2f2f697066732e696f2f697066732f516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252
@@ -789,17 +795,16 @@ class Elrond:
            + "@" + int_to_hex(quantity,2) \
            + "@" + str_to_hex(title, False) \
            + "@" + int_to_hex(royalties*100,4) \
-           + "@" + hash \
+           + "@" + _h \
            + "@" + str_to_hex(s,False) \
-           + "@" + str_to_hex(visual,False)
+           + "@" + str_to_hex(visual,False) \
+           + "@" + str_to_hex(url_metadata,False)
 
     for f in files:
-      data=data+"@"+str_to_hex(f,False)
+      if len(f)>0:
+        data=data+"@"+str_to_hex(f,False)
 
     #Exemple de minage: ESDTNFTCreate@544f5552454946462d323864383938@0a@4c6120746f75722071756920636c69676e6f7465@09c4@516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b@746167733a3b6d657461646174613a516d54713845666d36416634616a35383847694d716b4d44524c475658794133773439315052464e413471546165@68747470733a2f2f697066732e696f2f697066732f516d64756e4a7a71377850443164355945415a6952647a34486d4d32366179414d574334687a63785a447735426b
-
-    if len(file)>0:
-      data=data+"@"+str_to_hex(file)
 
       #Exemple : Pass5An a 10 exemplaire avec le fichier png chargé et description dans description et tag dans tags
       # resultat ESDTNFTCreate@43414c5649323032322d356364623263@0a@5061737331416e@09c4@516d50373347703135464461367976474474397765526d7035684d575041734c4c63724e5a686d506e79366d4134@746167733a3b6d657461646174613a516d54713845666d36416634616a35383847694d716b4d44524c475658794133773439315052464e413471546165@68747470733a2f2f697066732e696f2f697066732f516d50373347703135464461367976474474397765526d7035684d575041734c4c63724e5a686d506e79366d4134

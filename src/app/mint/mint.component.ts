@@ -296,6 +296,13 @@ export class MintComponent implements OnInit {
 
   //Opére le minage.
   //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
+  create_options: any=[
+    {label:"Create",value:"ESDTRoleNFTCreate"},
+    {label:"Burn",value:"ESDTRoleNFTBurn"},
+    {label:"Update",value:"ESDTRoleNFTUpdateAttributes"},
+    {label:"Add URI",value:"ESDTRoleNFTAddURI"},
+    {label:"TransferRole",value:"ESDTTransferRole"}
+  ]
 
 
   miner(token: NFT) : Promise<any> {

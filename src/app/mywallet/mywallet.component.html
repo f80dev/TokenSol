@@ -55,6 +55,13 @@
           </tr>
         </table>
 
+        <div>
+          <a *ngFor="let file of nft.files" [href]="file" style="display: inline" target="_blank" [title]="file">
+            <mat-icon>link</mat-icon>
+          </a>
+
+        </div>
+
       </div>
     </app-reversebloc>
 

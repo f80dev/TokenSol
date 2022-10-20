@@ -1,6 +1,7 @@
 import base64
 import datetime as datetime
 import hashlib
+import io
 import json
 import os
 import smtplib
@@ -15,6 +16,8 @@ import pyqrcode
 import requests
 import unicodedata
 import yaml
+
+from PIL import Image,ImageSequence
 from cryptography.fernet import Fernet
 from fontTools import ttLib
 
@@ -331,3 +334,54 @@ def check_access_code(code:str) -> str:
   #On vérifie la resence du timestamp
   if ts!=get_timestamp_for_access_code(): return None
   return s.split("ts:")[0]
+
+
+
+def convertImageFormat(imgObj, outputFormat=None):
+  newImgObj = imgObj
+  if outputFormat and (imgObj.format != outputFormat):
+    imageBytesIO = BytesIO()
+    imgObj.save(imageBytesIO, outputFormat)
+    newImgObj = Image.open(imageBytesIO)
+
+  return newImgObj
+
+
+def extract_image_from_string(content:str) -> Image:
+  if type(content)==bytes:
+    return Image.open(io.BytesIO(content))
+
+  if "base64" in content:
+    content=content.split("base64,")[1]
+
+  return Image.open(io.BytesIO(base64.b64decode(content)))
+
+
+
+def convert_to(content:str,storage_platform=None,filename=None,format="GIF",quality=90):
+  if content.startswith("http"):
+    image:Image=Image.open(io.BytesIO(requests.get(content).content))
+  else:
+    image:Image=extract_image_from_string(content)
+
+  if filename:
+    buffered=open(filename,"wb")
+  else:
+    buffered =io.BytesIO()
+
+  if image.is_animated:
+    frames = [f.convert("RGBA") for f in ImageSequence.Iterator(image)]
+    frames[0].save(buffered,format=format,save_all=True,append_images=frames[1:],optimize=True,quality=quality)
+  else:
+    image.save(buffered, format=format,quality=quality)
+
+  if storage_platform:
+    url=storage_platform.add(bytes(buffered.getvalue()),"image/gif")["url"]
+    return url
+
+  if filename:
+    buffered.close()
+    return filename
+
+  return buffered
+

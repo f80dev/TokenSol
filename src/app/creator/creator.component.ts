@@ -57,6 +57,7 @@ export class CreatorComponent implements OnInit {
   max_items: number=8;
   config_name: string="maconfig";
   palette: any={};
+  attributes: any={};
 
   constructor(
     public network:NetworkService,
@@ -157,7 +158,7 @@ export class CreatorComponent implements OnInit {
       })
     }else{
       this.network.wait("Chargement des visuels");
-      this.network.upload(body,this.sel_platform).subscribe((r:any)=>{
+      this.network.upload(body,this.sel_platform,"image/png","webp").subscribe((r:any)=>{
         this.network.wait();
         layer.elements.push({image:r.url,name:normalize(evt.filename)});
       },(err:any)=>{
@@ -235,7 +236,7 @@ export class CreatorComponent implements OnInit {
         this.network.wait("Fabrication de la collection ...");
         showMessage(this,"L'aperçu se limite à 10 NFT maximum");
 
-        this.network.get_collection(Math.min(this.limit,10),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"preview",this.data).subscribe((r:any)=>{
+        this.network.get_collection(Math.min(this.limit,10),this.filename_format,this.sel_ext,this.col_width+","+this.col_height,this.seed,this.quality,"preview",this.data,this.attributes).subscribe((r:any)=>{
           this.show_download_link();
           this.network.wait("");
           this.previews=r;
@@ -450,6 +451,7 @@ export class CreatorComponent implements OnInit {
           };
           if(!this.data.hasOwnProperty("nftlive"))this.data.nftlive={datestart:"",timestart:"",duration:120};
 
+          this.attributes=r.attributes;
           this.col_width=r.width;
           this.col_height=r.height;
           this.filename_format=r.filename_format;
@@ -664,7 +666,7 @@ export class CreatorComponent implements OnInit {
           reader.readAsDataURL(blob)
           reader.onload=()=>{
             let s=reader.result;
-            this.network.upload(s,this.sel_platform,blob.type).subscribe((r:any)=>{
+            this.network.upload(s,this.sel_platform,blob.type,"webp").subscribe((r:any)=>{
               layer.elements.push({image:r.url});
               this.network.wait("")
             },()=>{showError(this);})
@@ -736,6 +738,8 @@ export class CreatorComponent implements OnInit {
     })
   }
 
+
+
   on_upload_attributs($event: any) {
     this.fill_layer(0,200,200,0,()=>{
       this.network.upload_attributes(this.config_name,$event.file.split("base64,")[1]).subscribe((resp:any)=>{
@@ -743,6 +747,9 @@ export class CreatorComponent implements OnInit {
       })
     });
   }
+
+
+
 
   clear_data() {
     this.data = {

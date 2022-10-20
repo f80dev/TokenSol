@@ -26,6 +26,12 @@
     Nouveau wallet
   </button>
 
+  <button
+    type="button" aria-label="Ajouter" mat-raised-button
+    (click)="open_elrond_wallet()">
+    Wallet Elrond
+  </button>
+
   <app-upload-file extensions=".key,.txt"
                    style="margin:10px;"
                    (uploaded)="onuploaded_key_file($event)">Charger les fichiers de clé

@@ -114,4 +114,10 @@ export class KeysComponent implements OnInit {
   open_collections(key: CryptoKey) {
     this.router.navigate(["collections"],{queryParams:{owner:key.pubkey}});
   }
+
+  open_elrond_wallet() {
+    let url="https://wallet.elrond.com/unlock/pem"
+    if(this.network.network.indexOf("devnet")>-1)url=url.replace("wallet","devnet-wallet");
+    open(url,"elrondwallet")
+  }
 }

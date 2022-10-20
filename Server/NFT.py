@@ -1,3 +1,4 @@
+import base64
 import json
 
 import yaml
@@ -35,6 +36,7 @@ class NFT:
                address: str="",
                royalties: int=0,
                marketplace:dict={},
+               files:list=[],
                object=None) -> object:
     if object is None:
       self.name=name
@@ -48,6 +50,7 @@ class NFT:
       self.tags=tags
       self.royalties=royalties
       self.marketplace=marketplace
+      self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
     else:
       self.name=object["name"]
       self.symbol=object["symbol"]

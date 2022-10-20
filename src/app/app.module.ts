@@ -79,6 +79,8 @@ import {VisgraphComponent} from "./visgraph/visgraph.component";
 import {GoogleLoginProvider, SocialAuthServiceConfig, SocialLoginModule} from "@abacritt/angularx-social-login";
 import {SocketIoConfig, SocketIoModule} from "ngx-socket-io";
 import { SplashComponent } from './splash/splash.component';
+import { TableComponent } from './table/table.component';
+import {NgxDatatableModule} from "@swimlane/ngx-datatable";
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -128,16 +130,17 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
     AutovalidateComponent,
     ValidatorsComponent,
     AnalyticsComponent,
-    SplashComponent
+    SplashComponent,
+    TableComponent
   ],
     imports: [
         BrowserModule,
-      ShareButtonsModule,
-      SocialLoginModule,
-      SocketIoModule.forRoot(config),
+        ShareButtonsModule,
+        SocialLoginModule,
+        SocketIoModule.forRoot(config),
         BrowserAnimationsModule,
         ColorPickerModule,
-      ClipboardModule,
+        ClipboardModule,
         HttpClientModule,
         MatDialogModule,
         NgxJsonViewerModule,
@@ -169,7 +172,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         MatExpansionModule,
         WebcamModule,
         MatTableModule,
-        GooglePayButtonModule
+        GooglePayButtonModule,
+        NgxDatatableModule
     ],
   providers: [
 

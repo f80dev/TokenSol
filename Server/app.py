@@ -21,7 +21,7 @@ from zipfile import ZipFile
 
 from flask_socketio import SocketIO, emit
 from StoreFile import StoreFile
-from Tools import get_operation, decrypt, get_access_code_from_email,normalize
+from Tools import get_operation, decrypt, get_access_code_from_email, normalize, send, convert_to
 
 import py7zr
 import pyqrcode
@@ -36,7 +36,7 @@ from werkzeug.datastructures import FileStorage
 from yaml import dump
 
 import GitHubStorage
-from ArtEngine import ArtEngine, Layer, Sticker, convert_to_gif
+from ArtEngine import ArtEngine, Layer, Sticker
 from Elrond.Elrond import Elrond, ELROND_KEY_DIR
 from GoogleCloudStorageTools import GoogleCloudStorageTools
 from NFT import NFT
@@ -218,6 +218,7 @@ def layers(body=None):
   s=None
   for elt in elts:
     s=None
+    log("Traitement de "+str(elt))
     if elt:
       if "text" in elt and elt["text"]:
         s=Sticker(text=elt["text"]["text"],x=elt["text"]["x"],y=elt["text"]["y"],
@@ -344,6 +345,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     seed=int(request.args.get("seed","0"))
     ext=request.args.get("image","webp")
     data=request.args.get("data","")
+    attributes=request.args.get("attributes","")
     nft.name=request.args.get("name","mycollection").replace(".png","")
 
   log("On détermine le nombre d'image maximum générable")
@@ -374,7 +376,8 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     height=int(size[1]),
     quality=quality,
     data=s_data,
-    ext=ext
+    ext=ext,
+    attributes= json.loads(urllib.parse.unquote(str(base64.b64decode(attributes), "utf8"))) if len(attributes)>0 else []
   )
 
   for f in os.listdir("./temp"):
@@ -1547,6 +1550,7 @@ def configs(name:str="",format=""):
   if len(name)==0:
     return jsonify({"files":os.listdir("./Configs")})
   else:
+    #Utilisé par load_config
     if request.method=="GET" or format=="dict":
       if len(format)==0: format=request.args.get("format","yaml")
       filename="./Configs/"+name.replace(".yaml","")+".yaml"
@@ -1973,6 +1977,12 @@ def upload():
       "content":content,
       "type":request.args.get("type","")
     }
+
+  if request.args.get("convert","")!="":
+    format=request.args.get("convert","webp")
+    buffered=convert_to(body["content"],format=format,quality=95)
+    body["content"]="data:image/"+format+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
+    body["type"]="image/"+format
 
   if body["type"]=="":
     if "filename" in body and body["filename"].startswith("qrcode:"):
@@ -2438,7 +2448,7 @@ def scan_for_access():
 
   validator=decrypt(_data["validator"])
   log("Validateur en charge de la validation : "+validator)
-  Tools.send(socketio,validator, {"address":_data["address"]})
+  send(socketio,validator, {"address":_data["address"]})
 
   log("Ajout de l'adresse "+_data["address"]+" pour validation")
   dao.db["validators"].update_one({"id":validator},{"$set": {"user":_data["address"]}})

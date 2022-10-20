@@ -67,6 +67,10 @@ export class CollectionsComponent implements OnInit {
     this.user.addr_change.subscribe((addr)=>{
       this.refresh(addr);
     })
+
+    this.network.network_change.subscribe((new_network)=>{
+      this.refresh(this.user.addr);
+    })
   }
 
 
@@ -110,7 +114,6 @@ export class CollectionsComponent implements OnInit {
 
   open_inspire() {
     this.network.open_gallery(this.user.addr);
-
   }
 
 
@@ -123,7 +126,7 @@ export class CollectionsComponent implements OnInit {
 
   open_explorer(col:Collection) {
     //https://devnet-explorer.elrond.com/collections/
-    open("https://"+(this.network.isMain() ? "" : "devnet")+"-explorer.elrond.com/collections/"+col.id);
+    open("https://"+(this.network.isMain() ? "" : "devnet-")+"explorer.elrond.com/collections/"+col.id);
   }
 
   open_analyser(col: Collection) {
