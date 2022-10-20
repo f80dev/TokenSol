@@ -53,6 +53,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
     link:"",
     visual: undefined,
     name:"Toutes",
+    roles: [],
     options: {
       canAddSpecialRoles: true,
       canChangeOwner: true,
@@ -200,6 +201,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
       let collection:Collection= {
         name: this.sel_ope?.nftlive!.nft_target.collection,
         id: undefined,
+        roles:[],
         visual: undefined,
         description: undefined,
         owner: undefined,

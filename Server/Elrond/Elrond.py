@@ -22,7 +22,7 @@ from erdpy.wallet import derive_keys
 
 
 RESULT_SECTION="smartContractResults"
-LIMIT_GAS=2000000
+LIMIT_GAS=200000000
 PRICE_FOR_STANDARD_NFT=50000000000000000
 ELROND_KEY_DIR="./Elrond/PEM/"
 
@@ -349,6 +349,29 @@ class Elrond:
       return t
 
 
+  def set_roles(self,collection_id,owner):
+    owner=self.toAccount(owner)
+    data = "setSpecialRole@" + str_to_hex(collection_id,False) + "@" + owner.address.hex() \
+           + "@" + str_to_hex("ESDTRoleNFTCreate",False) \
+           + "@" + str_to_hex("ESDTRoleNFTBurn",False) \
+           + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
+
+    sleep(3)
+
+    #TODO pour l'instant ne fonctionne pas
+    #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
+
+    if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
+
+    #Exemple d'usage de setSpecialRole sur la collection présente
+    #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
+
+    t = self.send_transaction(owner,
+                              Account(address=NETWORKS[self.network_name]["nft"]),
+                              owner, 0, data)
+    sleep(5)
+    return t
+
 
 
   def add_collection(self, owner:Account, collection_name:str,options:dict,type="SemiFungible"):
@@ -403,26 +426,7 @@ class Elrond:
         for result in t[RESULT_SECTION]:
           if len(result["data"].split("@"))>2:
             collection_id = result["data"].split("@")[2]
-
-            data = "setSpecialRole@" + collection_id + "@" + owner.address.hex() \
-                   + "@" + str_to_hex("ESDTRoleNFTCreate",False) \
-                   + "@" + str_to_hex("ESDTRoleNFTBurn",False) \
-                   + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
-
-            sleep(3)
-
-            #TODO pour l'instant ne fonctionne pas
-            #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
-
-            if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
-
-            #Exemple d'usage de setSpecialRole sur la collection présente
-            #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
-
-            t = self.send_transaction(owner,
-                                      Account(address=NETWORKS[self.network_name]["nft"]),
-                                      owner, 0, data)
-            sleep(5)
+            self.set_roles(hex_to_str(collection_id),owner)
 
       else:
         log("Erreur de création de la collection. Consulter "+self.getExplorer(owner.address.bech32(),"address"))

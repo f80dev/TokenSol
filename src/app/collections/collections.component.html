@@ -35,15 +35,24 @@
       <th>Name</th>
       <th>Identifiant</th>
       <th>Propriétés</th>
+      <th>Roles</th>
       <th>Actions</th>
     </tr>
     <tr *ngFor="let col of user.collections">
       <td>{{col.name}}</td>
       <td ><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
-      <td>
+      <td style="max-width: 250px;overflow: scroll;font-size: x-small;">
         {{col.options | json}}
       </td>
+      <td style="max-width: 350px;overflow: scroll;font-size: x-small;">
+        {{col.roles | json}}
+      </td>
       <td>
+        <button type="button" mat-raised-button mat-button (click)="set_roles(col)">
+          Roles
+        </button>
+
+
         <button type="button" mat-raised-button mat-button (click)="open_collection(col)">
           Voir les NFTs
         </button>

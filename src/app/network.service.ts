@@ -811,4 +811,12 @@ export class NetworkService {
     //Associer un fichier d'attributs au visuel des calques
     return this.httpClient.post(environment.server+"/api/upload_attributes_file/"+config_name+"/",file);
   }
+
+  set_role(collection_id: string, owner: string, network: string) {
+    return this.httpClient.post(environment.server+"/api/set_role_for_collection/",{
+      network:network,
+      collection_id:collection_id,
+      owner:owner
+    });
+  }
 }

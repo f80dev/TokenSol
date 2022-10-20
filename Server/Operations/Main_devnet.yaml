@@ -1938,7 +1938,7 @@ validate:
   filters:
     mint_authority: ''
     collections:                #Liste des collections que le visiteur doit posséder pour avoir l'accès
-      - "NFLUENTA-4fcc6c"
+      - "VENTEIAA-cd1447"
     symbol: ''                  #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
 
@@ -1963,7 +1963,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "ENCHERES-4c7520"
+    - "VENTEIAA-cd1447"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -2122,7 +2122,7 @@ security:
 #section détaillant la possibilité de faire des photos
 nftlive:
   collections: #design la collection qui donne le droit d'utiliser NFTLive
-    - "NFLUENTA-4fcc6c"
+    - "VENTEIAA-cd1447"
 
   configuration: nftlive    #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
   limit: 10                 #nombre de NFT à proposer à l'utilisateurs

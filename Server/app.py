@@ -2205,6 +2205,16 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
   return rc
 
 
+@app.route('/api/set_role_for_collection/',methods=["POST"])
+def set_role_for_collection():
+  collection_id=request.json['collection_id']
+  owner=request.json['owner']
+  network=request.json["network"]
+  if "elrond" in network:
+    t=Elrond(network).set_roles(collection_id,owner)
+    return jsonify({"transaction":t})
+
+
 
 
 

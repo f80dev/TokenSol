@@ -21,6 +21,7 @@ export class CollectionsComponent implements OnInit {
     price: undefined,
     type: undefined,
     visual: undefined,
+    roles: [],
     link: "",
     options:{
       canWipe:true,
@@ -131,5 +132,14 @@ export class CollectionsComponent implements OnInit {
 
   open_analyser(col: Collection) {
     this.router.navigate(["analytics"],{queryParams:{collection:col.id}});
+  }
+
+  set_roles(col: Collection) {
+    if(col && col.id){
+      this.network.set_role(col.id,this.user.addr,this.network.network).subscribe(()=>{
+        showMessage(this,"role affected");
+      })
+    }
+
   }
 }

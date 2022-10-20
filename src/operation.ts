@@ -7,6 +7,7 @@ export interface Collection {
   owner : string | undefined
   price: number | undefined
   type: string | undefined
+  roles: any[] | undefined
   link: string | ""
 
   options: {
