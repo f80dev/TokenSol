@@ -4,7 +4,6 @@ import {RouterModule, Routes} from "@angular/router";
 import {HelpComponent} from "./help/help.component";
 import {AboutComponent} from "./about/about.component";
 import {BuyComponent} from "./buy/buy.component";
-import {FaucetComponent} from "./faucet/faucet.component";
 import {MywalletComponent} from "./mywallet/mywallet.component";
 import {KeysComponent} from "./keys/keys.component";
 import {MintComponent} from "./mint/mint.component";
@@ -42,7 +41,6 @@ const routes: Routes = [
   { path: 'validators', component: ValidatorsComponent },
   { path: 'analytics', component: AnalyticsComponent },
   { path: 'about', component: AboutComponent },
-  { path: 'reload', component: FaucetComponent },
   { path: 'faqs', component: FaqsComponent },
   { path: 'login', component: LoginComponent },
   { path: 'collections', component: CollectionsComponent},

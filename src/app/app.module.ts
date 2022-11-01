@@ -13,7 +13,6 @@ import { MatListModule } from '@angular/material/list';
 import { HelpComponent } from './help/help.component';
 import { AboutComponent } from './about/about.component';
 import { BuyComponent } from './buy/buy.component';
-import { FaucetComponent } from './faucet/faucet.component';
 import { NftsComponent } from './nfts/nfts.component';
 import { MywalletComponent } from './mywallet/mywallet.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -90,7 +89,6 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
     HelpComponent,
     AboutComponent,
     BuyComponent,
-    FaucetComponent,
     NftsComponent,
     MywalletComponent,
     PromptComponent,

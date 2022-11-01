@@ -68,13 +68,14 @@
   <div style="width: 100%;text-align: center">
     <div style="width: fit-content;display: inline-block" *ngIf="showNfluentWalletConnect">
       <img
+        *ngIf="nfluent_wallet_connect_qrcode.length>0"
         title="Flasher avec votre wallet nfluent"
         [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
         [src]="nfluent_wallet_connect_qrcode"
         style="cursor: copy;margin: 10px;" [style.width]="size"><br>
       <small>{{title}}</small>
     </div>
-    <img [src]="qrcode" *ngIf="showWalletConnect"
+    <img [src]="qrcode" *ngIf="showWalletConnect && qrcode.length>0"
          title="Flasher avec un wallet compatible wallet connect"
          style="max-width: 150px;margin: 10px;" [style.width]="size">
   </div>

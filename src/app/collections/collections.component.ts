@@ -45,6 +45,8 @@ export class CollectionsComponent implements OnInit {
     {label:"Modifiable",name:"canUpgrade",value:true},
     {label:"Role spéciaux",name:"canAddSpecialRoles",value:true},
   ]
+  perms: any;
+
 
   constructor(
     public network:NetworkService,
@@ -142,4 +144,16 @@ export class CollectionsComponent implements OnInit {
     }
 
   }
+
+  has_perm(col: Collection, address: string, perm: any) {
+    // if(col.roles){
+    //   for(let role of col.roles){
+    //
+    //   }
+    // }
+    return "checked";
+
+  }
+
+
 }

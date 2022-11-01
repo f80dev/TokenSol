@@ -73,8 +73,18 @@ def send(socketio,event_name: str, message=dict()):
 
 
 def open_html_file(name:str,replace=dict(),domain_appli=""):
-  if not name.endswith("html"):name=name+".html"
-  with open("./"+name, 'r', encoding='utf-8') as f: body = f.read()
+  """
+  ouvre un fichier html et remplace le code avec le dictionnaire de remplacement
+  :param name:
+  :param replace:
+  :param domain_appli:
+  :return:
+  """
+  if "<" in name and ">" in name:
+    body=name
+  else:
+    if not name.endswith("html"):name=name+".html"
+    with open("./"+name, 'r', encoding='utf-8') as f: body = f.read()
 
   style="""
         <style>

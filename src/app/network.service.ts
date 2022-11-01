@@ -639,9 +639,12 @@ export class NetworkService {
     return this.httpClient.get<NFT[]>(environment.server+"/api/nfts_from_operation/"+ope);
   }
 
-  transfer_to(mint_addr: string, to_addr: string,owner:string,network="") {
+  transfer_to(mint_addr: string, to_addr: string,owner:string,network="",mail_content="mail_new_account") {
     if(network.length==0)network=this.network;
-    return this.httpClient.get(environment.server+"/api/transfer_to/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network);
+    return this.httpClient.post(
+      environment.server+"/api/transfer_to/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network,
+      {mail_content:mail_content}
+    );
   }
 
   generate_svg(file_content:string,text_to_add:string,layer_name:string) {

@@ -1,44 +1,18 @@
-#Ce fichier décrit les opérations de distribution de NFT via le service d'nfluent (https://nfluent.io)
 
-#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)
-
-#une fois terminé, ce fichier doit être chargé a l'adresse : https://tokensol.nfluent.io/build
-
-#notes:
-# $nfluent_appli$ est utilisé dans les API pour désigner l'appli nfluent. A terme il est possible d'utiliser des applis propriétaires
-
-
-id: "Main_devnet"          #cet Id doit être cohérent avec le nom du fichier
-title: "Opération fictive / Modele principal"     #est le titre usuel de l'operation qui apparait pour les validateurs
-description: "Modèle principal"
+id: "IAA22"          #cet Id doit être cohérent avec le nom du fichier
+title: "IAA22"     #est le titre usuel de l'operation qui apparait pour les validateurs
+description: "IAA"
 website: "https://nfluent.io"   #désigne le site concerné par l'opération
 version: 0.1
-network: elrond-devnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
+network: elrond-mainnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
 wallet: "$nfluent_appli$/wallet"
-
-#Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
-lazy_mining:
-  metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
-  content_storage: NFTstorage         #plateforme de destibation des images
-  miner:                              #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection
-#!!!!! Attention le mineur doit être propriétaire de la collection de minage
-
-
-#section détaillant l'événement associé à cette opération
-event:
-  title: Ventes aux enchères
-  place: 12 rue Martel, 75010 Paris   #Lieu de l'événement
-  web:
-  dates:                              #Liste des périodes d'ouvertures
-    - start: 04/02/1971 20:00
-      end: 04/02/1971 22:00
 
 
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "SACASOUK-152e32"          #Id de la collection. A priori cet id doit se trouver dans les sources
-    name: "SacASouk"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
+  - id: "VENTEIAA-7d39a9"          #Id de la collection. A priori cet id doit se trouver dans les sources
+    name: "Ventes aux enchere"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
     visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
     description: Une collection de NFTs
 
@@ -63,21 +37,6 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
     height: fit-content
     min-height: 100vh
 
-#Mail envoyé aux personnes ne disposant pas d'un wallet
-#les champs remarquables utilisablent sont
-# {{mini_wallet}} : adresse du wallet nfluent
-# {{url_wallet}}: adresse du wallet web
-# {{words}}: seed du wallet
-# {{qrcode}}: seed au format QRCODE
-new_account:
-  mail: "Bienvenue, votre NFT sac a souk est disponible dans votre <a href='{{mini_wallet}}'>wallet</a>"
-  max_account_by_email: 1     #fixe un nombre de compte maximum par email. S'il existe une limite le système doit stocker l'email
-  to_start:                   #permet d'attribuer de la monnaie au nouvau client
-    money:                    #identifiant de la monnaie (ERC20)
-    bank:                     #account fournissant la monnaie
-    amount: 0                 #montant à attribuer
-
-
 
 #Fonctionnement de la section data ______________________________________________________________________________________________________________________________
 #localisation du fichier contenant les NFTs Ã proposer
@@ -88,48 +47,17 @@ new_account:
 #connexion désigne la localisation de la base de donnée. Cela peut être un alias (server, cloud, cloud2) ou
 #plus simplement une chaine de connexion comme "mongodb+srv://Hhoareau:<password>@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
 #"mongodb://admin:<password>@server.f80lab.com:27017"
+
 data:
   sources:
     - type: network
       active: True
-      connexion: elrond-devnet
+      connexion: elrond-mainnet
       filter:
         limit: 200
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
-        - "SACASOUK-152e32"
-
-
-    - type: database
-      active: False
-      connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
-      dbname: nfluent           #Nom de la base de données contenant les NFTS
-      filter:
-        limit: 200
-
-
-#    - type: json              #Les NFTs sont contenus dans un fichier json
-#      active: False
-#      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
-
-
-#    - type: web              #Les NFTs sont contenus dans un fichier json
-#      active: False
-      #connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
-
-
-    - type: file            #permet d'aller chercher les NFT dans un fichier
-      active: False
-      connexion: ""         #designe la localisation du fichier contenant les NFT
-      nfts: []
-
-    - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
-      active: False
-      connexion: "Exemple.yaml"
-      seed: 10                          #Permet de générer toujours la même séquence
-      limit: 5                          #Nombre de nft à générer
-      creators:                         #Compte à utiliser comme créateurs
-        - "paul"
+        - "VENTEIAA-7d39a9"
 
 
 #Section utilisée pour personnalisé les messages envoyés aux clients
@@ -143,7 +71,7 @@ contact:
 #Section responsable du process de validation des NFTs
 validate:
   title: "Bienvenu dans l'application de validation des NFT nfluent"    #Message d'acceuil des validateurs
-  visible: True           #La section de validation est visible
+  visible: False           #La section de validation est visible
   camera: True            #Si possible, utilise la caméra du device
   manual_input: True      #Le validateur peut saisir manuellement l'adresse du NFT du visiteur
 
@@ -237,7 +165,7 @@ validate:
   filters:
     mint_authority: ''
     collections:                #Liste des collections que le visiteur doit posséder pour avoir l'accès
-      - "SACASOUK-152e32"
+      - "VENTEIAA-cd1447"
     symbol: ''                  #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
 
@@ -251,7 +179,7 @@ payment: #Section désignant le réceptionnaire des payment via google pay : htt
 
 
 store:              #Cette section regroupe l'ensemble des propriétés liés à la vente des NFTs via des stores dédiés
-  visible: True
+  visible: False
   application: '$nfluent_appli$/store'    #Désigne l'application en charge de la vente
 
   authentification:
@@ -262,7 +190,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "SACASOUK-152e32"
+    - "VENTEIAA-cd1447"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -312,22 +240,22 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 dispenser:
   visible: True
   application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
-  collections:                                      #Liste des collections concernée par la distribution (si vide toutes les collections disponibles depuis la source sont prises en compte)
+  collections: []
   authentification:                                 #il s'agit d'authentifier le destinataire (et non une auto-authentification)
     address: True
-    webcam: True
+    webcam: False
     email: True
 
 
 airdrop:
-  visible: True
+  visible: false
   collections: []
 
 
 #Distribution de NFT au sein d'une ou plusieurs collecion à l'aveugle
 #le destinataire donne juste une adresse mail
 candymachine:
-  visible: True
+  visible: False
 
   connexion:
     wallet_connect: False          #Permet de se connecter à la candy machine via wallet connect
@@ -356,7 +284,7 @@ candymachine:
 #Fonctionnement de la section lottery ________________________________________________________________________________________________________________________________
 #Section destinée la distribution de NFT gratuitement
 lottery:
-  visible: True     #Rends la section visible ou pas en production
+  visible: False     #Rends la section visible ou pas en production
   miner: paul
 
   messages:

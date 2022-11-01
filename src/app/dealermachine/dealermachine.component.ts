@@ -138,7 +138,7 @@ export class DealermachineComponent implements OnInit {
       if(mint_addr!=""){
         $$("Ce token est déjà miné, on se contente de le transférer");
         this.message="Envoi en cours";
-        this.network.transfer_to(mint_addr!,addr,this.nft!.owner!).subscribe((r:any)=>{
+        this.network.transfer_to(mint_addr!,addr,this.nft!.owner!,this.network.network,this.ope?.new_account.mail).subscribe((r:any)=>{
           this.message="";
           this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;
           if(this.selfWalletConnexion){

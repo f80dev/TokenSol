@@ -61,6 +61,16 @@ export interface Operation {
     style: any
   } | null
 
+  new_account: {
+    mail: string | ""
+    max_account_by_email: number
+    to_start: {
+      money: string
+      bank: string
+      amount: number
+    } | null
+  }
+
   data: {
     sources: Source[]
   }

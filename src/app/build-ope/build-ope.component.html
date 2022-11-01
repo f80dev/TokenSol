@@ -1,16 +1,5 @@
 <div class="mainform">
   <div class="mat-display-3 color-primary">Gestion des opérations</div>
-  <mat-expansion-panel>
-    <mat-expansion-panel-header>Qu'est-ce qu'une opération ?</mat-expansion-panel-header>
-    une <strong>opération</strong> est un fichier regroupant
-    <ul>
-      <li>la liste des wallets utilisés pour le minage et comme créateur des nfts </li>
-      <li>la liste des validateurs (adresses mails)</li>
-      <li>le processus de validation</li>
-      <li>le processus de génération automatique des NFTs (en construction)</li>
-      <li>le processus de distribution 'libre-service' des NFTs (en construction)</li>
-    </ul>
-  </mat-expansion-panel>
 
   <mat-expansion-panel>
     <mat-expansion-panel-header>Gestion des opérations</mat-expansion-panel-header>
@@ -195,7 +184,7 @@
         </td>
           <td>
             Miner: {{operation.sel_ope.lazy_mining.miner}}<br>
-            Target: {{operation.network}}
+            Target: {{operation.network.network}}
           </td>
         </tr>
       </table>
@@ -208,16 +197,21 @@
         <table>
           <tr>
             <th>Propriétés</th>
-            <th>Collections distribuables</th>
+            <th>NFTs distribuables</th>
           </tr>
 
           <tr>
             <td>
-              Mineur: {{operation.sel_ope.lazy_mining!.miner}}<br>
+              <div *ngIf="operation.sel_ope!.lazy_mining">
+                Mineur: {{operation.sel_ope!.lazy_mining!.miner}}
+              </div>
               Network: {{operation.sel_ope.network}}
             </td>
-            <td>
-              <ul>
+            <td td *ngIf="operation.sel_ope.dispenser!.collections!.length==0">
+              Tous les NFTs des sources
+            </td>
+            <td *ngIf="operation.sel_ope.dispenser!.collections!.length>0">
+              <ul >
                 <li *ngFor="let col of operation.sel_ope.dispenser!.collections!">
                   {{col}}
                 </li>

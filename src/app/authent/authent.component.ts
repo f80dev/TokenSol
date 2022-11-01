@@ -3,7 +3,7 @@
 import {WalletProvider} from "@elrondnetwork/erdjs-web-wallet-provider";
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, isLocal, showMessage} from "../../tools";
+import {$$, isLocal, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {WalletConnectProvider} from "@elrondnetwork/erdjs-wallet-connect-provider/out";
 import {environment} from "../../environments/environment";
@@ -88,7 +88,8 @@ export class AuthentComponent implements OnInit,OnDestroy {
           $$("Déconnection");
           this.strong=false;
           this.onlogout.emit();
-        }
+        },
+
       }
     );
   }
@@ -106,6 +107,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
       $$("Le validator est enregistré sour "+this.validator)
       this.autorized_users=result.addresses;
       this.socket.on(result.id,(data:any) => {
+        $$("Réception d'un message de la part du serveur",data);
         let user_to_validate=data.address;
         if(this.autorized_users.length==0 || this.autorized_users.indexOf(user_to_validate)>-1){
           this.onauthent.emit({address:user_to_validate,strong:true,nftchecked:true});
@@ -114,6 +116,9 @@ export class AuthentComponent implements OnInit,OnDestroy {
         }
       });
       this.nfluent_wallet_connect_qrcode=environment.server+"/api/qrcode/"+encodeURIComponent(result.access_code);
+      if(this.title=="" && this.showNfluentWalletConnect)this.title="Pointer ce QRcode avec votre 'NFluent Wallet'";
+    },(err)=>{
+      showError(this);
     })
   }
 
@@ -121,11 +126,11 @@ export class AuthentComponent implements OnInit,OnDestroy {
     window.onbeforeunload = () => this.ngOnDestroy();
 
     if(this.title=="" && this.showWalletConnect)this.title="Pointer ce QRcode avec un wallet compatible 'Wallet Connect'";
-    if(this.title=="" && this.showNfluentWalletConnect)this.title="Pointer ce QRcode avec votre 'NFluent Wallet'";
 
     if (this.provider) {
       if (this.showCollections && this.checknft && this.checknft.length > 0) {
         this.api.get_collections(this.checknft.join(","),this.network,true).subscribe((cols: Collection[]) => {
+          $$("Récupération des collections", cols);
           this.collections = cols;
         })
       }

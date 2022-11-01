@@ -12,6 +12,22 @@ test: http://localhost:5555/api/faqs
 #- format est optionnel et par défaut à txt, il peut être à HTML si 'content\" contient des balises
 
 content:
+  - index: operation
+    title: Qu'est-ce qu'une opération ?
+    order: 0
+    format: html
+    content: "
+        une <strong>opération</strong> est un fichier regroupant
+    <ul>
+      <li>la liste des wallets utilisés pour le minage et comme créateur des nfts </li>
+      <li>la liste des validateurs (adresses mails)</li>
+      <li>le processus de validation</li>
+      <li>le processus de génération automatique des NFTs (en construction)</li>
+      <li>le processus de distribution 'libre-service' des NFTs (en construction)</li>
+    </ul>
+
+    "
+
   - index: not_authorized
     title: Pourquoi je n'arrive pas a accéder à cet écran ?
     order: 0

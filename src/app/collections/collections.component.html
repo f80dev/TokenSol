@@ -39,12 +39,27 @@
       <th>Actions</th>
     </tr>
     <tr *ngFor="let col of user.collections">
-      <td>{{col.name}}</td>
+      <td>{{col.title}}</td>
       <td ><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
       <td style="max-width: 250px;overflow: scroll;font-size: x-small;">
         {{col.options | json}}
       </td>
       <td style="max-width: 350px;overflow: scroll;font-size: x-small;">
+        <table>
+          <tr>
+            <th></th>
+            <th *ngFor="let perm of perms">
+              {{perm}}
+            </th>
+          </tr>
+
+          <tr *ngFor="let role of col.roles">
+            <td>{{role.address}}</td>
+            <td *ngFor="let perm of perms">
+              <mat-checkbox [value]="has_perm(col,role.address,perm)"></mat-checkbox>
+            </td>
+          </tr>
+        </table>
         {{col.roles | json}}
       </td>
       <td>

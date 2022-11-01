@@ -503,7 +503,8 @@ class Elrond:
     return url+setParams({"toolbar":"false","network":network,"addr":address})
 
 
-  def create_account(self,email="",seed="",network="elrond-devnet",domain_appli="",subject="Votre compte Elrond est disponible"):
+  def create_account(self,email="",seed="",network="elrond-devnet",domain_appli="",
+                     subject="Votre compte Elrond est disponible",mail_content="mail_new_account"):
     """
     :param fund:
     :param name:
@@ -539,7 +540,7 @@ class Elrond:
     if len(email)>0:
       wallet_appli=self.nfluent_wallet_url(address,network,domain_appli)
 
-      send_mail(open_html_file("mail_new_account",{
+      send_mail(open_html_file(mail_content,{
         "wallet_address":address,
         "mini_wallet":wallet_appli,
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",

@@ -684,7 +684,7 @@ def export_to_prestashop():
         prestashop.set_product_quantity(product,nft.get_quantity())
         filename="./temp/image"+now("hex")+".gif"
         try:
-          buf_image=convert_to_gif(nft.visual,filename=filename)
+          #buf_image=convert_to_gif(nft.visual,filename=filename)
           sleep(3)
         except:
           log("Impossible de convertire l'image")
@@ -692,13 +692,7 @@ def export_to_prestashop():
         prestashop.add_image(product["id"],filename)
         os.remove(filename)
 
-
   return jsonify({"message":"ok"})
-
-
-
-
-
 
 
 
@@ -753,13 +747,10 @@ def get_operations() -> [dict]:
 
 
 
-
-
-
-@app.route('/api/transfer_to/<nft_addr>/<to>/<owner>/',methods=["GET"])
+@app.route('/api/transfer_to/<nft_addr>/<to>/<owner>/',methods=["POST"])
 def transfer_to(nft_addr:str,to:str,owner:str):
   network=request.args.get("network","elrond-devnet")
-
+  mail_content=request.json["mail_content"] | "mail_new_account"
 
   if "solana" in network:
     solana=Solana(network)
@@ -774,7 +765,10 @@ def transfer_to(nft_addr:str,to:str,owner:str):
 
     collection_id,nonce=elrond.extract_from_tokenid(nft_addr)
     if "@" in to:
-      to,pem,words,qrcode=elrond.create_account(to,domain_appli=app.config["DOMAIN_APPLI"],network=network)
+      to,pem,words,qrcode=elrond.create_account(to,
+                                                domain_appli=app.config["DOMAIN_APPLI"],
+                                                network=network,
+                                                mail_content=mail_content)
 
     t=elrond.transfer(collection_id,nonce,elrond.toAccount(owner),to)
     nfluent_wallet=elrond.nfluent_wallet_url(to,network)
@@ -1375,6 +1369,7 @@ def mint_for_prestashop():
   log("Réception de "+str(body))
 
   _p=body["product"]
+  mail_content=body["mail_content"] | "mail_new_account"
 
   log("Chargement de l'opération "+_p["reference"])
   _operation=get_operation(_p["reference"].split(" / ")[0])
@@ -1404,7 +1399,7 @@ def mint_for_prestashop():
     royalties=body["royalties"] if "royalties" in body else 0
 
     if not "elrond" in addresses:
-      _account,pem,words,qrcode=elrond.create_account(email=body["email"],domain_appli=app.config["DOMAIN_APPLI"])
+      _account,pem,words,qrcode=elrond.create_account(email=body["email"],domain_appli=app.config["DOMAIN_APPLI"],mail_content=mail_content)
       addresses["elrond"]=_account.address.bech32()
       prestashop.edit_customer(body["customer"],"note",yaml.dump(addresses))
       bNewAccount=True
@@ -1413,8 +1408,6 @@ def mint_for_prestashop():
       bNewAccount=False
 
     if not "address" in _p or _p["address"] is None or _p["address"]=="":
-
-
       collection_id=elrond.add_collection(miner,collection,type="NonFungible")
       nonce,rc=elrond.mint(miner,_p["name"],_p["description"],collection_id,attributes,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
       t=elrond.transfer(collection_id,nonce,miner,_account)
@@ -1663,7 +1656,9 @@ def keys(name:str=""):
       if "solana" in network:
         mnemonic,pubkey,privkey,key=Solana(network).create_account(email,domain_appli=app.config["DOMAIN_APPLI"])
       else:
-        _u,key,words,qrcode=Elrond(network).create_account(email,network=network,domain_appli=app.config["DOMAIN_APPLI"])
+        _u,key,words,qrcode=Elrond(network).create_account(email,
+                                                           network=network,
+                                                           domain_appli=app.config["DOMAIN_APPLI"])
 
     f = open(filename, "w")
     f.write(key)
