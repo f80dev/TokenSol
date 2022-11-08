@@ -444,7 +444,7 @@ nftlive:
     miner: paul
     collection: "PHILHARM-f25fc0"     #collection auquel appartiendra le NFT (Vérifier que le miner à les droits sur cette collection)
     royalties: 20                     #royalties pour le mineur
-    configuration: "philarmonie_nftlive"
+    configuration: "philharmonie_nftlive"
 
     permissions:
       transfer: True
