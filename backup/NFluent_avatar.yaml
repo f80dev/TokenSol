@@ -1,0 +1,83 @@
+data:
+    collection: BC_NFLUENT
+    description: "Herv\xE9 Hoareau\n+33 6 19 75 08 04"
+    family: nfluent
+    files: 'https://nfluent.io/
+
+        https://tokenfactory.nfluent.io/
+
+        mailto:herve@nfluent.io'
+    nftlive:
+        datestart: ''
+        duration: 120
+        timestart: ''
+    operation: Main_devnet
+    properties: ''
+    sequence:
+    - '001'
+    - '002'
+    - '003'
+    - '004'
+    - '005'
+    - '006'
+    - '007'
+    - 008
+    - 009
+    - '010'
+    symbol: anniv02
+    title: "Herv\xE9 Hoareau"
+filename_format: image
+fontstyle:
+    color: '#FFFFFF'
+    name: HTOWERTI.TTF
+    size: 26.7
+height: 200
+layers:
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/0x3ec8ddce99c9577a.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x38285551c4c738bd.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x2c2bee192d082a69.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x22092966d8e937cc.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x4a7fc8426954b1f4.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x5c476f67b884ac0.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x2949a1b3fcb4f2d.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x4d27d883b9ae77c1.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x19cf2c21d02a2a3e.png?png
+    indexed: true
+    name: layer0
+    params: {}
+    position: 0
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/0x45b10191d2bb5d67.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x6496aecb4baca11b.png?png
+    indexed: true
+    name: layer2
+    params: {}
+    position: 1
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+limit: 10
+nftlive:
+    datestart: ''
+    duration: 120
+    timestart: ''
+platform: nfluent
+seed: 0
+text_to_add: 001|002|003|004|005|006|007|008|009|010
+width: 200
+x: 4.5
+y: 78

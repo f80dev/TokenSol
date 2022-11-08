@@ -1,12 +1,7 @@
-attributes: []
 data:
     collection: macollection
     description: madescription
     files: http://monfichier
-    nftlive:
-        datestart: ''
-        duration: 120
-        timestart: ''
     operation: ''
     properties: propriete=valeur
     symbol: token__idx__
@@ -14,15 +9,11 @@ data:
 filename_format: image
 fontstyle:
     color: '#FFFFFF'
-    name: AGENCYB.TTF
+    name: corbel.ttf
     size: 12
 height: 200
 layers: []
 limit: 10
-nftlive:
-    datestart: ''
-    duration: 120
-    timestart: ''
 platform: nfluent
 seed: 0
 text_to_add: Texte ici

@@ -4,13 +4,13 @@
   <mat-form-field appearance="fill" style="width: 200px" id="txtCollectionName">
     <mat-label>Nom de la collection</mat-label>
     <input matInput type="text" maxlength="20" [(ngModel)]="new_collection.name">
-    <mat-hint>Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux</mat-hint>
+    <mat-hint>Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux ou espace</mat-hint>
   </mat-form-field>
 
-  <mat-form-field appearance="fill" style="max-width: 120px" id="txtCollectionDescription">
-    <mat-label>Description</mat-label>
-    <input matInput type="text" max="20" [(ngModel)]="new_collection.description">
-  </mat-form-field>
+<!--  <mat-form-field appearance="fill" style="max-width: 120px" id="txtCollectionDescription">-->
+<!--    <mat-label>Description</mat-label>-->
+<!--    <input matInput type="text" max="20" [(ngModel)]="new_collection.description">-->
+<!--  </mat-form-field>-->
 
   <div style="width: fit-content;display: inline-block;">
     <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">
@@ -18,14 +18,13 @@
     </mat-checkbox>
   </div>
 
-  <button type="button" mat-raised-button mat-button (click)="create_collection()" id="cmdBuild">
+  <button type="button" mat-raised-button mat-button (click)="create_collection()" id="cmdBuild" [disabled]="!user.addr">
     Fabriquer
   </button>
 
-  <button type="button" mat-raised-button mat-button (click)="open_inspire()">
+  <button type="button" mat-raised-button mat-button (click)="open_inspire()" [disabled]="!user.addr">
     Inspire.ART
   </button>
-
 
 
   <br><br>
@@ -34,35 +33,48 @@
     <tr>
       <th>Name</th>
       <th>Identifiant</th>
-      <th>Propriétés</th>
+      <th>Propriétés de la collection</th>
       <th>Roles</th>
       <th>Actions</th>
     </tr>
-    <tr *ngFor="let col of user.collections">
-      <td>{{col.title}}</td>
-      <td ><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
-      <td style="max-width: 250px;overflow: scroll;font-size: x-small;">
-        {{col.options | json}}
-      </td>
-      <td style="max-width: 350px;overflow: scroll;font-size: x-small;">
-        <table>
-          <tr>
-            <th></th>
-            <th *ngFor="let perm of perms">
-              {{perm}}
-            </th>
-          </tr>
 
-          <tr *ngFor="let role of col.roles">
-            <td>{{role.address}}</td>
-            <td *ngFor="let perm of perms">
-              <mat-checkbox [value]="has_perm(col,role.address,perm)"></mat-checkbox>
-            </td>
-          </tr>
-        </table>
-        {{col.roles | json}}
+    <tr *ngFor="let col of user.collections">
+      <td style="width: 50px;" title="Nom de la collection">{{col.name}}</td>
+      <td style="width: fit-content;overflow: hidden;" title="Identifiant"><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
+
+      <td style="max-width: 150px;overflow: hidden;font-size: small;">
+        <app-json-to-list style="text-align: left;" [data]="col.options"></app-json-to-list>
       </td>
-      <td>
+
+      <td style="max-width: 350px;overflow: hidden;font-size: x-small;">
+<!--        <table>-->
+<!--          <tr>-->
+<!--            <th></th>-->
+<!--            <th *ngFor="let perm of perms">-->
+<!--              {{perm}}-->
+<!--            </th>-->
+<!--          </tr>-->
+
+<!--          <tr *ngFor="let role of col.roles">-->
+<!--            <td>{{role.address}}</td>-->
+<!--            <td *ngFor="let perm of perms">-->
+<!--              <mat-checkbox [value]="has_perm(col,role.address,perm)"></mat-checkbox>-->
+<!--            </td>-->
+<!--          </tr>-->
+<!--        </table>-->
+<!--        -->
+        <app-dbtable [dictionnary]="{
+          canAddQuantity:'i_add_circle|ajouter des quantité',
+          canAddUri:'i_link|ajouter des liens',
+          canBurn:'i_delete_forever|brulé',
+          canCreate:'i_build|Miner',
+          canUpdateAttributes: 'i_edit|Mettre a jour les attributs'
+        }" [source]="col.roles">
+        </app-dbtable>
+      </td>
+
+
+      <td style="width: 300px;">
         <button type="button" mat-raised-button mat-button (click)="set_roles(col)">
           Roles
         </button>

@@ -41,6 +41,8 @@ export interface Source {
   collections: string[] | null
 }
 
+
+
 //Description de la structure d'une opération
 //Voir le fichier yaml commenté pour le détail des sections
 export interface Operation {
@@ -51,6 +53,7 @@ export interface Operation {
   version: string
   network: string
   metadatastorage: string
+  format: "yamlv1" | "yamlv2"
 
   collections:Collection[]
 
@@ -251,6 +254,9 @@ export interface Operation {
     application: string
     collections: string[]
     authentification: Connexion
+    title: string
+    prompt: string
+    selfWalletConnection: boolean
   } | null
 
   airdrop: {

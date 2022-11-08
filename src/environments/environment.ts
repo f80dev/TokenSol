@@ -4,6 +4,8 @@
 
 export const environment = {
   production: false,
+  mail:"contact@nfluent.io",
+  forum:"",
   version: "dev",
   server:"http://127.0.0.1:4242",
   appname:"TokenFactory",

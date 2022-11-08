@@ -7,6 +7,7 @@ import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
 import {type} from "os";
 import {UserService} from "../user.service";
+import {MatFormFieldAppearance} from "@angular/material/form-field";
 
 @Component({
   selector: 'app-selectkey',
@@ -16,6 +17,7 @@ import {UserService} from "../user.service";
 export class SelectkeyComponent implements OnChanges {
   selected: CryptoKey | undefined;
   @Input("fontsize") fontsize = "x-small";
+  @Input() apparence:MatFormFieldAppearance = "legacy";
   @Input("selected_addr") selected_addr="";
   @Input() network="elrond-mainnet";
   @Input("keys") keys: CryptoKey[] = [];
@@ -44,7 +46,7 @@ export class SelectkeyComponent implements OnChanges {
     this.user.key=$event.value;
     if(this.user.key){
       this.user.init(this.user.key.pubkey).then(()=>{
-        localStorage.setItem("key",this.user.key?.name!);
+        localStorage.setItem("addr",this.user.key?.pubkey!);
         this.onrefresh.emit($event);
       })
     }

@@ -1,7 +1,7 @@
-<div style="display: inline-block" style="height: fit-content;">
 
-  <ng-content></ng-content>&nbsp;&nbsp;
-  <mat-form-field [ngStyle]="{fontsize:fontsize}" style="width: 90px;margin:0px">
+
+  <ng-content style="display: inline-block;"></ng-content>&nbsp;&nbsp;
+  <mat-form-field [ngStyle]="{fontsize:fontsize}" style="min-width: 50px;max-width: 90px;display: inline-block;" [appearance]="apparence">
     <mat-select  [(value)]="selected" (selectionChange)="refresh($event)" >
       <mat-option *ngFor="let key of keys" [value]="key">
         {{key.name}}
@@ -20,8 +20,5 @@
     <mat-icon (click)="open_wallet()">
       local_atm
     </mat-icon>
-
-  </div>
-
 
 </div>

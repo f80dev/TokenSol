@@ -7,7 +7,6 @@
                [opened]="(isHandset$ | async) === false && toolbar_visible=='true'">
 
     <mat-toolbar class="mat-body-2" color="primary">
-
       <div style="line-height: 90%;font-size: medium;" *ngIf="!user.connected()">
         {{title}}<br>
         <small>v{{version}}</small>
@@ -17,8 +16,6 @@
         {{user.addr | alias}}
         {{user.email}}
       </div>
-
-
     </mat-toolbar>
 
     <mat-nav-list>
@@ -59,28 +56,30 @@
       <span class="example-spacer"></span>
 
 
-      <mat-form-field appearance="legacy" style="width:350px;font-size: medium;">
-        <mat-select [(value)]="operation.sel_ope" (selectionChange)="refresh_ope($event)" >
-          <mat-option *ngFor="let ope of operation.opes" [value]="ope">
-            {{ope.title}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+      <div style="width: 80%;max-width:800px;font-size: small;display: inline-block;padding: 3px;text-align: right;">
+        <mat-form-field appearance="legacy" style="width: 20%;max-width:300px;">
+          <mat-select [(value)]="operation.sel_ope" (selectionChange)="refresh_ope($event)" >
+            <mat-option *ngFor="let ope of operation.opes" [value]="ope">
+              {{ope.title}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
+        <mat-form-field style="width: 20%;min-width: 100px;" appearance="legacy">
+          <mat-select  [(value)]="network_service.network" (selectionChange)="update_network()">
+            <mat-option *ngFor="let network of networks" [value]="network" >
+              {{network}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
 
-      <mat-form-field style="min-width: 100px;width: 10%;font-size: medium;">
-        <mat-select  [(value)]="network_service.network" (selectionChange)="update_network()">
-          <mat-option *ngFor="let network of networks" [value]="network" >
-            {{network}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+        <app-selectkey [keys]="metaboss.keys"
+                        apparence="legacy"
+                       [network]="network_service.network"
+                       [selected_addr]="user.addr">
+        </app-selectkey>&nbsp;&nbsp;
+      </div>
 
-      <app-selectkey [keys]="metaboss.keys"
-                     [network]="network_service.network"
-                     [selected_addr]="user.addr">
-        Sign:
-      </app-selectkey>&nbsp;&nbsp;
 
 
       <button type="button"

@@ -3,7 +3,7 @@
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
     <div class="mat-display-1" *ngIf="selfWalletConnexion">Acquérir ce NFT pour {{nft.marketplace!.price}}€</div>
-    <div class="mat-display-1" *ngIf="!selfWalletConnexion">Envoyer ce NFT</div>
+    <div class="mat-display-1" *ngIf="!selfWalletConnexion">{{title}}</div>
 
     <img [src]="nft?.visual" *ngIf="nft?.visual"
          style="max-width: 200px;width:80%;margin-bottom: 10px;"
@@ -12,7 +12,7 @@
 
     <div *ngIf="!selfWalletConnexion">
       <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" >
-        <mat-label>Indiquer l'adresse ou l'email du destinataire</mat-label>
+        <mat-label>{{prompt}}</mat-label>
         <input matInput type="text" [(ngModel)]="address">
         <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
       </mat-form-field>
@@ -25,12 +25,11 @@
       </button>
       <br>
 
-      <div *ngIf="webcam">
+      <div *ngIf="authentification?.webcam">
         <br>
         Capturez l'adresse d'un wallet<br>
         <app-scanner size="250px" (flash)="onflash($event)"></app-scanner>
       </div>
-
     </div>
 
 
@@ -80,6 +79,7 @@
                  [showWebcam]="authentification.webcam"
                  [showWalletConnect]="authentification.wallet_connect"
                  (authent)="valide($event)"
+                 [prompt]="prompt"
                  (cancel)="cancel()"
                  style="max-height: 300px;">
     </app-authent>

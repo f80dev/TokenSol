@@ -24,6 +24,8 @@ export class DealermachineComponent implements OnInit {
   webcam: boolean=true;
   mining: any={};
   authentification: Connexion | undefined;
+  title: string="Envoyez ce NFT";
+  prompt: string="Indiquer l'adresse ou l'email du destinataire";
 
   constructor(
     public routes:ActivatedRoute,
@@ -43,6 +45,9 @@ export class DealermachineComponent implements OnInit {
       this.nft=params["token"];
       let ope=params["ope"];
       let section=params["section"];
+      if(params.hasOwnProperty("title"))this.title=params["title"]
+      if(params.hasOwnProperty("prompt"))this.prompt=params["prompt"]
+
       if(!section)$$("!La section n'est pas renseignée");
 
       if(!this.nft){
@@ -121,7 +126,7 @@ export class DealermachineComponent implements OnInit {
       $$("Ce token est issue d'une base de données, donc non miné");
       if(this.ope){
         this.message=this.ope.store!.support.buy_message;
-        this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.ope.network,this.nft!).subscribe((r:any)=>{;
+        this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.ope.network,this.nft!).subscribe((r:any)=>{
           this.message="";
           if(r.error.length>0){
             this.message=r.error+". ";
@@ -137,7 +142,7 @@ export class DealermachineComponent implements OnInit {
       let mint_addr=this.nft!.address;
       if(mint_addr!=""){
         $$("Ce token est déjà miné, on se contente de le transférer");
-        this.message="Envoi en cours";
+        this.message="Envoi du NFT en cours sur "+addr;
         this.network.transfer_to(mint_addr!,addr,this.nft!.owner!,this.network.network,this.ope?.new_account.mail).subscribe((r:any)=>{
           this.message="";
           this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;

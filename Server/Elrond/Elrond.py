@@ -277,6 +277,7 @@ class Elrond:
         item["id"]=item["ticker"]
         item["options"]={
           "canFreeze":item["canFreeze"],
+          "canTransfer":item["canTransfer"],
           "canWipe":item["canWipe"],
           "canPause":item["canPause"],
           "canTranferNftCreateRole":item["canTransferNftCreateRole"]
@@ -288,10 +289,11 @@ class Elrond:
 
   def get_collection(self,collection_id):
     rc=api(self._proxy.url+"/collections/"+collection_id,"gateway=api")
-    if "ticker" in rc:
-      rc["id"]=rc["ticker"]
-    else:
-      rc["id"]=rc["collection"]
+    if not rc is None:
+      if "ticker" in rc:
+        rc["id"]=rc["ticker"]
+      else:
+        rc["id"]=rc["collection"]
     return rc
 
 
@@ -377,12 +379,14 @@ class Elrond:
   def add_collection(self, owner:Account, collection_name:str,options:dict,type="SemiFungible"):
     """
     gestion des collections sur Elrond
-    voir
+    voir https://docs.elrond.com/tokens/nft-tokens/
     :param owner:
     :param collection:
     :param collection_id:
     :param type:
     :return:
+
+    TODO: ajouter l'enregistrement de la collection chez Elrond via https://github.com/ElrondNetwork/assets
     """
     owner=self.toAccount(owner)
     collection:str=collection_name.replace(" ","").replace("'","")[:20]
@@ -406,6 +410,7 @@ class Elrond:
              + "@" + str_to_hex(collection_name, False) \
              + "@" + str_to_hex(collection_id, False)
 
+      log("Ajout des propriétés de la collection. Voir ")
       for key in options.keys():
         data=data + "@" + str_to_hex(key, False)+"@"+str_to_hex(str(options[key]).lower(),False)
 
@@ -425,14 +430,13 @@ class Elrond:
         log("Recherche du collection id")
         for result in t[RESULT_SECTION]:
           if len(result["data"].split("@"))>2:
-            collection_id = result["data"].split("@")[2]
-            self.set_roles(hex_to_str(collection_id),owner)
-
+            collection_id = hex_to_str(result["data"].split("@")[2])
+            self.set_roles(collection_id,owner)
       else:
         log("Erreur de création de la collection. Consulter "+self.getExplorer(owner.address.bech32(),"address"))
         collection_id=None
 
-    return hex_to_str(collection_id)
+    return collection_id
 
 
   def get_nfts_from_collections(self,collections:[str],with_attr=False):
@@ -553,7 +557,7 @@ class Elrond:
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
 
-  def analyse_attributes(self,body,with_ipfs=True):
+  def analyse_attributes(self,body,with_ipfs=True) -> (list,str,str):
     """
     analyse du champs attributes des NFT elrond (qui peut contenir les données onchain ou via IPFS)
     :param body:
@@ -591,7 +595,7 @@ class Elrond:
              result["description"] if "description" in result else "",\
              tags
 
-    return {},attr,tags
+    return [],attr,tags
 
 
   def get_nft(self,token_id:str,attr=False,transactions=False):
@@ -781,8 +785,11 @@ class Elrond:
       url_metadata=cid["url"]
       s="metadata:"+cid["Hash"]
       if len(tags)>0: s=s+"tags:"+tags
+      _h=hex(hash(s) & sys.maxsize).replace("0x","")
     else:
+      url_metadata=""
       s=description
+      _h="00"
 
     #Traitement de la problématique des caractères spéciaux
     s=strip_accents(s.replace("\n"," "))
@@ -790,7 +797,7 @@ class Elrond:
     log("tags et attributes : "+s)
 
     #hash = hex(int(now() * 1000)).upper().replace("0X", "")
-    _h=hex(hash(s) & sys.maxsize).replace("0x","")
+
 
     #Exemple de creation:
     #ESDTNFTCreate@4d41434f4c4c4543542d323565666366@01@4d6f6e546f6b656e@09c4@516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252@746167733a3b6d657461646174613a516d5947397a6e724c7a735252594d436d6e52444a7931436f7478676e4a384b6a5668746870485a553775436d59@68747470733a2f2f697066732e696f2f697066732f516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252
@@ -802,8 +809,9 @@ class Elrond:
            + "@" + int_to_hex(royalties*100,4) \
            + "@" + _h \
            + "@" + str_to_hex(s,False) \
-           + "@" + str_to_hex(visual,False) \
-           + "@" + str_to_hex(url_metadata,False)
+           + "@" + str_to_hex(visual,False)
+
+    if len(url_metadata)>0: data=data+ "@" + str_to_hex(url_metadata,False)
 
     for f in files:
       if len(f)>0:

@@ -1,0 +1,58 @@
+data:
+    collection: ''
+    description: ''
+    files: ''
+    properties: ''
+    symbol: ''
+    title: ''
+filename_format: image
+fontstyle:
+    color: '#FFFFFF'
+    name: HTOWERTI.TTF
+    size: 12
+height: 2000
+layers:
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/12-orlinski_0x289ed686e3fd531e.png?png
+        name: 12- orlinski
+    -   image: https://server.f80lab.com:4242/api/images/16-claudielaks_0xddca5534b932e44.png?png
+        name: 16- claudie laks
+    -   image: https://server.f80lab.com:4242/api/images/10-mambo1_0x4c28b9ae1d00e6ea.png?png
+        name: 10- mambo 1
+    -   image: https://server.f80lab.com:4242/api/images/5-jonone_-0x46f393e802fb4745.png?png
+        name: 5- jonone
+    -   image: https://server.f80lab.com:4242/api/images/11-mambo2_-0x650355824fda207c.png?png
+        name: 11- mambo 2
+    -   image: "https://server.f80lab.com:4242/api/images/1-g\xE9rardzlotykamien_0x343911543b34b14d.png?png"
+        name: "1- g\xE9rard zlotykamien"
+    -   image: https://server.f80lab.com:4242/api/images/14-maho_-0x6c186f868da576d5.png?png
+        name: 14- maho
+    -   image: https://server.f80lab.com:4242/api/images/17-claudielaks_-0x71da48c193d7415a.png?png
+        name: 17- claudie laks
+    -   image: https://server.f80lab.com:4242/api/images/20-illessarkantyu_0x1fb69f590e9e84de.png?png
+        name: 20- illes sarkantyu
+    -   image: https://server.f80lab.com:4242/api/images/19-jessicalescs_-0xde02139c5ee4cf5.png?png
+        name: 19- jessica lescs
+    -   image: https://server.f80lab.com:4242/api/images/2-rnst_0x336e4136fcaf1ff2.png?png
+        name: 2- rnst
+    -   image: https://server.f80lab.com:4242/api/images/23-izazaro_-0x25ceaaa4fdd547c6.png?png
+        name: '23- iza zaro '
+    indexed: true
+    name: oeuvres
+    params: {}
+    position: 0
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+limit: 30
+platform: nfluent
+seed: 0
+text_to_add: Texte ici
+width: 2000
+x: 10
+y: 10

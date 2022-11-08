@@ -1,15 +1,15 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import { Component, OnInit} from '@angular/core';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Observable } from 'rxjs';
-import { map, shareReplay } from 'rxjs/operators';
+import {Component, OnInit} from '@angular/core';
+import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
+import {Observable} from 'rxjs';
+import {map,shareReplay } from 'rxjs/operators';
 import {UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {NETWORKS} from "../definitions";
 import {Location} from "@angular/common";
 import {MetabossService} from "./metaboss.service";
-import {getBrowserName, getParams, showMessage} from "../tools";
+import {$$, getBrowserName, getParams, showMessage} from "../tools";
 import {OperationService} from "./operation.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {MatSelectChange} from "@angular/material/select";
@@ -57,6 +57,12 @@ export class AppComponent implements OnInit {
         }
         if(params.hasOwnProperty("addr")){
           this.user.init(params["addr"]);
+        } else {
+          let key=localStorage.getItem("addr") || "";
+          if(key.length>0){
+            $$("Récupération de la clé "+key+" depuis les cookies")
+            this.user.init(key);
+          }
         }
         //if(localStorage.getItem("addr"))this.user.init(localStorage.getItem("addr") || "")
         this.network_service.version=params["version"] || "main";

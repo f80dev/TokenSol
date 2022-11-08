@@ -1,0 +1,211 @@
+data:
+    collection: BCNFLUENT
+    description: Business Card
+    family: nfluent
+    files: ''
+    nftlive:
+        datestart: ''
+        duration: 120
+        timestart: ''
+    operation: Main_devnet
+    properties: 'Name=Thomas Laffourcade
+
+        Tel=+33 6 70 70 99 84
+
+        Email=thomas@nfluent.io
+
+        Web=https://nfluent.io/
+
+        LinkedIn=https://www.linkedin.com/in/thomas-laffourcade/'
+    sequence:
+    - '001'
+    - '002'
+    - '003'
+    - '004'
+    - '005'
+    - '006'
+    - '007'
+    - 008
+    - 009
+    - '010'
+    symbol: anniv02
+    title: Thomas Laffourcade
+filename_format: image
+fontstyle:
+    color: '#FFFFFF'
+    name: HTOWERTI.TTF
+    size: 26.7
+height: 2000
+layers:
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/0x55ae0bb03869d5dc.png?png
+    indexed: true
+    name: layer0
+    params: {}
+    position: 0
+    text: ''
+    unique: false
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/-0x1cc62e3de461ee8c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x582ad82f638e5704.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x1f1ead73a597380c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x2e50ba88b6ebb75b.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x5ebbaabddc3011d6.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x7b9a98f0c16052e7.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x56c245258132e493.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x30ec3fb0137062af.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x317a5dc529d0b193.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x56a176a5c7aa2974.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x8bad714356749f7.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x147f997cfd05785a.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x51f2411a201fa1f7.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x225b0a0562aba77d.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x433d37a87ab50a8a.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x4c05a3806589f86e.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x76d5946067f1f2ba.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x3f84ac7f1929a61a.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x396e930d42161f3c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x3830ffeb9c08a869.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x21268bb24ff63073.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x6fbdbabe320c9843.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x2f8e1df67e8a2c94.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x56a41e6338a6935e.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x106796d54fed4213.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x24413315e8f0de5.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x639f9689dc15140b.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x56e0ac1e18008500.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x4211fe11a4634f4c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x8a5a640b1944bb7.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x662b4dbea062b43a.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x5d1673117877577.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x6098958503b1722.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x3b76ae16732d9fb9.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x34e43a2efd8d5315.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x4dc893241af86c85.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x751b9b89ff9dcaed.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x1709994e64f6e8f.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0xad4e155c5a6f8e9.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x25f5108b5ec9710c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x22370e00d9401d82.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x33678386da598a34.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x33b9852aaf9d2a86.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x3d97902d86337f98.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x4bf0aeb474229756.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0xdb7a0f8646d8627.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x3f643a9824b5a869.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x4798080890b3f037.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x580c5d3c1df56d8c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x5d12630b4f40d801.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x466ff487aa31b61b.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x79b403c900724819.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x4ec449496e1dbacc.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x5c9ed02969e43bbd.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x3f125bb6afba4167.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x19fb2332dbe65b0f.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x63d02a8641d07143.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x30ee651099462837.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x2421fd6a5b33b0ae.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x68a9933942709426.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x20b652b7f9a9aa3c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x2c93512b97ac62a0.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x418f11a96c7a25ee.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x36a07fde25dd35a2.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x2003ea82f1ae7237.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x52bf0a697e0873ed.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x6917db169086b67f.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0xaeb6487b07bc63c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0xd7629e24964b079.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x9b1cb28dead8377.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x6ad2aeeb24524822.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x73f0155745a5b0b1.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x12187397f24527e0.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x57ce735aadf2a55a.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x777aea2782ed73ad.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x7182cab55d3482bf.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x48825786f9964759.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x7312cb4f1dcc2e29.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x6828bb0fe22cd2ca.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x1ab34b14e4d378b9.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x3d464ec5bd029f2d.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x2f99003d5b7df20.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x7d2f4dbcb683e63c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0xc7c87652ec742d2.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x8f78e5af4eade2f.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x73c61b890ed895b6.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x37d987d8690c1ca4.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x5cd0574be3aa722a.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0xe404fd2ceda7d14.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x1a0caf2ca4fb750.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x1046418a8acfb439.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x54123dfb022a9d6f.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x2e7b909fe1e587b4.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x77b6b8914ab7feb2.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x26f195bb645d39b8.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x598eadd3450561a1.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x1fdfb35929ecfd12.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x398590125e8fb32c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x3619ac8bd6233e30.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x38b1420cfdc08ab0.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x494364f43e4d8691.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x7261e713a52bed7e.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x5b491536f7e8b294.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x7f599703f0505295.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x169fbd553b7e16a0.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x55a96849d2ddb6f.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x4e8eb2f011af4b0e.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x1b7bf7f1df579010.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x504f8c445a8fadd4.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x3485c0771d7c77be.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x7ed59c12c733a082.png?png
+    indexed: true
+    name: layer1
+    params: {}
+    position: 1
+    text: ''
+    unique: false
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/-0x4e7efbc184e704bb.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x532560acac6369f0.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x67789a36bd9de451.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x6fd24e7d7d4a5537.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x14bce2e6ef1b207c.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x54d3faebdfa6ca53.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x33396ec7b5a8a206.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x2c2e1acfe0c26cb4.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x695215625d505d3d.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x33ceb02e0fa59ad.png?png
+    -   image: https://server.f80lab.com:4242/api/images/-0x3dd6354e55e5379b.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x261d13815b0c9683.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x2955ac06524e0db9.png?png
+    -   image: https://server.f80lab.com:4242/api/images/0x3347221dd383230d.png?png
+    indexed: true
+    name: layer2
+    params: {}
+    position: 2
+    text: ''
+    unique: false
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/-0x43ac45ed4ae9078f.png?png
+    indexed: true
+    name: layer3
+    params: {}
+    position: 3
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+limit: 10
+nftlive:
+    datestart: ''
+    duration: 120
+    timestart: ''
+platform: nfluent
+seed: 0
+text_to_add: 001|002|003|004|005|006|007|008|009|010
+width: 2000
+x: 4.5
+y: 78

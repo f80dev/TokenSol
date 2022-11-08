@@ -40,7 +40,7 @@ export class CollectionsComponent implements OnInit {
     {label:"Freezable",name:"canFreeze",value:true},
     {label:"Wipeable",name:"canWipe",value:true},
     {label:"Pausable",name:"canPause",value:true},
-    {label:"",name:"canTransferNFTCreateRole",value:true},
+    {label:"Délégation de minage",name:"canTransferNFTCreateRole",value:true},
     {label:"Transférable",name:"canChangeOwner",value:true},
     {label:"Modifiable",name:"canUpgrade",value:true},
     {label:"Role spéciaux",name:"canAddSpecialRoles",value:true},
@@ -74,6 +74,10 @@ export class CollectionsComponent implements OnInit {
     this.network.network_change.subscribe((new_network)=>{
       this.refresh(this.user.addr);
     })
+
+    setTimeout(()=>{
+      this.refresh(this.user.addr)
+    },1000);
   }
 
 
@@ -83,7 +87,13 @@ export class CollectionsComponent implements OnInit {
     this._location.replaceState("./collections","owner="+addr);
     this.network.get_collections(addr,this.network.network,true).subscribe((r:any)=>{
       this.network.wait();
-      this.user.collections=r;
+      this.user.collections=[];
+      for(let col of r){
+        for(let r of col.roles){
+          delete r.roles;
+        }
+        this.user.collections.push(col);
+      }
     })
   }
 

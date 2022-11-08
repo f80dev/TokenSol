@@ -205,10 +205,10 @@ export class MintComponent implements OnInit {
           this.mintfile="sf_"+now()+".yaml";
           this.network.wait("Production du fichier");
           this.mint(0);
-          setTimeout(()=>{
-            this.network.wait();
-            open(environment.server+"/api/images/"+this.mintfile,"mintfile")
-          },5000);
+          // setTimeout(()=>{
+          //   this.network.wait();
+          //   open(environment.server+"/api/images/"+this.mintfile,"mintfile")
+          // },5000);
 
         }
     });

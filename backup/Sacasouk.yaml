@@ -1,0 +1,71 @@
+attributes: []
+data:
+    collection: ''
+    description: ''
+    files: ''
+    nftlive:
+        datestart: ''
+        duration: 120
+        timestart: ''
+    properties: ''
+    symbol: ''
+    tags: bag sac
+    title: SacASouk
+filename_format: sacasouk
+fontstyle:
+    color: '#FFFFFF'
+    name: HTOWERTI.TTF
+    size: 12
+height: 500
+layers:
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/sacasouk(1)_-0x220211ca3f999f48.webp?webp
+        name: sacasouk(1)
+    -   image: https://server.f80lab.com:4242/api/images/sacasouk2_-0xd70880934b5817.webp?webp
+        name: sacasouk2
+    -   image: https://server.f80lab.com:4242/api/images/sacasouk4_0x33ec5fd35f384790.webp?webp
+        name: sacasouk4
+    -   image: https://server.f80lab.com:4242/api/images/sacasouk3_-0x140dfc4c44b543f5.webp?webp
+        name: sacasouk3
+    -   image: https://server.f80lab.com:4242/api/images/sacasouk5_0x56b93ca08a522dfb.webp?webp
+        name: sacasouk5
+    -   image: https://server.f80lab.com:4242/api/images/sacasouk6_-0x1c14e2a930bcbba0.webp?webp
+        name: sacasouk6
+    indexed: true
+    name: photo
+    params: {}
+    position: 0
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/sacasouk_0x46751180c2cb563a.webp?webp
+        name: sacasouk
+    indexed: true
+    name: logo
+    params: {}
+    position: 3
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+limit: 10
+nftlive:
+    datestart: ''
+    duration: 120
+    timestart: ''
+platform: nfluent
+seed: 0
+text_to_add: Texte ici
+width: 500
+x: 10
+y: 10

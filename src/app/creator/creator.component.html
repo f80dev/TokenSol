@@ -4,56 +4,64 @@
   </div>
   <app-hourglass [message]="message"></app-hourglass>
 
-  <mat-expansion-panel [expanded]="!sel_config">
-    <mat-expansion-panel-header>Configurations</mat-expansion-panel-header>
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>Gestion des configurations</mat-expansion-panel-header>
     <table>
       <tr>
         <th>Charger une configuration</th>
-        <th *ngIf="sel_config">Enregistrer une configuration</th>
+        <th>Créer une nouvelle configuration</th>
+        <th>Enregistrer la configuration</th>
       </tr>
-      <tr>
-        <td>
+      <tr style="width: 100%;text-align: center;">
+        <td style="width:50%;">
           <app-upload-file (uploaded)="on_upload_config($event)"
                            format="text"
                            title="Chargée une configuration depuis votre ordinateur"
                            extensions=".yaml">
-            Importer
+            Importer <mat-icon>arrow_right</mat-icon>
           </app-upload-file>
-
-          <button type="button" mat-raised-button mat-button (click)="new_config()">
-            Nouvelle
-          </button>
-
-          <br>
 
           <mat-form-field style="fontsize:small">
             <mat-label>Depuis le serveur</mat-label>
-            <mat-select [(ngModel)]="sel_config">
+            <mat-select [(ngModel)]="sel_config" (ngModelChange)="update_config()">
               <mat-option *ngFor="let config of configs" [value]="config">
-                {{config}}
+                {{config.name}}
               </mat-option>
             </mat-select>
           </mat-form-field>
 
-          <button type="button" mat-raised-button mat-button (click)="load_config(sel_config)">
-            Charger
+          <button type="button" mat-icon-button mat-button (click)="del_config(sel_config)">
+            <mat-icon>delete</mat-icon>
           </button>
 
-          <button type="button" mat-raised-button mat-button (click)="del_config(sel_config)">
-            Supprimer
+          <br>
+          <button type="button" mat-raised-button mat-button (click)="online_config()">
+            Utiliser un fichier en ligne
           </button>
+
 
 
         </td>
+        <td style="width:25%;">
+          <button type="button" mat-raised-button mat-button (click)="reset()">
+            Nouvelle
+          </button>
 
-        <td *ngIf="sel_config">
-          <button type="button" mat-raised-button mat-button
-                  (click)="save_config(true)">
-            Enregistrer
+          <button type="button" mat-raised-button mat-button (click)="clone()">
+            Cloner
           </button>
         </td>
-        <td>
-          <mat-checkbox [(ngModel)]="config_with_image">Inclure les images</mat-checkbox>
+
+        <td style="width:25%;">
+          <button type="button" mat-raised-button mat-button (click)="save_config(false)">
+            Sur le serveur
+          </button>
+
+          <button type="button" mat-raised-button mat-button (click)="save_config(true)">
+            Sur mon ordinateur
+          </button>
+
+
         </td>
       </tr>
     </table>
@@ -62,212 +70,211 @@
 
 
   <!--  Travail sur les textes -->
-  <mat-expansion-panel [expanded]="show_addtext!=null">
-    <mat-expansion-panel-header>Ajout de texte</mat-expansion-panel-header>
-    <table style="width: 100%;vertical-align: middle;">
-      <tr>
-        <td>
-          <button style="width: fit-content" mat-raised-button mat-button
-                  title="Ajouter une série d'identifiant"
-                  (click)="add_serial(show_addtext)">
-            Série numérique
-          </button>
-          <mat-checkbox [(ngModel)]="usePalette" *ngIf="sel_colors.length>0">Utiliser la palette sélectionnée</mat-checkbox>
+  <div *ngIf="sel_config">
+    <mat-expansion-panel [expanded]="show_addtext!=null">
+      <mat-expansion-panel-header>Ajout de texte</mat-expansion-panel-header>
+      <table style="width: 100%;vertical-align: middle;">
+        <tr>
+          <td>
+            <button style="width: fit-content" mat-raised-button mat-button
+                    title="Ajouter une série d'identifiant"
+                    (click)="add_serial(show_addtext)">
+              Série numérique
+            </button>
+            <mat-checkbox [(ngModel)]="usePalette" *ngIf="sel_colors.length>0">Utiliser la palette sélectionnée</mat-checkbox>
 
-          <br>
+            <br>
 
-          <mat-form-field appearance="fill" style="max-width: 600px;width: 100%;">
-            <mat-label>Texte a ajouter</mat-label>
-            <input matInput type="text" [(ngModel)]="text_to_add" title="Insérer __idx__ pour générer des séries automatiquement">
-            <mat-icon matSuffix (click)="text_to_add=''">cancel</mat-icon>
-          </mat-form-field><br>
+            <mat-form-field appearance="fill" style="max-width: 600px;width: 100%;">
+              <mat-label>Texte a ajouter</mat-label>
+              <input matInput type="text" [(ngModel)]="sel_config!.text!.text_to_add" title="Insérer __idx__ pour générer des séries automatiquement">
+              <mat-icon matSuffix (click)="sel_config!.text!.text_to_add=''">cancel</mat-icon>
+            </mat-form-field><br>
 
-        </td>
-        <td>
-          <div style="width:200px;height: 200px;border: 1px solid black;cursor: crosshair;position: relative;" [style.background-color]="backcolor"
-               (click)="onclick_on_text($event,show_addtext)">
-            <div [ngStyle]="{
-              'font-size':(200*fontsize/100)+'px',
+          </td>
+          <td>
+            <div style="width:200px;height: 200px;border: 1px solid black;cursor: crosshair;position: relative;" [style.background-color]="backcolor"
+                 (click)="onclick_on_text($event,show_addtext)">
+              <div [ngStyle]="{
+              'font-size':(200*sel_config!.text!.fontsize/100)+'px',
               position: 'absolute',display:'block',
               'z-index': 10,'pointer-events':'none',
-              top:position_text.y*2+'px',left:position_text.x*2+'px',
-              'width':'fit-content',color:color}">
-              {{text_to_add.replace('__idx__','0').split("|")[0]}}
+              top:sel_config!.text!.position_text.y*2+'px',left:sel_config!.text!.position_text.x*2+'px',
+              'width':'fit-content',color:sel_config!.text!.color}">
+                {{sel_config!.text!.text_to_add.replace('__idx__','0').split("|")[0]}}
+              </div>
             </div>
-          </div>
-        </td>
-        <td>
-          Couleur du texte : <input *ngIf="!usePalette" [(colorPicker)]="color" [style.background]="color"><br>
-          X:<mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="position_text.x"></mat-slider>
-          <input type="number" [(ngModel)]="position_text.x" style="width:50px">
-          <br>
-          Y:<mat-slider [max]="100" [min]="0" [thumbLabel]="true" [(ngModel)]="position_text.y"></mat-slider>
-          <input type="number" [(ngModel)]="position_text.y"  style="width:50px;">
+          </td>
+          <td>
+            Couleur du texte : <input *ngIf="!usePalette" [(colorPicker)]="sel_config!.text!.color" [style.background]="sel_config!.text!.color"><br>
+            X:<mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="sel_config!.text!.position_text.x"></mat-slider>
+            <input type="number" [(ngModel)]="sel_config!.text!.position_text.x" style="width:50px">
+            <br>
+            Y:<mat-slider [max]="100" [min]="0" [thumbLabel]="true" [(ngModel)]="sel_config!.text!.position_text.y"></mat-slider>
+            <input type="number" [(ngModel)]="sel_config!.text!.position_text.y"  style="width:50px;">
 
-          <br>
+            <br>
 
-          <br>
-          Fonte:
-          <mat-select [(ngModel)]="font">
-            <mat-option *ngFor="let f of fontfiles" [value]="f">{{f.name}}</mat-option>
-          </mat-select>
-          <br>
-          FontSize: <mat-slider [max]="40" [min]="1" [step]="0.1" [thumbLabel]="true" [(ngModel)]="fontsize"></mat-slider>
-          <input type="number" [(ngModel)]="fontsize"  style="width:50px;">
-          <br>
-
-
-        </td>
-        <td>
-
-        </td>
-        <td>
-
-        </td>
-      </tr>
-    </table>
-  </mat-expansion-panel>
+            <br>
+            Fonte:
+            <mat-select [(ngModel)]="sel_config!.text.font">
+              <mat-option *ngFor="let f of fontfiles" [value]="f">{{f.name}}</mat-option>
+            </mat-select>
+            <br>
+            FontSize: <mat-slider [max]="40" [min]="1" [step]="0.1" [thumbLabel]="true" [(ngModel)]="sel_config!.text!.fontsize"></mat-slider>
+            <input type="number" [(ngModel)]="sel_config!.text!.fontsize"  style="width:50px;">
+            <br>
 
 
+          </td>
+          <td>
 
-  <mat-expansion-panel [expanded]="sel_config">
-    <mat-expansion-panel-header>Visuels / Images</mat-expansion-panel-header>
-    <button type="button" mat-raised-button mat-button
-            (click)="generate_collection()">
-      Apercu
-    </button>
-    <button type="button" mat-raised-button mat-button
-            (click)="max_items=1000">
-      Voir toutes les images
-    </button>
-    <button type="button" mat-raised-button mat-button
-            title="Afficher la transparence en noir (pour faire resortir les éléments blancs)"
-            (click)="backcolor=(backcolor=='white' ? 'black' : 'white')">
-      Inverser le fond
-    </button>
-    <button style="width: fit-content" mat-raised-button mat-button
-            title="Trouver des images"
-            (click)="find_image()">
-      Trouver des images
-    </button>
+          </td>
+          <td>
 
-    <mat-form-field style="fontsize:small">
-      <mat-label>Plateforme de stockage</mat-label>
-      <mat-select [(ngModel)]="sel_platform">
-        <mat-option *ngFor="let platform of platforms" [value]="platform.value">
-          {{platform.label}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+          </td>
+        </tr>
+      </table>
+    </mat-expansion-panel>
 
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>Visuels / Images</mat-expansion-panel-header>
+      <button type="button" mat-raised-button mat-button
+              (click)="generate_collection()">
+        Apercu
+      </button>
+      <button type="button" mat-raised-button mat-button
+              (click)="max_items=1000">
+        Voir toutes les images
+      </button>
+      <button type="button" mat-raised-button mat-button
+              title="Afficher la transparence en noir (pour faire resortir les éléments blancs)"
+              (click)="backcolor=(backcolor=='white' ? 'black' : 'white')">
+        Inverser le fond
+      </button>
+      <button style="width: fit-content" mat-raised-button mat-button
+              title="Trouver des images"
+              (click)="find_image()">
+        Trouver des images
+      </button>
 
-    <br>
-
-    <table style="padding: 10px;width:100%;">
-      <tr>
-        <th></th>
-        <th>Nom</th>
-        <th>Commandes</th>
-        <th>Sélection des photos</th>
-        <th>Cliquer sur une image + CTRL sur le clavier pour la supprimer ou SHIFT pour la déplacer</th>
-      </tr>
-      <tr *ngFor="let layer of layers" style="text-align: center;vertical-align: middle">
-        <td style="width: 10px;">
-          <mat-icon *ngIf="layer.position>0" (click)="update_position(layer,-1)">keyboard_arrow_up</mat-icon><br>
-          <mat-icon *ngIf="layer.position<layers.length-1"  (click)="update_position(layer,+1)">keyboard_arrow_down</mat-icon>
-        </td>
-        <td style="width:fit-content;" (click)="load_text_config(layer)" title="Cliquer pour rappeler les paramètres de fabrication">
-          {{layer.name}}<br>
-          <span style="font-size: x-small;">{{layer.elements?.length}} éléments</span>
-        </td>
-
-        <td style="width:150px">
-          <app-upload-file (uploaded)="on_upload($event,layer)" icon="image"
-                           title="Charger une image depuis votre ordinateur"
-                           extensions=".png,.psd,.webp,.gif,.jpg,.svg,.yaml">
-          </app-upload-file>
-
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Inclure une image sous forme d'une adresse internet"
-                  (click)="add_link(layer)">
-            <mat-icon>link</mat-icon>
-          </button>
-
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Inclure du texte"
-                  (click)="generate(layer)">
-            <mat-icon>notes</mat-icon>
-          </button>
-
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Inclure du texte"
-                  (click)="apply_filter(layer)">
-            <mat-icon>filter</mat-icon>
-          </button>
-
-          <br>
-
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Coller une image contenu dans le presse-papier"
-                  (click)="paste_picture(layer)">
-            <mat-icon>content_paste</mat-icon>
-          </button>
-
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Générer des copies par variation de couleurs"
-                  (click)="generate_with_color(layer)">
-            <mat-icon>palette</mat-icon>
-          </button>
-
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Règler l'échelle et la position"
-                  (click)="transform(layer)">
-            <mat-icon>edit</mat-icon>
-          </button>
-
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Effacer la ligne"
-                  (click)="delete_layer(layer)">
-            <mat-icon>cancel</mat-icon>
-          </button>
+      <mat-form-field style="fontsize:small">
+        <mat-label>Plateforme de stockage</mat-label>
+        <mat-select [(ngModel)]="sel_platform">
+          <mat-option *ngFor="let platform of platforms" [value]="platform.value">
+            {{platform.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
 
 
-          <button style="width: fit-content" mat-icon-button mat-button
-                  title="Effacer tous les éléments"
-                  (click)="clear_layer(layer)">
-            <mat-icon>delete</mat-icon>
-          </button>
+      <br>
 
-        </td>
-        <td style="width:100px">
-          <mat-checkbox style="margin-top: 10px;" [(ngModel)]="layer.indexed">Dans l'unicité</mat-checkbox><br>
-          <mat-checkbox style="margin-top: 10px;" [(ngModel)]="layer.unique">Usage unique</mat-checkbox>
-        </td>
+      <table style="padding: 10px;width:100%;">
+        <tr>
+          <th></th>
+          <th>Nom</th>
+          <th>Commandes</th>
+          <th>Sélection des photos</th>
+          <th>Cliquer sur une image + CTRL sur le clavier pour la supprimer ou SHIFT pour la déplacer</th>
+        </tr>
+        <tr *ngFor="let layer of sel_config!.layers" style="text-align: center;vertical-align: middle">
+          <td style="width: 10px;">
+            <mat-icon *ngIf="layer.position>0" (click)="update_position(layer,-1)">keyboard_arrow_up</mat-icon><br>
+            <mat-icon *ngIf="layer.position<sel_config!.layers.length-1"  (click)="update_position(layer,+1)">keyboard_arrow_down</mat-icon>
+          </td>
+          <td style="width:fit-content;" (click)="load_text_config(layer)" title="Cliquer pour rappeler les paramètres de fabrication">
+            {{layer.name}}<br>
+            <span style="font-size: x-small;">{{layer.elements?.length}} éléments</span>
+          </td>
 
-        <td style="text-align: left;">
+          <td style="width:150px">
+            <app-upload-file (uploaded)="on_upload($event,layer)" icon="image"
+                             title="Charger une image depuis votre ordinateur"
+                             extensions=".png,.psd,.webp,.gif,.jpg,.svg,.yaml">
+            </app-upload-file>
 
-          <div *ngFor="let elt of layer.elements?.slice(0,max_items)"
-               title="Cliquer pour voir à l'échelle 1:1"
-               style="display: inline-block;margin: 5px;">
-            <img *ngIf="elt?.image?.length>0"
-                 [src]="elt.image"
-                 alt="En cours de chargement"
-                 style="width: 100px;height: 100px;cursor: pointer;" [style.background-color]="backcolor" class="mat-elevation-z4"
-                 (mousedown)="modify_element($event,layer,elt)" (click)="open_file(elt)">
-          </div>
-          <span *ngIf="layer.elements && max_items<1000 && layer.elements.length>max_items" style="font-size: xx-large;cursor: pointer;" (click)="max_items=1000">...</span>
-        </td>
-      </tr>
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Inclure une image sous forme d'une adresse internet"
+                    (click)="add_link(layer)">
+              <mat-icon>link</mat-icon>
+            </button>
 
-    </table>
-    <br>
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Inclure du texte"
+                    (click)="generate(layer)">
+              <mat-icon>notes</mat-icon>
+            </button>
 
-    <button type="button" mat-raised-button mat-button (click)="add_layer()">
-      <mat-icon>add_circle</mat-icon> une couche
-    </button>
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Inclure du texte"
+                    (click)="apply_filter(layer)">
+              <mat-icon>filter</mat-icon>
+            </button>
 
-    <button type="button" mat-raised-button mat-button
-            (click)="build_sample(
+            <br>
+
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Coller une image contenu dans le presse-papier"
+                    (click)="paste_picture(layer)">
+              <mat-icon>content_paste</mat-icon>
+            </button>
+
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Générer des copies par variation de couleurs"
+                    (click)="generate_with_color(layer)">
+              <mat-icon>palette</mat-icon>
+            </button>
+
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Règler l'échelle et la position"
+                    (click)="transform(layer)">
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Effacer la ligne"
+                    (click)="delete_layer(layer)">
+              <mat-icon>cancel</mat-icon>
+            </button>
+
+
+            <button style="width: fit-content" mat-icon-button mat-button
+                    title="Effacer tous les éléments"
+                    (click)="clear_layer(layer)">
+              <mat-icon>delete</mat-icon>
+            </button>
+
+          </td>
+          <td style="width:100px">
+            <mat-checkbox style="margin-top: 10px;" [(ngModel)]="layer.indexed">Dans l'unicité</mat-checkbox><br>
+            <mat-checkbox style="margin-top: 10px;" [(ngModel)]="layer.unique">Usage unique</mat-checkbox>
+          </td>
+
+          <td style="text-align: left;">
+
+            <div *ngFor="let elt of layer.elements?.slice(0,max_items)"
+                 title="Cliquer pour voir à l'échelle 1:1"
+                 style="display: inline-block;margin: 5px;">
+              <img *ngIf="elt?.image?.length>0"
+                   [src]="elt.image"
+                   alt="En cours de chargement"
+                   style="width: 100px;height: 100px;cursor: pointer;" [style.background-color]="backcolor" class="mat-elevation-z4"
+                   (mousedown)="modify_element($event,layer,elt)" (click)="open_file(elt)">
+            </div>
+            <span *ngIf="layer.elements && max_items<1000 && layer.elements.length>max_items" style="font-size: xx-large;cursor: pointer;" (click)="max_items=1000">...</span>
+          </td>
+        </tr>
+
+      </table>
+      <br>
+
+      <button type="button" mat-raised-button mat-button (click)="add_layer()">
+        <mat-icon>add_circle</mat-icon> une couche
+      </button>
+
+      <button type="button" mat-raised-button mat-button
+              (click)="build_sample(
             [
               {name:'label',files:'',text:'NFT #1|NFT #2|NFT #3|NFT #4|NFT #5|NFT #6|NFT #7|NFT #8|NFT #9',position:3},
               {name:'triangles',files:'$appli$/assets/triangle1.png,$appli$/assets/triangle2.png,$appli$/assets/triangle3.png',text:'',position:2},
@@ -282,192 +289,191 @@
                     collection:'SampleCollection',
                     family:'SampleFamily'}
                )">
-      Un exemple
-    </button>
-
-    <button type="button" mat-raised-button mat-button (click)="reset()">
-      Nouveau
-    </button>
-
-  </mat-expansion-panel>
-
-
-  <!--  preview-->
-
-  <mat-expansion-panel [expanded]="previews && previews.length>0">
-    <mat-expansion-panel-header>Génération</mat-expansion-panel-header>
-
-    <div class="mat-body-2">Caractéristiques des images produites</div>
-    <mat-form-field appearance="fill" style="max-width: 100px">
-      <mat-label>Longueur</mat-label>
-      <input matInput type="number" [(ngModel)]="col_width" >
-    </mat-form-field>
-    &nbsp;
-    <mat-form-field appearance="fill" style="max-width: 100px">
-      <mat-label>Hauteur</mat-label>
-      <input matInput type="number" [(ngModel)]="col_height" >
-    </mat-form-field>
-    &nbsp;
-    <mat-form-field appearance="fill" style="max-width: 100px">
-      <mat-label>Nombre d'unités</mat-label>
-      <input matInput type="number" [(ngModel)]="limit" (ngModelChange)="show_download_link()">
-    </mat-form-field>
-
-    <mat-form-field appearance="fill" style="max-width: 100px">
-      <mat-label>Seed</mat-label>
-      <input matInput type="number" [(ngModel)]="seed" >
-    </mat-form-field>
-
-    <mat-form-field style="fontsize:small">
-      <mat-label>Format des images</mat-label>
-      <mat-select [(value)]="sel_ext">
-        <mat-option value="webp">webp</mat-option>
-        <mat-option value="gif">gif</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-
-    <div style="display: inline-block;width:200px">
-      Qualité des NFT:<br>
-      <mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="quality"></mat-slider>
-    </div>
-
-    <br>
-
-    <button type="button" mat-raised-button mat-button
-            (click)="generate_collection('preview')">
-      Aperçu
-    </button>
-
-    <a [href]="url_collection"
-       *ngIf="url_collection.length>0"
-       title="Télécharger la collection"
-       style="vertical-align: middle;text-align:center;height: 30px;margin: 10px;"
-       download="collection.7z">
-
-      <mat-icon>download</mat-icon>&nbsp;Télécharger
-    </a>
-
-
-    <mat-form-field appearance="fill" style="max-width: 200px">
-      <mat-label>Nom des fichiers téléchargés</mat-label>
-      <input matInput type="text" [(ngModel)]="filename_format" >
-    </mat-form-field>
-
-    <button type="button" mat-raised-button mat-button
-            (click)="generate_collection('upload')">
-      Uploader
-    </button>
-
-
-    <br>
-
-    <div *ngIf="upload_files.length>0">
-      <div *ngFor="let url of upload_files">
-        <a [href]="url">{{url}}</a>
-      </div>
-      <button type="button" mat-raised-button mat-button
-              (click)="miner()">
-        Miner
+        Un exemple
       </button>
 
-    </div>
-
-    <div style="width: 100%;" class="mat-elevation-z4">
-      <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
-        <img [src]="img.src" style="width: 100px;margin-left:5px;" (click)="open_file({image:img.src})">
-        <small>{{img.filename}}</small>
-      </div>
-    </div>
-
-  </mat-expansion-panel>
-
-  <mat-expansion-panel>
-    <mat-expansion-panel-header>Datas</mat-expansion-panel-header>
-    <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
-  <br>
-    <app-upload-file (uploaded)="on_upload_attributs($event)"
-                     title="Associer aux visuels un fichier de descriptions / attributs"
-                     extensions=".csv,.txt">
-      Associer des propriétés
-    </app-upload-file>
-
-    <button type="button" mat-raised-button mat-button (click)="clear_data()">
-      Effacer tout
-    </button>
-
-    <table>
-      <tr>
-        <th>Titre</th>
-        <th>Description</th>
-        <th *ngIf="!network.isElrond()">Symbole</th>
-        <th>Propriétés / Attributs</th>
-        <th>Tags</th>
-        <th>Liens / fichiers</th>
-      </tr>
-      <tr>
-        <td>
-          <mat-form-field appearance="fill" style="max-width: 200px">
-            <mat-label>Titre / Nom</mat-label>
-            <input matInput type="text" [(ngModel)]="data.title">
-          </mat-form-field>
-        </td>
-        <td>
-           <textarea class="mat-elevation-z2"
-                     title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
-                     matInput [(ngModel)]="data.description" rows="5" cols="40"></textarea>
-        </td>
-        <td *ngIf="!network.isElrond()">
-          <mat-form-field appearance="fill" style="max-width: 200px" >
-            <mat-label>Symbol</mat-label>
-            <input matInput type="text" [(ngModel)]="data.symbol">
-          </mat-form-field>
-        </td>
-        <td>
-          <textarea class="mat-elevation-z2"
-                    title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
-                    matInput [(ngModel)]="data.properties" rows="5" cols="40"></textarea>
-        </td>
-        <td>
-          <mat-form-field appearance="fill" style="max-width: 200px">
-            <mat-label>Mots clés associés (tags)</mat-label>
-            <input matInput type="text" [(ngModel)]="data.tags" >
-            <mat-hint>Séparé les mots clés par une virgule</mat-hint>
-          </mat-form-field>
-        </td>
-        <td>
-          <textarea class="mat-elevation-z2"
-                    title="Chaque lien est sur une ligne"
-                    matInput [(ngModel)]="data.files" rows="5" cols="40"></textarea>
-        </td>
-      </tr>
-    </table>
-
-
-    <br>
-<!--    <mat-expansion-panel>-->
-<!--      <mat-expansion-panel-header>NFT Live</mat-expansion-panel-header>-->
-
-<!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
-<!--        <mat-label>Date de début</mat-label>-->
-<!--        <input matInput type="date" [(ngModel)]="data!.nftlive!.datestart">-->
-<!--      </mat-form-field>-->
-
-<!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
-<!--        <mat-label>Heure de début</mat-label>-->
-<!--        <input matInput type="time" [(ngModel)]="data!.nftlive!.timestart">-->
-<!--      </mat-form-field>-->
-
-<!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
-<!--        <mat-label>Durée de l'événement (en heure)</mat-label>-->
-<!--        <input matInput type="number" [(ngModel)]="data!.nftlive!.duration">-->
-<!--      </mat-form-field>-->
-<!--    </mat-expansion-panel>-->
-<!--    -->
 
     </mat-expansion-panel>
 
 
+    <!--  preview-->
+
+    <mat-expansion-panel [expanded]="previews && previews.length>0">
+      <mat-expansion-panel-header>Génération</mat-expansion-panel-header>
+
+      <div class="mat-body-2">Caractéristiques des images produites</div>
+      <mat-form-field appearance="fill" style="max-width: 100px">
+        <mat-label>Longueur</mat-label>
+        <input matInput type="number" [(ngModel)]="sel_config!.width" >
+      </mat-form-field>
+      &nbsp;
+      <mat-form-field appearance="fill" style="max-width: 100px">
+        <mat-label>Hauteur</mat-label>
+        <input matInput type="number" [(ngModel)]="sel_config!.height" >
+      </mat-form-field>
+      &nbsp;
+      <mat-form-field appearance="fill" style="max-width: 100px">
+        <mat-label>Nombre d'unités</mat-label>
+        <input matInput type="number" [(ngModel)]="sel_config!.limit" (ngModelChange)="show_download_link()">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" style="max-width: 100px">
+        <mat-label>Seed</mat-label>
+        <input matInput type="number" [(ngModel)]="sel_config!.seed" >
+      </mat-form-field>
+
+      <mat-form-field style="fontsize:small">
+        <mat-label>Format des images</mat-label>
+        <mat-select [(value)]="sel_ext">
+          <mat-option value="webp">webp</mat-option>
+          <mat-option value="gif">gif</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+
+      <div style="display: inline-block;width:200px">
+        Qualité des NFT:<br>
+        <mat-slider [max]="100" [thumbLabel]="true" [min]="0" [(ngModel)]="sel_config!.quality"></mat-slider>
+      </div>
+
+      <br>
+
+      <button type="button" mat-raised-button mat-button
+              (click)="generate_collection('preview')">
+        Aperçu
+      </button>
+
+      <a [href]="url_collection"
+         *ngIf="url_collection.length>0"
+         title="Télécharger la collection"
+         style="vertical-align: middle;text-align:center;height: 30px;margin: 10px;"
+         download="collection.7z">
+
+        <mat-icon>download</mat-icon>&nbsp;Télécharger
+      </a>
+
+
+      <mat-form-field appearance="fill" style="max-width: 200px">
+        <mat-label>Nom des fichiers téléchargés</mat-label>
+        <input matInput type="text" [(ngModel)]="filename_format" >
+      </mat-form-field>
+
+      <button type="button" mat-raised-button mat-button
+              (click)="generate_collection('upload')">
+        Uploader
+      </button>
+
+
+      <br>
+
+      <div *ngIf="upload_files.length>0">
+        <div *ngFor="let url of upload_files">
+          <a [href]="url">{{url}}</a>
+        </div>
+        <button type="button" mat-raised-button mat-button
+                (click)="miner()">
+          Miner
+        </button>
+
+      </div>
+
+      <div style="width: 100%;" class="mat-elevation-z4">
+        <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
+          <img [src]="img.src" style="width: 100px;margin-left:5px;" (click)="open_file({image:img.src})">
+          <small>{{img.filename}}</small>
+        </div>
+      </div>
+
+    </mat-expansion-panel>
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>Datas</mat-expansion-panel-header>
+      <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
+      <br>
+      <app-upload-file (uploaded)="on_upload_attributs($event)"
+                       title="Associer aux visuels un fichier de descriptions / attributs"
+                       extensions=".csv,.txt">
+        Associer des propriétés
+      </app-upload-file>
+
+      <button type="button" mat-raised-button mat-button (click)="clear_data()">
+        Effacer tout
+      </button>
+
+      <table>
+        <tr>
+          <th>Titre</th>
+          <th>Description</th>
+          <th *ngIf="!network.isElrond()">Symbole</th>
+          <th>Propriétés / Attributs</th>
+          <th>Tags</th>
+          <th>Liens / fichiers</th>
+        </tr>
+        <tr>
+          <td>
+            <mat-form-field appearance="fill" style="max-width: 200px">
+              <mat-label>Titre / Nom</mat-label>
+              <input matInput type="text" [(ngModel)]="sel_config!.data.title">
+            </mat-form-field>
+          </td>
+          <td>
+           <textarea class="mat-elevation-z2"
+                     title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
+                     matInput [(ngModel)]="sel_config!.data.description" rows="5" cols="40"></textarea>
+          </td>
+          <td *ngIf="!network.isElrond()">
+            <mat-form-field appearance="fill" style="max-width: 200px" >
+              <mat-label>Symbol</mat-label>
+              <input matInput type="text" [(ngModel)]="sel_config!.data.symbol">
+            </mat-form-field>
+          </td>
+          <td>
+          <textarea class="mat-elevation-z2"
+                    title="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
+                    matInput [(ngModel)]="sel_config!.data.properties" rows="5" cols="40"></textarea>
+          </td>
+          <td>
+            <mat-form-field appearance="fill" style="max-width: 200px">
+              <mat-label>Mots clés associés (tags)</mat-label>
+              <input matInput type="text" [(ngModel)]="sel_config!.data.tags" >
+              <mat-hint>Séparé les mots clés par une virgule</mat-hint>
+            </mat-form-field>
+          </td>
+          <td>
+          <textarea class="mat-elevation-z2"
+                    title="Chaque lien est sur une ligne"
+                    matInput [(ngModel)]="sel_config!.data.files" rows="5" cols="40"></textarea>
+          </td>
+        </tr>
+      </table>
+
+
+      <br>
+      <!--    <mat-expansion-panel>-->
+      <!--      <mat-expansion-panel-header>NFT Live</mat-expansion-panel-header>-->
+
+      <!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
+      <!--        <mat-label>Date de début</mat-label>-->
+      <!--        <input matInput type="date" [(ngModel)]="data!.nftlive!.datestart">-->
+      <!--      </mat-form-field>-->
+
+      <!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
+      <!--        <mat-label>Heure de début</mat-label>-->
+      <!--        <input matInput type="time" [(ngModel)]="data!.nftlive!.timestart">-->
+      <!--      </mat-form-field>-->
+
+      <!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
+      <!--        <mat-label>Durée de l'événement (en heure)</mat-label>-->
+      <!--        <input matInput type="number" [(ngModel)]="data!.nftlive!.duration">-->
+      <!--      </mat-form-field>-->
+      <!--    </mat-expansion-panel>-->
+      <!--    -->
+
+    </mat-expansion-panel>
+
+  </div>
+
+  <!--  Options avancées-->
   <mat-expansion-panel>
     <mat-expansion-panel-header>Options avancées</mat-expansion-panel-header>
     <table>
@@ -486,6 +492,9 @@
           <div id="showPalette">
             <div style="width: 20px;height:20px;display: inline-block" *ngFor="let color of sel_colors" [style.background-color]="color" ></div>
           </div>
+        </td>
+        <td>
+          <mat-checkbox [(ngModel)]="config_with_image">Inclure les images</mat-checkbox>
         </td>
       </tr>
     </table>

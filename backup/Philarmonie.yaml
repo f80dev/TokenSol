@@ -1,0 +1,73 @@
+attributes: []
+data:
+    collection: macollection
+    description: NFT de la Philharmonie de Paris
+    files: https://philharmoniedeparis.fr/fr
+    nftlive:
+        datestart: ''
+        duration: 120
+        timestart: ''
+    operation: Main_devnet
+    properties: ''
+    sequence:
+    - Texte ici
+    symbol: token__idx__
+    title: Philharmonie de Paris
+filename_format: image
+fontstyle:
+    color: '#FFFFFF'
+    name: HTOWERTI.TTF
+    size: 12
+height: 800
+layers:
+-   elements:
+    -   image: https://server.f80lab.com:4242/api/images/fond4_-0x3c2b1304dd3946da.webp?webp
+        name: fond4
+    -   image: https://server.f80lab.com:4242/api/images/fond6_-0x4064d08de10da199.webp?webp
+        name: fond6
+    -   image: https://server.f80lab.com:4242/api/images/fond5_-0x6eb8f8a8bb4b287e.webp?webp
+        name: fond5
+    -   image: https://server.f80lab.com:4242/api/images/fond1_-0x4add52d12665bf72.webp?webp
+        name: fond1
+    -   image: https://server.f80lab.com:4242/api/images/fond3_-0x2f1fc701d7ae294b.webp?webp
+        name: fond3
+    -   image: https://server.f80lab.com:4242/api/images/fond2_-0x31daf546e2b246c8.webp?webp
+        name: fond2
+    indexed: true
+    name: fond
+    params: {}
+    position: 0
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+-   elements:
+    -   image: "https://server.f80lab.com:4242/api/images/t\xE9l\xE9chargement_0x15fa8262308c005c.webp?webp"
+        name: "t\xE9l\xE9chargement"
+    indexed: true
+    name: motif
+    params: {}
+    position: 1
+    scale:
+        x: 1
+        y: 1
+    text: ''
+    translation:
+        x: 0
+        y: 0
+    unique: false
+limit: 10
+nftlive:
+    datestart: ''
+    duration: 120
+    timestart: ''
+platform: nfluent
+seed: 0
+text_to_add: Texte ici
+width: 800
+x: 10
+y: 10

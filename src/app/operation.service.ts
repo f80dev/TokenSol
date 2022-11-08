@@ -21,7 +21,7 @@ export class OperationService {
   get_operation_from_web(url:string){
     this.network.get_operations(url).subscribe((ope:Operation)=>{
       this.opes.push(ope);
-      this.sel_ope=this.opes[0]
+      this.sel_ope=this.opes[this.opes.length-1]
     })
   }
 

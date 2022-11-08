@@ -27,7 +27,6 @@ export class BuildOpeComponent implements OnInit {
   nfts: NFT[]=[];
   collections: any={};
   collection_keys:string[]=[];
-  url_store="";
   store_collections: any[]=[];
   sources: any;
 
@@ -98,6 +97,7 @@ export class BuildOpeComponent implements OnInit {
           if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
           if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
           this.collections[k]=this.collections[k]+nft.marketplace!.quantity;
+          this.nfts.push(nft);
         }
       }
 
@@ -165,17 +165,12 @@ export class BuildOpeComponent implements OnInit {
     });
   }
 
-  update_url_ope() {
-    _prompt(this,
+  async update_url_ope() {
+    let rep=await _prompt(this,
       "Utiliser une opération depuis un lien web",
       "https://raw.githubusercontent.com/f80dev/TokenSol/master/Server/Operations/Main_devnet.yaml",
-      "Saisissez l'url du fichier d'opération","text").then((rep:any)=>{
-      if(rep){
-        this.operation.select("b64:"+btoa(this.url_ope));
-
-      }
-    })
-
+      "Saisissez l'url du fichier d'opération","text")
+    this.operation.select("b64:"+btoa(rep));
   }
 
   download_ope() {
@@ -211,6 +206,10 @@ export class BuildOpeComponent implements OnInit {
   }
 
   open_appli(appli:string,add_param:any={}) {
+    if(this.nft_filter_by_account(this.nfts,this.user.addr)==0){
+      showMessage(this,"le compte sélectionné ne peut transféré aucun NFT issue de la source")
+      return;
+    }
     if(this.operation.sel_ope){
       if(appli=="validate" && (!this.operation.sel_ope.validate?.users || this.operation.sel_ope.validate?.users.length==0))appli="autovalidate";
       this.refresh();
@@ -257,5 +256,15 @@ export class BuildOpeComponent implements OnInit {
 
       this.open_appli(url,'_self');
     }
+  }
+
+  nft_filter_by_account(nfts:NFT[],addr: string,operation="transfer") {
+    //Compte sur combien de NFT, addr peut effectuer l'operation operation
+    let rc=0;
+    for(let nft of nfts){
+      if(nft.owner==addr)rc=rc+1;
+      //TODO ajouter ici les roles par rapport à la collection
+    }
+    return rc;
   }
 }

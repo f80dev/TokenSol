@@ -21,6 +21,19 @@ export function url_wallet(network:string) : string {
 }
 
 
+export function hashCode(s:string):number {
+  var hash = 0,
+    i, chr;
+  if (s.length === 0) return hash;
+  for (i = 0; i < s.length; i++) {
+    chr = s.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
+
 export function b64DecodeUnicode(s:string):string {
   return decodeURIComponent(Array.prototype.map.call(atob(s), function(c) {
     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)

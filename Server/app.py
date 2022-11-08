@@ -20,6 +20,8 @@ from xml.dom.minidom import Element
 from zipfile import ZipFile
 
 from flask_socketio import SocketIO, emit
+
+from BackgroundGenerator import BackgroundGenerator
 from StoreFile import StoreFile
 from Tools import get_operation, decrypt, get_access_code_from_email, normalize, send, convert_to
 
@@ -76,10 +78,10 @@ IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"
 
 
 
-def returnError(msg:str="",_d=dict()):
+def returnError(msg:str="",_d=dict(),status=500):
   log("Error "+msg)
   _d["error"]="Ooops ! Petit problème technique. "+msg
-  return jsonify(_d),500
+  return jsonify(_d),status
 
 
 
@@ -103,8 +105,14 @@ def get_palettes():
 @app.route('/api/getyaml/<name>/')
 @app.route('/api/getyaml/<name>/<format>/')
 #http://127.0.0.1:4242/api/getyaml/calvi22/txt/?dir=Operations
-def getyaml(name,format="json"):
+def getyaml(name:str):
   dir=request.args.get("dir",".")
+  format=request.args.get("format","json")
+
+  if name.startswith("b64:"):name=str(base64.b64decode(name[4:]),"utf8")
+  if name.startswith("http"):
+    return jsonify(yaml.load(name,Loader=yaml.FullLoader))
+
   filename=dir+"/"+name+(".yaml" if not name.endswith(".yaml") else "")
   f=open(filename,"r",encoding="utf-8")
 
@@ -147,7 +155,6 @@ def get_perms(addr:str):
 
 
 @app.route('/api/clone_with_color/',methods=["POST"])
-#test http://127.0.0.1:4242/api/test/
 def clone_with_color():
   body=request.json
   l=nft.get_layer(body["layer"]["name"])
@@ -168,10 +175,6 @@ def clone_with_color():
 
 
 
-@app.route('/api/test2/')
-#test http://127.0.0.1:4242/api/test2
-def test():
-  return "Ok",201
 
 
 
@@ -191,7 +194,6 @@ def api_get_fonts():
 
 
 @app.route('/api/layers/',methods=["POST"])
-#test http://127.0.0.1:4242/api/test/
 def layers(body=None):
   """
   charge les couches dans l'instance partagé nft
@@ -229,8 +231,6 @@ def layers(body=None):
           ext=elt["image"].split("?")[1] if "?" in elt["image"] else elt["image"][elt["image"].rindex(".")+1:]
           name=elt["image"].split("images/")[1].split("_0x")[0]
           s=Sticker(name=name,image=elt["image"],ext=ext)
-
-
 
       if s:
         layer.add(s)
@@ -325,7 +325,6 @@ def get_collections(addresses:str):
 
 
 @app.route('/api/collection/')
-#test http://127.0.0.1:4242/api/test/
 def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data={},ext="webp"):
   """
   Generation de la collection des NFTs
@@ -368,6 +367,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
 
   if must_register_font: nft.register_fonts()
 
+  prefix="gen_"+now("random").replace("0x","")
   files=nft.generate(
     dir="./temp/",
     limit=min(limit,max_item),
@@ -377,14 +377,15 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     quality=quality,
     data=s_data,
     ext=ext,
-    attributes= json.loads(urllib.parse.unquote(str(base64.b64decode(attributes), "utf8"))) if len(attributes)>0 else []
+    attributes= json.loads(urllib.parse.unquote(str(base64.b64decode(attributes), "utf8"))) if len(attributes)>0 else [],
+    prefix=prefix
   )
 
   for f in os.listdir("./temp"):
     try:
-      if f.startswith("temp"):os.remove("./temp/"+f)
+      if f.startswith(prefix):os.remove("./temp/"+f)
     except:
-      pass
+      log("Impossible de supprimer "+f)
 
   if format=="zip":
     archive_file="./temp/Collection.7z"
@@ -525,15 +526,10 @@ def get_nft_from_db():
 
 
 @app.route('/api/test/',methods=["GET"])
-#test http://127.0.0.1:4242/api/test/
-#test https://server.f80lab.com:4242/api/test
-def test2():
-  ps_key="SA92LXSJW9MC28NC8G933SPNZPP9MQDZ"
-  _order=requests.get("http://161.97.75.165:8080/api/order_details/1?ws_key="+ps_key+"&io_format=JSON").json()
-  log("Order="+str(_order))
-  _product=requests.get("http://161.97.75.165:8080/api/products/"+_order["order_detail"]["product_id"]+"?ws_key=SA92LXSJW9MC28NC8G933SPNZPP9MQDZ&output_format=JSON").json()
-  log("Product="+str(_product))
-  return jsonify(_product)
+#http://127.0.0.1:4242/api/test
+def test():
+  pass
+
 
 
 @app.route('/api/analyse_transaction/<address>/',methods=["GET"])
@@ -750,7 +746,7 @@ def get_operations() -> [dict]:
 @app.route('/api/transfer_to/<nft_addr>/<to>/<owner>/',methods=["POST"])
 def transfer_to(nft_addr:str,to:str,owner:str):
   network=request.args.get("network","elrond-devnet")
-  mail_content=request.json["mail_content"] | "mail_new_account"
+  mail_content=request.json["mail_content"] or "mail_new_account"
 
   if "solana" in network:
     solana=Solana(network)
@@ -1535,56 +1531,58 @@ def apply_filter():
 
 
 
-@app.route('/api/configs/<name>/',methods=["GET","DELETE","POST"])
-@app.route('/api/configs/')
+@app.route('/api/configs/<location>/',methods=["GET","DELETE"])
+@app.route('/api/configs/',methods=["GET","POST"])
 #test http://127.0.0.1:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
-def configs(name:str="",format=""):
-  if len(name)==0:
-    return jsonify({"files":os.listdir("./Configs")})
-  else:
-    #Utilisé par load_config
-    if request.method=="GET" or format=="dict":
-      if len(format)==0: format=request.args.get("format","yaml")
-      filename="./Configs/"+name.replace(".yaml","")+".yaml"
-      rc=dict()
-      if exists(filename):
-        with open(filename,"r",encoding="utf8") as file:
-          rc=yaml.load(file,Loader=yaml.FullLoader)
-      else:
-        return returnError("File not exist")
+def configs(location:str="",format=""):
 
-      if format=="json": return jsonify(rc)
-      if format=="dict": return rc
+  #Utilisé par load_config
+  if request.method=="GET" or format=="dict":
 
-      return send_file(path_or_file=filename,mimetype="plain/text",as_attachment=True,download_name=name+("" if name.endswith(".yaml") else ".yaml"))
+    if len(format)==0: format=request.args.get("format","yaml")
+    if location.startswith("b64"): location=base64.b64decode(location[3:])
 
-    if request.method=="DELETE":
-      os.remove("./Configs/"+name)
+    if location.startswith("http"):
+      return jsonify(yaml.load(location,Loader=yaml.FullLoader))
 
-    if request.method=="POST":
-      log("Demande d'enregistrement de la config "+name)
+    rc=[]
+    for f in os.listdir("./Configs"):
+      with open("./Configs/"+f,"r",encoding="utf8") as file:
+        config=yaml.load(file,Loader=yaml.FullLoader)
+        if not "text" in config:config["text"]={}
+        if not "text_to_add" in config["text"]:config["text"]["text_to_add"]=""
 
-      filename="./Configs/"+name+(".yaml" if not name.endswith(".yaml") else "")
-      log("Ouverture en ecriture du fichier de destination "+filename)
-      s=request.json["file"]
+        if len(location)==0 or config["location"]==location:
+          rc.append(config)
 
-      s["attributes"]=nft.attributes
+    if format=="json": return jsonify(rc)
+    if format=="file" and len(rc)>0:
+      filename=rc[0]["location"]
+      return send_file(path_or_file="./Configs/"+filename,mimetype="plain/text",as_attachment=True,download_name=filename)
 
-      if type(s)==dict:
-        s=str(yaml.dump(s,default_flow_style=False,indent=4,encoding="utf8"),"utf8")
+    return rc
 
-      log("Ecriture effective du fichier de contenu "+s)
-      f=open(filename,"w",encoding="utf8")
-      f.write(s)
-      f.close()
+  if request.method=="DELETE":
+    os.remove("./Configs/"+location)
+    return jsonify({"error":"","message":"fichier supprimé"})
 
-      log("Fermeture du fichier")
+  if request.method=="POST":
+    s = request.json
+    filename="./Configs/"+s["location"]
 
-      return jsonify({"error":"","content":s})
+    #s["attributes"]=nft.attributes
+    s=str(yaml.dump(s,default_flow_style=False,indent=4,encoding="utf8"),"utf8")
 
+    log("Ecriture effective du fichier de contenu "+filename)
+    f=open(filename,"w",encoding="utf8")
+    f.write(s)
+    f.close()
 
-    return jsonify({"error":""})
+    log("Fermeture du fichier")
+
+    return jsonify({"error":"","content":s})
+
 
 
 
@@ -1726,7 +1724,7 @@ def get_image(cid:str=""):
         response.headers.set('Content-Type', format)
         return response
       else:
-        return returnError("Fichier inexistant")
+        return returnError("Fichier inexistant",status=404)
 
 
   if request.method=="DELETE":
@@ -1786,7 +1784,7 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
     b=base64.b64decode(data["content"].split("base64,")[1])
     #if ext=="gif" or ext=="png": ext="webp"
     cid=hex(hash(data["content"]))+"."+ext
-    filename=normalize(data["filename"].split(".")[0]+"_"+cid)
+    filename=normalize(data["filename"].split(".")[0]+"_"+cid) if "filename" in data and not data["filename"] is None else cid
 
     if ext=="svg":
       s=Sticker(cid,text=str(b,"utf8"))
@@ -1813,6 +1811,8 @@ def upload_on_platform(data,platform="ipfs",id=None,options={}):
     rc= github_storage.add(data,id,overwrite=False)
 
   return rc
+
+
 
 #
 # @app.route('/api/nft/<owner>/<tokenid>/',methods=["GET"])

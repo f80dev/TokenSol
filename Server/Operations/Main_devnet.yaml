@@ -7,7 +7,7 @@
 #notes:
 # $nfluent_appli$ est utilisé dans les API pour désigner l'appli nfluent. A terme il est possible d'utiliser des applis propriétaires
 
-
+format: "yamlv1"
 id: "Main_devnet"          #cet Id doit être cohérent avec le nom du fichier
 title: "Opération fictive / Modele principal"     #est le titre usuel de l'operation qui apparait pour les validateurs
 description: "Modèle principal"
@@ -37,10 +37,10 @@ event:
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "SACASOUK-152e32"          #Id de la collection. A priori cet id doit se trouver dans les sources
-    name: "SacASouk"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
-    visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
-    description: Une collection de NFTs
+  - id: "PHILHARM-f25fc0"          #Id de la collection. A priori cet id doit se trouver dans les sources
+    name: "PhilarmonieDeParis"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
+    visual:  https://img.over-blog-kiwi.com/1/48/41/00/20161126/ob_602568_philarmonieparis-logo.png
+    description: Collection de NFTs dédiés au brainstorm avec la philarmonie
 
 
 
@@ -69,14 +69,15 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 # {{url_wallet}}: adresse du wallet web
 # {{words}}: seed du wallet
 # {{qrcode}}: seed au format QRCODE
+# {{signature}}: signature de l'équipe nfluent
+# {{appname}}: Nom de l'application emetrice (ici TokenForge)
 new_account:
-  mail: "Bienvenue, votre NFT sac a souk est disponible dans votre <a href='{{mini_wallet}}'>wallet</a>"
+  mail: ""
   max_account_by_email: 1     #fixe un nombre de compte maximum par email. S'il existe une limite le système doit stocker l'email
   to_start:                   #permet d'attribuer de la monnaie au nouvau client
     money:                    #identifiant de la monnaie (ERC20)
     bank:                     #account fournissant la monnaie
     amount: 0                 #montant à attribuer
-
 
 
 #Fonctionnement de la section data ______________________________________________________________________________________________________________________________
@@ -97,7 +98,7 @@ data:
         limit: 200
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
-        - "SACASOUK-152e32"
+        - "PHILHARM-f25fc0"
 
 
     - type: database
@@ -158,6 +159,7 @@ validate:
 #    - "thomas@nfluent.io"
 
   #Cette section regroupe les possibilités offerte au visiteur en phase d'autovalidation
+  #voir la description de cette section ci-dessus
   authentification:
     webcam: True
     wallet_connect: False
@@ -182,8 +184,8 @@ validate:
       </ul>
       "
 
-
     #Section des points de contact présentés aux validateurs
+    #Cette section n'est pas utilisable en autovalidation
     contacts:
       message: Besoin d'aide ?                      #Message afficher en tête des points de contact du support
       mail: mailto:support@nfluent.io
@@ -237,7 +239,7 @@ validate:
   filters:
     mint_authority: ''
     collections:                #Liste des collections que le visiteur doit posséder pour avoir l'accès
-      - "SACASOUK-152e32"
+      - "PHILHARM-f25fc0"
     symbol: ''                  #Ici on saisie une chaine de caractère que doit contenir le symbole du NFT pour pouvoir être validé
 
 
@@ -262,7 +264,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "SACASOUK-152e32"
+    - "PHILHARM-f25fc0"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -315,8 +317,12 @@ dispenser:
   collections:                                      #Liste des collections concernée par la distribution (si vide toutes les collections disponibles depuis la source sont prises en compte)
   authentification:                                 #il s'agit d'authentifier le destinataire (et non une auto-authentification)
     address: True
-    webcam: True
     email: True
+    google: True
+  title: Recuperer votre NFT                                  #Titre afficher sur la fenetre proposant l'envoie du NFT
+  prompt: Indiquer votre addresse email pour recevoir ce NFT  #Message affiché dans la zone de saisie
+  selfWalletConnection: True
+
 
 
 airdrop:
@@ -438,7 +444,7 @@ nftlive:
     miner: paul
     name: monnft                      #nom du NFT qui sera miné
     description: ??
-    collection: "BAYARD"              #collection auquel appartiendra le NFT
+    collection: "PHILHARM-f25fc0"              #collection auquel appartiendra le NFT
     royalties: 20                     #royalties pour le mineur
     dimensions: 800x800               #dimension du NFT miné
     attributes:                       #attributs affecter au NFT

@@ -16,7 +16,7 @@ import {environment} from "../environments/environment";
 import {retry, Subject, timeout} from "rxjs";
 import {Collection, Operation} from "../operation";
 import {NFT, SolanaToken, SplTokenInfo, Validator} from "../nft";
-import {Layer} from "../create";
+import {Configuration, Layer} from "../create";
 
 
 
@@ -522,12 +522,12 @@ export class NetworkService {
     return this.httpClient.get(environment.server+"/api/reset_collection/");
   }
 
-  save_config_on_server(name:string,body:any,with_file=false) {
-    return this.httpClient.post(environment.server+"/api/configs/"+encodeURIComponent(name)+"/?with_file="+with_file,{filename:name,file:body});
+  save_config_on_server(body:Configuration,with_file=false) {
+    return this.httpClient.post(environment.server+"/api/configs/?with_file="+with_file,body);
   }
 
-  load_config(name:string) {
-    return this.httpClient.get(environment.server+"/api/configs/"+encodeURI(name)+"/?format=json");
+  load_config(url:string) {
+    return this.httpClient.get<Configuration>(environment.server+"/api/configs/b64"+btoa(url)+"/?format=json");
   }
 
   list_config() {
@@ -784,7 +784,7 @@ export class NetworkService {
 
 
   getyaml(filename:string) {
-    return this.httpClient.get<string>(environment.server+"/api/getyaml/"+filename)
+    return this.httpClient.get<any>(environment.server+"/api/getyaml/"+filename+"?format=json")
   }
 
   delete_ask(id: string) {

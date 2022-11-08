@@ -1,4 +1,5 @@
 import base64
+import copy
 import os
 import re
 from io import BytesIO
@@ -19,9 +20,8 @@ from PIL.ImageOps import pad
 from reportlab.graphics import renderPM
 from svglib.svglib import svg2rlg
 
-from Tools import now, log, get_fonts,normalize,extract_image_from_string
-
-
+from Tools import now, log, get_fonts, normalize, extract_image_from_string, convertImageFormat, \
+  convert_image_to_animated, merge_animated_image
 
 
 class Element():
@@ -50,11 +50,14 @@ class Element():
   def get_code(self):
     pass
 
+  def is_animated(self):
+    pass
+
 
 class Sticker(Element):
   image:Image=None
-  frames=[]
   text:dict=None
+  dimension=None
 
   def __init__(self,name="",image=None,
                dimension=None,text:str=None,x:int=None,y:int=None,
@@ -78,7 +81,8 @@ class Sticker(Element):
       if type(image)==str:
         if ext=="image/svg":
           if image.startswith("http"):
-            self.text={"text":str(requests.get(image).content,"utf8")}
+            svg_code=str(requests.get(image).content,"utf8")
+            self.text={"text":svg_code}
 
           if image.startswith("data:"):
             self.text={"text":str(base64.b64decode(image.split("base64,")[1]),"utf8")}
@@ -88,27 +92,29 @@ class Sticker(Element):
               content=file.readline()
               self.text={"text":content}
 
+          self.text["dimension"]=self.extract_dimension_from_svg(self.text["text"])
           self.render_svg(with_picture=False)
           return
-
 
 
         if not image.startswith("http"):
           if "base64" in image:
             self.image=extract_image_from_string(image)
           else:
-            self.image=Image.open(image).convert("RGBA")
+            self.image=Image.open(image)
         else:
           if "/api/images/" in image:
             filename=image.split("/api/images/")[1].split("?")[0]
             if exists("./temp/"+filename):
               self.image=Image.open("./temp/"+filename)
             else:
-              self.image=Image.open(BytesIO(requests.get(image).content))
+              r=requests.get(image)
+              if r.status_code==200:
+                self.image=Image.open(BytesIO(requests.get(image).content))
           else:
             self.image=Image.open(BytesIO(requests.get(image).content))
 
-        if self.image and self.image.mode!="RGBA" and ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
+        if self.image and self.image.mode!="RGBA" and not self.is_animated():
           self.image=self.image.convert("RGBA")
 
       else:
@@ -117,16 +123,17 @@ class Sticker(Element):
         else:
           self.image=image.copy()
 
-      if self.image.format!="JPEG" and ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
-        ech=1
-        l=abs(self.image.width-self.image.height)
-        if self.image.width>self.image.height:
-          offset=(self.image.width-self.image.height)/2
-          box=(offset,0,self.image.height+offset,self.image.height)
-        if self.image.width<self.image.height:
-          offset=(self.image.height-self.image.width)/2
-          box=(0,offset,self.image.width,self.image.width+offset)
-        if l>0: self.image=self.image.crop((box[0]*ech,box[1]*ech,box[2]*ech,box[3]*ech))
+      #TODO code ci-dessous ne fonctionne pas, à corriger
+      # if self.image and self.image.format!="JPEG" and not self.is_animated():
+      #   ech=1
+      #   l=abs(self.image.width-self.image.height)
+      #   if self.image.width>self.image.height:
+      #     offset=(self.image.width-self.image.height)/2
+      #     box=(offset,0,self.image.height+offset,self.image.height)
+      #   if self.image.width<self.image.height:
+      #     offset=(self.image.height-self.image.width)/2
+      #     box=(0,offset,self.image.width,self.image.width+offset)
+      #   if l>0: self.image=self.image.crop((box[0]*ech,box[1]*ech,box[2]*ech,box[3]*ech))
 
     if text:
       self.text={
@@ -136,8 +143,19 @@ class Sticker(Element):
         "x":x,"y":y
       }
 
+    if self.image and dimension is None:
+      dimension=self.image.size
+
+    self.dimension=dimension
+
     if not text and not image:
       self.image=Image.new("RGBA",dimension)
+
+
+  def is_animated(self):
+    if self.image.format is None: return False
+    return (self.image.format=="WEBP" or self.image.format=="GIF") and self.image.is_animated
+
 
 
   def render_text(self,factor=1):
@@ -161,6 +179,14 @@ class Sticker(Element):
       if ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
         offset=(translation[0]/self.image.width,translation[1]/self.image.height)
         pad(self.image,size=(self.image.width*scale[0],self.image.height*scale[1]),color=None,centering=(offset[0]+0.5,offset[1]+0.5))
+
+
+  def extract_dimension_from_svg(self,svg_code:str) -> (int,int):
+    if "width=" in svg_code and "height=" in svg_code:
+      numbers=re.findall(r'\d+',svg_code.split("viewBox")[1])
+      return (int(numbers[2]),int(numbers[3]))
+    else:
+      return (500,500)
 
 
   def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,prefix_name="svg"):
@@ -192,11 +218,8 @@ class Sticker(Element):
       self.image=image.convert("RGBA")
       self.text["dimension"]=(self.image.width,self.image.height)
     else:
-      if "width=" in svg_code and "height=" in svg_code:
-        numbers=re.findall(r'\d+',svg_code.split("viewBox")[1])
-        self.text["dimension"]=(int(numbers[2]),int(numbers[3]))
-      else:
-        self.text["dimension"]=(500,500)
+      self.text["dimension"]=self.extract_dimension_from_svg(svg_code)
+
 
       self.image=filename
 
@@ -222,14 +245,26 @@ class Sticker(Element):
 
   def close(self):
     if self.image and self.image.format and self.image.filename!="":
-      self.image.close()
+      try:
+        self.image.close()
+      except:
+        log("Image "+str(self)+" déjà close")
 
-  def delete(self):
+
+  def __str__(self):
+    rc=self.name
     try:
-      os.remove(self.image.filename)
-      return True
+      if self.image and self.image.filename:rc=rc+" ("+self.image.filename+")"
+      #if self.text:rc=rc+" ("+self.text[:20]+")"
+      if self.is_animated(): rc=rc+" ("+str(self.image.n_frames)+" frames)"
     except:
-      return False
+      pass
+    return rc
+
+
+  def __del__(self):
+    self.close()
+
 
   def write(self,text:str,position="bottom-left",fontname="corbel.ttf",size=22,color=(0,0,0,255),x=None,y=None):
     font = truetype("./Fonts/"+fontname, size)
@@ -247,10 +282,19 @@ class Sticker(Element):
 
   def clone(self,new_name=""):
     if new_name=="": new_name=self.name+"_clone"
-    rc=Sticker(name=new_name,image=self.image,ext=self.ext,data=self.data)
-    if type(self.image)!=str: rc.image=self.image.copy()
-    rc.text=self.text
+
+    try:
+      image=self.image.filename
+    except:
+      try:
+        image=self.image.copy()
+      except:
+        image=self.image
+
+    text=self.text["text"] if type(self.text)==dict and "text" in self.text else self.text
+    rc=Sticker(name=new_name,image=image,text=text,ext=self.ext,data=self.data,dimension=self.dimension)
     return rc
+
 
   def replace_color(self,old_color,new_color):
     if old_color.startswith("#"):old_color=(int(old_color[1:2],16),int(old_color[3:4],16),int(old_color[5:6],16))
@@ -264,6 +308,8 @@ class Sticker(Element):
     return Image.fromarray(data,"RGBA")
 
 
+
+
   def toBase64(self,format="WEBP",factor=1,quality=98):
     buffered = BytesIO()
     if self.image is None and self.text is not None:
@@ -274,56 +320,11 @@ class Sticker(Element):
     return "data:image/"+format.lower()+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
 
 
-  def merge_animated_image(self,base:Image,to_paste:Image):
-    filename="./temp/temp_merge_"+now("hex")+".gif"
-    wr=imageio.get_writer(filename,mode="I")
-
-    frames_to_paste = [f.resize(base.size).convert("RGBA") for f in ImageSequence.Iterator(to_paste)]
-    frame_base=[f.convert("RGBA") for f in ImageSequence.Iterator(base)]
-    for i,frame in enumerate(frames_to_paste):
-      if i<len(frame_base):
-        frame_base[i].alpha_composite(frame)
-      else:
-        #Il y a plus assez d'image dans la base donc on ajoute les images a coller
-        frame_base.append(frame)
-
-      ndarray=numpy.asarray(frame_base[i])
-      wr.append_data(ndarray)
-
-    wr.close()
-    to_paste.close()
-    rc=Image.open(filename,"r")
-    return rc
 
 
-  def convert_image_to_animated(self,base:Image,n_frames:int):
-    filename="./temp/temp_convert_"+now("hex")+".gif"
 
-    base=self.convertImageFormat(base,"GIF")
-    images=[base]*(n_frames)
-
-    images[0].save(filename, save_all=True,append_images=images[1:],disposal=2,loop=0)
-    base.close()
-
-    for image in images:
-      image.close()
-
-    # wr=imageio.get_writer(filename,mode="I")
-    # cp=base.convert("RGBA")
-    # ndarray=numpy.asarray(cp)
-    # for i in range(n_frames):
-    #   wr.append_data(ndarray.copy())
-    # wr.close()
-    #
-    # base.close()
-
-    rc= Image.open(filename)
-    return rc
-
-
-  def fusion(self,to_concat:Element,factor:float,replacement:dict):
-
-      log("Fusion des propriétés")
+  def fusion(self,to_concat:Element,factor:float,replacement:dict,prefix=""):
+      #log("Fusion des propriétés")
       for k in to_concat.attributes.keys():
         if k!="file":
           if not k in self.attributes:self.attributes[k]=[]
@@ -340,28 +341,25 @@ class Sticker(Element):
           src=to_concat.render_text(factor)
 
       if self.image and to_concat.image:
-        if (to_concat.image.format=="WEBP" or to_concat.image.format=="GIF") and to_concat.image.is_animated:
-          if self.image.format is None:
-            log("Convertion de la base en image animé")
-            self.image=self.convert_image_to_animated(self.image,to_concat.image.n_frames)
+        if to_concat.is_animated():
+          # if not self.is_animated():
+          #   self.image=convert_image_to_animated(self.image,to_concat.image.n_frames,prefix)
 
-          log("Collage d'une image animé sur la base")
-          self.image=self.merge_animated_image(self.image,to_concat.image)
+          log("Collage d'une image animé "+str(to_concat)+" sur la base "+str(self))
+          self.image=merge_animated_image(self.image,to_concat.image,prefix)
           to_concat.image.close()
 
         else:
           log("Collage d'une image fixe ...")
-          if self.image.format is None:
+          if not self.is_animated():
             log("... sur la base fixe")
             self.image.alpha_composite(to_concat.image.resize(self.image.size))
           else:
             log("... sur une base animé")
-            to_concat.image=self.convert_image_to_animated(to_concat.image,self.image.n_frames)
-            self.image=self.merge_animated_image(self.image,to_concat.image)
+            to_concat.image=convert_image_to_animated(to_concat.image,self.image.n_frames,prefix)
+
+            self.image=merge_animated_image(self.image,to_concat.image,prefix)
             to_concat.image.close()
-
-
-
 
 
 
@@ -397,8 +395,8 @@ class Sticker(Element):
       f.writelines(self.text["text"])
       f.close()
     else:
-      if self.image.format=="GIF" or self.image.format=="WEBP" :
-        log("Enregistrement d'un fichier animé")
+      if self.is_animated():
+        log("Enregistrement d'un fichier animé "+str(self))
         frames = [f.convert("RGBA") for f in ImageSequence.Iterator(self.image)]
         self.image.close()
         if len(xmp)>0:
@@ -413,7 +411,7 @@ class Sticker(Element):
           with open(xmp_filename,"w") as f:
             f.write(xmp)
       else:
-        log("Enregistrement d'un fichier statique")
+        log("Enregistrement d'un fichier statique "+str(self))
         if self.image.format=="JPEG" or self.image.format=="JPG":
           if len(xmp)>0:
             self.image.save(filename,xmp=bytes(xmp,"utf8"))
@@ -461,6 +459,7 @@ class VideoElement(Element):
   def save(self,filename):
     return True
 
+
   def toStr(self):
     return self.video
 
@@ -497,7 +496,7 @@ class TextElement(Element):
 
 class Layer:
   def __init__(self,name="",element=None,position=0,unique=False,indexed=True):
-    self.elements=[]
+    self.elements:[Element]=[]
     self.name=name if len(name)>0 else str(now())
     self.unique=unique if type(unique)!=str else False
     self.indexed=indexed if type(indexed)!=str else False
@@ -558,7 +557,8 @@ class Layer:
       pos=int(random()*len(self.elements))
       rc=self.elements[pos]
 
-    return rc
+    return rc.clone()
+
 
   def apply_filter(self, filter_name:str):
     filter_name=filter_name.lower()
@@ -640,7 +640,12 @@ class ArtEngine:
 
 
 
-  def generate(self,dir="",limit=100,seed_generator=0,width=500,height=500,quality=100,ext="webp",data="",replacements={},attributes=list()):
+  def generate(self,dir="",
+               limit=100,seed_generator=0,width=500,height=500,
+               quality=100,ext="webp",data="",
+               replacements={},
+               attributes=list(),
+               prefix="generate_"):
     """
     Génération des collections
     :param dir:
@@ -672,7 +677,7 @@ class ArtEngine:
       collage=Sticker("collage",dimension=(width,height),ext=ext,data=data)
 
       name=[]
-      log("Génération du NFT "+str(index)+"/"+str(limit))
+      log("\nGénération du NFT "+str(index+1)+"/"+str(limit))
       for layer in self.layers:
         if len(layer.elements)==0:
           elt=None
@@ -688,8 +693,10 @@ class ArtEngine:
           elt.open()
 
           elt.transform(layer.scale,layer.translation)
-          collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements)
-          if layer.unique: layer.remove(elt)
+          log("Collage de "+str(elt)+" sur "+str(collage))
+          collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)
+          if layer.unique:
+            layer.remove(elt)
 
           elt.close()
 
@@ -701,20 +708,14 @@ class ArtEngine:
         if len(dir)>0:
           filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
           rc.append(filename)
-          if collage.ext.lower()=="gif":
-            rc.append(filename.replace(".gif",".xmp"))
+          if collage.ext.lower()=="gif": rc.append(filename.replace(".gif",".xmp"))
+
           collage.save(filename,quality,index)
         else:
           filename=collage.toStr()
           rc.append(filename)
 
-        try:
-          collage.close()
-        except:
-          log("L'image "+str(collage.name)+" est déjà closed")
-          pass
-
-        collage.delete()
+        collage.close()
 
     return rc
 

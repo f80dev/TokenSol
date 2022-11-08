@@ -8,23 +8,41 @@
     <div class="mat-subheading-2 color-accent">{{miner | alias}}, cliquez sur le NFT à envoyer</div>
     <br>
 
-    <div *ngFor="let nft of nfts" style="display: inline-block;margin:10px;cursor: pointer;max-width: 250px;"
-         (click)="send(nft)"
+    <div *ngFor="let nft of nfts" style="display: inline-block;margin:15px;cursor: pointer;max-width: 250px;"
          [title]="nft.message"
          [style]="nft.style">
 
-      <span class="mat-subheading-1 color-primary">{{nft.name}}</span>
-      <br>
+      <div class="mat-subheading-1 color-primary" style="margin:10px;">{{nft.name}}</div>
 
-      <img class="mat-elevation-z4"
-           [src]="nft.visual"
-           alt="image non disponible"
-           style="width:80%;max-width:350px;margin:3px;">
+
+      <app-reversebloc [image]="nft.visual" width="200px" height="200px">
+
+        <div style="padding: 5%;color: black;" class="mat-body-1">
+          <br>
+          <strong>Collection:</strong> <span [title]="nft.collection!.description">{{nft.collection!.name}}</span><br>
+          <strong>Quantité: </strong>{{nft.marketplace!.quantity}}<br>
+        </div>
+
+        <div style="display: block;position:absolute;bottom: 10px;text-align: right;left:0px;width: 95%;">
+          <button color="primary"
+                  mat-raised-button mat-button
+                  title="Envoyer le NFT à un destinataire"
+                  (click)="send(nft)">
+            Envoyer
+          </button>
+
+          <button color="primary"
+                  mat-raised-button mat-button
+                  title="Lien de récupération du NFT par le propriétaire"
+                  (click)="copy_link(nft)">
+            Copier
+          </button>
+
+        </div>
+
+      </app-reversebloc>
 
       <br>
-      <span class="mat-body-1" style="margin-top: 5px;">
-        {{nft.marketplace!.quantity}} - <span [title]="nft.collection!.description">{{nft.collection!.name}}</span>
-      </span>
 
     </div>
 
@@ -34,5 +52,7 @@
 
   </div>
 
+  <br>
 
+  <app-signature faq="dispenser"></app-signature>
 </div>

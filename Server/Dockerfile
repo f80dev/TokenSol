@@ -28,6 +28,11 @@
 #test en mode batch : docker run --restart=always -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest bash
 #à tester avec la commande ./metaboss-ubuntu-latest update name --account GwCtQjSZj3CSNRbHVVJ7MqJHcMBGJJ9eHSyxL9X1yAXy --keypair admin.json --new-name dudule
 
+
+#Execution sur le serveur de production :
+#docker rm -f tokensol && docker pull f80hub/tokensol
+#docker run --restart=always -v /root/Server/Configs:/Configs -v /root/Server/Fonts:/Fonts -v /root/Server/Operations:/Operations -v /root/Server/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io debug ssl
+
 FROM python:3.9.0-buster
 
 # set environment variables

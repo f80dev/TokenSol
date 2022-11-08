@@ -9,7 +9,7 @@ export function _prompt(vm:any,title:string,_default:string="",description="",_t
           title: title,
           type: _type,
           options:options,
-          value:_default,
+          result:_default,
           onlyConfirm:onlyConfirm,
           lbl_ok:lbl_ok,
           lbl_cancel:lbl_cancel

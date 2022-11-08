@@ -28,6 +28,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
   @Input() showCollections:boolean=true; //Vérifie si l'utilisateur dispose d'un ou plusieurs NFT
   @Input() explain_message:string="Adresse de votre wallet ou votre email si vous n'en avez pas encore";
   @Input() autoconnect_for_localhost=false;   //Connection automatique sur le localhost
+  @Input() prompt="Votre email / Adresse dans la blockchain";   //Connection automatique sur le localhost
 
   @Output('authent') onauthent: EventEmitter<{strong:boolean,nftchecked:boolean,address:string}>=new EventEmitter();
   @Output('invalid') oninvalid: EventEmitter<any>=new EventEmitter();
@@ -89,15 +90,17 @@ export class AuthentComponent implements OnInit,OnDestroy {
           this.strong=false;
           this.onlogout.emit();
         },
-
       }
     );
   }
+
 
   ngOnDestroy(): void {
     $$("Desenregistrement de "+this.validator);
         this.api.remove_validator(this.validator).subscribe(()=>{})
     }
+
+
 
   subscribe_as_validator(){
     $$("Le systeme d'authent demande le QRCode en mode wallet_connect")
@@ -121,6 +124,8 @@ export class AuthentComponent implements OnInit,OnDestroy {
       showError(this);
     })
   }
+
+
 
   ngOnInit(): void {
     window.onbeforeunload = () => this.ngOnDestroy();

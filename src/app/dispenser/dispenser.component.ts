@@ -8,6 +8,8 @@ import {MatDialog} from "@angular/material/dialog";
 
 import {Operation} from "../../operation";
 import {NFT} from "../../nft";
+import {Clipboard} from "@angular/cdk/clipboard";
+import {environment} from "../../environments/environment";
 
 @Component({
   selector: 'app-dispenser',
@@ -28,14 +30,15 @@ export class DispenserComponent implements OnInit {
     public dialog:MatDialog,
     public router:Router,
     public toast:MatSnackBar,
-    public alias:AliasPipe
+    public alias:AliasPipe,
+    public clipboardService:Clipboard
   ) { }
 
   //test: http://127.0.0.1:4200/dispenser?ope=calvi22_devnet&toolbar=false/dispenser?ope=calvi22_devnet
   ngOnInit(): void {
     let limit=Number(this.routes.snapshot.queryParamMap.get("limit") || "1000") ;
     getParams(this.routes).then((params:any)=>{
-
+      this.message="Préparation de la page";
       this.network.get_operations(params["ope"]).subscribe((operation:Operation)=>{
         this.operation=operation;
         this.miner=params.hasOwnProperty("miner") ? params["miner"] : operation.lazy_mining?.miner;
@@ -63,6 +66,21 @@ export class DispenserComponent implements OnInit {
     });
   }
 
+  get_nft_link(nft:any){
+    if(this.operation)
+      return setParams({
+        token: nft,
+        price: 0,
+        section: "dispenser",
+        ope: this.operation.id,
+        selfWalletConnexion: this.operation.dispenser?.selfWalletConnection,
+        mining: this.operation.lazy_mining,
+        title: this.operation.dispenser?.title,
+        prompt: this.operation.dispenser?.prompt
+      });
+    return null;
+  }
+
   send(nft: any) {
     if(nft.quantity==0){
       showMessage(this,"Ce NFT ne peut plus être miné");
@@ -71,14 +89,7 @@ export class DispenserComponent implements OnInit {
 
     nft.price=0;
     if(this.operation){
-      this.router.navigate(["dm"],{queryParams:{param:setParams({
-            token:nft,
-            price:0,
-            section:"dispenser",
-            ope: this.operation.id,
-            selfWalletConnexion:false,
-            mining:this.operation.lazy_mining
-          })}})
+      this.router.navigate(["dm"],{queryParams:{param:this.get_nft_link(nft)}})
     }
 
 
@@ -94,6 +105,16 @@ export class DispenserComponent implements OnInit {
       // }else{
       //   showMessage(this,"Envoi annulé");
       // }
+
+  }
+
+  copy_link(nft: NFT) {
+    let url=this.get_nft_link(nft);
+    if(url){
+      url=environment.appli+"/dm?param="+url;
+      this.clipboardService.copy(url);
+      showMessage(this,"Le lien de distribution est dans votre presse-papier")
+    }
 
   }
 }

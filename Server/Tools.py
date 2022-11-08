@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import os
+import random
 import smtplib
 from email import encoders
 from email.mime.base import MIMEBase
@@ -12,6 +13,8 @@ from email.mime.text import MIMEText
 from io import BytesIO
 from os.path import exists
 
+import imageio
+import numpy
 import pyqrcode
 import requests
 import unicodedata
@@ -277,6 +280,7 @@ def get_operation(name:str):
     url=str(base64.b64decode(name.split("b64:")[1]),"utf8")
     rc=requests.get(url).text
     rc=yaml.load(rc,Loader=yaml.FullLoader)
+    rc["id"]=name
   else:
     name=name.replace(".yaml","")
     rc=yaml.load(open("./Operations/"+name+".yaml","r"),Loader=yaml.FullLoader)
@@ -295,6 +299,7 @@ def strip_accents(text):
 def now(format="dec"):
   rc= datetime.datetime.now(tz=None).timestamp()
   if format=="hex":return hex(int(rc*10000))
+  if format=="random":return hex(int(rc*10000)+random.randint(0,1000000))
   return rc
 
 
@@ -302,6 +307,10 @@ start=now()
 store_log=""
 def log(text:str,sep='\n'):
   global store_log
+  if text.startswith("\n"):
+    print("\n\n")
+    text=text[1:]
+
   delay=int(now()-start)
   line:str=str(int(delay/60))+":"+str(delay % 60)+" : "+text
   try:
@@ -348,11 +357,21 @@ def check_access_code(code:str) -> str:
 
 
 def convertImageFormat(imgObj, outputFormat=None):
+  """
+  Convertion
+  Pour l'instant ne fonctionne qu'avec le GIF
+  :param imgObj:
+  :param outputFormat:
+  :return:
+  """
   newImgObj = imgObj
-  if outputFormat and (imgObj.format != outputFormat):
-    imageBytesIO = BytesIO()
-    imgObj.save(imageBytesIO, outputFormat)
-    newImgObj = Image.open(imageBytesIO)
+
+  if outputFormat:
+    outputFormat=outputFormat.upper()
+    if (imgObj.format != outputFormat):
+      imageBytesIO = BytesIO()
+      imgObj.save(imageBytesIO, outputFormat,save_all=True,optimize=True,quality=95)
+      newImgObj = Image.open(imageBytesIO)
 
   return newImgObj
 
@@ -379,7 +398,7 @@ def convert_to(content:str,storage_platform=None,filename=None,format="GIF",qual
   else:
     buffered =io.BytesIO()
 
-  if image.is_animated:
+  if image.format!="JPEG" and image.is_animated:
     frames = [f.convert("RGBA") for f in ImageSequence.Iterator(image)]
     frames[0].save(buffered,format=format,save_all=True,append_images=frames[1:],optimize=True,quality=quality)
   else:
@@ -395,3 +414,43 @@ def convert_to(content:str,storage_platform=None,filename=None,format="GIF",qual
 
   return buffered
 
+
+
+def convert_image_to_animated(base:Image,n_frames:int,prefix_for_temp_file="temp_convert",format_to_use="gif"):
+  filename="./temp/"+prefix_for_temp_file+"_"+now("hex")+"."+format_to_use
+  log("Convertion de "+str(base)+" en image animé de "+str(n_frames)+" frames -> "+filename)
+
+  base=convertImageFormat(base,format_to_use)
+  images=[base]*(n_frames)
+
+  #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
+  images[0].save(filename, format=format_to_use,save_all=True,append_images=images[1:],loop=0,optimize=True,disposal=2)
+  base.close()
+
+  for image in images:
+    image.close()
+
+  rc= Image.open(filename,mode="r",formats=[format_to_use])
+  return rc
+
+
+def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge"):
+  filename="./temp/"+prefix_for_temp_file+"_"+now("hex")+".gif"
+  wr=imageio.get_writer(filename,mode="I")
+
+  frames_to_paste = [f.resize(base.size).convert("RGBA") for f in ImageSequence.Iterator(to_paste)]
+  frame_base=[f.convert("RGBA") for f in ImageSequence.Iterator(base)]
+  for i,frame in enumerate(frames_to_paste):
+    if i<len(frame_base):
+      frame_base[i].alpha_composite(frame)
+    else:
+      #Il y a plus assez d'image dans la base donc on ajoute les images a coller
+      frame_base.append(frame)
+
+    ndarray=numpy.asarray(frame_base[i])
+    wr.append_data(ndarray)
+
+  wr.close()
+  to_paste.close()
+  rc=Image.open(filename,"r")
+  return rc

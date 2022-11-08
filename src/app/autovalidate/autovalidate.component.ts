@@ -38,6 +38,7 @@ export class AutovalidateComponent implements OnInit {
       let url=this.operation?.validate?.actions.fault.redirect;
       if(url && url.length>0)open(url);
     }
+    setTimeout(()=>{this.message=""},2000);
     showMessage(this,this.message);
   }
 
