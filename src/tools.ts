@@ -81,7 +81,7 @@ export function setParams(_d:any,prefix="") : string {
   let rc=[];
   for(let k of Object.keys(_d)){
     if(typeof(_d[k])=="object")_d[k]="b64:"+btoa(JSON.stringify(_d[k]));
-    rc.push(k+"="+_d[k]);
+    rc.push(k+"="+encodeURIComponent(_d[k]));
   }
   let url=encrypt(prefix+rc.join("&"));
   return encodeURIComponent(url);

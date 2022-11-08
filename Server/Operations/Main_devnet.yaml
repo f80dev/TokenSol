@@ -426,29 +426,25 @@ security:
 
 #section détaillant la possibilité de faire des photos
 nftlive:
-  collections: #design la collection qui donne le droit d'utiliser NFTLive
-    - "VENTEIAA-cd1447"
+  collections:              #design la collection qui donne le droit d'utiliser NFTLive
+    - "PHILHARM-f25fc0"
 
-  configuration: nftlive    #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
-  limit: 10                 #nombre de NFT à proposer à l'utilisateurs
+  configuration: nftlive              #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
+  limit: 10                           #nombre de NFT à proposer à l'utilisateurs
 
-  price: 0                  #prix d'utilisation du service
+  price: 0                            #prix d'utilisation du service
 
-  dynamic_fields:           #liste de champs utilisé par le créateur pour personnaliser le NFT
-    - name: description     #nom du champs, présent dans un SVG du NFT sous le libellé _description_
-      maxlen: 30            #nombre maximum de caractères
+  dynamic_fields:                     #liste de champs utilisé par le créateur pour personnaliser le NFT
+    - name: description               #nom du champs, présent dans un SVG du NFT sous le libellé _description_
+      maxlen: 30                      #nombre maximum de caractères
       message: "Note placée en bas de votre photo"
       value: "votre message"
 
-  nft_target:               #désigne les caractéristiques du NFT qui sera miné
+  nft_target:                         #désigne les caractéristiques du NFT qui sera miné
     miner: paul
-    name: monnft                      #nom du NFT qui sera miné
-    description: ??
-    collection: "PHILHARM-f25fc0"              #collection auquel appartiendra le NFT
+    collection: "PHILHARM-f25fc0"     #collection auquel appartiendra le NFT (Vérifier que le miner à les droits sur cette collection)
     royalties: 20                     #royalties pour le mineur
-    dimensions: 800x800               #dimension du NFT miné
-    attributes:                       #attributs affecter au NFT
-      moment: Reunion bayard
+    configuration: "philarmonie_nftlive"
 
     permissions:
       transfer: True

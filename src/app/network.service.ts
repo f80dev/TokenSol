@@ -632,7 +632,7 @@ export class NetworkService {
   }
 
   get_tokens_to_send(ope="",section="dispenser", limit=1000) {
-    return this.httpClient.get(environment.server+"/api/get_tokens_to_send/"+ope+"/?limit="+limit+"&section="+section);
+    return this.httpClient.get(environment.server+"/api/get_tokens_to_send/"+encodeURIComponent(ope)+"/?limit="+limit+"&section="+section);
   }
 
   get_nfts_from_operation(ope:string){

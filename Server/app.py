@@ -925,8 +925,9 @@ def open_operation(ope):
   rc=None
   if ope is None:return rc
   if type(ope)==str:
+    if ope.startswith("b64:"):ope=str(base64.b64decode(ope[4:]),"utf8")
     if ope.startswith("http"):
-      rc=yaml.load(ope,Loader=yaml.FullLoader)
+      rc=yaml.load(requests.get(ope).text,Loader=yaml.FullLoader)
     else:
       with open("./Operations/"+ope+(".yaml" if not ope.endswith(".yaml") else ""),"r") as file:
         rc=yaml.load(file,Loader=yaml.FullLoader)

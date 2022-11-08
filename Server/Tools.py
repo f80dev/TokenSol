@@ -277,7 +277,7 @@ def str_to_hex(letters,zerox=True):
 
 def get_operation(name:str):
   if name.startswith("b64:"):
-    url=str(base64.b64decode(name.split("b64:")[1]),"utf8")
+    url=str(base64.b64decode(name[4:]),"utf8")
     rc=requests.get(url).text
     rc=yaml.load(rc,Loader=yaml.FullLoader)
     rc["id"]=name
