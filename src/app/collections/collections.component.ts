@@ -3,7 +3,7 @@ import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Collection} from "../../operation";
 import {ActivatedRoute, Router} from "@angular/router";
-import {showMessage} from "../../tools";
+import {showError, showMessage} from "../../tools";
 import {Location} from "@angular/common";
 import {MatSnackBar} from "@angular/material/snack-bar";
 
@@ -120,6 +120,9 @@ export class CollectionsComponent implements OnInit {
       this.user.collections.push(r.collection);
       this.network.wait();
       showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
+    },(err)=>{
+      this.network.wait();
+      showError(this,err);
     })
   }
 

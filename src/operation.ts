@@ -213,12 +213,14 @@ export interface Operation {
       value: string | ""
       message: string | ""
     }]
+
     nft_target: {
       collection: string
       name: string
       miner: string
       dimensions: string
       royalties: number
+      configuration: string
       quality:number | 90
 
       permissions:{
@@ -229,7 +231,6 @@ export interface Operation {
     }
 
     price: number
-    configuration: string
     limit: number
 
     period:             {

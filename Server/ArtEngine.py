@@ -1,9 +1,10 @@
 import base64
 import copy
+import json
 import os
 import re
 from io import BytesIO
-from json import loads, dump, dumps
+from json import loads, dumps
 from os.path import exists
 from random import random,seed
 
@@ -20,9 +21,8 @@ from PIL.ImageOps import pad
 from reportlab.graphics import renderPM
 from svglib.svglib import svg2rlg
 
-from Tools import now, log, get_fonts, normalize, extract_image_from_string, convertImageFormat, \
-  convert_image_to_animated, merge_animated_image
-
+from TokenForge import upload_on_platform
+from Tools import now, log, get_fonts, normalize, extract_image_from_string, convert_image_to_animated, merge_animated_image
 
 class Element():
   name:str=""
@@ -67,10 +67,6 @@ class Sticker(Element):
     self.data=data
     self.attributes=dict()
 
-    if not dimension is None:     #accepte la syntaxe 800x800
-      if type(dimension)==str:
-        dimension=(int(dimension.split("x")[0]),int(dimension.split("x")[1]))
-
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
     ext=ext.replace(";","").lower()
     if "jpeg" in ext:ext="jpg"
@@ -93,7 +89,7 @@ class Sticker(Element):
               self.text={"text":content}
 
           self.text["dimension"]=self.extract_dimension_from_svg(self.text["text"])
-          self.render_svg(with_picture=False)
+          self.render_svg(with_picture=False,dimension=self.dimension)
           return
 
 
@@ -134,6 +130,11 @@ class Sticker(Element):
       #     offset=(self.image.height-self.image.width)/2
       #     box=(0,offset,self.image.width,self.image.width+offset)
       #   if l>0: self.image=self.image.crop((box[0]*ech,box[1]*ech,box[2]*ech,box[3]*ech))
+
+    if not dimension is None:     #accepte la syntaxe 800x800
+      if type(dimension)==str:
+        dimension=(int(dimension.split("x")[0]),int(dimension.split("x")[1]))
+
 
     if text:
       self.text={
@@ -183,8 +184,9 @@ class Sticker(Element):
 
   def extract_dimension_from_svg(self,svg_code:str) -> (int,int):
     if "width=" in svg_code and "height=" in svg_code:
-      numbers=re.findall(r'\d+',svg_code.split("viewBox")[1])
-      return (int(numbers[2]),int(numbers[3]))
+      height=re.findall(r'\d+',svg_code.split("height=")[1])
+      width=re.findall(r'\d+',svg_code.split("width=")[1])
+      return (int(height[0]),int(width[0]))
     else:
       return (500,500)
 
@@ -205,7 +207,8 @@ class Sticker(Element):
 
     if with_picture:
       svg=svg2rlg("./temp/"+filename)
-      image=extract_image_from_string(renderPM.drawToString(svg,"GIF")).convert("RGBA")
+      s=renderPM.drawToString(svg,"GIF",dpi=72)
+      image=extract_image_from_string(s).convert("RGBA")
 
       newImage = []
       for item in image.getdata():
@@ -284,10 +287,10 @@ class Sticker(Element):
     if new_name=="": new_name=self.name+"_clone"
 
     try:
-      image=self.image.filename
+      image=self.image.copy()
     except:
       try:
-        image=self.image.copy()
+        image=self.image.filename
       except:
         image=self.image
 
@@ -335,7 +338,7 @@ class Sticker(Element):
       if to_concat.image is None and not to_concat.text is None:
         if "<svg" in to_concat.text["text"]:
           log("Collage d'un SVG")
-          src=to_concat.render_svg(replacement)
+          src=to_concat.render_svg(replacement,self.dimension)
         else:
           log("Collage d'un texte")
           src=to_concat.render_text(factor)
@@ -421,6 +424,18 @@ class Sticker(Element):
           log("... au format WEBP")
           self.image.save(filename,quality=int(quality),method=6,lossless=(quality==100),save_all=True,xmp=bytes(xmp,"utf8"))
 
+
+
+  def add_propertie_to_data(self, key, value):
+    """
+    Ajoute une propriété aux datas du fichier
+    :param key:
+    :param value:
+    :return:
+    """
+    _d=loads(self.data) if type(self.data)==str else self.data
+    _d[key]=value
+    self.data=dumps(_d)
 
 
 
@@ -645,7 +660,9 @@ class ArtEngine:
                quality=100,ext="webp",data="",
                replacements={},
                attributes=list(),
-               prefix="generate_"):
+               prefix="generate_",
+               target_platform=""
+               ):
     """
     Génération des collections
     :param dir:
@@ -673,7 +690,8 @@ class ArtEngine:
     self.associate_attributes()
 
     log("Lancement de la génération de "+str(limit)+" images")
-    while index<limit:
+    _try=0
+    while index<limit and _try<20:
       collage=Sticker("collage",dimension=(width,height),ext=ext,data=data)
 
       name=[]
@@ -701,21 +719,30 @@ class ArtEngine:
           elt.close()
 
 
-      if not name in histo and index<limit:
-        index=index+1
+      if not name in histo:
+        if index<limit:
+          index=index+1
 
-        histo.append(name)
-        if len(dir)>0:
-          filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
-          rc.append(filename)
-          if collage.ext.lower()=="gif": rc.append(filename.replace(".gif",".xmp"))
+          histo.append(name)
+          if len(dir)>0:
+            filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
+            rc.append(filename)
+            if collage.ext.lower()=="gif": rc.append(filename.replace(".gif",".xmp"))
 
-          collage.save(filename,quality,index)
-        else:
-          filename=collage.toStr()
-          rc.append(filename)
+            if len(target_platform)>0:
+              log("Upload de du résultat sur "+target_platform)
+              result=upload_on_platform({"content":collage.toBase64(),"type":"image/webp"},target_platform)
+              collage.add_propertie_to_data("storage",result["url"])
 
-        collage.close()
+
+            collage.save(filename,quality,index)
+          else:
+            filename=collage.toStr()
+            rc.append(filename)
+
+          collage.close()
+      else:
+        _try=_try+1
 
     return rc
 

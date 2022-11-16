@@ -19,7 +19,7 @@ from erdpy.proxy import ElrondProxy
 from erdpy.transactions import Transaction
 from erdpy.accounts import Account,Address
 from erdpy.wallet import derive_keys
-
+from Network import Network
 
 RESULT_SECTION="smartContractResults"
 LIMIT_GAS=200000000
@@ -63,8 +63,9 @@ NETWORKS={
 }
 
 
-class Elrond:
-  def __init__(self,network="elrond_devnet"):
+class Elrond(Network):
+  def __init__(self,network="elrond-devnet"):
+    super().__init__(network)
     self.network_name="devnet" if "devnet" in network else "mainnet"
     self._proxy=ElrondProxy(NETWORKS[self.network_name]["proxy"])
     self.transactions=[]
@@ -269,8 +270,10 @@ class Elrond:
     rc=[]
     for id in ids:
       col=self.get_collection(id) if detail else {"id":id}
-      col["link"]="https://"+("devnet." if "devnet" in self.network_name else "")+"inspire.art/collections/"+id
+      col["link"]="https://"+("devnet." if "devnet" in self.network else "")+"inspire.art/collections/"+id
       rc.append(col)
+
+    rc=sorted(rc,key=lambda x:x["timestamp"] if "timestamp" in x else 0,reverse=True)
 
     if detail:
       for item in rc:
@@ -376,7 +379,7 @@ class Elrond:
 
 
 
-  def add_collection(self, owner:Account, collection_name:str,options:dict,type="SemiFungible"):
+  def add_collection(self, owner:Account, collection_name:str,options:dict,type="SemiFungible") -> (str,bool):
     """
     gestion des collections sur Elrond
     voir https://docs.elrond.com/tokens/nft-tokens/
@@ -397,9 +400,8 @@ class Elrond:
     collection_id=None
     log("On recherche la collection de nom "+collection_name+" appartenant à "+owner.address.bech32())
     for col in self.get_collections(owner,True):
-      if col["name"].upper()==collection_name.upper() and owner.address.bech32()==col["owner"]:
-        collection_id=col["collection"]
-        break
+      if col["name"]==collection_name and owner.address.bech32()==col["owner"]:
+        return col["collection"],False
 
     if collection_id is None:
       collection_id=collection_name[:8].upper() if collection_id is None else collection_id
@@ -436,7 +438,7 @@ class Elrond:
         log("Erreur de création de la collection. Consulter "+self.getExplorer(owner.address.bech32(),"address"))
         collection_id=None
 
-    return collection_id
+    return collection_id,True
 
 
   def get_nfts_from_collections(self,collections:[str],with_attr=False):
@@ -466,7 +468,7 @@ class Elrond:
           royalties=royalties,
           files=item["uris"]
         )
-        nft.network="elrond-"+self.network_name
+        nft.network=self.network
         nft.address=item["identifier"]
         nft.owner=owners[i]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
         nft.marketplace={"quantity":int(owners[i]["balance"]),"price":0}
@@ -501,13 +503,10 @@ class Elrond:
 
     return content
 
-  def nfluent_wallet_url(self,address:str,network="elrond-devnet",domain_appli=""):
-    url=domain_appli+"/wallet/?" if "localhost" in domain_appli or "127.0.0.1" in domain_appli else "https://wallet.nfluent.io/?"
-    if type(address)==Account: address=address.address.bech32()
-    return url+setParams({"toolbar":"false","network":network,"addr":address})
 
 
-  def create_account(self,email="",seed="",network="elrond-devnet",domain_appli="",
+
+  def create_account(self,email="",seed="",domain_appli="",
                      subject="Votre compte Elrond est disponible",mail_content="mail_new_account"):
     """
     :param fund:
@@ -542,13 +541,13 @@ class Elrond:
     log("Création du compte "+self.getExplorer(Address(pubkey).bech32(),"address"))
 
     if len(email)>0:
-      wallet_appli=self.nfluent_wallet_url(address,network,domain_appli)
+      wallet_appli=self.nfluent_wallet_url(address,domain_appli)
 
       send_mail(open_html_file(mail_content,{
         "wallet_address":address,
         "mini_wallet":wallet_appli,
-        "url_wallet":"https://wallet.elrond.com" if "mainnet" in network else "https://devnet-wallet.elrond.com",
-        "url_explorer":("https://explorer.elrond.com" if "mainnet" in network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
+        "url_wallet":"https://wallet.elrond.com" if "mainnet" in self.network else "https://devnet-wallet.elrond.com",
+        "url_explorer":("https://explorer.elrond.com" if "mainnet" in self.network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
         "words":words,
         "qrcode":"cid:qrcode",
         "access_code":get_access_code_from_email(address)
@@ -611,10 +610,16 @@ class Elrond:
     if item:
       royalties=int(item["royalties"]*100) if "royalties" in item else 0
       attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=attr)
-      nft=NFT(item["name"],item["nonce"],{"id":item["collection"]},attributes,description,tags,item["url"],[item["creator"]],item["identifier"],royalties=royalties,files=item["uris"])
+      nft=NFT(item["name"],item["nonce"],
+              {"id":item["collection"]},
+              attributes,description,tags,
+              item["url"],[item["creator"]],
+              item["identifier"],royalties=royalties,
+              files=item["uris"],dtCreate=item["timestamp"]
+              )
       nft.owner=item["owner"]
-      nft.marketplace={"price":0,"quantity":int(item["supply"])}
-      nft.network=self.network_name
+      nft.marketplace={"price":0,"quantity":int(item["supply"] if "supply" in item else 1)}
+      nft.network=self.network
 
       if transactions:
         transactions=api(self._proxy.url+"/nfts/"+token_id+"/transactions","gateway=api")
@@ -661,7 +666,7 @@ class Elrond:
     rc=list()
 
     #nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
-    nfts:dict=api(self._proxy.url.replace("gateway","api")+"/accounts/"+_user.address.bech32()+"/nfts")
+    nfts:dict=api(self._proxy.url.replace("gateway","api")+"/accounts/"+_user.address.bech32()+"/nfts?size="+str(limit))
     if nfts is None:
       log("Le compte "+_user.address.bech32()+" n'existe pas")
       return []
@@ -698,11 +703,12 @@ class Elrond:
             marketplace={"quantity":1},
             files=nft["uris"]
           )
-          _nft.network="elrond-"+self.network_name
+          _nft.network=self.network
           _nft.owner=_user.address.bech32()
 
-          rc.append(_nft)
+          rc.insert(0,_nft)
           if len(rc)>limit:break
+
     return rc
 
   def freeze(self,_user,token_id):

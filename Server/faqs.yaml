@@ -45,6 +45,16 @@ content:
       ici description de la procédure de validation
       "
 
+  - index: svg
+    title: Comment utiliser des fichiers vectoriels ?
+    order: 0
+    format: html
+    content: "
+      Les fichiers vectoriels peuvent être utilisés dans la conception des NFT<br>
+      Ils doivent être au format SVG
+
+    "
+
   - index: dispenser
     title: Comment utiliser l'outil de distribution des NFT ?
     order: 0

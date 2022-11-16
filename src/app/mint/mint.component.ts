@@ -20,8 +20,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {OperationService} from "../operation.service";
 import {NFT} from "../../nft";
 import {Clipboard} from "@angular/cdk/clipboard";
-import {environment} from "../../environments/environment";
-
+import {Location} from "@angular/common";
 
 
 @Component({
@@ -48,6 +47,7 @@ export class MintComponent implements OnInit {
     public network:NetworkService,
     public dialog:MatDialog,
     public user:UserService,
+    public _location:Location,
     public operation:OperationService,
     public metaboss:MetabossService,
     public router:Router,
@@ -59,17 +59,18 @@ export class MintComponent implements OnInit {
 
 
   ngOnInit(): void {
-
     this.user.addr_change.subscribe((addr)=>{
+      this._location.replaceState("./mint","miner="+addr);
       this.user.get_collection().then(()=>{
-        this.sel_collection=this.user.collections[0].id || "";
-      });
-    })
+        getParams(this.routes).then((params:any)=>{
+          if(this.user.find_collection(params["collection"])){
+            this.sel_collection=params["collection"];
+          } else {
+            this.sel_collection=this.user.collections[0].id || "";
+          }
+        })
 
-    getParams(this.routes).then((params:any)=>{
-      if(params.hasOwnProperty("collection")){
-        this.sel_collection=params["collection"];
-      }
+      });
     })
     this.init_form();
   }
@@ -81,6 +82,7 @@ export class MintComponent implements OnInit {
       if(tmp)this.tokens=JSON.parse(tmp);
 
       getParams(this.routes).then((params:any)=>{
+        if(params.hasOwnProperty("miner"))this.user.init(params["miner"]);
         if(params.hasOwnProperty("files")){
           let files=[];
           for(let f of params["files"]){
@@ -120,6 +122,7 @@ export class MintComponent implements OnInit {
       }
     }
 
+    if(!_infos.hasOwnProperty("files"))_infos["files"]="";
 
     let rc:NFT={
       collection: null,
@@ -185,8 +188,10 @@ export class MintComponent implements OnInit {
         let url=f.file;
         let _infos:any={};
         if(tags.hasOwnProperty("mint")){
-          _infos= JSON.parse(b64DecodeUnicode(tags.mint.value));
+          const s_tmp=b64DecodeUnicode(tags.mint.value)
+          _infos= JSON.parse(s_tmp);
         }
+        if(_infos.hasOwnProperty("storage"))url=_infos["storage"];
         this.tokens.push(this.get_token_from_xmp(_infos,url))
       }
     }

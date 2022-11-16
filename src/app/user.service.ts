@@ -166,6 +166,7 @@ export class UserService {
   }
 
   find_collection(sel_collection: string) {
+    if(!sel_collection)return null;
     for(let col of this.collections)
       if(col.id==sel_collection)return col;
     return null;

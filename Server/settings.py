@@ -8,6 +8,10 @@ GITHUB={
 	"repository":"TokenSol"
 }
 
+IPFS_PORT=5001
+IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"
+
+
 FTX_API_KEY="GN5PIvejHZ0h2BXDmXziybR5XW4fdSrzRFa0R2Fw"
 FTX_API_SECRET="Rge4X3p8KtV3ZJvd0yQXSCqIRiWZDeLEXTLO6O_s"
 

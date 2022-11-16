@@ -22,7 +22,7 @@ export class MetabossService {
   init_keys(network="elrond-devnet",with_balance=false) {
     return new Promise((resolve, reject) => {
       this.network.wait("Chargement des clés");
-      if(this.network.isElrond() || this.network.isSolana()){
+      if(this.network.isElrond() || this.network.isSolana() || this.network.isPolygon()){
         this.httpClient.get<CryptoKey[]>(environment.server + "/api/keys/?network=" + network + "&with_private=true&with_balance="+with_balance).subscribe((r: CryptoKey[]) => {
           this.keys = r;
           this.network.wait();

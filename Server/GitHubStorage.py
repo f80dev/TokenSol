@@ -1,8 +1,5 @@
-from hashlib import md5
 from json import dumps, dump
-
 from github import Github
-
 from Tools import log
 
 

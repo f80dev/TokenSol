@@ -43,11 +43,11 @@
 
         </td>
         <td style="width:25%;">
-          <button type="button" mat-raised-button mat-button (click)="reset()">
+          <button type="button" mat-raised-button mat-button (click)="reset()" color="primary">
             Nouvelle
           </button>
 
-          <button type="button" mat-raised-button mat-button (click)="clone()">
+          <button type="button" mat-raised-button mat-button [disabled]="!sel_config" (click)="clone()">
             Cloner
           </button>
         </td>
@@ -314,7 +314,7 @@
       &nbsp;
       <mat-form-field appearance="fill" style="max-width: 100px">
         <mat-label>Nombre d'unités</mat-label>
-        <input matInput type="number" [(ngModel)]="sel_config!.limit" (ngModelChange)="show_download_link()">
+        <input matInput type="number" [(ngModel)]="sel_config!.limit">
       </mat-form-field>
 
       <mat-form-field appearance="fill" style="max-width: 100px">
@@ -360,8 +360,21 @@
 
       <button type="button" mat-raised-button mat-button
               (click)="generate_collection('upload')">
-        Uploader
+        Uploader <mat-icon>arrow_right</mat-icon>
       </button>
+
+      <mat-form-field style="fontsize:small">
+        <mat-label>Herbergement des NFT</mat-label>
+        <mat-select [(ngModel)]="sel_webstorage_platform">
+          <mat-option *ngFor="let platform of webstorage_platform" [value]="platform.value">
+            {{platform.label}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+
+
+
 
 
       <br>

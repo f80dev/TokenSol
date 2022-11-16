@@ -22,7 +22,6 @@ export class BuildOpeComponent implements OnInit {
 
   url: string = "";
   url_ope: string="https://raw.githubusercontent.com/f80dev/TokenSol/master/Server/Operations/Main_devnet.yaml";
-  url_dispenser_app: string="";
   collections_lottery: any[]=[];
   nfts: NFT[]=[];
   collections: any={};
@@ -31,9 +30,7 @@ export class BuildOpeComponent implements OnInit {
   sources: any;
 
   candymachine_qrcode: string="";
-  candymachine_url: string="";
 
-  airdrop_url:string=""
 
   title: string="NFluenT Candy Machine";
 
@@ -49,19 +46,20 @@ export class BuildOpeComponent implements OnInit {
     public router:Router,
     public ngShare:NgNavigatorShareService
   ) {
-
+    this.user.addr_change.subscribe(()=>{
+      this.refresh();
+    })
+    this.operation.sel_ope_change.subscribe(()=>{
+      this.refresh();
+    })
   }
 
   ngOnInit(): void {
     if(this.user.isConnected()){
-
-      setTimeout(()=>{
         getParams(this.routes).then((params:any)=>{
           this.operation.select(params["ope"]);
           this.refresh();
         })
-
-      },1000);
     } else {
       this.user.login();
     }
@@ -75,7 +73,7 @@ export class BuildOpeComponent implements OnInit {
   refresh_ope($event: any) {
 
     if(!$event.value)return;
-    this.operation.select($event.value.id);
+    // this.operation.select($event.value.id);
 
     if(!this.operation.sel_ope)return;
 
@@ -111,12 +109,7 @@ export class BuildOpeComponent implements OnInit {
           this.operation.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
         }
 
-        if(this.operation.sel_ope.dispenser){
-          this.url_dispenser_app=this.operation.sel_ope.dispenser.application.replace("$nfluent_appli$",environment.appli)
-            +"?param="+setParams({ope:ope,toolbar:false,selfWalletConnexion:false});
-        }
-
-        if(this.operation.sel_ope.validate){
+        if(this.operation.sel_ope && this.operation.sel_ope.validate && this.operation.sel_ope.validate.application){
           this.operation.sel_ope.validate.application=this.operation.sel_ope.validate.application.replace("$nfluent_appli$",environment.appli);
         }
 
@@ -131,9 +124,7 @@ export class BuildOpeComponent implements OnInit {
         //   this.store_collections.push(_c);
         // }
 
-        this.airdrop_url=environment.appli+"/cm?param="+setParams({airdrop:true,ope:this.operation.sel_ope.id,toolbar:false});
-        this.candymachine_url=environment.appli+"/cm?param="+setParams({airdrop:false,ope:this.operation.sel_ope.id,toolbar:false});
-        this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.candymachine_url)+"&scale=13";
+        this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.get_url_for_appli("cm",{airdrop:false}))+"&scale=13";
 
       }
 
@@ -211,7 +202,14 @@ export class BuildOpeComponent implements OnInit {
       return;
     }
     if(this.operation.sel_ope){
-      if(appli=="validate" && (!this.operation.sel_ope.validate?.users || this.operation.sel_ope.validate?.users.length==0))appli="autovalidate";
+      if(appli=="validate" && (!this.operation.sel_ope.validate?.users || this.operation.sel_ope.validate?.users.length==0)){
+        _prompt(this,"Nom du validateur","dudule").then((name:string)=>{
+          appli="autovalidate";
+          add_param["validator_name"]=name;
+          open(this.get_url_for_appli(appli,add_param),"_self");
+        })
+        return;
+      }
       this.refresh();
       open(this.get_url_for_appli(appli,add_param),"_self");
       }

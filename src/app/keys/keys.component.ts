@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import {Clipboard} from '@angular/cdk/clipboard';
 import {MetabossService} from "../metaboss.service";
-import {$$, CryptoKey, setParams, showMessage} from "../../tools";
+import {$$, CryptoKey, getParams, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Location} from "@angular/common";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
-import {Router} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {NFLUENT_WALLET} from "../../definitions";
 
 @Component({
@@ -28,15 +28,19 @@ export class KeysComponent implements OnInit {
     public network:NetworkService,
     public toast:MatSnackBar,
     public user:UserService,
-    public _location:Location
+    public _location:Location,
+    public routes:ActivatedRoute
   ) { }
 
   ngOnInit(): void {
-    if(this.user.isConnected(true)){
-      this.refresh();
-    } else {
-      this.user.login();
-    }
+    getParams(this.routes).then((params:any)=>{
+      if(params.hasOwnProperty("network"))this.network.network=params["network"];
+      if(this.user.isConnected(true)){
+          this.refresh();
+      } else {
+        this.user.login();
+      }
+    })
   }
 
   refresh(){
@@ -124,6 +128,9 @@ export class KeysComponent implements OnInit {
   open_faucet(key: CryptoKey) {
     if(this.network.isElrond()){
       //TODO ici ajouter l'ouverture du rechargement
+    }
+    if(this.network.isPolygon()){
+      open("https://faucet.polygon.technology/","faucet")
     }
   }
 }

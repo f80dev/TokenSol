@@ -24,8 +24,7 @@ from PIL import Image,ImageSequence
 from cryptography.fernet import Fernet
 from fontTools import ttLib
 
-
-from secret import USERNAME, PASSWORD, SALT
+from secret import USERNAME, PASSWORD, SALT, GITHUB_TOKEN
 from settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
 
 
@@ -454,3 +453,10 @@ def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_me
   to_paste.close()
   rc=Image.open(filename,"r")
   return rc
+
+
+
+
+
+
+

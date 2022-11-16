@@ -1,6 +1,6 @@
 <div class="mainform">
   <mat-expansion-panel>
-    <mat-expansion-panel-header>Les NFTS</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Les NFTS de {{operation.sel_ope!.title}}</mat-expansion-panel-header>
     <table *ngIf="nfts.length>0" style="width: 100%;text-align: center;" class="mat-elevation-z4">
       <tr>
         <th>Address</th>
@@ -54,10 +54,12 @@
 
   </mat-expansion-panel>
 
+  <br><br>
   <div class="mat-elevation-z4">
-    <button type="button" mat-raised-button mat-button (click)="open_graph()" id="cmdOpen">
-      Graph
+    <button type="button" mat-icon-button mat-button (click)="open_graph()">
+      <mat-icon>refresh</mat-icon>
     </button>
+    <app-visgraph style="width:60%;height:60%;" *ngIf="graph" [data]="graph.graph"></app-visgraph>
   </div>
 
 </div>

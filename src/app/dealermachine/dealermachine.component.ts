@@ -1,7 +1,7 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component,  OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {$$, decrypt, getParams, hasWebcam, showError, showMessage} from "../../tools";
+import {$$, getParams, hasWebcam, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";

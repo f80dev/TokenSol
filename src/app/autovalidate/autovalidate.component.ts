@@ -13,6 +13,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 export class AutovalidateComponent implements OnInit {
   operation: Operation | null=null;
   message: string | undefined ="";
+  validator_name: any;
 
   constructor(
     public routes:ActivatedRoute,
@@ -22,6 +23,7 @@ export class AutovalidateComponent implements OnInit {
 
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
+      this.validator_name=params["validator_name"]
       this.network.get_operations(params["ope"]).subscribe((ope)=>{
         this.operation=ope;
       })
@@ -31,12 +33,8 @@ export class AutovalidateComponent implements OnInit {
   on_authent($event: { address:string,strong:boolean,nftchecked:boolean}) {
     if($event.strong){
       this.message=this.operation?.validate?.actions.success.message;
-      let url=this.operation?.validate?.actions.success.redirect;
-      if(url && url.length>0)open(url);
     } else {
       this.message=this.operation?.validate?.actions.fault.message;
-      let url=this.operation?.validate?.actions.fault.redirect;
-      if(url && url.length>0)open(url);
     }
     setTimeout(()=>{this.message=""},2000);
     showMessage(this,this.message);

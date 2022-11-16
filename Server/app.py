@@ -19,11 +19,12 @@ from xml.dom import minidom
 from xml.dom.minidom import Element
 from zipfile import ZipFile
 
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 
-from BackgroundGenerator import BackgroundGenerator
+from Polygon.Polygon import Polygon, POLYGON_KEY_DIR
 from StoreFile import StoreFile
-from Tools import get_operation, decrypt, get_access_code_from_email, normalize, send, convert_to
+from TokenForge import upload_on_platform
+from Tools import get_operation, decrypt, get_access_code_from_email, send, convert_to
 
 import py7zr
 import pyqrcode
@@ -40,7 +41,6 @@ from yaml import dump
 import GitHubStorage
 from ArtEngine import ArtEngine, Layer, Sticker
 from Elrond.Elrond import Elrond, ELROND_KEY_DIR
-from GoogleCloudStorageTools import GoogleCloudStorageTools
 from NFT import NFT
 from PrestaTools import PrestaTools
 from Solana.Solana import SOLANA_KEY_DIR, Solana
@@ -48,13 +48,11 @@ from Tools import setParams, get_access_code, check_access_code, get_fonts
 from Tools import log, now, is_email, send_mail, open_html_file, encrypt
 from TransactionsGraph import TransactionsGraph
 from dao import DAO
-from infura import Infura
 from ipfs import IPFS
-from nftstorage import NFTStorage
-from secret import GITHUB_TOKEN, SALT, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY, SECRETS_FILE
+from secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRET_JWT_KEY, SECRETS_FILE, SECRET_ACCESS_CODE
 from flask_jwt_extended import create_access_token, JWTManager
 
-from settings import DBSERVER_SYSTEM, DBNAME_SYSTEM
+from settings import DBSERVER_SYSTEM, DBNAME_SYSTEM, IPFS_SERVER
 
 scheduler = BackgroundScheduler()
 log("Initialisation du scheduler ok")
@@ -73,15 +71,11 @@ log("Initialisation de la base de donnée OK")
 
 #voir la documentation de metaboss:
 
-IPFS_PORT=5001
-IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"
-
 
 
 def returnError(msg:str="",_d=dict(),status=500):
   log("Error "+msg)
-  _d["error"]="Ooops ! Petit problème technique. "+msg
-  return jsonify(_d),status
+  return "Ooops ! Petit problème technique. "+msg,status
 
 
 
@@ -230,7 +224,7 @@ def layers(body=None):
         if elt["image"] and len(elt["image"])>0:
           ext=elt["image"].split("?")[1] if "?" in elt["image"] else elt["image"][elt["image"].rindex(".")+1:]
           name=elt["image"].split("images/")[1].split("_0x")[0]
-          s=Sticker(name=name,image=elt["image"],ext=ext)
+          s=Sticker(name=name,image=elt["image"],ext=ext,dimension=(body["width"],body["height"]))
 
       if s:
         layer.add(s)
@@ -313,11 +307,10 @@ def get_collections(addresses:str):
   """
   network=request.args.get("network","elrond-devnet")
   with_detail=(request.args.get("detail","true")=="true")
-  if "elrond" in network:
-    elrond=Elrond(network)
-    cols=[]
-    for addr in addresses.split(","):
-      cols=cols+elrond.get_collections(addr,with_detail)
+  cols=[]
+  for addr in addresses.split(","):
+    if "elrond" in network: cols=cols+Elrond(network).get_collections(addr,with_detail)
+    if "polygon" in network: cols=cols+Polygon(network).get_collections(addr)
 
   return jsonify(cols)
 
@@ -346,6 +339,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     data=request.args.get("data","")
     attributes=request.args.get("attributes","")
     nft.name=request.args.get("name","mycollection").replace(".png","")
+    target_platform=request.args.get("platform","")
 
   log("On détermine le nombre d'image maximum générable")
   max_item=1
@@ -378,7 +372,8 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     data=s_data,
     ext=ext,
     attributes= json.loads(urllib.parse.unquote(str(base64.b64decode(attributes), "utf8"))) if len(attributes)>0 else [],
-    prefix=prefix
+    prefix=prefix,
+    target_platform=target_platform if format=="upload" else ""
   )
 
   for f in os.listdir("./temp"):
@@ -387,42 +382,39 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     except:
       log("Impossible de supprimer "+f)
 
-  if format=="zip":
-    archive_file="./temp/Collection.7z"
-    with py7zr.SevenZipFile(archive_file, 'w') as archive:
-      for f in files:
-        archive.write(f)
 
+
+  archive_file="Collection_"+now("hex")+".7z"
+  with py7zr.SevenZipFile("./temp/"+archive_file, 'w') as archive:
     for f in files:
-      os.remove(f)
-
-    return send_file(archive_file,as_attachment=True)
+      archive.write(f)
 
   if format=="list":
     return files
 
-  if format=="upload":
-    platform=request.args.get("platform","nftstorage")
-    for filename in files:
-      _f=open(filename,"rb")
-      only_filename=filename[filename.rindex("/")+1:]
-      obj={
-        "content":"data:image/jpeg;base64,"+str(base64.b64encode(_f.read()),"utf8"),
-        "type":"image/"+ext,
-        "filename":only_filename
-      }
-      rc.append(upload_on_platform(obj,platform))
-      _f.close()
+  # if format=="upload":
+  #   platform=request.args.get("platform","nftstorage")
+  #   for filename in files:
+  #     _f=open(filename,"rb")
+  #     only_filename=filename[filename.rindex("/")+1:]
+  #     obj={
+  #       "content":"data:image/jpeg;base64,"+str(base64.b64encode(_f.read()),"utf8"),
+  #       "type":"image/"+ext,
+  #       "filename":only_filename
+  #     }
+  #     rc.append(upload_on_platform(obj,platform))
+  #     _f.close()
 
-  if format=="preview":
-    for filename in files:
-      f=open(filename,"rb")
-      only_filename=filename[filename.rindex("/")+1:]
-      rc.append({"src":"data:image/jpeg;base64,"+str(base64.b64encode(f.read()),"utf8"),"filename":only_filename})
-      f.close()
-      os.remove(filename)
 
-  return jsonify(rc)
+  for filename in files:
+    f=open(filename,"rb")
+    only_filename=filename[filename.rindex("/")+1:]
+    rc.append({"src":"data:image/jpeg;base64,"+str(base64.b64encode(f.read()),"utf8"),"filename":only_filename})
+    f.close()
+    os.remove(filename)
+
+
+  return jsonify({"preview":rc,"archive":archive_file})
 
 
 
@@ -430,9 +422,13 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
 def send_photo_for_nftlive(conf_id:str):
 
   config=configs(conf_id,format="dict")
+  if len(config)==0:
+    return returnError("Configuration "+conf_id+" introuvable")
+  else:
+    config=config[0]
 
   image=request.json["photo"]
-  dim=request.json["dimensions"] if "dimensions" in request.json else config["width"]+"x"+config["height"]
+  dim=request.json["dimensions"] if "dimensions" in request.json else str(config["width"])+"x"+str(config["height"])
   limit=request.json["limit"] if "limit" in request.json else config["limit"]
   quality=request.json["quality"] if "quality" in request.json else 90
   note=request.json["note"] if "note" in request.json else ""
@@ -1009,6 +1005,11 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
           nfts=nfts+l_nfts
           src["ntokens"]=len(l_nfts)
 
+        if src["connexion"].startswith("polygon"):
+          l_nfts=Polygon(src['connexion']).get_nfts(src["owner"],limit=src["filter"]["limit"])
+          nfts=nfts+l_nfts
+          src["ntokens"]=len(l_nfts)
+
         if src["connexion"].startswith("elrond"):
           elrond=Elrond(src['connexion'])
           if src["owner"]:
@@ -1405,7 +1406,7 @@ def mint_for_prestashop():
       bNewAccount=False
 
     if not "address" in _p or _p["address"] is None or _p["address"]=="":
-      collection_id=elrond.add_collection(miner,collection,type="NonFungible")
+      collection_id,newCollection=elrond.add_collection(miner,collection,type="NonFungible")
       nonce,rc=elrond.mint(miner,_p["name"],_p["description"],collection_id,attributes,IPFS(IPFS_SERVER),[],body["quantity"],royalties,visual)
       t=elrond.transfer(collection_id,nonce,miner,_account)
     else:
@@ -1554,7 +1555,7 @@ def configs(location:str="",format=""):
         if not "text" in config:config["text"]={}
         if not "text_to_add" in config["text"]:config["text"]["text_to_add"]=""
 
-        if len(location)==0 or config["location"]==location:
+        if len(location)==0 or config["name"]==location:
           rc.append(config)
 
     if format=="json": return jsonify(rc)
@@ -1638,9 +1639,17 @@ def keys(name:str=""):
     if "solana" in network:
       rc=Solana(network).get_keys(with_private=(request.args.get("with_private","false")=="true"),with_balance=with_balance,with_qrcode=True)
       return jsonify(rc)
+    if "polygon" in network:
+      rc=Polygon(network).get_keys(3,with_balance=with_balance)
+      return jsonify(rc)
 
-  filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in network else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
+
   if request.method=="DELETE":
+    if "polygon" in network:
+      filename=POLYGON_KEY_DIR+name+".secret"
+    else:
+      filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in network else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
+
     os.remove(filename)
 
   if request.method=="POST":
@@ -1719,7 +1728,10 @@ def get_image(cid:str=""):
           format="text/yaml"
         else:
           f=open(filename,"r" if cid.endswith(".svg") else "rb")
-          format="image/svg+xml" if cid.endswith(".svg") else "image/webp"
+          if filename.endswith("7z"):
+            format="application/zip"
+          else:
+            format="image/svg+xml" if cid.endswith(".svg") else "image/webp"
 
         response = make_response(f.read())
         response.headers.set('Content-Type', format)
@@ -1757,61 +1769,6 @@ def sign():
     rc=Solana(network).exec("sign one",account=account,keyfile=keyfile)
   return jsonify(rc)
 
-
-
-def upload_on_platform(data,platform="ipfs",id=None,options={}):
-  if platform=="ipfs":
-    ipfs=IPFS(IPFS_SERVER)
-    cid=ipfs.add(data,removeFile=True)
-    rc={"cid":cid["Hash"],"url":ipfs.get_link(cid["Hash"])+("?"+cid["Name"] if "Name" in cid else "")}
-
-  if platform=="infura":
-    infura=Infura()
-    cid=infura.add(data)
-    rc={"cid":cid["Hash"],"url":cid["url"]}
-
-  if platform=="mongodb":
-    cid=dao.add_dict(data)
-    rc={"cid":cid,"url":app.config["DOMAIN_APPLI"]+"/api/json/"+cid}
-
-  if platform.startswith("nfluent"):
-    ext=data["type"].split("/")[1].split("+")[0]
-
-    if "filename" in data and not data["filename"] is None and len(data["filename"])>0 and exists(data["filename"]):
-      log("Le fichier est déjà présent sur le serveur")
-      cid=data["filename"][data["filename"].rindex("/")+1:]
-      return {"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+cid+"?"+ext}
-
-    b=base64.b64decode(data["content"].split("base64,")[1])
-    #if ext=="gif" or ext=="png": ext="webp"
-    cid=hex(hash(data["content"]))+"."+ext
-    filename=normalize(data["filename"].split(".")[0]+"_"+cid) if "filename" in data and not data["filename"] is None else cid
-
-    if ext=="svg":
-      s=Sticker(cid,text=str(b,"utf8"))
-    else:
-      s=Sticker(cid,data["content"],ext=ext)
-
-    s.save("./temp/"+filename)
-    rc={"cid":cid,"url":app.config["DOMAIN_SERVER"]+"/api/images/"+filename+"?"+ext}
-
-
-
-  if platform=="nftstorage":
-    if "content" in data:
-      rc=NFTStorage().add(data["content"],data["type"])
-    else:
-      rc=NFTStorage().add(data)
-
-  if platform=="googlecloud":
-    rc=GoogleCloudStorageTools().add(data,id)
-
-  if platform.startswith("github"):
-    repo=options["repository"] if "repository" in options else platform.split("/")[1].strip()
-    github_storage=GitHubStorage.GithubStorage(repo,"main","nfluentdev",GITHUB_TOKEN)
-    rc= github_storage.add(data,id,overwrite=False)
-
-  return rc
 
 
 
@@ -1862,7 +1819,7 @@ def nfts(id=""):
 @app.route('/api/access_code_checking/<access_code>/<addr>/',methods=["GET"])
 #http://127.0.0.1:4242/api/access_code_checking/
 def access_code_checking(access_code:str,addr:str):
-  if get_access_code_from_email(addr)==access_code:
+  if get_access_code_from_email(addr)==access_code or access_code==SECRET_ACCESS_CODE:
     return jsonify({"message":"ok"})
   else:
     return returnError("Incorrect access code")
@@ -1962,6 +1919,7 @@ def upload():
   Chargement des visuels
   :return:
   """
+
   platform=request.args.get("platform","ipfs")
   if str(request.data,"utf8").startswith("{"):
     body=request.json
@@ -2055,7 +2013,10 @@ def create_collection(owner:str):
   if "elrond" in network:
     elrond=Elrond(network)
     solde=elrond.balance(owner)
-    collection_id=elrond.add_collection(owner,_data["name"],_data["options"],type="NonFungible")
+    collection_id,newCollection=elrond.add_collection(owner,_data["name"],_data["options"],type="NonFungible")
+    if not newCollection:
+      return returnError("Cette collection existe déjà")
+
     new_collection=elrond.get_collection(collection_id)
     new_solde=elrond.balance(owner)
 
@@ -2066,9 +2027,20 @@ def create_collection(owner:str):
 
 
 def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile="",wallet_appli="https://wallet.nfluent.io"):
+  """
+  minage du NFT
+  :param nft:
+  :param miner:
+  :param owner:
+  :param network:
+  :param offchaindata_platform:
+  :param storagefile:
+  :param wallet_appli:
+  :return:
+  """
   rc= {"error":"Problème technique"}
   account=None
-  collection_id=nft.collection["id"]
+  collection_id=nft.collection["id"] if nft.collection else ""
 
   if is_email(owner):
     email=owner
@@ -2080,9 +2052,14 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
                                                       domain_appli=app.config["DOMAIN_APPLI"])
       account=_account.address.bech32()
       log("Notification de "+owner+" que son compte "+elrond.getExplorer(account,"account")+" est disponible")
-    else:
+
+    if "solana" in network:
       solana=Solana(network)
       words,pubkey,privkey,list_int=solana.create_account(domain_appli=app.config["DOMAIN_APPLI"],network=network,subject="Votre NFT '"+nft.name+"' est disponible")
+      account=pubkey
+
+    if "polygon" in network:
+      words,pubkey,privkey,list_int=Polygon(network).create_account(domain_appli=app.config["DOMAIN_APPLI"],network=network,subject="Votre NFT '"+nft.name+"' est disponible")
       account=pubkey
 
   if account is None:
@@ -2098,6 +2075,22 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
     #   dao.add_histo(_ope["id"],"new_account",account,"","",_ope["network"],"Création d'un compte pour "+owner,owner)
 
   if len(miner)==0:miner=owner
+
+  if "polygon" in network:
+    nonce,rc=Polygon(network).mint(
+      miner,
+      title=nft.name,
+      description=nft.description,
+      tags=nft.tags,
+      collection=None,
+      properties=nft.attributes,
+      files=nft.files,
+      ipfs=IPFS(IPFS_SERVER),
+      quantity=nft.marketplace["quantity"],
+      royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
+      visual=nft.visual
+    )
+
 
   if "elrond" in network.lower() and not account is None:
     elrond=Elrond(network)
@@ -2411,7 +2404,7 @@ def validators(validator=""):
 
   if request.method=="POST":
     log("Un validateur demande son inscription")
-    validator_name="val_"+now("hex")
+    validator_name="val_"+now("hex") if len(request.json["validator_name"])==0 else request.json["validator_name"]
     access_code=str(base64.b64encode(encrypt(validator_name)),"utf8")
     ask_for:str=request.json["ask_for"]
     dao.add_validator(validator_name,ask_for)

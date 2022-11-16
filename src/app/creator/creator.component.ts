@@ -29,6 +29,12 @@ export class CreatorComponent implements OnInit {
 
   platforms=PLATFORMS;
 
+  webstorage_platform=[
+    {label:"NFT storage",value:"nftstorage"},
+    {label:"IPFS",value:"ipfs"},
+    {label:"Infura (IPFS)",value:"infura"},
+  ]
+
   show_addtext:any;
   configs:Configuration[]=[];
   previews:any[]=[];
@@ -40,6 +46,8 @@ export class CreatorComponent implements OnInit {
   upload_files=[];
 
   sel_platform: any="nfluent";
+  sel_webstorage_platform: any="nftstorage";
+
   sel_config: Configuration | null=null;
   fontfiles: any;
   filename_format: string ="image";
@@ -191,6 +199,8 @@ export class CreatorComponent implements OnInit {
         elements:[],
         text:"",
         unique:false,
+        width:this.sel_config.width,
+        height:this.sel_config.height,
         indexed:true,
         position:this.sel_config!.layers.length,
         translation: {x:0,y:0},
@@ -230,6 +240,8 @@ export class CreatorComponent implements OnInit {
   generate_collection(format="zip") {
 
     if(!this.sel_config)return;
+    this.url_collection="";
+
 
     //Vérification du format des datas
     if(this.sel_config!.data.properties && this.sel_config!.data.properties!=""){
@@ -241,11 +253,10 @@ export class CreatorComponent implements OnInit {
       }
     }
 
-
     let i=0;
 
     this.network.reset_collection().subscribe(()=>{
-      this.fill_layer(i,format=="preview" ? 200 : 0,format=="preview" ? 200 : 0,0,()=>{
+      this.fill_layer(i,this.sel_config?.width || 800,this.sel_config?.height || 800,0,()=>{
 
         this.sel_config!.data.sequence=this.sel_config?.text.text_to_add.split("|");
         if(this.operation!.sel_ope!.nftlive){
@@ -255,11 +266,13 @@ export class CreatorComponent implements OnInit {
         this.network.wait("Fabrication de la collection ...");
         showMessage(this,"L'aperçu se limite à 10 NFT maximum");
 
+        this.url_collection="";
         // @ts-ignore
-        this.network.get_collection(Math.min(this.sel_config.limit,10),this.filename_format,this.sel_ext,this.sel_config!.width+","+this.sel_config!.height,this.sel_config.seed,this.quality,"preview",this.sel_config!.data,this.attributes).subscribe((r:any)=>{
-          this.show_download_link();
+        this.network.get_collection(Math.min(this.sel_config.limit,format=="preview" ? 10 : 1000),this.filename_format,this.sel_ext,this.sel_config!.width+","+this.sel_config!.height,this.sel_config.seed,this.quality,format,this.sel_config!.data,this.attributes).subscribe((r:any)=>{
+          showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
+          this.url_collection=environment.server+"/api/images/"+r.archive;
           this.network.wait("");
-          this.previews=r;
+          this.previews=r.preview;
         },(err)=>{showError(this,err);})
 
 
@@ -273,6 +286,8 @@ export class CreatorComponent implements OnInit {
         //     }
         //   });
         // }
+
+
       });
     },(err)=>{showError(this,err);})
   }
@@ -466,6 +481,7 @@ export class CreatorComponent implements OnInit {
   //https://server.f80lab.com/api/configs/?format=file
   config_with_image=true;
 
+
   save_config(with_file=false) : Promise<string> {
     return new Promise((resolve,reject) => {
 
@@ -587,8 +603,8 @@ export class CreatorComponent implements OnInit {
     //let new_name=await _prompt(this,"Nom de la configuration");
     this.sel_config={
       quality: 98,
-      height: 200,
-      width: 200,
+      height: 800,
+      width: 800,
       data: { description: "", files: "", operation: "", properties: "", symbol: "token__idx__", title: "",tags:"",sequence:[]},
       attributes: {},
       layers: [],
@@ -706,13 +722,6 @@ export class CreatorComponent implements OnInit {
 
 
 
-  show_download_link() {
-    showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
-    this.url_collection=environment.server+"/api/collection/?seed="+this.sel_config!.seed+"&image="+this.sel_ext
-      +"&size="+this.sel_config!.width+","+this.sel_config!.height+"&name="+this.filename_format
-      +"&format=zip&limit="+this.sel_config!.limit+"&quality="
-      +this.sel_config!.quality+"&data="+btoa(encodeURIComponent(JSON.stringify(this.sel_config!.data)));
-  }
 
   transform(layer: Layer) {
     if(!layer.translation)layer.translation={x:0,y:0};

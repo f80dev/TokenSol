@@ -67,7 +67,7 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 #les champs remarquables utilisablent sont
 # {{mini_wallet}} : adresse du wallet nfluent
 # {{url_wallet}}: adresse du wallet web
-# {{words}}: seed du wallet
+# {{words}}: seed du wallet (liste des 12 ou 24 mots permettant de retrouver le wallet)
 # {{qrcode}}: seed au format QRCODE
 # {{signature}}: signature de l'équipe nfluent
 # {{appname}}: Nom de l'application emetrice (ici TokenForge)
@@ -429,9 +429,7 @@ nftlive:
   collections:              #design la collection qui donne le droit d'utiliser NFTLive
     - "PHILHARM-f25fc0"
 
-  configuration: nftlive              #designe la configuration à utiliser (peut être un lien web ou le nom sur le serveur)
   limit: 10                           #nombre de NFT à proposer à l'utilisateurs
-
   price: 0                            #prix d'utilisation du service
 
   dynamic_fields:                     #liste de champs utilisé par le créateur pour personnaliser le NFT
@@ -440,11 +438,12 @@ nftlive:
       message: "Note placée en bas de votre photo"
       value: "votre message"
 
-  nft_target:                         #désigne les caractéristiques du NFT qui sera miné
+  nft_target:                               #désigne les caractéristiques du NFT qui sera miné
     miner: paul
-    collection: "PHILHARM-f25fc0"     #collection auquel appartiendra le NFT (Vérifier que le miner à les droits sur cette collection)
-    royalties: 20                     #royalties pour le mineur
-    configuration: "philharmonie_nftlive"
+    collection: "PHILHARM-f25fc0"           #collection auquel appartiendra le NFT (Vérifier que le miner à les droits sur cette collection)
+    royalties: 20                           #royalties pour le mineur
+    configuration: "philharmonie_nftlive"   #nom de la configuration à utiliser
+    dimension:                              #dimension est optionnelle, et permet d'écraser la valeur contenu dans le fichier de configuration
 
     permissions:
       transfer: True

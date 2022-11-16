@@ -2,7 +2,10 @@
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
-    <div class="mat-display-1" *ngIf="selfWalletConnexion">Acquérir ce NFT pour {{nft.marketplace!.price}}€</div>
+    <div class="mat-display-1" *ngIf="selfWalletConnexion && nft.marketplace">
+      Acquérir ce NFT
+      <span *ngIf="nft.marketplace!.price>0">pour {{nft.marketplace!.price}}€</span>
+    </div>
     <div class="mat-display-1" *ngIf="!selfWalletConnexion">{{title}}</div>
 
     <img [src]="nft?.visual" *ngIf="nft?.visual"
@@ -34,7 +37,9 @@
 
 
     <!--    gestion de la facture -->
-    <mat-form-field appearance="fill" style="min-width: 400px;width:60%;max-width: 600px;" *ngIf="ope?.payment?.billing && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1">
+    <mat-form-field appearance="fill"
+                    style="min-width: 400px;width:60%;max-width: 600px;"
+                    *ngIf="ope?.payment?.billing && nft.marketplace && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1">
       <mat-label>Indiquez une adresse mail pour recevoir une facture</mat-label>
       <input matInput type="text" [(ngModel)]="billing_address">
       <mat-icon matSuffix (click)="address=''">cancel</mat-icon>

@@ -175,7 +175,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
       if(this.sel_ope && this.sel_ope.nftlive){
         this.network.send_photo_for_nftlive(
           this.sel_ope?.nftlive.limit,
-          this.sel_ope?.nftlive?.configuration,
+          this.sel_ope?.nftlive?.nft_target.configuration,
           this.sel_ope.nftlive.nft_target.dimensions,
           this.sel_ope.nftlive.nft_target.quality,
           this.attributes,

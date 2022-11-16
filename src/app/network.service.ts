@@ -447,6 +447,11 @@ export class NetworkService {
     return network.indexOf("solana")>-1;
   }
 
+  isPolygon(network="") {
+    if(network=="")network=this.network;
+    return network.indexOf("polygon")>-1;
+  }
+
   get_nfts_balance_from_ftx(){
     return this.httpClient.get("https://ftx.us/api/nft/balances")
   }
@@ -489,7 +494,16 @@ export class NetworkService {
     return this.httpClient.post(environment.server+"/api/layers/?preview="+preview,  _l);
   }
 
-  get_collection(limit: number,file_format:string,ext="webp",size="200,200",seed=0,quality=98,target="preview",data={},attributes:any=[],platform="nftstorage") {
+  get_collection(limit: number,
+                 file_format:string,
+                 ext="webp",
+                 size="200,200",
+                 seed=0,
+                 quality=98,
+                 target="preview",
+                 data={},
+                 attributes:any=[],
+                 platform="nftstorage") {
     let url=environment.server+"/api/collection/?seed="+seed+"&image="+ext+"&name="+file_format+"&size=" + size+"&format="+target+"&limit="+limit+"&quality="+quality+"&platform="+platform;
 
     url=url+"&data="+btoa(encodeURIComponent(JSON.stringify(data)));
@@ -636,7 +650,7 @@ export class NetworkService {
   }
 
   get_nfts_from_operation(ope:string){
-    return this.httpClient.get<NFT[]>(environment.server+"/api/nfts_from_operation/"+ope);
+    return this.httpClient.get<{nfts:NFT[],source:any}>(environment.server+"/api/nfts_from_operation/"+ope);
   }
 
   transfer_to(mint_addr: string, to_addr: string,owner:string,network="",mail_content="mail_new_account") {
@@ -762,8 +776,8 @@ export class NetworkService {
     return this.httpClient.get<Validator[]>(environment.server+"/api/validators/");
   }
 
-  subscribe_as_validator(ask_for="",network=""){
-    return this.httpClient.post<any>(environment.server+"/api/validators/",{"ask_for":ask_for,network:network});
+  subscribe_as_validator(ask_for="",network="",validator_name=""){
+    return this.httpClient.post<any>(environment.server+"/api/validators/",{"validator_name":validator_name,"ask_for":ask_for,network:network});
   }
 
   set_operation_for_validator(validator_id: string, operation_id:string) {

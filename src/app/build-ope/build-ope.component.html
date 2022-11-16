@@ -135,7 +135,7 @@
 
 
     <mat-expansion-panel *ngIf="operation.sel_ope.event">
-      <mat-expansion-panel-header class="color-primary">Evénement associé</mat-expansion-panel-header>
+      <mat-expansion-panel-header class="color-primary">Evénement associé & NFT live</mat-expansion-panel-header>
       <table>
         <tr>
           <th>Evénement</th>
@@ -165,7 +165,7 @@
           </td>
           <td *ngIf="operation.sel_ope.nftlive && operation.sel_ope.nftlive!.collections">
             Collections: {{operation.sel_ope.nftlive!.collections.join(' - ')}}<br>
-            Configuration: {{operation.sel_ope.nftlive!.configuration}}<br>
+            Configuration: {{operation.sel_ope.nftlive!.nft_target.configuration}}<br>
           </td>
         </tr>
       </table>
@@ -176,7 +176,7 @@
       <mat-expansion-panel-header  class="color-primary">Paramètres de minage et communication</mat-expansion-panel-header>
       <table>
         <tr>
-          <th>Stockage</th>
+          <th>Stockage off-chain</th>
           <th>Communication</th>
           <th>Mineur</th>
         </tr>
@@ -234,13 +234,16 @@
           </td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="open_appli('dispenser',{miner:user.addr})">
+                    (click)="open_appli('dispenser',{miner:user.addr,selfWalletConnexion:false})">
               Ouvrir
             </button>
 
             <br>
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="share_link(url_dispenser_app,'Distributeur pour '+operation.sel_ope.title,'Ouvrir ce lien distribuer des NFTs')">
+                    (click)="share_link(
+                        get_url_for_appli('dispenser',{miner:user.addr,selfWalletConnexion:false}),
+                    'Distributeur pour '+operation.sel_ope.title,
+                    'Ouvrir ce lien distribuer des NFTs')">
               Partager
             </button>
 
@@ -280,7 +283,7 @@
             </button>
             <br>
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="share_link(airdrop_url,'Gagner des NFT','Recevoir des NFT gratuitement')">
+                    (click)="share_link(get_url_for_appli('cm',{airdrop:true}),'Gagner des NFT','Recevoir des NFT gratuitement')">
               Partager
             </button>
           </td>
@@ -322,7 +325,7 @@
             </button>
             <br>
             <button type="button" mat-raised-button mat-button color="primary"
-                    (click)="share_link(candymachine_url,'Gagner des NFT','Recevoir des NFT gratuitement')">
+                    (click)="share_link(get_url_for_appli('cm',{airdrop:false}),'Gagner des NFT','Recevoir des NFT gratuitement')">
               Partager
             </button>
 
@@ -405,8 +408,11 @@
         </tr>
         <tr style="vertical-align: top;">
           <td>
-            <strong>Update:</strong> {{operation.sel_ope.validate!.method!.update_authority}}<br>
-            <strong>Storage:</strong> {{operation.sel_ope.validate!.method!.storage}} / {{operation.sel_ope.validate!.method!.repository}}
+            <div *ngIf="operation.sel_ope.validate!.method!">
+              <strong>Update:</strong> {{operation.sel_ope.validate!.method!.update_authority!}}<br>
+              <strong>Storage:</strong> {{operation.sel_ope.validate!.method!.storage}} / {{operation.sel_ope.validate!.method!.repository}}
+            </div>
+
           </td>
           <td style="text-align: left;" *ngIf="operation.sel_ope.validate?.users">
             <ul>
@@ -457,7 +463,7 @@
     </mat-expansion-panel>
 
 
-    <mat-expansion-panel *ngIf="operation.sel_ope.store?.visible || url_ope.length>0">
+    <mat-expansion-panel *ngIf="operation.sel_ope!.store && (operation.sel_ope!.store?.visible || url_ope.length>0)">
       <mat-expansion-panel-header class="color-primary">
         Store
       </mat-expansion-panel-header>
@@ -477,7 +483,7 @@
             </ul>
           </td>
           <td>
-            De {{operation.sel_ope.store!.filter!.from}} à {{operation.sel_ope.store!.filter!.to}}
+            De {{operation.sel_ope!.store!.filter!.from}} à {{operation.sel_ope!.store!.filter!.to}}
           </td>
           <td>
             Serveur: {{operation.sel_ope.store!.prestashop!.server}}<br>

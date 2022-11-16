@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
 import * as d3 from "d3";
 import {Location} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -10,10 +10,10 @@ import {NetworkService} from "../network.service";
   templateUrl: './visgraph.component.html',
   styleUrls: ['./visgraph.component.sass']
 })
-export class VisgraphComponent implements OnInit,AfterViewInit {
-  private svg:any;
+export class VisgraphComponent implements OnChanges {
+  private svg: any;
 
-  simulation:any;
+  simulation: any;
   forceProperties = {
     center: {
       x: 1,
@@ -48,32 +48,40 @@ export class VisgraphComponent implements OnInit,AfterViewInit {
     }
   };
 
-  name: string="";
-  data: any;
-  sel_node: any=null;
+  name: string = "";
+  @Input() data: any;
+  sel_node: any = null;
 
-  props=["pagerank","centrality"]
-  filter:any={
-    pagerank:{value:0.0005,min:1000,max:-1000,step:0},
-    centrality:{value:0.0005,min:1000,max:-1000,step:0},
-    promo:{value:2005,values:[1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023]},
-    department:{value:"",values:["Image","Son","Réalisation","Montage","Décor"]}
+  props = ["pagerank", "centrality"]
+  filter: any = {
+    pagerank: {value: 0.0005, min: 1000, max: -1000, step: 0},
+    centrality: {value: 0.0005, min: 1000, max: -1000, step: 0}
   };
-  selFilter=this.props[0];
+  selFilter = this.props[0];
 
-  message: string="";
+  message: string = "";
   edge_props: any;
-  width=screen.availWidth;
-  height=screen.availHeight;
+  width = screen.availWidth;
+  height = screen.availHeight;
 
-  @ViewChild('graph_zone') graph_zone : ElementRef | null=null;
+  @ViewChild('graph_zone') graph_zone: ElementRef | null = null;
 
   constructor(
-    public api:NetworkService,
-    public router:Router,
-    public _location:Location,
-    public routes:ActivatedRoute,
-  ) { }
+    public api: NetworkService,
+    public router: Router,
+    public _location: Location,
+    public routes: ActivatedRoute,
+  ) {
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if(!this.svg){
+      this.svg=this.createSvg(this.width,this.height,-this.height/4);
+      this.initializeForces(this.data,this.svg);
+    }
+    this.resetGraph(this.svg);
+    this.refresh();
+  }
 
 
 
@@ -86,7 +94,6 @@ export class VisgraphComponent implements OnInit,AfterViewInit {
       .attr("transform", "translate(" + (-width/4) + "," + (-height/8) + ")");
   }
 
-
   resetGraph(svg:any){
     svg.selectAll("g").remove();
     svg.selectAll("line").remove();
@@ -95,6 +102,7 @@ export class VisgraphComponent implements OnInit,AfterViewInit {
 
 
   initializeForces(data:any,svg:any) {
+    if(!data || !data.edges || !data.nodes)return;
     $$("Données traitées ",data);
     var link = svg
       .selectAll("line")
@@ -222,16 +230,9 @@ export class VisgraphComponent implements OnInit,AfterViewInit {
 
   sel_edge(d:any){
     let prop=this.edge_props[d.target.__data__.index];
-    this.router.navigate(["pows"],{queryParams:{id:prop}})
   }
 
 
-  ngOnInit(): void {
-    this.svg=this.createSvg(this.width,this.height,-this.height/4);
-    this.message="Chargement du réseau";
-    if(this.routes.snapshot.queryParamMap.has("formation"))this.filter.department.value=this.routes.snapshot.queryParamMap.get("formation");
-    if(this.routes.snapshot.queryParamMap.has("promo"))this.filter.promo.value=Number(this.routes.snapshot.queryParamMap.get("promo"));
-  }
 
 
   //Sélection d'un noeud
@@ -256,37 +257,16 @@ export class VisgraphComponent implements OnInit,AfterViewInit {
         this.filter[k].value=this.filter[k].min;
         this.filter[k].step=(this.filter[k].max-this.filter[k].min)/100;
       }
-
     }
-
 
   }
 
-  updateData() {
-    let query="";
-    if(this.filter.department.value)query=query+"&formation="+this.filter.department.value;
-    if(this.filter.promo.value)query=query+"&promo="+this.filter.promo.value;
-    if(query.length>0){
-      this._location.replaceState("/visgraph?"+query);
-    }
-    this.resetGraph(this.svg);
-    this.refresh(this.filter.promo.value,this.filter.department.value);
-  }
 
-  refresh(promo_filter=2021,department_filter="") {
-    let filter=promo_filter+"_"+department_filter;
 
-    this.message="Chargement du graphe";
-    this.api._get("social_graph/json/","film&eval="+this.props.join(",")+"&filter="+filter).subscribe((data:any)=>{
-      this.message="";
-      this.data=data.graph;
-      this.edge_props=data.edge_props;
-      this.update_filter(data.graph);
-      this.initializeForces(data.graph,this.svg);
-    },(err:any)=>{
-      showError(this,err);
-      this._location.back();
-    });
+  refresh() {
+    this.edge_props=this.data.edge_props;
+    this.update_filter(this.data);
+    this.initializeForces(this.data,this.svg);
   }
 
   ngAfterViewInit(): void {
@@ -294,13 +274,13 @@ export class VisgraphComponent implements OnInit,AfterViewInit {
       this.width=this.graph_zone.nativeElement.clientWidth;
       this.height=this.graph_zone.nativeElement.clientHeight;
     }
-    this.updateData();
+    this.refresh();
   }
 
   clear_filter() {
     this.filter.department.value="";
     this.filter.promo.value=null;
-    this.updateData();
+    this.refresh()
   }
 }
 

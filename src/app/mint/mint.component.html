@@ -213,7 +213,7 @@
 
       <td>
         <mat-icon style="cursor: pointer" (click)="upload_token(token)" title="upload du visuel" *ngIf="token.visual.startsWith('data')">upload</mat-icon>
-        <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="user.key && sel_collection">build</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="user.key">build</mat-icon>
         <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0" (click)="see_in_hub(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <br>

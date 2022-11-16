@@ -82,6 +82,7 @@ import { TableComponent } from './table/table.component';
 import {NgxDatatableModule} from "@swimlane/ngx-datatable";
 import { JsonToListComponent } from './json-to-list/json-to-list.component';
 import { SignatureComponent } from './signature/signature.component';
+import { ShowroomComponent } from './showroom/showroom.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -134,7 +135,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         TableComponent,
         JsonToListComponent,
         JsonToListComponent,
-        SignatureComponent
+        SignatureComponent,
+        ShowroomComponent
     ],
     imports: [
         BrowserModule,

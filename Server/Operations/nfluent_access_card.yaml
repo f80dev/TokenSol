@@ -1,0 +1,192 @@
+#Ce fichier décrit les opérations de distribution de NFT via le service d'nfluent (https://nfluent.io)
+
+#Il doit respecter le formation YAML (voir https://fr.wikipedia.org/wiki/YAML#Caract%C3%A9ristiques)
+
+#une fois terminé, ce fichier doit être chargé a l'adresse : https://tokensol.nfluent.io/build
+
+#notes:
+# $nfluent_appli$ est utilisé dans les API pour désigner l'appli nfluent. A terme il est possible d'utiliser des applis propriétaires
+
+format: "yamlv1"
+id: "nfluent_access_card"          #cet Id doit être cohérent avec le nom du fichier
+title: "Nfluent Access Card"     #est le titre usuel de l'operation qui apparait pour les validateurs
+description: "Carte d'acces au site nfluent"
+website: "https://nfluent.io"   #désigne le site concerné par l'opération
+version: 0.1
+network: elrond-devnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
+wallet: "$nfluent_appli$/wallet"
+
+#Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
+lazy_mining:
+  metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
+  content_storage: NFTstorage         #plateforme de destibation des images
+  miner: nlfuent                      #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection
+#!!!!! Attention le mineur doit être propriétaire de la collection de minage
+
+
+#section détaillant l'événement associé à cette opération
+event:
+  title: Ventes aux enchères
+  place: 12 rue Martel, 75010 Paris   #Lieu de l'événement
+  web:
+  dates:                              #Liste des périodes d'ouvertures
+    - start: 04/02/1971 20:00
+      end: 04/02/1971 22:00
+
+
+
+#Section permettant de décrire précisément les collections utilisées par les NFT
+collections:
+  - id: "NFLUENTA-af9ddf"          #Id de la collection. A priori cet id doit se trouver dans les sources
+    name: "Nluent Access Card"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
+    visual:  ""
+    description: "Carte d'accès au site nfluent"
+
+
+
+database:                 #base de données générale de l'outil pour les historiques
+  connexion: server
+  dbname: nfluent
+
+#la section accounts contient les clés privées (cryptées) des comptes Ã utiliser pendant l'opération
+#accounts:
+#  solana:
+#    paul: Z0FBQUFBQmltR2ZCaDRoMUw2VFdla2hJajh2STNlOV8xQlhUcXgxcGtfUFllX1BVT3gxN0xULXVzTGpCSVF1N29vTzR1OTBuX0lVakY2bjVpNlhNQ0x3WUttWGJnTnRnWEZaVXBiMWNHaHdnTmtyUms1OENOcjB2QkV2ZFJrSkZiZzE4RENtWHBJbVNBYVZZaC1LMnBrbEctSGJvNWsxdHJvbmpTa01GWW1KODFENFlSbTFsRHNWX28wX1Z1ZVc5SjdVdkpqRW8zM1ByQW9GNlB1YXNIUVN4YXdIUFhCS3N2Z2dKQnM0aW9ncGVyTWZmMDF0VzNWYUlaVzNocFh6X1pEQUswMXRjbXEyb3lCRE9UZmxiY2xnX0x4QnhZXzMzM2pZX1ZOQ2VNWHoxSVc2TVByQVBjMWFCTXpJRVZLU05BTkJYUUFZcUpUYjRTZTFoLXZMMXFPZkFlWGFLS3pOYV9mSGpnVklOMU5aM1NUb25hMmFvbXZ5YUU2QXZvSjUyeWtJNDQzMk9XZlRs
+
+
+
+#Mail envoyé aux personnes ne disposant pas d'un wallet
+#les champs remarquables utilisablent sont
+# {{mini_wallet}} : adresse du wallet nfluent
+# {{url_wallet}}: adresse du wallet web
+# {{words}}: seed du wallet (liste des 12 ou 24 mots permettant de retrouver le wallet)
+# {{qrcode}}: seed au format QRCODE
+# {{signature}}: signature de l'équipe nfluent
+# {{appname}}: Nom de l'application emetrice (ici TokenForge)
+new_account:
+  mail: "
+    Bonjour,<br><br>
+    Bienvenue sur le réseau NFluent. Veuillez retrouver votre carte d'accès sur le site <a href='{{mini_wallet}}'>NFluent Wallet</a><br><br>
+    Vous pouvez également utilisé votre carte depuis le wallet officiel de MultiversX en important le compte avec la suite de mots suivante :<br>
+    {{words}}
+    <br><br>
+    {{signature}}
+  "
+  max_account_by_email: 1     #fixe un nombre de compte maximum par email. S'il existe une limite le système doit stocker l'email
+  to_start:                   #permet d'attribuer de la monnaie au nouvau client
+    money:                    #identifiant de la monnaie (ERC20)
+    bank:                     #account fournissant la monnaie
+    amount: 0                 #montant à attribuer
+
+
+#Fonctionnement de la section data ______________________________________________________________________________________________________________________________
+#localisation du fichier contenant les NFTs Ã proposer
+#Plusieurs valeurs sont possibles:
+#     - "database:<collection>" ou "db:<collection>" signifie que les NFT ont été importé préalablement via les outils nfluent (fichier Excel).
+#     - une adresse internet peut désigner un fichier csv contenant une description des NFT distribué
+#     - une adresse internet peut désigner un fichier json contenant un NFT Ã distribuer
+#connexion désigne la localisation de la base de donnée. Cela peut être un alias (server, cloud, cloud2) ou
+#plus simplement une chaine de connexion comme "mongodb+srv://Hhoareau:<password>@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
+#"mongodb://admin:<password>@server.f80lab.com:27017"
+data:
+  sources:
+    - type: network
+      active: True
+      connexion: elrond-devnet
+      filter:
+        limit: 200
+      owner:                   #Tous les NGFt de l'owner
+      collections:             #Tous les NFT des collections ci-dessous
+        - "NFLUENTA-af9ddf"
+
+
+
+
+#Fonctionnement de la section Validate _____________________________________________________________________________________________________________________________
+#Section responsable du process de validation des NFTs
+validate:
+  title: "Bienvenu dans l'application de validation des NFT nfluent"    #Message d'acceuil des validateurs
+  visible: True           #La section de validation est visible
+
+  #Liste des validateurs autorisé à modifier les NFTs
+  #Si cette liste est vide, on fonctionne sur un principe d'autovalidation
+
+  #Cette section regroupe les possibilités offerte au visiteur en phase d'autovalidation
+  #voir la description de cette section ci-dessus
+  authentification:
+    webcam: False
+    wallet_connect: False
+    google: False
+    address: False
+    nfluent_wallet_connect: True
+
+  support:
+    #message affiché aux validateurs pour la détection du wallet
+    message_search: "Veuillez flasher le QRCode présenté par les visiteurs"
+
+    #message affiché aux validateurs pour l'attribution des passes
+    message_action: "Veuillez attribuer le nombre de passes souhaitez en fonction du solde restant sur le NFT"
+
+    #message affiché en cas de dysfonctionnement de l'outil
+    warning_process:
+      "
+      <h2>Procédure dégradée</h2>
+      En cas d'impossibilité de valider le NFT du visiteur, veuillez adresser un mail à <a href='mailto:support@nfluent.io'>support@nfluent.io</a> en précisant
+      <ul>
+        <li>l'adresse du wallet du client</li>
+      </ul>
+      "
+
+    #Section des points de contact présentés aux validateurs
+    #Cette section n'est pas utilisable en autovalidation
+    contacts:
+      message: Besoin d'aide ?                      #Message afficher en tête des points de contact du support
+      mail: mailto:support@nfluent.io
+      phone: ""
+      telegram: "https://t.me/+S2pSVLljMEVjN2Jk"    #Le lien d'invitation telegram s'obtient dans le menu "Gérer le groupe" de l'application Telegram
+
+
+  #Lorsque le validateur appui sur validation du billet l'API de action_api est appelé
+  actions:
+    #Procédure déclenchée automatiquement si le visiteur dispose du NFT
+    success:
+      message: "Passage autorisé"   #Message affiché sur l'écran de validation
+      api: ""
+      redirect: ""                  #Permet la redirection du visiteur sur une page données
+
+    fault:
+      message: "Passage interdit. Autorisation manquante"   #Message affiché sur l'écran de validation en cas d'échec
+      redirect: ""                                          #Permet la redirection du visiteur sur une page données
+      api: ""
+
+
+  #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
+  filters:
+    mint_authority: ''
+    collections:                #Liste des collections que le visiteur doit posséder pour avoir l'accès
+      - "NFLUENTA-af9ddf"
+
+
+
+
+
+#Distribution de NFT au sein d'une ou plusieurs collecion à l'aveugle
+#le destinataire donne juste une adresse mail
+candymachine:
+  visible: True
+
+  connexion:
+    wallet_connect: False          #Permet de se connecter à la candy machine via wallet connect
+    nfluent_wallet_connect: False
+    webcam: False
+    network: False
+    email: True
+    address: True
+    on_device: False
+    google: True
+
+  collections: []                 #Liste les collections disponibles via la candy machine
+
+  messages:
+    title: "Flasher ce code pour obtenir votre carte d'accès"
+

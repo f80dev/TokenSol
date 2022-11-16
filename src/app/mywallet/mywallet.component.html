@@ -3,19 +3,14 @@
                style="padding: 10px;width:100%;  text-align: center;">
   <mat-tab [label]="tab_title">
 
-    <table style="display: inline-block;width:fit-content;width:100%;"><tr>
+    <table style="display: inline-block;width:fit-content;margin-top: 10px;height:min-content;width:100%;"><tr>
       <td>
-        <button type="button" mat-raised-button mat-button style="width: 90px;"
-                  *ngIf="qrcode_addr.length==0"
-                  (click)="show_elrond_addr()">
-        Recevoir
-      </button></td>
-      <td>
-        <mat-icon (click)="force_refresh()" style="cursor: pointer;font-size: x-large;">refresh</mat-icon>
-        <mat-icon (click)="open_inspire()" style="cursor: pointer;font-size: x-large;">visibility</mat-icon>
+        <mat-icon (click)="show_elrond_addr()" title="Recevoir directement d'autres NFT" *ngIf="qrcode_addr.length==0" style="cursor: pointer;font-size: x-large;">download</mat-icon>
+        <mat-icon (click)="force_refresh()" title="Rafraichir l'écran" style="cursor: pointer;font-size: x-large;">refresh</mat-icon>
+        <mat-icon (click)="open_inspire()" title="Voir dans Inspire.art" style="cursor: pointer;font-size: x-large;">visibility</mat-icon>
       </td>
       <td>
-        <mat-form-field style="min-width: 100px;width: 60%;max-width:500px;font-size: medium;">
+        <mat-form-field style="min-width: 150px;width: 60%;max-width:500px;font-size: medium;" *ngIf="nfts.length>3">
           <mat-label>Collections:</mat-label>
           <mat-select [(value)]="sel_collection" (selectionChange)="force_refresh()">
             <mat-option *ngFor="let col of collections" [value]="col">
@@ -24,11 +19,10 @@
           </mat-select>
         </mat-form-field>
       </td>
+      <td>
+        <app-hourglass [message]="message"></app-hourglass>
+      </td>
     </tr></table>
-
-    <br>
-    <app-hourglass [message]="message"></app-hourglass>
-    <br>
 
     <div *ngIf="qrcode_addr.length>0">
       <br>
@@ -36,9 +30,10 @@
       <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="addr" (click)="qrcode_addr=''">
     </div>
 
-
     <app-reversebloc *ngFor="let nft of nfts"
                      [image]="nft.visual"
+                     margin="15px"
+                     [style]="{backgroundColor:'0xFEFEFE',border: '1px solid lightgray'}"
                      width="300px" height="300px"
                      [data]="nft"
                      (onreverse)="on_reverse($event)">
@@ -59,7 +54,6 @@
           <a *ngFor="let file of nft.files" [href]="file" style="display: inline" target="_blank" [title]="file">
             <mat-icon>link</mat-icon>
           </a>
-
         </div>
 
       </div>
@@ -106,18 +100,13 @@
     </div>
 
     <app-signature faq="nfluent_wallet" color="black"></app-signature>
-
   </mat-tab>
 
 
 
 
-  <mat-tab label="NFTlive">
-    <div *ngIf="opes.length==0"  style="margin-top: 30px;">
-      Aucune opération NFTLive n'est possible pour l'instant
-      <br><br>
-      <a [routerLink]="'faqs'" [queryParams]="{faq:'nftlive'}">En savoir plus</a> sur NFTLive
-    </div>
+  <mat-tab label="NFTlive" *ngIf="opes.length>0">
+    <a [routerLink]="'faqs'" [queryParams]="{faq:'nftlive'}">En savoir plus</a> sur NFTLive
 
     <mat-form-field style="min-width: 100px;width: 60%;max-width:500px;font-size: medium;" *ngIf="opes.length>0">
       <mat-select [(value)]="sel_ope">
@@ -185,10 +174,7 @@
         </table>
         <br>
       </div>
-
-
     </div>
-
 
     <div *ngIf="photos_to_send.length>0" style="width: 100%;">
       Choisissez un NFT à fabriquer<br>
@@ -234,7 +220,6 @@
       </button>
 
     </div>
-
   </mat-tab>
 
 

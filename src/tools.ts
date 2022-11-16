@@ -94,7 +94,7 @@ function analyse_params(params:string):any {
   let rc:any={};
   for(let _param of _params) {
     let key = _param.split("=")[0];
-    let value: any = _param.split("=")[1];
+    let value: any = decodeURIComponent(_param.split("=")[1]);
 
     $$("Récupération de " + _param);
     if (value.startsWith("b64:")) {
@@ -122,7 +122,7 @@ export function getParams(routes:ActivatedRoute,local_setting_params="") {
   return new Promise((resolve, reject) => {
     routes.queryParams.subscribe((params:any) => {
       if(params.hasOwnProperty("param")){
-        let rc=analyse_params(params["param"]);
+        let rc=analyse_params(decodeURIComponent(params["param"]));
         if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["param"]);
         resolve(rc);
       } else {

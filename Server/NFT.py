@@ -12,6 +12,7 @@ class NFT:
   collection:dict
   attributes:list
   name:str
+  dtCreate:int=0
   description:str
   tags:str
   visual:str
@@ -37,6 +38,7 @@ class NFT:
                royalties: int=0,
                marketplace:dict={},
                files:list=[],
+               dtCreate:int=0,
                object=None) -> object:
     if object is None:
       self.name=name
@@ -51,8 +53,10 @@ class NFT:
       self.royalties=royalties
       self.marketplace=marketplace
       self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
+      self.dtCreate=dtCreate
     else:
       self.name=object["name"]
+      self.dtCreate=object["dtCreate"] if "dtCreate" in object else 0
       self.symbol=object["symbol"]
       self.description=object["description"]
       self.visual=object["visual"] if "visual" in object else object["image"]

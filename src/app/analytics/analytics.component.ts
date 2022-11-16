@@ -1,4 +1,4 @@
-import {Component, OnChanges, OnInit, SimpleChanges} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {OperationService} from "../operation.service";
@@ -16,6 +16,7 @@ import {Operation} from "../../operation";
 export class AnalyticsComponent implements OnInit {
   nfts: NFT[] = [];
   transactions: any[]=[]
+  graph: any;
 
   constructor(
     public network:NetworkService,
@@ -33,11 +34,10 @@ export class AnalyticsComponent implements OnInit {
         this.operation.sel_ope_change.subscribe((new_sel:Operation)=>{
           this.from_operation(new_sel.id);
         })
+        this.open_graph();
       }
     })
-
   }
-
 
 
 
@@ -61,9 +61,14 @@ export class AnalyticsComponent implements OnInit {
   }
 
   open_graph() {
+    this.network.wait("Construction du graph");
     this.network._get(environment.server+"/api/analyse_transaction/"+this.user.addr+"/","limit=50&profondeur_max=5&network="+this.network.network+"&size=50").subscribe((result:any)=>{
-      this.transactions=result.transactions;
-      this.add_date();
+      if(result.hasOwnProperty("graph")){
+        this.graph=result.graph;
+      } else {
+        this.transactions=result.transactions;
+        this.add_date();
+      }
     })
   }
 
