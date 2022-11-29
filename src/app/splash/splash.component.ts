@@ -8,7 +8,7 @@ import {Component, Input, OnInit} from '@angular/core';
 export class SplashComponent implements OnInit {
   @Input() appname: any;
   @Input() description: any;
-  @Input() image: string="forge.jpg";
+  @Input() image: string="./assets/forge.jpg";
 
   constructor() { }
 

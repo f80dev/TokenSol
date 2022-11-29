@@ -66,14 +66,15 @@ log("Initialisation de la websocket")
 nft=ArtEngine()
 log("Initialisation de l'ArtEngine ok")
 
-dao=DAO(DBSERVER_SYSTEM,DBNAME_SYSTEM+"_debug" if "debug" in sys.argv else "")
-log("Initialisation de la base de donnée OK")
+db_server=DBSERVER_SYSTEM if len(sys.argv)<=3 else sys.argv[3]
+dao=DAO(db_server,DBNAME_SYSTEM+"_debug" if "debug" in sys.argv else "")
+if dao.isConnected(): log("Initialisation de la base de donnée OK")
 
 #voir la documentation de metaboss:
 
 
-
 def returnError(msg:str="",_d=dict(),status=500):
+  msg=str(msg)
   log("Error "+msg)
   return "Ooops ! Petit problème technique. "+msg,status
 
@@ -105,7 +106,8 @@ def getyaml(name:str):
 
   if name.startswith("b64:"):name=str(base64.b64decode(name[4:]),"utf8")
   if name.startswith("http"):
-    return jsonify(yaml.load(name,Loader=yaml.FullLoader))
+    _d=yaml.load(requests.get(name).text,Loader=yaml.FullLoader)
+    return jsonify(_d)
 
   filename=dir+"/"+name+(".yaml" if not name.endswith(".yaml") else "")
   f=open(filename,"r",encoding="utf-8")
@@ -498,16 +500,21 @@ def nftlive_access(addr:str):
 #test http://127.0.0.1:4242/api/infos/
 #test http://75.119.159.46:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
+#test https://api.nfluent.io:4242/api/infos/
 def infos():
-  rc={"Solana":{"keys":len(Solana("devnet").get_keys())},
-      "Elrond":{"keys":len(Elrond("devnet").get_keys())},
-      "Secret":{},
-      "Database":{
-        "tokens":dao.db["nfts"].count_documents(filter={}),
-        "validators":dao.db["validators"].count_documents(filter={}),
-        "mintpool":dao.db["mintpool"].count_documents(filter={})
+  rc={
+    "Server":app.config["DOMAIN_SERVER"],
+    "Client":app.config["DOMAIN_APPLI"],
+    "Database_Server":app.config["DB_SERVER"],
+    "Database_Name":app.config["DB_NAME"],
+    "Upload_Folder":app.config["UPDLOAD_FOLDER"],
+    "Activity_Report":app.config["ACTIVITY_REPORT"],
+    "Database":{
+      "tokens":dao.db["nfts"].count_documents(filter={}),
+      "validators":dao.db["validators"].count_documents(filter={}),
+      "mintpool":dao.db["mintpool"].count_documents(filter={})
       }
-      }
+    }
   return jsonify(rc)
 
 
@@ -557,11 +564,13 @@ def analyse_transaction(address:str):
   if format=="graph":
     G=TransactionsGraph()
     keys=elrond.get_keys()
+    tokens=dict()
     for t in elrond.transactions:
+      if t["token"]!="" and not t["token"] in tokens: tokens[t["token"]]=elrond.get_nft(t["token"]).toJson()
+      t["from"]="factory" if ["method"]=="ESDTNFTCreate" else elrond.find_alias(t["from"],keys)
       t["to"]=elrond.find_alias(t["to"],keys)
-      t["from"]=elrond.find_alias(t["from"],keys)
 
-    G.load(elrond.transactions)
+    G.load(elrond.transactions,tokens=tokens)
 
   return jsonify({"graph":G.export()})
 
@@ -578,7 +587,8 @@ def analyse_prestashop_orders():
   nfts=prestashop.analyse_order()
   for nft in nfts:
     new_owner=nft.other["owner"]
-    mint(nft,nft.other["miner"] if "miner" in nft.other else "",new_owner,nft.network)
+    mint(nft,nft.other["miner"] if "miner" in nft.other else "",new_owner,nft.network,
+         mail_new_wallet=_operation["new_account"]["mail"],mail_existing_wallet=_operation["transfer"]["mail"])
     prestashop.update_order_status(nft.other["order_id"],4) #Passage de la commande au statut expédié
 
   return jsonify({"message":"traitement terminé"})
@@ -742,7 +752,7 @@ def get_operations() -> [dict]:
 @app.route('/api/transfer_to/<nft_addr>/<to>/<owner>/',methods=["POST"])
 def transfer_to(nft_addr:str,to:str,owner:str):
   network=request.args.get("network","elrond-devnet")
-  mail_content=request.json["mail_content"] or "mail_new_account"
+  _ope=get_operation(request.args.get("operation",""))
 
   if "solana" in network:
     solana=Solana(network)
@@ -759,8 +769,9 @@ def transfer_to(nft_addr:str,to:str,owner:str):
     if "@" in to:
       to,pem,words,qrcode=elrond.create_account(to,
                                                 domain_appli=app.config["DOMAIN_APPLI"],
-                                                network=network,
-                                                mail_content=mail_content)
+                                                mail_new_wallet=_ope["new_account"]["mail"],
+                                                mail_existing_wallet=_ope["transfer"]["mail"]
+                                                )
 
     t=elrond.transfer(collection_id,nonce,elrond.toAccount(owner),to)
     nfluent_wallet=elrond.nfluent_wallet_url(to,network)
@@ -959,6 +970,8 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
       if not "limit" in src["filter"]: src["filter"]["limit"]=10000
 
       if src["type"] in ["database","db"]:
+        if not "connexion" in src or not "dbname" in src:
+          raise RuntimeError("Champs dbname ou connexion manquant dans la source")
         try:
           if collections and len(collections)>0:
             for collection in collections:
@@ -1156,52 +1169,78 @@ def get_minerpool(id=""):
   return jsonify(rc)
 
 
+def get_network_instance(network:str):
+  if "elrond" in network:return Elrond(network)
+  if "solana" in network:return Solana(network)
+  if "polygon" in network:return Polygon(network)
+  return None
+
+
+
 def async_mint(nbr_items=3,filter=""):
+  message=""
   if not dao.isConnected():
-    log("Impossible de se connecter à la base")
-  else:
+    message="Impossible de se connecter à la base"
+
+  if message=="":
     for ask in dao.get_nfts_to_mint(int(nbr_items),filter):
       log("Traitement de la demande "+str(ask["_id"]))
       dao.edit_pool(ask["_id"],now(),"traitement en cours")
       nfts=get_nfts_from_src(ask["sources"],ask["filter"],False)
+      _ope=get_operation(ask["operation"])
 
       nft_to_mint=None
-      elrond=Elrond(ask["network"])
-      _miner=elrond.toAccount(ask["miner"])
+      if "elrond" in ask["network"]:
+        elrond=Elrond(ask["network"])
+        _miner=elrond.toAccount(ask["miner"])
 
-      if len(nfts)>0:
-        log("Tirage au sort d'un NFT parmis la liste de "+str(len(nfts)))
-        for i in range(200):
-          nft_to_mint=nfts[int(random()*len(nfts))]
+        if len(nfts)>0:
+          log("Tirage au sort d'un NFT parmis la liste de "+str(len(nfts)))
+          for i in range(200):
+            nft_to_mint=nfts[int(random()*len(nfts))]
 
-          if nft_to_mint.owner=="":
-            if elrond.canMint(nft_to_mint): break
-          else:
-            if not _miner is None and nft_to_mint.owner==_miner.address.bech32(): break
-      else:
-        log("Aucun NFT à miner")
+            if nft_to_mint.owner=="":
+              if nft_to_mint.collection is None:
+                nft_to_mint.collection=get_network_instance(ask["network"]).get_collection(ask["collection_to_mint"])
+
+              if elrond.canMint(nft_to_mint,ask["dest"]): break
+            else:
+              if not _miner is None and nft_to_mint.owner==_miner.address.bech32(): break
+        else:
+          log("Aucun NFT à miner")
 
       if not nft_to_mint is None:
         log("Minage de "+nft_to_mint.name+" en cours")
         if _miner is None:
           log("Le miner est fixé sur le propriétaire de la collection "+nft_to_mint.collection["id"])
-          _miner=elrond.toAccount(nft_to_mint.collection["owner"])
+          if "elrond" in ask["network"]:
+            _miner=elrond.toAccount(nft_to_mint.collection["owner"])
+            if _miner.secret_key is None:
+              message="On ne dispose pas de la clé privée du propriétaire de la collection "+nft_to_mint.collection["id"]+", donc pas de minage possible"
+              activity_report_sender(message)
 
-        log("Ajout de l'attribut lazymint pour ne pas risquer de re-minté")
-        nft_to_mint.attributes.append({"trait_type":"lazymint","value":nft_to_mint.address})
-        rc=mint(nft_to_mint,_miner.address.bech32(),ask["dest"],ask["network"],wallet_appli=ask["wallet"])
-        if not rc or rc["error"]!="":
-          log("Problème de minage voir "+rc["hash"])
-          message="Error"+rc["error"]+" voir "+rc["hash"]
-        else:
-          message="Ok: "+rc["hash"]
+        if message=="":
+          log("Ajout de l'attribut lazymint pour ne pas risquer de re-minté")
+          nft_to_mint.attributes.append({"trait_type":"lazymint","value":nft_to_mint.address})
+          rc=mint(nft_to_mint,
+                  _miner.address.bech32(),
+                  ask["dest"],
+                  ask["network"],
+                  mail_new_wallet=_ope["new_account"]["mail"],mail_existing_wallet=_ope["transfer"]["mail"]
+                  )
+          if not rc or rc["error"]!="":
+            log("Problème de minage voir "+rc["hash"])
+            message="Error"+rc["error"]+" voir "+elrond.getExplorer(rc["hash"])
+          else:
+            message="Ok. Transaction="+rc["hash"]
 
-        log("Mise a jour des données de la pool de minage")
+        log("Mise a jour des données de la pool de minage avec message:"+message)
         dao.edit_pool(ask["_id"],now(),message)
 
       else:
-        log("Aucun NFT disponible pour le minage")
-        dao.edit_pool(ask["_id"],now(),"Error: Aucun NFT disponible pour le minage")
+        message="Aucun NFT disponible pour le minage"
+        log(message)
+        dao.edit_pool(ask["_id"],now(),message)
 
 
 # http://127.0.0.1:4242/api/async_mint/3/
@@ -1221,13 +1260,25 @@ def add_user_for_nft():
   Insere une demande de minage ou transfert d'un NFT d'une collection
   :return:
   """
+  _ope:dict=request.json["operation"]
+  network=request.json["network"]
+  target_collection=None
+  miner=request.json["miner"]
+  if "lazy_mining" in _ope:
+    for n in _ope["lazy_mining"]["networks"]:
+      if n["network"]==network:
+        target_collection=n["collection"]
+        miner=n["miner"]
+
   id=dao.add_nft_to_mint(
-                      miner=request.json["miner"],
-                      sources=request.json["operation"]["data"]["sources"],
-                      network=request.json["network"],
+                      miner=miner,
+                      operation=_ope["id"],
+                      sources=_ope["data"]["sources"],
+                      network=network,
                       collections=request.json["collections"],
                       destinataires=request.json["owner"],
-                      wallet=request.json["wallet"])
+                      wallet=request.json["wallet"],
+                      collection_to_mint=target_collection)
 
   return jsonify({"message":"ok","ask_id":id})
 
@@ -1271,7 +1322,7 @@ def api_access_code(addr=""):
 #http://127.0.0.1:4200/contest?ope=calvi22
 @app.route('/api/get_new_code/<ope>/<url_appli>',methods=["GET"])
 @app.route('/api/get_new_code/<ope>',methods=["GET"])
-def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io"):
+def get_token_for_contest(ope:str,url_appli:str="https://tokenforge.nfluent.io"):
   """
   Retourne un nouveau NFT
   voir get_new_token, get_new_nft
@@ -1337,6 +1388,14 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
 
 
 
+#http://127.0.0.1:4200/dealermachine/?id=symbol2LesGratuits
+@app.route('/api/nfts_from_collection/<collection_id>/',methods=["GET"])
+def nfts_from_collection(collection_id):
+  network=request.args.get("network","elrond-devnet")
+  with_attr=(request.args.get("with_attr","false")=="true")
+  nfts=get_network_instance(network).get_nfts_from_collections([collection_id],with_attr=with_attr,format="json")
+  return jsonify({"nfts":nfts})
+
 
 
 
@@ -1345,7 +1404,10 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenfactory.nfluent.io
 def nfts_from_operation(ope=""):
   _ope=get_operation(ope)
   if _ope:
-    nfts=get_nfts_from_src(_ope["data"]["sources"],with_attributes=False)
+    try:
+      nfts=get_nfts_from_src(_ope["data"]["sources"],with_attributes=False)
+    except Exception as inst:
+      return returnError(inst.args)
 
     sources=[]
     for s in _ope["data"]["sources"]:
@@ -1397,7 +1459,7 @@ def mint_for_prestashop():
     royalties=body["royalties"] if "royalties" in body else 0
 
     if not "elrond" in addresses:
-      _account,pem,words,qrcode=elrond.create_account(email=body["email"],domain_appli=app.config["DOMAIN_APPLI"],mail_content=mail_content)
+      _account,pem,words,qrcode=elrond.create_account(email=body["email"],domain_appli=app.config["DOMAIN_APPLI"],mail_content=mail_content,histo=dao)
       addresses["elrond"]=_account.address.bech32()
       prestashop.edit_customer(body["customer"],"note",yaml.dump(addresses))
       bNewAccount=True
@@ -1453,8 +1515,6 @@ def mint_for_prestashop():
     account_addr=pubkey
 
 
-
-
   return jsonify({"result":"ok","address":account_addr,"mint":nonce})
 
 
@@ -1505,13 +1565,13 @@ def mint_for_contest(confirmation_code=""):
 
   if _data is None: return jsonify({"error":"Ce NFT n'est plus disponible"})
 
-  rc=mint(_data,miner,account,network,metadata_storage)
+  rc=mint(_data,miner,account,network,metadata_storage,mail_new_wallet=_ope["new_account"]["mail"],mail_existing_wallet=_ope["transfer"]["mail"])
 
   if len(rc["error"])==0:
     if not _ope is None:
       dao.add_histo(_ope["id"],"mint",account,nft.collection["name"],rc["result"]["transaction"],_ope["network"],"minage pour loterie")
 
-    DAO(_data["domain"],_data["dbname"]).update(_data.__dict__,"quantity")
+    DAO(_data["domain"],_data["dbname"]).update(_data.toJson(),"quantity")
 
   return jsonify(rc)
 
@@ -1666,7 +1726,7 @@ def keys(name:str=""):
       else:
         _u,key,words,qrcode=Elrond(network).create_account(email,
                                                            network=network,
-                                                           domain_appli=app.config["DOMAIN_APPLI"])
+                                                           domain_appli=app.config["DOMAIN_APPLI"],histo=dao)
 
     f = open(filename, "w")
     f.write(key)
@@ -1783,14 +1843,15 @@ def sign():
 
 
 #https://server.f80lab.com:4242/api/nfts/
-#http://127.0.0.1:4242/api/nfts/
+#usage avec get_transaction
+#http://127.0.0.1:4242/api/nfts/?network=polygon-devnet&account=admin
 @app.route('/api/nfts/',methods=["GET"])
 @app.route('/api/nfts/<id>/',methods=["GET"])
 def nfts(id=""):
-  network=request.args.get("network","solana-devnet")
+  network=request.args.get("network","elrond-devnet")
   account=request.args.get("account","paul")
   with_attr="with_attr" in request.args
-  limit=int(request.args.get("limit","2000"))
+  limit=int(request.args.get("limit","100"))
   offset=int(request.args.get("offset","0"))
 
   log("Récupération de "+str(limit)+" nfts sur "+network+" à partir de "+str(offset))
@@ -1801,15 +1862,19 @@ def nfts(id=""):
       l_nfts=Elrond(network).get_nfts(account,limit,with_attr=with_attr,offset=offset,with_collection=True)
     else:
       l_nfts=[Elrond(network).get_nft(token_id=id,attr=True)]
-  else:
+
+  if "solana" in network:
     l_nfts=Solana(network).get_nfts(account,offset,limit)
+
+  if "polygon" in network:
+    l_nfts=Polygon(network).get_nfts(account,offset=offset,limit=limit)
 
   log(str(len(l_nfts))+" NFT identifiés")
 
   rc=rc+l_nfts
   nfts=[]
   for nft in rc:
-    nfts.append(nft.__dict__)
+    if not nft is None: nfts.append(nft.toJson())
 
   return jsonify(nfts)
 
@@ -1817,12 +1882,26 @@ def nfts(id=""):
 
 
 @app.route('/api/access_code_checking/<access_code>/<addr>/',methods=["GET"])
-#http://127.0.0.1:4242/api/access_code_checking/
-def access_code_checking(access_code:str,addr:str):
-  if get_access_code_from_email(addr)==access_code or access_code==SECRET_ACCESS_CODE:
+@app.route('/api/access_code_checking/<access_code>/',methods=["GET"])
+#http://127.0.0.1:4242/api/access_code_checking/42714280/
+#http://server.f80lab.com:4242/api/access_code_checking/42714280/
+def access_code_checking(access_code:str,addr:str=""):
+  if access_code==SECRET_ACCESS_CODE or get_access_code_from_email(addr)==access_code:
     return jsonify({"message":"ok"})
   else:
     return returnError("Incorrect access code")
+
+
+@app.route('/api/check_private_key/<seed>/<addr>/<network>/',methods=["GET"])
+#http://127.0.0.1:4242/api/access_code_checking/
+def check_private_key(seed:str,addr:str,network:str):
+  if addr.startswith("erd"):
+    _account=Elrond(network=network).toAccount(seed)
+    if _account.address.bech32()==addr:
+      return jsonify({"message":"ok"})
+
+
+  return returnError("Incorrect access code")
 
 
 
@@ -2026,7 +2105,7 @@ def create_collection(owner:str):
   })
 
 
-def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile="",wallet_appli="https://wallet.nfluent.io"):
+def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile="",mail_new_wallet="",mail_existing_wallet=""):
   """
   minage du NFT
   :param nft:
@@ -2038,6 +2117,9 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
   :param wallet_appli:
   :return:
   """
+  if len(mail_existing_wallet)==0:mail_existing_wallet="mail_existing_account"
+  if len(mail_new_wallet)==0:mail_new_wallet="mail_new_account"
+
   rc= {"error":"Problème technique"}
   account=None
   collection_id=nft.collection["id"] if nft.collection else ""
@@ -2046,20 +2128,21 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
     email=owner
     if "elrond" in network:
       elrond=Elrond(network)
-      _account,pem,words,qrcode=elrond.create_account(email=email,
-                                                      network=network,
+      _account,pem,words,qrcode=elrond.create_account(email=email,histo=dao,
                                                       subject="Votre NFT '"+nft.name+"' est disponible",
-                                                      domain_appli=app.config["DOMAIN_APPLI"])
+                                                      domain_appli=app.config["DOMAIN_APPLI"],
+                                                      mail_new_wallet=mail_new_wallet,mail_existing_wallet=mail_existing_wallet)
       account=_account.address.bech32()
       log("Notification de "+owner+" que son compte "+elrond.getExplorer(account,"account")+" est disponible")
 
     if "solana" in network:
       solana=Solana(network)
-      words,pubkey,privkey,list_int=solana.create_account(domain_appli=app.config["DOMAIN_APPLI"],network=network,subject="Votre NFT '"+nft.name+"' est disponible")
+      words,pubkey,privkey,list_int=solana.create_account(domain_appli=app.config["DOMAIN_APPLI"],subject="Votre NFT '"+nft.name+"' est disponible")
       account=pubkey
 
     if "polygon" in network:
-      words,pubkey,privkey,list_int=Polygon(network).create_account(domain_appli=app.config["DOMAIN_APPLI"],network=network,subject="Votre NFT '"+nft.name+"' est disponible")
+      words,pubkey,privkey,list_int=Polygon(network).create_account(domain_appli=app.config["DOMAIN_APPLI"],histo=dao,
+                                                                    subject="Votre NFT '"+nft.name+"' est disponible")
       account=pubkey
 
   if account is None:
@@ -2076,8 +2159,9 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
 
   if len(miner)==0:miner=owner
 
+
   if "polygon" in network:
-    nonce,rc=Polygon(network).mint(
+    rc=Polygon(network).mint(
       miner,
       title=nft.name,
       description=nft.description,
@@ -2088,8 +2172,10 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
       ipfs=IPFS(IPFS_SERVER),
       quantity=nft.marketplace["quantity"],
       royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
-      visual=nft.visual
+      visual=nft.visual,
+      creators=nft.creators
     )
+
 
 
   if "elrond" in network.lower() and not account is None:
@@ -2219,8 +2305,10 @@ def api_mint():
   owner=request.args.get("owner",keyfile)
   offchaindata_platform=request.args.get("offchaindata_platform","ipfs").replace(" ","").lower()
   _data=NFT(object=request.json)
+  _ope=get_operation(request.args.get("operation",""))
 
-  rc=mint(_data,keyfile,owner,network,offchaindata_platform,storagefile)
+  rc=mint(_data,keyfile,owner,network,offchaindata_platform,storagefile,
+          mail_new_wallet=_ope["new_account"]["mail"],mail_existing_wallet=_ope["transfer"]["mail"])
 
   if not _data.visual.startswith("http"):
     return jsonify({"error":"Vous devez uploader les images avant le minage"})
@@ -2475,24 +2563,46 @@ def burn():
   return jsonify(rc)
 
 
+def activity_report_sender(event:str="CR d'activité"):
+  if "DOMAIN_SERVER" in app.config:
+    log(event)
+    mail=open_html_file("mail_activity_report",{
+      "DOMAIN_SERVER":app.config["DOMAIN_SERVER"],
+      "DOMAIN_APPLI":app.config["DOMAIN_APPLI"],
+      "event":event
+    })
+
+    if not "localhost" in app.config["DOMAIN_SERVER"] and not "127.0.0.1" in app.config["DOMAIN_SERVER"]:
+      send_mail(mail,_to=app.config["ACTIVITY_REPORT"],subject="ACTIVITY REPORT de "+app.config["DOMAIN_SERVER"]+" - "+event[:60])
+    else:
+      log(mail)
+
+
 
 if __name__ == '__main__':
 
   scheduler.add_job(func=async_mint, trigger="interval", seconds=30,max_instances=1)
+  scheduler.add_job(func=activity_report_sender, trigger="interval", seconds=3600*24,max_instances=1)
   scheduler.start()
+
   atexit.register(lambda: scheduler.shutdown())
 
   log("Mise a place du modele CORS")
   CORS(app)
 
+  domain_server=sys.argv[1]
+  debug_mode=("debug" in sys.argv)
 
   app.config.from_mapping({
-    "DEBUG": True,                    # some Flask specific configs
+    "DEBUG": debug_mode,                    # some Flask specific configs
     "CACHE_TYPE": "SimpleCache",      # Flask-Caching related configs
     "CACHE_DEFAULT_TIMEOUT": 300,
     "APPLICATION_ROOT":sys.argv[2],
     "DOMAIN_APPLI":sys.argv[2],
-    "DOMAIN_SERVER":sys.argv[1],
+    "DOMAIN_SERVER":domain_server,
+    "ACTIVITY_REPORT":sys.argv[4] if len(sys.argv)>4 else "",
+    "DB_SERVER":dao.url,
+    "DB_NAME":dao.dbname,
     "UPDLOAD_FOLDER":"./Temp/",
     "JWT_SECRET_KEY":SECRET_JWT_KEY
   })
@@ -2501,19 +2611,20 @@ if __name__ == '__main__':
   _port=int(app.config["DOMAIN_SERVER"][app.config["DOMAIN_SERVER"].rindex(":")+1:])
 
   app.config.update(SESSION_COOKIE_SECURE=True,SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE='Lax')
-  log("Démarage du server")
+
+
+  if not "127.0.0.1" in domain_server: activity_report_sender("Démarage du serveur "+app.config["DOMAIN_SERVER"]+" en mode "+("debug" if debug_mode else "prod"))
   if "ssl" in sys.argv:
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-    context.load_cert_chain("/certs/fullchain.pem", "/certs/privkey.pem")
-    socketio.run(app,debug=("debug" in sys.argv),port=_port,ssl_context=context,host="0.0.0.0",allow_unsafe_werkzeug=True)
+    try:
+      context.load_cert_chain("/certs/fullchain.pem", "/certs/privkey.pem")
+      log("Démarage du serveur en mode sécurisé")
+
+      socketio.run(app,debug=debug_mode,port=_port,ssl_context=context,host="0.0.0.0",allow_unsafe_werkzeug=True,use_reloader=debug_mode)
+    except:
+      log("Le répertoire /root/certs doit contenir les certificats sous forme de fichier fullchain.pem et privkey.pem")
+    log("Fonctionnement en mode SSL activé")
   else:
-    socketio.run(app,port=_port,host="0.0.0.0",debug=("debug" in sys.argv),allow_unsafe_werkzeug=True)
+    socketio.run(app,port=_port,host="0.0.0.0",debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=debug_mode)
 
-
-
-
-
-
-
-
-
+  if not "127.0.0.1" in domain_server: activity_report_sender("Arret du server en mode "+("debug" if debug_mode else "prod"))

@@ -270,7 +270,7 @@ export class CreatorComponent implements OnInit {
         // @ts-ignore
         this.network.get_collection(Math.min(this.sel_config.limit,format=="preview" ? 10 : 1000),this.filename_format,this.sel_ext,this.sel_config!.width+","+this.sel_config!.height,this.sel_config.seed,this.quality,format,this.sel_config!.data,this.attributes).subscribe((r:any)=>{
           showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
-          this.url_collection=environment.server+"/api/images/"+r.archive;
+          this.url_collection=this.network.server_nfluent+"/api/images/"+r.archive;
           this.network.wait("");
           this.previews=r.preview;
         },(err)=>{showError(this,err);})
@@ -499,7 +499,7 @@ export class CreatorComponent implements OnInit {
         setTimeout(() => {
           this.refresh()
         }, 1000);
-        if(with_file)open(environment.server + "/api/configs/" + this.sel_config!.location + "/?format=file", "config");
+        if(with_file)open(this.network.server_nfluent + "/api/configs/" + this.sel_config!.location + "/?format=file", "config");
         resolve("ok")
       });
     });

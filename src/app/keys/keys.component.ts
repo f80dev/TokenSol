@@ -38,7 +38,7 @@ export class KeysComponent implements OnInit {
       if(this.user.isConnected(true)){
           this.refresh();
       } else {
-        this.user.login();
+        this.user.login("Se connecter pour gérer les clés de l'application");
       }
     })
   }

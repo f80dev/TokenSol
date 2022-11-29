@@ -44,12 +44,12 @@ html {font-size: 0.8vw;}
 $nfluent-typography: mat.define-typography-config(
         $display-4: mat.define-typography-level(4.2rem, 4.2rem, 600, mediasans-bold, $letter-spacing: 0.01em),
         $display-3: mat.define-typography-level(3.8rem, 3.8rem, 500, mediasans-bold, $letter-spacing: 0.03em),       //H2
-        $display-2: mat.define-typography-level(2.8rem, 3rem, 700, mediasans-regular, $letter-spacing: 0.03em), //H3
-        $display-1: mat.define-typography-level(2.5rem, 2.5rem, 600,mediasans-regular, $letter-spacing: 0.03em),
+        $display-2: mat.define-typography-level(2.8rem, 3rem, 500, mediasans-regular, $letter-spacing: 0.03em), //H3
+        $display-1: mat.define-typography-level(2.5rem, 2.5rem, 500,mediasans-regular, $letter-spacing: 0.03em),
         $headline:  mat.define-typography-level(2rem, 2rem, 500, $font-family: mediasans-regular, $letter-spacing: 0.03em),
         $title:  mat.define-typography-level(1.8rem, 1.8rem, 300, $font-family: mediasans-regular, $letter-spacing: 0.03em),
-        $subheading-2:  mat.define-typography-level(1.6rem, 1.6rem, 600, $font-family: GilroyRegular,$letter-spacing: -0.01em),
-        $subheading-1:  mat.define-typography-level(1.2rem, 1.2rem, 500,$font-family: GilroyRegular,$letter-spacing: -0.01em),
+        $subheading-2:  mat.define-typography-level(1.6rem, 1.6rem, 500, $font-family: GilroyRegular,$letter-spacing: -0.01em),
+        $subheading-1:  mat.define-typography-level(1.2rem, 1.2rem, 400,$font-family: GilroyRegular,$letter-spacing: -0.01em),
         $body-2: mat.define-typography-level(16px, 16px, 400, $font-family: GilroyRegular,$letter-spacing: -0.03em),
         $body-1: mat.define-typography-level(14px, 14px, 400, $font-family: GilroyRegular,$letter-spacing: -0.03em),
         $button: mat.define-typography-level(16px, 16px, 500, GilroyRegular, $letter-spacing: -0.03em),
@@ -112,6 +112,7 @@ $nfluent-green-palette :(
 
 
 $nfluent-primary-color: mat.define-palette($nfluent-indigo-palette, 700);
+$nfluent-secondary-color: mat.define-palette($nfluent-green-palette, 700);
 $nfluent-accent-color:mat.define-palette($nfluent-green-palette, 500);
 $nfluent-warn-color:mat.define-palette(mat.$red-palette, A200, A100, A400);
 
@@ -119,11 +120,12 @@ $nfluent-warn-color:mat.define-palette(mat.$red-palette, A200, A100, A400);
 $nfluent-theme: mat.define-light-theme((
         color: (
                 primary:$nfluent-primary-color,
-                secondary:#ffffff,
+                secondary:$nfluent-secondary-color,
                 accent: $nfluent-accent-color,
                 warn: $nfluent-warn-color,
         ),
-        typography: $nfluent-typography
+        background:$nfluent-primary-color,
+        typography: $nfluent-typography,
 ));
 
 
@@ -187,6 +189,10 @@ body,html {
 
 .color-accent {
         color: mat.get-color-from-palette($nfluent-accent-color, 500);
+}
+
+.color-warm {
+        color: mat.get-color-from-palette(mat.$red-palette, 500);
 }
 
 .color-primary {

@@ -1,12 +1,8 @@
-<div class="mainform" style="text-align: center;" [ngStyle]="ope?.branding?.style" *ngIf="final_message==''">
+<div class="mainform" [ngStyle]="ope?.branding?.style" *ngIf="final_message==''">
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
-    <div class="mat-display-1" *ngIf="selfWalletConnexion && nft.marketplace">
-      Acquérir ce NFT
-      <span *ngIf="nft.marketplace!.price>0">pour {{nft.marketplace!.price}}€</span>
-    </div>
-    <div class="mat-display-1" *ngIf="!selfWalletConnexion">{{title}}</div>
+    <div class="mat-display-1 color-primary" *ngIf="title.length>0">{{title}}</div>
 
     <img [src]="nft?.visual" *ngIf="nft?.visual"
          style="max-width: 200px;width:80%;margin-bottom: 10px;"
@@ -14,18 +10,19 @@
     <br>
 
     <div *ngIf="!selfWalletConnexion">
-      <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 600px;" >
-        <mat-label>{{prompt}}</mat-label>
-        <input matInput type="text" [(ngModel)]="address">
-        <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
-      </mat-form-field>
+      <app-input style="width:50%;max-width: 400px;" label_button="Envoyer"
+                 [label]="prompt" (validate)="validate_input_address()"
+                 value_type="text" [(value)]="address"></app-input>
+
 
       <button type="button" mat-raised-button mat-button
-              title="Ne pas se connecter" color="primary"
-              [disabled]="address.length<20 && address.indexOf('@')==-1 && !address.startsWith('\'') "
-              (click)="validate_input_address()">
-        Envoyer
+              title="Aide / FAQ"
+              *ngIf="help_url.length>5"
+              (click)="open_help()">
+        Aide
       </button>
+
+
       <br>
 
       <div *ngIf="authentification?.webcam">
@@ -37,14 +34,11 @@
 
 
     <!--    gestion de la facture -->
-    <mat-form-field appearance="fill"
-                    style="min-width: 400px;width:60%;max-width: 600px;"
-                    *ngIf="ope?.payment?.billing && nft.marketplace && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1">
-      <mat-label>Indiquez une adresse mail pour recevoir une facture</mat-label>
-      <input matInput type="text" [(ngModel)]="billing_address">
-      <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
-      <mat-hint>Une facture vous seras adressée</mat-hint>
-    </mat-form-field>
+    <app-input *ngIf="ope?.payment?.billing && nft.marketplace && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1"
+               [(ngModel)]="billing_address"
+               value_type="text"
+               label="Indiquez une adresse mail pour recevoir une facture"
+               help="Une facture vous seras adressée"></app-input>
 
 
     <div *ngIf="address.length>20 || (address.length>5 && address.indexOf('@')>-1)">
@@ -82,6 +76,7 @@
                  [showGoogle]="authentification.google"
                  [showAddress]="authentification.address"
                  [showWebcam]="authentification.webcam"
+                 [showEmail]="authentification.email"
                  [showWalletConnect]="authentification.wallet_connect"
                  (authent)="valide($event)"
                  [prompt]="prompt"

@@ -12,6 +12,12 @@
     <input matInput type="text" maxlength="8" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
     <mat-hint>Ce code se trouve dans le mail reçu à la création de votre wallet</mat-hint>
   </mat-form-field>
+
+  <mat-form-field appearance="fill" style="width:300px;font-size: medium;" *ngIf="showPrivateKey">
+    <mat-label>Votre phrase secrete</mat-label>
+    <textarea matInput [(ngModel)]="private_key" (ngModelChange)="connect('private_key')"></textarea>
+    <mat-hint>Cette phrase vous a été envoyé dans le mail de création</mat-hint>
+  </mat-form-field>
   <br>
 
   <div style="display: inline-block;" *ngIf="showGoogle">
@@ -26,16 +32,20 @@
 <!--    Via Google-->
 <!--  </button>-->
 
-  <span *ngIf="showGoogle && showAddress" style="margin: 10px;">
+  <span *ngIf="showGoogle && (showAddress || showEmail)" style="margin: 10px;">
     ou
   </span>
 
-  <mat-form-field appearance="fill" style="min-width: 320px;width:60%;max-width: 500px;" *ngIf="showAddress">
-    <mat-label>{{intro_message}}</mat-label>
-    <input matInput type="text" [(ngModel)]="address" (ngModelChange)="update_address()">
-    <mat-icon matSuffix (click)="address=''">cancel</mat-icon>
-    <mat-hint>{{explain_message}}</mat-hint>
-  </mat-form-field>
+  <app-input *ngIf="showAddress || showEmail"
+             style="display: inline-block;min-width: 320px;width:80%;max-width: 600px;"
+             [label]="intro_message"
+             label_button="Valider"
+             [placeholder]="prompt"
+             [(value)]="address"
+             (validate)="validate()"
+             [help]="explain_message">
+  </app-input>
+
 
   <br>
   <app-scanner *ngIf="showWebcam"
@@ -59,20 +69,34 @@
 
   <!--  Le validator est un qrcode équivalent à wallet connect mais destiné à nfluent wallet-->
   <div style="width: 100%;text-align: center">
-    <div style="width: fit-content;display: inline-block" *ngIf="showNfluentWalletConnect">
-      <img
-        *ngIf="nfluent_wallet_connect_qrcode.length>0"
-        title="Flasher avec votre wallet nfluent"
-        [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
-        [src]="nfluent_wallet_connect_qrcode"
-        style="cursor: copy;margin: 10px;" [style.width]="size"><br>
-      <small>{{title}}</small>
+    <div style="width: fit-content;display: inline-block;margin:20px;" *ngIf="showNfluentWalletConnect">
+      <button type="button" mat-raised-button mat-button color="primary"
+              *ngIf="!directShowQRCode"
+              (click)="directShowQRCode=true">
+        Utiliser le Wallet Nfluent
+      </button>
+
+      <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && directShowQRCode">
+        <img
+
+          title="Flasher avec votre wallet nfluent"
+          [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
+          [src]="nfluent_wallet_connect_qrcode"
+          style="cursor: copy;margin: 10px;" [style.width]="size"><br>
+        <small>{{title}}</small>
+
+      </div>
+
+
     </div>
 
-    <img [src]="qrcode" *ngIf="showWalletConnect && qrcode.length>0"
-         title="Flasher avec un wallet compatible wallet connect"
-         style="max-width: 150px;margin: 10px;" [style.width]="size">
+
   </div>
+
+
+  <img [src]="qrcode" *ngIf="showWalletConnect && qrcode.length>0"
+       title="Flasher avec un wallet compatible wallet connect"
+       style="max-width: 150px;margin: 10px;" [style.width]="size">
 
 
 
@@ -101,11 +125,5 @@
       Annuler
     </button>
 
-    <button type="button" mat-raised-button mat-button
-            title="Ne pas se connecter" color="primary"
-            [disabled]="address.length<20 && address.indexOf('@')==-1"
-            (click)="validate()">
-      Valider
-    </button>
   </div>
 </div>

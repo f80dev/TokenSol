@@ -6,7 +6,10 @@
   width: 200px;
 }
 
-
+a {
+  font-size: medium !important;
+  margin: 0px;
+}
 
 mat-toolbar  {
   position: sticky;

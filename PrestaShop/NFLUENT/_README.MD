@@ -6,12 +6,61 @@
   Suivi du processus d'installation décrit ici : https://www.how2shout.com/linux/how-to-install-prestashop-on-ubuntu-22-04-server/
   avec le mots de passe habituel
 
-  Puis installation du certificat : https://serverspace.io/support/help/how-to-get-lets-encrypt-ssl-on-ubuntu/
+  Puis installation du certificat :
+  https://serverspace.io/support/help/how-to-get-lets-encrypt-ssl-on-ubuntu/
+  executer certbot certonly --standalone --email hhoareau@gmail.com -d shop.nfluent.io
+
+
+#Executer sur le serveur de production les commandes suivantes:
+
+<pre>
+apt update
+apt upgrade
+apt install apache2 -y
+a2enmod rewrite
+
+systemctl restart apache2
+apt install mariadb-server -y
+systemctl enable --now mariadb
+mysql_secure_installation
+mysql
+  create database presta;
+  create user prestauser@localhost identified by '<password>';
+  GRANT ALL PRIVILEGES ON presta.* to prestauser@localhost;
+  exit;
+
+apt install software-properties-common -y
+add-apt-repository ppa:ondrej/php -y
+apt install php7.4 php7.4-{cli,common,curl,zip,gd,mysql,xml,mbstring,json,intl} -y
+
+php -i | grep -i php.ini
+nano /etc/php/7.4/cli/php.ini pour upload_max_filesize = 32M et memory_limit= 128M
+
+systemctl restart apache2
+apt install curl
+cd /tmp
+curl -s https://api.github.com/repos/PrestaShop/PrestaShop/releases/latest | grep "browser_download_url.*zip" | cut -d : -f 2,3 | tr -d \" | wget -qi -
+apt install unzip
+unzip prestashop_*.zip -d /var/www/prestashop/
+chown -R www-data: /var/www/prestashop/
+nano /etc/apache2/sites-available/prestashop.conf avec le contenu de https://www.how2shout.com/linux/how-to-install-prestashop-on-ubuntu-22-04-server/
+a2ensite prestashop.conf
+a2dissite 000-default.conf
+systemctl restart apache2
+
+firewall-cmd --zone=public --add-port=80/tcp
+firewall-cmd --zone=public --add-port=443/tcp
+
+
+Sécurisation du server
+
+        SSLEngine on
+        SSLCertificateFile /etc/letsencrypt/live/shop.nfluent.io/cert.pem
+        SSLCertificateKeyFile /etc/letsencrypt/live/shop.nfluent.io/privkey.pem
 
 
 
-
-
+</pre>
 
 
 

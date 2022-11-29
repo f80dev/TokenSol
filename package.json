@@ -4,10 +4,12 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --open --live-reload",
+    "start_intranet": "ng serve --open --live-reload",
     "start_4201": "ng serve --port 4201 --open --live-reload",
     "build": "ng build --output-hashing=all",
     "prod": "ng build --configuration=production --source-map=false --optimization=true --output-hashing=all  && gh-pages -d ./docs --repo https://github.com/nluent/TokenForge.git -f -t true -b gh-pages -m \"update from gh-pages\"",
-    "deploy": "ng build --delete-output-path=true --source-map=true --optimization=false --output-hashing=none && gh-pages -d ./docs --repo https://github.com/f80dev/TokenSol.git -f -t true -b gh-pages -m \"update from gh-pages\"",
+    "deploy": "ng build --configuration=debug --delete-output-path=true --source-map=true --optimization=false --output-hashing=none && gh-pages -d ./docs --repo https://github.com/f80dev/TokenSol.git -f -t true -b gh-pages -m \"update from gh-pages\"",
+    "deploy prod": "ng build --delete-output-path=true --configuration=production --source-map=false --optimization=true --output-hashing=none && gh-pages -d ./docs --repo https://github.com/nfluentdev/tokenforge.git -f -t true -b gh-pages -m \"update from gh-pages\"",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

@@ -36,3 +36,6 @@ export const GOOGLE_SECRET_ID="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"
 export const SALT="sel"
 export const TOKEN_FACTORY_WALLET="BjW8USn6XpyCW5dg95bNKey5XZ6KWaTox1nPDFYr4fdc";
 export const PRICE_PER_TOKEN=0.01;
+
+export const EMAIL_ADMIN="hhoareau@gmail.com"
+export const ADDR_ADMIN="erd16ck62egnvmushkfkut3yltux30cvp5aluy69u8p5hezkx89a2enqf8plt8"

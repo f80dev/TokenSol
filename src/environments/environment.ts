@@ -8,7 +8,9 @@ export const environment = {
   forum:"",
   version: "dev",
   server:"http://127.0.0.1:4242",
-  appname:"TokenFactory",
+  appname:"TokenForge",
+  splash_visual:"./assets/forge.jpg",
+  claim:"From design to implementation",
   appli:"http://127.0.0.1:4200",
   wallet:"http://127.0.0.1:4200"
 };

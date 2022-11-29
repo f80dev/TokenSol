@@ -14,7 +14,8 @@ interface Ask {
   filter:string[]
   network:string
   miner:string
-  sources:Source[]
+  sources:Source[],
+  collection_to_mint:string
 }
 
 @Component({
@@ -61,9 +62,13 @@ export class MinerpoolComponent implements OnInit {
   }
 
   reset_pool(all=false) {
+    let i=this.asks.length;
     for(let ask of this.asks){
       if(all || (ask.dtWork && ask.dtWork>0)){
-        this.network.delete_ask(ask.id).subscribe(()=>{});
+        this.network.delete_ask(ask.id).subscribe(()=>{
+          i=i-1;
+          if((i==0 && all) || (i>0 && !all))this.refresh();
+        });
       }
     }
   }
@@ -77,6 +82,6 @@ export class MinerpoolComponent implements OnInit {
   }
 
   export_pool() {
-    open(environment.server+"/api/minerpool?format=csv","export");
+    open(this.network.server_nfluent+"/api/minerpool?format=csv","export");
   }
 }

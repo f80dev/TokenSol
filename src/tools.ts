@@ -315,3 +315,18 @@ export function detect_type_network(network:string){
   return "mainnet";
 }
 
+export function jsonToList(obj:any):string {
+  let rc="<ul>";
+  for(let k of Object.keys(obj)){
+    rc=rc+"<li><strong>"+k+"</strong>: "+obj[k]+"</li>"
+  }
+  return rc+"</ul>";
+}
+
+
+export function isEmail(addr="") {
+  if(!addr)return false;
+  const expression: RegExp = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+  return expression.test(addr);
+}
+

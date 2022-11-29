@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, OnInit} from '@angular/core';
 import {NetworkService} from "./network.service";
 import {Operation} from "../operation";
 import {Subject} from "rxjs";
@@ -6,7 +6,7 @@ import {Subject} from "rxjs";
 @Injectable({
   providedIn: 'root'
 })
-export class OperationService {
+export class OperationService implements OnInit {
 
   opes:Operation[]=[];
   sel_ope:Operation | null=null;
@@ -15,7 +15,7 @@ export class OperationService {
   constructor(
     public network: NetworkService,
   ) {
-    this.refresh();
+    setTimeout(()=>{this.refresh();},100);
   }
 
   get_operation_from_web(url:string){
@@ -36,7 +36,6 @@ export class OperationService {
         }
       }
     }
-
   }
 
   refresh(){
@@ -49,6 +48,10 @@ export class OperationService {
         }
       })
     }
+  }
+
+  ngOnInit(): void {
+
   }
 
 

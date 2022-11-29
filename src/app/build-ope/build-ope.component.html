@@ -1,6 +1,4 @@
 <div class="mainform">
-  <div class="mat-display-3 color-primary">Gestion des opérations</div>
-
   <mat-expansion-panel [expanded]="false">
     <mat-expansion-panel-header>Gestion des opérations</mat-expansion-panel-header>
     <table>
@@ -50,33 +48,26 @@
   </mat-expansion-panel>
 
   <div *ngIf="operation.sel_ope">
-    <div class="mat-display-3"  >{{operation.sel_ope.title}}</div>
-    <small class="color-primary mat-display-1">{{operation.sel_ope.description}}</small>
+    <div class="mat-display-1" style="margin: 0px;">{{operation.sel_ope.title}}</div>
+    <small class="color-primary mat-subheading-1">{{operation.sel_ope.description}}&nbsp;(v{{operation.sel_ope.version}})</small>
 
     <table style="line-height: 125%;">
       <tr style="font-size: medium">
         <td>
-          Id:<br>
-          Network:<br>
-          Version:<br>
-          Stockage:<br>
+          Id: {{operation.sel_ope.id}}
         </td>
-        <td style="font-size: large;">
-          {{operation.sel_ope.id}}<br>
-          {{operation.sel_ope.network}}<br>
-          {{operation.sel_ope.version}}<br>
-          {{operation.sel_ope.metadatastorage}}
-        </td>
+        <td style="text-align: right;">Blockchain: {{operation.sel_ope.network}}</td>
       </tr>
     </table>
 
 
-
+    <div class="color-warm mat-headline" *ngIf="sources?.length==0">Auncune source référencée dans le fichier d'opération</div>
     <mat-expansion-panel *ngIf="sources?.length>0">
       <mat-expansion-panel-header  class="color-primary">Sources des NFTs</mat-expansion-panel-header>
       <table style="text-align: left;">
         <tr>
           <th>Sources</th>
+          <th>Visuels</th>
           <th>Nombre de NFTs par collection</th>
         </tr>
         <tr>
@@ -100,35 +91,18 @@
             </ul>
           </td>
           <td>
+            <app-showroom [delay]="1" size="100px"
+                          [collection_network]="operation.sel_ope.network"
+                          [nfts]="nfts">
+            </app-showroom>
+          </td>
+          <td>
             <ul>
               <li *ngFor="let k of collection_keys" [cdkCopyToClipboard]="k" style="cursor: copy;">
                 {{k}} : {{collections[k]}}
               </li>
             </ul>
           </td>
-        </tr>
-      </table>
-
-      <button type="button" mat-raised-button mat-button color="primary"
-              (click)="open_miner()">
-        Miner
-      </button>
-    </mat-expansion-panel>
-
-
-
-    <mat-expansion-panel *ngIf="operation.sel_ope.collections">
-      <mat-expansion-panel-header class="color-primary">Détail des collections</mat-expansion-panel-header>
-      <table>
-        <tr>
-          <th>Description</th>
-          <th>Visuel</th>
-          <th>Prix par défaut</th>
-        </tr>
-        <tr *ngFor="let col of operation.sel_ope.collections">
-          <td>{{col.name}}<br><small>{{col.description}}</small></td>
-          <td><img [src]="col.visual" style="width:150px"></td>
-          <td>{{col.price}}</td>
         </tr>
       </table>
     </mat-expansion-panel>
@@ -177,8 +151,9 @@
       <table>
         <tr>
           <th>Stockage off-chain</th>
-          <th>Communication</th>
-          <th>Mineur</th>
+          <th>Communication nouveau wallet</th>
+          <th>Communication nouveau NFT</th>
+          <th>Paramétres par réseau cible</th>
         </tr>
         <tr>
           <td>
@@ -186,20 +161,28 @@
             Metadata: {{operation.sel_ope.lazy_mining.metadata_storage}}<br>
           </td>
           <td>
-            <strong>Mail envoyer à la création d'un compte:</strong><br>
-
-            <div *ngIf="operation.sel_ope.new_account.mail && operation.sel_ope.new_account.mail.length>0"
-                 style="padding: 10px;margin: 10px;display: inline-block;max-width: 500px;width: 80%;" class="mat-elevation-z4"
-                 [innerHTML]="operation.sel_ope.new_account.mail"></div>
-
-            <div *ngIf="!operation.sel_ope.new_account.mail || operation.sel_ope.new_account.mail.length==0">
-              Mail standard
-            </div>
+            <strong>Mail envoyer pour l'ouverture d'un wallet:</strong><br>
+            <div
+                 style="padding: 10px;margin: 10px;display: inline-block;max-width: 500px;width: 80%;"
+                 class="mat-elevation-z4"
+                 [innerHTML]="mails.new_account"></div>
 
           </td>
           <td>
-            Miner: {{operation.sel_ope.lazy_mining.miner}}<br>
-            Target: {{operation.network.network}}
+            <strong>Mail envoyer pour le simple transfert:</strong><br>
+            <div
+                 style="padding: 10px;margin: 10px;display: inline-block;max-width: 500px;width: 80%;" class="mat-elevation-z4"
+                 [innerHTML]="mails.transfer"></div>
+          </td>
+
+          <td>
+            <div *ngFor="let network of operation.sel_ope.lazy_mining.networks">
+              <strong>{{network.network}}:</strong>
+              <ul>
+                <li>Miner: {{network.miner}}</li>
+                <li>Collection: {{network.collection}}</li>
+              </ul>
+            </div>
           </td>
         </tr>
       </table>
@@ -212,16 +195,20 @@
       <table>
         <tr>
           <th>Propriétés</th>
+          <th>Messages</th>
           <th>NFTs distribuables</th>
         </tr>
 
         <tr>
           <td>
-            <div *ngIf="operation.sel_ope!.lazy_mining">
-              Mineur: {{operation.sel_ope!.lazy_mining!.miner}}
-            </div>
-            Network: {{operation.sel_ope.network}}
+            Si l'utilisateur fournit un email:<br>
+            <ul *ngIf="operation.sel_ope!.lazy_mining && operation.sel_ope!.lazy_mining!.networks!.length>0">
+              <li>Mineur: {{operation.sel_ope!.lazy_mining!.networks[0].miner}}</li>
+              <li>Network: {{operation.sel_ope!.lazy_mining!.networks[0].network}}</li>
+              <li>Collection: {{operation.sel_ope!.lazy_mining!.networks[0].collection}}</li>
+            </ul>
           </td>
+          <td [innerHTML]="showMessages('dispenser')"></td>
           <td td *ngIf="operation.sel_ope.dispenser?.collections?.length==0">
             Tous les NFTs des sources
           </td>
@@ -260,6 +247,7 @@
         <tr>
           <th>Collections impliquées</th>
           <th>QRCode d'accès</th>
+          <th>Messages</th>
           <th>Partager le lien</th>
         </tr>
         <tr>
@@ -276,6 +264,7 @@
             </a><br>
             <small>cliquer pour visualiser en grand format</small>
           </td>
+          <td [innerHTML]="showMessages('airdrop')"></td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button mat-button color="primary"
                     (click)="open_appli('cm',{airdrop:true})">
@@ -295,12 +284,13 @@
 
 
 
-    <mat-expansion-panel *ngIf="operation.sel_ope.candymachine.visible"  [expanded]="false">
+    <mat-expansion-panel *ngIf="operation.sel_ope.candymachine.visible && nfts.length>0"  [expanded]="false">
       <mat-expansion-panel-header class="color-primary">Distributeur automatique</mat-expansion-panel-header>
       <table>
         <tr>
           <th>Collections impliquées</th>
           <th>QRCode d'accès</th>
+          <th>Messages</th>
           <th>Partager le lien</th>
         </tr>
         <tr>
@@ -317,6 +307,7 @@
             </a><br>
             <small>cliquer pour visualiser en grand format</small>
           </td>
+          <td [innerHTML]="showMessages('candymachine')"></td>
           <td style="text-align: right;">
             <br>Vérifier bien que {{user.addr | alias}} dispose des droits pour distribuer les NFTs<br><br>
             <button type="button" mat-raised-button mat-button color="primary"
@@ -393,7 +384,7 @@
     </mat-expansion-panel>
 
 
-    <mat-expansion-panel *ngIf="operation.sel_ope.validate?.visible || url_ope!.length>0">
+    <mat-expansion-panel *ngIf="nfts.length>0 && (operation.sel_ope.validate?.visible || url_ope!.length>0)">
       <mat-expansion-panel-header class="color-primary">
         Validation
       </mat-expansion-panel-header>
@@ -471,7 +462,7 @@
         <tr style="width: 100%;">
           <th>Collection en ventes</th>
           <th>Filtres</th>
-          <th>Prestashop</th>
+          <th *ngIf="showPrestashop">Prestashop</th>
           <th>Vente directe</th>
         </tr>
         <tr>
@@ -485,7 +476,7 @@
           <td>
             De {{operation.sel_ope!.store!.filter!.from}} à {{operation.sel_ope!.store!.filter!.to}}
           </td>
-          <td>
+          <td *ngIf="showPrestashop">
             Serveur: {{operation.sel_ope.store!.prestashop!.server}}<br>
             <a [href]="operation.sel_ope.store!.prestashop!.address.replace('$server$',operation.sel_ope.store!.prestashop!.server)" target="store">Voir la boutique</a>
             /

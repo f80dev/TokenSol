@@ -50,10 +50,19 @@
           </tr>
         </table>
 
-        <div>
-          <a *ngFor="let file of nft.files" [href]="file" style="display: inline" target="_blank" [title]="file">
-            <mat-icon>link</mat-icon>
-          </a>
+        <div style="position: absolute;display: block;width:100%;left:5%;bottom:5%;">
+          <table>
+            <tr>
+              <td>Liens:</td>
+              <td>
+                <a *ngFor="let file of nft.files" [href]="file" style="display: inline" target="_blank" [title]="file">
+                  <mat-icon>link</mat-icon>
+                </a>
+              </td>
+            </tr>
+          </table>
+
+
         </div>
 
       </div>
@@ -230,7 +239,7 @@
                  [address]="addr"
                  (authent)="on_authent($event)"
                  (disconnect)="on_disconnect()"
-                 [showAccesCode]="true">
+                 [showPrivateKey]="true">
     </app-authent>
 
 

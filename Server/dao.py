@@ -1,11 +1,11 @@
+import hashlib
 import pymongo
 from bson import ObjectId
 from pymongo import mongo_client, database
 
 from NFT import NFT
 from Tools import log, now
-from secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING, \
-  MONGO_CLUSTER_CONNECTION_STRING_2, WEB3_PASSWORD
+from secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING,WEB3_PASSWORD
 
 #Voir les infos de connections du cloud sur
 #Localisation de l'offre cloud :
@@ -14,7 +14,6 @@ DB_SERVERS=dict(
     "local":"mongodb://127.0.0.1:27017",
     "server":"mongodb://"+MONGO_INITDB_ROOT_USERNAME+":"+MONGO_INITDB_ROOT_PASSWORD+"@server.f80lab.com:27017",
     "cloud":MONGO_CLUSTER_CONNECTION_STRING,
-    "cloud2":MONGO_CLUSTER_CONNECTION_STRING_2,
     "web3":"mongodb://root:"+WEB3_PASSWORD+"@d3akash.cloud:31365/"
   }
 )
@@ -22,6 +21,7 @@ DB_SERVERS=dict(
 
 class DAO:
   db:database=None
+  url:str=""
 
   def __init__(self,domain:str="cloud",dbname="nfluent",ope=None):
     if ope:
@@ -50,10 +50,10 @@ class DAO:
     if domain==self.domain and name==self.dbname and not self.db is None:
       return True
 
-    log("Tentative de connexion sur la base de données "+self.dbname+" sur le domain "+DB_SERVERS[self.domain])
+    self.url=DB_SERVERS[self.domain] if self.domain in DB_SERVERS else self.domain
+    log("Tentative de connexion sur la base de données "+self.dbname+" sur "+self.url)
     try:
-      url=DB_SERVERS[self.domain] if not domain.startswith("mongodb+srv") else self.domain
-      self.db: pymongo.mongo_client = pymongo.MongoClient(url)[self.dbname]
+      self.db: pymongo.mongo_client = pymongo.MongoClient(self.url)[self.dbname]
       cols=self.db.__dict__
       log("Connexion réussie. ")
       return True
@@ -175,7 +175,7 @@ class DAO:
 
 
 
-  def add_nft_to_mint(self,miner:str,sources:dict,network,collections,destinataires,wallet,dtStart=now()):
+  def add_nft_to_mint(self,miner:str,sources:dict,network,collections,destinataires,wallet,operation,dtStart=now(),collection_to_mint=None):
     if type(destinataires)==str:destinataires=[destinataires]
 
     for d in destinataires:
@@ -184,11 +184,13 @@ class DAO:
           "dtCreate":now(),
           "dtStart":dtStart,
           "dtWork":None,
+          "operation":operation,
           "network":network,
           "message":"",
           "miner":miner,
           "dest":d,
           "filter":collections,
+          "collection_to_mint":collection_to_mint,
           "sources":sources,
           "wallet":wallet
         }
@@ -197,7 +199,19 @@ class DAO:
 
     return str(tx.inserted_id)
 
+  def add_email(self,email:str,addr:str,network:str):
+    encoded_email=hashlib.sha256(email.encode()).hexdigest()
+    self.db["account_by_emails"].insert_one({
+      "email":encoded_email,
+      "address":addr,
+      "network":network
+    })
 
+  def get_address(self,email:str,network:str):
+    encoded_email=hashlib.sha256(email.encode()).hexdigest()
+    rc=self.db["account_by_emails"].find_one({"email":encoded_email,"network":network})
+    if rc:return rc["address"]
+    return rc
 
   def add_validator(self, id,ask_for):
     """

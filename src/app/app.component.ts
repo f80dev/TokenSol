@@ -1,5 +1,5 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import {Component, OnInit} from '@angular/core';
+import {AfterContentInit, Component, OnInit} from '@angular/core';
 import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
 import {Observable} from 'rxjs';
 import {map,shareReplay } from 'rxjs/operators';
@@ -19,7 +19,7 @@ import {MatSelectChange} from "@angular/material/select";
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements AfterContentInit {
   title = environment.appname;
   version=environment.version;
   showSplash=true;
@@ -31,6 +31,9 @@ export class AppComponent implements OnInit {
     );
   networks=NETWORKS;
   toolbar_visible: string="true";
+  appname:string=environment.appname;
+  claim:string="";
+  visual:string="./assets/forge.jpg";
 
   constructor(
     private breakpointObserver: BreakpointObserver,
@@ -45,41 +48,45 @@ export class AppComponent implements OnInit {
   ) {
   }
 
-  //test: https://tokenfactory.nfluent.io/contest?ope=
-  ngOnInit(): void {
-    setTimeout(()=>{
+  init_form(){
+    getParams(this.routes).then((params:any)=>{
+      if(params.hasOwnProperty("server")){
+        this.network_service.server_nfluent=params["server"];
+      }
 
-      getParams(this.routes).then((params:any)=>{
-        this.metaboss.init_keys();
+      this.network_service.network=params["network"] || "elrond-devnet";
+      this.visual=params["visual"] || environment.splash_visual;
+      this.appname=params["appname"] || environment.appname;
+      this.claim=params["claim"] || environment.claim;
 
-        if(getBrowserName()=="firefox"){
-          showMessage(this,"Le fonctionnement de TokenFactory est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
-        }
-        if(params.hasOwnProperty("addr")){
-          this.user.init(params["addr"]);
-        } else {
-          let key=localStorage.getItem("addr") || "";
-          if(key.length>0){
-            $$("Récupération de la clé "+key+" depuis les cookies")
-            this.user.init(key);
-          }
-        }
-        //if(localStorage.getItem("addr"))this.user.init(localStorage.getItem("addr") || "")
-        this.network_service.version=params["version"] || "main";
-        if(params.hasOwnProperty("toolbar")){
-          this.toolbar_visible=params["toolbar"];
-        }
-        else {
-          this.toolbar_visible="true";
-        }
-        setTimeout(()=>{this.showSplash=false;},1000);
+      this.metaboss.init_keys(this.network_service.network);
 
-      }).catch(()=>{
-        debugger
-      });
-    },600);
+      if(getBrowserName()=="firefox"){
+        showMessage(this,"Le fonctionnement de TokenForge est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement mineurs",8000,()=>{},"Ok");
+      }
+      if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
+        this.user.init(params["addr"] || params["miner"]);
+      } else {
+        let key=localStorage.getItem("addr") || "";
+        if(key.length>0){
+          $$("Récupération de la clé "+key+" depuis les cookies")
+          this.user.init(key);
+        }
+      }
+
+      this.network_service.version=params["version"] || "main";
+      if(params.hasOwnProperty("toolbar")){
+        this.toolbar_visible=params["toolbar"];
+      }
+      else {
+        this.toolbar_visible="true";
+      }
+      setTimeout(()=>{this.showSplash=false;},3000);
+
+    }).catch(()=>{
+      debugger
+    });
   }
-
 
   logout(){
     this.user.disconnect();
@@ -105,4 +112,12 @@ export class AppComponent implements OnInit {
     this.operation.sel_ope_change.next($event.value);
   }
 
+  ngAfterContentInit(): void {
+    setTimeout(()=>{
+      this.init_form();
+    },10)
+
+  }
+
 }
+

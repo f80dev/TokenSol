@@ -11,13 +11,15 @@ import {NetworkService} from "../network.service";
 export class ShowroomComponent implements OnInit,OnDestroy {
 
   @Input() nfts:NFT[]=[];
-  @Input() collections:Collection[]=[];
+  @Input() collection_id:string="";
+  @Input() collection_network:string="elrond-devnet";
   @Input() operation_id:string="";
   @Input() delay:number=0.5;
   @Input() size:string="300px";
 
   private hInterval: NodeJS.Timeout | undefined;
   image_to_show: string | undefined;
+  message="";
 
 
   constructor(public network:NetworkService) { }
@@ -25,7 +27,7 @@ export class ShowroomComponent implements OnInit,OnDestroy {
   ngOnInit(): void {
     this.hInterval=setInterval(()=>{
       if(this.nfts.length>0){
-        const index=Math.round(Math.random()*this.nfts.length);
+        const index=Math.round(Math.random()*(this.nfts.length-1));
         this.image_to_show=this.nfts[index].visual;
       }
     },this.delay*1000);
@@ -33,9 +35,22 @@ export class ShowroomComponent implements OnInit,OnDestroy {
   }
 
   refresh(){
-    this.network.get_nfts_from_operation(this.operation_id).subscribe((result)=>{
-      this.nfts=result.nfts;
-    })
+    this.message="Chargement des visuels";
+    if(this.operation_id!=""){
+      this.network.get_nfts_from_operation(this.operation_id).subscribe((result)=>{
+        this.nfts=result.nfts;
+        this.message="";
+      })
+    } else {
+      if(this.collection_id!=""){
+        this.network.get_nfts_from_collection(this.collection_id,this.collection_network).subscribe((result)=>{
+          this.nfts=result.nfts;
+          this.message="";
+        })
+      } else {
+        this.message="";
+      }
+    }
   }
 
   ngOnDestroy(): void {

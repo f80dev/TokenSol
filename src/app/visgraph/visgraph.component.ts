@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild} from '@angular/core';
+import { Component, ElementRef, Input, OnChanges,  SimpleChanges, ViewChild} from '@angular/core';
 import * as d3 from "d3";
 import {Location} from "@angular/common";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -84,9 +84,9 @@ export class VisgraphComponent implements OnChanges {
   }
 
 
-
   createSvg(width:number,height:number,margin:number): any {
-    return d3.select("figure#graph")
+    let _graph_zone=d3.select("figure#graph_zone");
+    return _graph_zone
       .append("svg")
       .attr("width", width)
       .attr("height", height)
@@ -103,7 +103,7 @@ export class VisgraphComponent implements OnChanges {
 
   initializeForces(data:any,svg:any) {
     if(!data || !data.edges || !data.nodes)return;
-    $$("Données traitées ",data);
+    //$$("Données traitées ",data);
     var link = svg
       .selectAll("line")
       .data(data.edges)
@@ -129,15 +129,17 @@ export class VisgraphComponent implements OnChanges {
       .on("dblclick", (d:any)=>{this.sel(d);});
 
     var node = nodeEnter.append("svg:image")
-      .attr("xlink:href",  function(d:any) { return d.photo;})
-      .attr("title",function (d:any) {return d.firstname+" "+d.lastname;})
+      .attr("xlink:href",  function(d:any) {
+        return d.visual;
+      })
+      .attr("title",function (d:any) {return d.label})
       .attr("x", function(d:any) { return -25;})
       .attr("y", function(d:any) { return -25;})
       .attr("height", 50)
       .attr("width", 50)
 
     nodeEnter.append("svg:text")
-      .text(function(d:any) { return d.name;})
+      .text(function(d:any) { return d.label;})
 
     // add forces and associate each with a name
     this.simulation=d3.forceSimulation(data.nodes)
@@ -149,7 +151,7 @@ export class VisgraphComponent implements OnChanges {
       .force("forceY", d3.forceY())
       .on("tick",()=>{
         link
-          .attr("x1", function(d:any) { return d.source.x; })
+          .attr("x1", function(d:any) {return d.source.x;})
           .attr("y1", function(d:any) { return d.source.y; })
           .attr("x2", function(d:any) { return d.target.x; })
           .attr("y2", function(d:any) { return d.target.y; });
@@ -262,10 +264,9 @@ export class VisgraphComponent implements OnChanges {
   }
 
 
-
   refresh() {
-    this.edge_props=this.data.edge_props;
-    this.update_filter(this.data);
+    if(this.data.edge_props)this.edge_props=this.data.edge_props;
+    //this.update_filter(this.data);
     this.initializeForces(this.data,this.svg);
   }
 

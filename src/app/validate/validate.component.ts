@@ -98,9 +98,9 @@ export class ValidateComponent implements OnInit {
     let filters=this.operation!.validate.filters;
 
     let network=detect_network(address)+"-"+detect_type_network(this.operation!.network);
-    this.network.get_tokens_from("owner",addr,10,false,network).then((r:NFT[])=>{
+    this.network.get_tokens_from("owner",addr,10,false,network).then((r:any)=>{
       if(this.message.length>0){
-        for(let t of r){
+        for(let t of r.result){
           if(t.marketplace!.quantity>0){
             //Application des filtres contenu dans le fichier de configuration
             let filter_Ok=false;
@@ -157,8 +157,6 @@ export class ValidateComponent implements OnInit {
           this.access_code="";
         })
       }
-
-      if(this.access_code=="4271" && this.operation!.validate!.users.indexOf("hhoareau@gmail.com")>-1)this.user="hhoareau@gmail.com";
     }
   }
 

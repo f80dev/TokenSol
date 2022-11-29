@@ -1,4 +1,4 @@
-<div class="mainform" style="text-align: center;" [ngStyle]="operation?.branding?.style">
+<div class="mainform" [ngStyle]="operation?.branding?.style">
 
   <div class="mat-headline color-primary">{{operation?.title}}</div>
 
@@ -8,18 +8,16 @@
     <div class="mat-subheading-2 color-accent">{{miner | alias}}, cliquez sur le NFT à envoyer</div>
     <br>
 
-    <div *ngFor="let nft of nfts" style="display: inline-block;margin:15px;cursor: pointer;max-width: 250px;"
+    <div *ngFor="let nft of nfts" style="display: inline-block;margin:35px;cursor: pointer;max-width: 250px;"
          [title]="nft.message"
          [style]="nft.style">
 
-      <div class="mat-subheading-1 color-primary" style="margin:10px;">{{nft.name}}</div>
-
+      <div class="mat-body-2 color-primary" style="margin:5px;">{{nft.name}}</div>
 
       <app-reversebloc [image]="nft.visual" width="200px" height="200px">
-
         <div style="padding: 5%;color: black;" class="mat-body-1">
           <br>
-          <strong>Collection:</strong> <span [title]="nft.collection!.description">{{nft.collection!.name}}</span><br>
+          <div *ngIf="nft.collection"><strong>Collection:</strong> <span [title]="nft.collection!.description">{{nft.collection!.name}}</span></div>
           <strong>Quantité: </strong>{{nft.marketplace!.quantity}}<br>
         </div>
 
@@ -47,12 +45,12 @@
     </div>
 
     <div *ngIf="nfts.length==0">
-      Aucun NFT à envoyer
+      Aucun NFT à distribuer
     </div>
 
   </div>
 
   <br>
 
-  <app-signature faq="dispenser"></app-signature>
+  <app-signature style="position: absolute;display: block; bottom: 5px;width: 350px;left: 5px;" faq="dispenser"></app-signature>
 </div>

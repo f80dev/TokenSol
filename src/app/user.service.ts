@@ -46,8 +46,10 @@ export class UserService {
   }
 
   login(message="") {
-    if(!this.isConnected())
+    if(!this.isConnected()){
+      $$("Utilisateur non connecté --> redirection vers login");
       this.router.navigate(["login"],{queryParams:{message:message}});
+    }
   }
 
   get_collection(){
@@ -66,7 +68,7 @@ export class UserService {
         this.addr=addr
         if(addr.indexOf("@")>-1)this.email=addr;
           this.get_collection().then(()=>{
-            this.httpClient.get(environment.server+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
+            this.httpClient.get(this.network.server_nfluent+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
               this.profil = r;
               r.address=addr;
               this.addr_change.next(addr);
@@ -79,6 +81,8 @@ export class UserService {
       }
     });
   }
+
+
 
   str_to_hex(text:string){
     let rc="";

@@ -82,11 +82,15 @@ def open_html_file(name:str,replace=dict(),domain_appli=""):
   :param domain_appli:
   :return:
   """
-  if "<" in name and ">" in name:
+  if len(name)>10 and len(name.split(" "))>5:
     body=name
   else:
     if not name.endswith("html"):name=name+".html"
-    with open("./"+name, 'r', encoding='utf-8') as f: body = f.read()
+    if exists("./"+name):
+      with open("./"+name, 'r', encoding='utf-8') as f: body = f.read()
+    else:
+      log("Le mail type "+name+" n'existe pas",raise_exception=True)
+
 
   style="""
         <style>
@@ -160,7 +164,7 @@ def encrypt(text:str,secret_key_filename="./secret_key"):
 
 
 def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename=""):
-  if not is_email(_to):return None
+  if not is_email(_to):return False
   with smtplib.SMTP(SMTP_SERVER, SMTP_SERVER_PORT,timeout=10) as server:
     server.ehlo()
     server.starttls()
@@ -275,6 +279,7 @@ def str_to_hex(letters,zerox=True):
 
 
 def get_operation(name:str):
+  if name is None or len(name)==0: return None
   if name.startswith("b64:"):
     url=str(base64.b64decode(name[4:]),"utf8")
     rc=requests.get(url).text
@@ -283,6 +288,11 @@ def get_operation(name:str):
   else:
     name=name.replace(".yaml","")
     rc=yaml.load(open("./Operations/"+name+".yaml","r"),Loader=yaml.FullLoader)
+
+  #Complément pour les parties manquantes
+  if not "transfer" in rc:rc["transfer"]={"mail":""}
+  if not "new_account" in rc:rc["new_account"]={"mail":""}
+
   return rc
 
 
@@ -304,7 +314,7 @@ def now(format="dec"):
 
 start=now()
 store_log=""
-def log(text:str,sep='\n'):
+def log(text:str,sep='\n',raise_exception=False):
   global store_log
   if text.startswith("\n"):
     print("\n\n")
@@ -317,6 +327,7 @@ def log(text:str,sep='\n'):
   except:
     print("Problème d'affichage d'une ligne")
   store_log = line+sep+store_log[0:10000]
+  if raise_exception:raise RuntimeError(text)
   return text
 
 

@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import {NgModule, OnInit} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -83,6 +83,7 @@ import {NgxDatatableModule} from "@swimlane/ngx-datatable";
 import { JsonToListComponent } from './json-to-list/json-to-list.component';
 import { SignatureComponent } from './signature/signature.component';
 import { ShowroomComponent } from './showroom/showroom.component';
+import { InputComponent } from './input/input.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -136,7 +137,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         JsonToListComponent,
         JsonToListComponent,
         SignatureComponent,
-        ShowroomComponent
+        ShowroomComponent,
+        InputComponent
     ],
     imports: [
         BrowserModule,
@@ -198,6 +200,9 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
   ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+
+export class AppModule {
+
+}
 
 

@@ -1,7 +1,7 @@
 //Description d'une collection
 export interface Collection {
   name: string | undefined
-  id: string | undefined
+  id: string
   visual: string | undefined
   description: string | undefined
   owner : string | undefined
@@ -41,6 +41,17 @@ export interface Source {
   collections: string[] | null
 }
 
+//Section contenant les différents messages affiché aux clients
+export interface Messages {
+  confirm: string
+  title: string
+  subtitle: string | ""
+  prompt: string | null
+  cancel: string | null
+  question: string | null
+  help: string | ""             //Lien internet pointant vers une aide
+}
+
 
 
 //Description de la structure d'une opération
@@ -61,8 +72,12 @@ export interface Operation {
   accounts: any | null
 
   branding: {
-    style: any
-  } | null
+    appname:string
+    splash_visual: string
+    claim:string | ""
+    style: any | {}
+    reverse_card: any | {}
+  }
 
   new_account: {
     mail: string | ""
@@ -74,6 +89,10 @@ export interface Operation {
     } | null
   }
 
+  transfer : {
+    mail: string | ""
+  }
+
   data: {
     sources: Source[]
   }
@@ -81,16 +100,18 @@ export interface Operation {
   lazy_mining :{
     metadata_storage: string
     content_storage: string
-    miner: string
+    networks:[{
+        network: string
+        miner: string
+        collection: string
+      }]
   } | null
 
   candymachine : {
     visible: boolean
     collections:string[]
 
-    messages:{
-      title: string
-    }
+    messages: Messages
 
     limit: {
       total: number
@@ -179,6 +200,11 @@ export interface Operation {
       to: number
     }
 
+    apparence: {
+      size: string
+      fontsize: string
+    }
+
     collections:{
       name: string
       price: number | null
@@ -187,6 +213,7 @@ export interface Operation {
 
     support:any | null
 
+    messages: Messages
 
     prestashop: {
       server: string
@@ -255,8 +282,9 @@ export interface Operation {
     application: string
     collections: string[]
     authentification: Connexion
-    title: string
-    prompt: string
+
+    messages: Messages
+
     selfWalletConnection: boolean
   } | null
 
@@ -283,9 +311,7 @@ export interface Operation {
     }
     authentification: Connexion
 
-    messages:{
-      title:string | "Flasher ce QRCode pour recevoir ce NFT"
-    } | undefined
+    messages: Messages
 
     application: string | "$nfluent_appli$/contest"
     collections: [string]
@@ -305,6 +331,22 @@ export function find_collection(ope:Operation,name:string) : Collection | null {
     if(c.name==name)return c;
   }
   return null;
+}
+
+//Permet d'extraire des informations d'une operation de facçon simple (moins de code)
+export function get_in(ope:Operation | null,fields:string,_default:any=null) : any {
+  if(!ope)return _default;
+
+  let rc={...ope};
+  for(let field of fields.split(".")){
+    if(rc.hasOwnProperty(field)){
+      // @ts-ignore
+      rc=rc[field];
+    }else{
+      return _default;
+    }
+  }
+  return rc;
 }
 
 

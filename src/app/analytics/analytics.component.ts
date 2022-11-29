@@ -25,16 +25,22 @@ export class AnalyticsComponent implements OnInit {
     public operation:OperationService
   ) { }
 
+
+
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
-      if(params.hasOwnProperty("collection"))
+      if(params.hasOwnProperty("collection")){
+        //test : http://localhost:4200/analytics?collection=PHILHARM-f25fc0
         this.from_collection(params.collection);
+        this.open_graph(params.collection);
+      }
       else{
         if(this.operation.sel_ope)this.from_operation(this.operation.sel_ope.id);
         this.operation.sel_ope_change.subscribe((new_sel:Operation)=>{
           this.from_operation(new_sel.id);
+          this.open_graph(new_sel.id);
         })
-        this.open_graph();
+
       }
     })
   }
@@ -56,13 +62,18 @@ export class AnalyticsComponent implements OnInit {
       });
   }
 
+
+
   open_explorer(nft: NFT) {
     open("https://"+(this.network.isMain() ? "" : "devnet-")+"explorer.elrond.com/nfts/"+nft.address);
   }
 
-  open_graph() {
+
+
+  open_graph(addr:string) {
     this.network.wait("Construction du graph");
-    this.network._get(environment.server+"/api/analyse_transaction/"+this.user.addr+"/","limit=50&profondeur_max=5&network="+this.network.network+"&size=50").subscribe((result:any)=>{
+    this.network._get("/api/analyse_transaction/"+addr+"/","limit=50&profondeur_max=5&network="+this.network.network+"&size=50").subscribe((result:any)=>{
+      this.network.wait();
       if(result.hasOwnProperty("graph")){
         this.graph=result.graph;
       } else {
@@ -80,7 +91,7 @@ export class AnalyticsComponent implements OnInit {
 
   from_collection(collection_id:string) {
     this.nfts=[];
-    this.network._get(environment.server+"/api/analyse_transaction/"+collection_id+"/","network="+this.network.network+"&format=transactions&size=500").subscribe((result:any)=>{
+    this.network._get("/api/analyse_transaction/"+collection_id+"/","network="+this.network.network+"&format=transactions&size=500").subscribe((result:any)=>{
       this.transactions=result.transactions;
       this.add_date();
     })

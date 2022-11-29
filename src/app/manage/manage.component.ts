@@ -71,7 +71,7 @@ export class ManageComponent implements OnInit {
       this.nfts=[];
       for(let a of this.addrs){
         this.network.get_tokens_from("token",a,this.limit, false, null, 0,  this.network.network).then((r:any)=> {
-          this.nfts.push(r[0]);
+          this.nfts.push(r.result[0]);
         });
       }
     }else{

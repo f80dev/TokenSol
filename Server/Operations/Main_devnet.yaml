@@ -20,8 +20,15 @@ wallet: "$nfluent_appli$/wallet"
 lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
-  miner:                              #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection
-#!!!!! Attention le mineur doit être propriétaire de la collection de minage
+  miner:                              #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection !!!!! Attention le mineur doit être propriétaire de la collection de minage
+  networks:                           #Indique les parametres de minage suivant le réseau du destinataire
+    - network: elrond-devnet          #Le premier item est utilisé par défaut si le destinataire fourni un email
+      collection: PHILHARM-f25fc0     #Designe la collection utilisé pour le minage
+      miner: nfluent                  #Désigne le mineur à utilisé (il doit être propriétaire de la collection ci-dessus)
+
+    - network: polygon-devnet
+      collection:
+      miner: nfluent
 
 
 #section détaillant l'événement associé à cette opération
@@ -54,14 +61,21 @@ database:                 #base de données générale de l'outil pour les histo
 #    paul: Z0FBQUFBQmltR2ZCaDRoMUw2VFdla2hJajh2STNlOV8xQlhUcXgxcGtfUFllX1BVT3gxN0xULXVzTGpCSVF1N29vTzR1OTBuX0lVakY2bjVpNlhNQ0x3WUttWGJnTnRnWEZaVXBiMWNHaHdnTmtyUms1OENOcjB2QkV2ZFJrSkZiZzE4RENtWHBJbVNBYVZZaC1LMnBrbEctSGJvNWsxdHJvbmpTa01GWW1KODFENFlSbTFsRHNWX28wX1Z1ZVc5SjdVdkpqRW8zM1ByQW9GNlB1YXNIUVN4YXdIUFhCS3N2Z2dKQnM0aW9ncGVyTWZmMDF0VzNWYUlaVzNocFh6X1pEQUswMXRjbXEyb3lCRE9UZmxiY2xnX0x4QnhZXzMzM2pZX1ZOQ2VNWHoxSVc2TVByQVBjMWFCTXpJRVZLU05BTkJYUUFZcUpUYjRTZTFoLXZMMXFPZkFlWGFLS3pOYV9mSGpnVklOMU5aM1NUb25hMmFvbXZ5YUU2QXZvSjUyeWtJNDQzMk9XZlRs
 
 
-branding:                     #Utiliser pour uniformiser l'aspect des applications
-  style:
-    background-color: darkgrey
+branding:                             #Utiliser pour uniformiser l'aspect des applications
+  appname: Special Operation                #Nom de l'application affiché dans le splashscreen
+  splash_visual: https://cdn.pixabay.com/photo/2014/11/29/17/57/forge-550622_960_720.jpg    #Visuel en fond d'écran
+
+  style:                              #Style appliqué aux fenêtres des application candymachine, dispenser, store
+    background-color: lightgrey
     color: white
     font-size: medium
     text-align: center
-    height: fit-content
-    min-height: 100vh
+    signature-color: lightgray            #couleur de la signature
+
+  reverse_card:                       #style applicable aux dos des cartes NFT (retournées)
+    background-color: lightgray
+    color: black
+
 
 #Mail envoyé aux personnes ne disposant pas d'un wallet
 #les champs remarquables utilisablent sont
@@ -73,11 +87,15 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 # {{appname}}: Nom de l'application emetrice (ici TokenForge)
 new_account:
   mail: ""
-  max_account_by_email: 1     #fixe un nombre de compte maximum par email. S'il existe une limite le système doit stocker l'email
+  max_account_by_email: 1     #NON implémenté : fixe un nombre de compte maximum par email. S'il existe une limite le système doit stocker l'email
   to_start:                   #permet d'attribuer de la monnaie au nouvau client
     money:                    #identifiant de la monnaie (ERC20)
     bank:                     #account fournissant la monnaie
     amount: 0                 #montant à attribuer
+
+#Section utilisé pour les informations liées à l'envoi d'un NFT sur un wallet existant
+transfer:
+  mail: ""      #Contenu du mail envoyé au propriétaire du wallet. Les champs utilisables sont les mêmes que ci-dessous pour le mail
 
 
 #Fonctionnement de la section data ______________________________________________________________________________________________________________________________
@@ -92,7 +110,7 @@ new_account:
 data:
   sources:
     - type: network
-      active: True
+      active: False
       connexion: elrond-devnet
       filter:
         limit: 200
@@ -102,7 +120,7 @@ data:
 
 
     - type: database
-      active: False
+      active: True
       connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
       dbname: nfluent           #Nom de la base de données contenant les NFTS
       filter:
@@ -256,6 +274,10 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
   visible: True
   application: '$nfluent_appli$/store'    #Désigne l'application en charge de la vente
 
+  apparence:              #Fixe l'apparence des NFT dans le store
+    size: 200px       #Taille des NFT
+    fontsize: 12        #Taille de la police au dos
+
   authentification:
     google: True
     address: True
@@ -271,10 +293,16 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
     from: 1
     to: 3
 
-  support:      #Section regroupant les différents messages d'aides aux utilisateur
-    buy_message: "Achat en cours"
+  messages:      #Section regroupant les différents messages d'aides aux utilisateurs
+    confirm: "Votre NFT est en cours de préparation et envoie"
+    title: Acquerir une carte d'accès                       #Titre afficher sur la fenetre proposant l'envoie du NFT
+    prompt: Indiquer votre email du destinataire            #Message affiché dans la zone de saisie
+    question: ""                                            #Message affiché pour inviter la personne à laisser ses coordonner
+    cancel: probleme technique                              #Message affiché en cas de non fonctionnement
+    help_url: ""                                            #URL renvoyant vers une fenêtre d'aide
 
-# section regroupant l'ensemble des propriétés liés à une boutique prestashop
+
+  # section regroupant l'ensemble des propriétés liés à une boutique prestashop
 # Sur prestashop il faut installer le module web service, avec les permissions sur
 # categories, contacts, customers, images, order_details, order_states, images, order_details, order_histories, order_states,
 # orders, product_feature_values,product_feature,product_option_values, product_options, products, stock_available
@@ -318,10 +346,16 @@ dispenser:
   authentification:                                 #il s'agit d'authentifier le destinataire (et non une auto-authentification)
     address: True
     email: True
-    google: True
-  title: Recuperer votre NFT                                  #Titre afficher sur la fenetre proposant l'envoie du NFT
-  prompt: Indiquer votre addresse email pour recevoir ce NFT  #Message affiché dans la zone de saisie
-  selfWalletConnection: True
+
+  messages:                                             #section regroupant l'ensemble des messages à destination de l'utilisateur
+    title: Envoyer le NFT                              #Titre afficher sur la fenetre proposant l'envoie du NFT
+    prompt: Indiquer l'email du destinataire            #Message affiché dans la zone de saisie
+    question: ""                                        #Message affiché pour inviter la personne à laisser ses coordonner
+    confirm: Le NFT est en cours d'expédition           #Message affiché après déclenchement de la distribution
+    cancel: probleme technique                          #Message affiché en cas de non fonctionnement
+    help_url: ""                                        #URL renvoyant vers une fenêtre d'aide
+
+  selfWalletConnection: False
 
 
 
@@ -347,8 +381,11 @@ candymachine:
 
   collections: []                 #Liste les collections disponibles via la candy machine
 
-  messages:
-    title: "Flasher ce code pour obtenir un NFT de la collection NFLuenT"
+  messages:                                                                 #Voir la description de la section dans la rubrique dispenser
+    title: "Flasher ce code pour obtenir un NFT de la collection NFLuenT"   #Titre afficher dans le fenetre
+    question: "Ou dois l'envoyer ?"                                         #Invitation pour l'adressse
+    confirm: "Votre NFT est en cours de préparation et envoie"              #Message affiché après déclenchement de la distribution
+
 
   limit:
     total: 60

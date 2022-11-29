@@ -212,7 +212,7 @@ export class MintComponent implements OnInit {
           this.mint(0);
           // setTimeout(()=>{
           //   this.network.wait();
-          //   open(environment.server+"/api/images/"+this.mintfile,"mintfile")
+          //   open(this.network.server_nfluent+"/api/images/"+this.mintfile,"mintfile")
           // },5000);
 
         }
@@ -334,9 +334,9 @@ export class MintComponent implements OnInit {
           token.message="Error: "+error_message;
         }
 
-        if(this.user.key){
+        if(this.user.key && this.operation.sel_ope){
           token.collection=this.user.find_collection(this.sel_collection);
-          this.network.mint(token,this.user.key.name,this.user.key.name,this.sign, this.sel_platform,this.network.network,this.mintfile).then((result:any)=>{
+          this.network.mint(token,this.user.key.name,this.user.key.name,this.operation.sel_ope.id,this.sign, this.sel_platform,this.network.network,this.mintfile).then((result:any)=>{
             if(!result.error || result.error==""){
               resolve(token);
               token.address=result.result.mint;

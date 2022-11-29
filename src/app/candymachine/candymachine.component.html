@@ -1,11 +1,10 @@
-<div class="mainform" style="text-align: center">
-  <div *ngIf="!showEnd" style="width: 100%;">
+<div class="mainform" style="text-align: center" [ngStyle]="_style">
+  <div *ngIf="!showEnd && operation?.candymachine">
     <br>
-    <h2 *ngIf="!airdrop">Recevoir un NFT sur votre wallet</h2>
-    <h2 *ngIf="airdrop">Airdrop de NFT</h2>
+    <h2 class="color-primary" *ngIf="!airdrop">{{title}}</h2>
+    <h2 class="color-primary" *ngIf="airdrop">Airdrop de NFT</h2>
 
-    <app-showroom [operation_id]="operation!.id" [delay]="0.3"
-                  class="mat-elevation-z4"></app-showroom>
+    <app-showroom [operation_id]="operation!.id" [delay]="0.3" size="300px"></app-showroom>
 
 <!--    <div *ngFor="let col of collections"-->
 <!--         class="mat-elevation-z4"-->
@@ -36,7 +35,7 @@
     </div>
 
     <div *ngIf="operation && operation.candymachine && !airdrop">
-      <h2>Ou dois-je envoyer le NFT ?</h2>
+      <h2>{{operation.candymachine.messages.question}}</h2>
       <app-authent
         [showGoogle]="operation.candymachine.connexion.google"
         [showWebcam]="operation.candymachine.connexion.webcam"
@@ -46,7 +45,6 @@
         [showAddress]="operation.candymachine.connexion.address"
         (invalid)="invalid()"
         (authent)="authent($event)">
-
       </app-authent>
 
     </div>
@@ -65,8 +63,7 @@
       <strong>Vous pouvez maintenant fermer cette fenêtre</strong>
     </p>
 
-
   </div>
 
-  <app-signature faq="candymachine"></app-signature>
+  <app-signature style="position: absolute;display: block; bottom: 5px;width: 350px;left: 5px;" faq="candymachine"></app-signature>
 </div>

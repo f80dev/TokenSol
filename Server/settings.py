@@ -19,7 +19,7 @@ INFURA_PROJECT_ID="28bvVmf3lmX8xWj3UlHCaNPD0lQ"
 INFURA_PROJECT_SECRET="8e4ed073cf43c280787c3cf2e7c2176a"
 
 SIGNATURE="L'équipe <a href='https://nfluent.io'>NFluenT</a>"
-APPNAME="TokenFactory"
+APPNAME="TokenForge"
 
 SMTP_SERVER="ssl0.ovh.net"
 SMTP_SERVER_PORT=587

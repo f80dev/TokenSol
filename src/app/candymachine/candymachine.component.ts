@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {$$, getParams, setParams, showError, showMessage} from "../../tools";
+import {$$, getParams, showError, showMessage} from "../../tools";
 import {Collection, Operation} from "../../operation";
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
@@ -22,6 +22,8 @@ export class CandymachineComponent implements OnInit {
   is_email=false;
   airdrop: boolean=false;
   addresses="";
+  _style={};
+  title="";
 
   constructor(
     public routes:ActivatedRoute,
@@ -38,6 +40,8 @@ export class CandymachineComponent implements OnInit {
       this.network.get_operations(params["ope"]).subscribe((operation:any)=>{
         this.airdrop=params.hasOwnProperty('airdrop') ? params["airdrop"] : false;
         this.operation=operation;
+        if(this.operation?.branding)this._style=this.operation.branding.style;
+        if(this.operation?.candymachine.messages.title)this.title=this.operation.candymachine.messages.title;
         this.miner=(params.hasOwnProperty('miner') ? params["miner"] : operation.lazy_mining.miner)
         $$("Le miner de la transaction est "+this.miner);
         if(operation.collections){
@@ -79,13 +83,11 @@ export class CandymachineComponent implements OnInit {
     this._location.back();
   }
 
-
   invalid() {
     showMessage(this,"Connexion non valide");
   }
 
   start_airdrop() {
-
     let l_addresses=this.addresses.split("\n");
     _prompt(this,"Envoyer des NFTs de la collection à "+l_addresses.length+" personnes ?","","","text","ok","Annuler",true).then(()=>{
       let body={
@@ -97,10 +99,10 @@ export class CandymachineComponent implements OnInit {
         wallet:environment.wallet
       }
 
-        this.network.add_user_for_nft(body).subscribe(()=>{
-          showMessage(this,"L'ensemble des destinataires vont recevoir progressivement les NFTs")
-          this.back();
-        })
+      this.network.add_user_for_nft(body).subscribe(()=>{
+        showMessage(this,"L'ensemble des destinataires vont recevoir progressivement les NFTs")
+        this.back();
+      })
 
     });
   }

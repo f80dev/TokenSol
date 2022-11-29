@@ -1,0 +1,5 @@
+docker pull f80hub/tokensol
+docker ps -q --filter "name=tokensol" | grep -q . && docker rm -f tokensol
+docker run --restart=always -v /root/Server/Configs:/Configs -v /root/Server/Fonts:/Fonts -v /root/Server/Operations:/Operations -v /root/Server/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://api.nfluent.io:4242 https://tokenforge.nfluent.io cloud contact@nfluent.io ssl
+exit
+

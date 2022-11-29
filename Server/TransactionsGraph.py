@@ -31,16 +31,18 @@ class TransactionsGraph:
     return None
 
 
-  def load(self,transactions:[dict],network="elrond-devnet"):
+  def load(self,transactions:[dict],network="elrond-devnet",tokens=dict()):
     ids = []
-
+    visual="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/google/350/person_1f9d1.png"
     for t in transactions:
-      self.G.add_node(t["from"],label=t["from"],url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/accounts/"+t["from"])
-      self.G.add_node(t["to"],label=t["to"],url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/accounts/"+t["to"])
-      self.G.add_edge(t["from"], t["to"],
+
+      self.G.add_node(t["from"],label=t["from"],visual=visual,url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/accounts/"+t["from"])
+      self.G.add_node(t["to"],label=t["to"],visual=visual,url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/accounts/"+t["to"])
+
+      self.G.add_edge(t["from"],t["to"],
                       title=t["method"],
                       id=t["id"],
-                      token=t["token"],
+                      token=tokens[t["token"]] if t["token"] in tokens else t["token"],
                       timestamp=t["ts"],
                       value=t["value"],
                       url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/transactions/"+t["id"]

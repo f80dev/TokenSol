@@ -1,14 +1,14 @@
 import {Component,  OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {$$, getParams, hasWebcam, showError, showMessage} from "../../tools";
+import {$$, getParams, hasWebcam, isEmail, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
 import {UserService} from "../user.service";
 import {NFT} from "../../nft";
 import {NFLUENT_WALLET} from "../../definitions";
-import {Operation,Connexion} from "../../operation";
+import {Operation, Connexion, get_in} from "../../operation";
 
 @Component({
   selector: 'app-dealermachine',
@@ -22,10 +22,11 @@ export class DealermachineComponent implements OnInit {
   final_message="";
   ope: Operation | null=null;
   webcam: boolean=true;
-  mining: any={};
   authentification: Connexion | undefined;
   title: string="Envoyez ce NFT";
   prompt: string="Indiquer l'adresse ou l'email du destinataire";
+  help_url: string="";
+  section:string="dispenser";
 
   constructor(
     public routes:ActivatedRoute,
@@ -44,11 +45,9 @@ export class DealermachineComponent implements OnInit {
     getParams(this.routes).then((params:any)=>{
       this.nft=params["token"];
       let ope=params["ope"];
-      let section=params["section"];
-      if(params.hasOwnProperty("title"))this.title=params["title"]
-      if(params.hasOwnProperty("prompt"))this.prompt=params["prompt"]
 
-      if(!section)$$("!La section n'est pas renseignée");
+      this.section=params["section"];
+      if(!this.section)$$("!La section n'est pas renseignée");
 
       if(!this.nft){
         $$("On va chercher les NFTs dans le fichier d'opération");
@@ -62,19 +61,16 @@ export class DealermachineComponent implements OnInit {
         });
       }
 
-      this.mining=params["mining"];
-      this.selfWalletConnexion=params["selfWalletConnexion"] || (section=="lottery");
+      this.selfWalletConnexion=params["selfWalletConnexion"] || (this.section=="lottery");
 
       if(ope){
-        this.network.get_operations(ope).subscribe((ope:any)=>{
-          this.ope=ope;
+        this.network.get_operations(ope).subscribe((result:any)=>{
+          this.ope=result;
+          this.prompt=get_in(this.ope,this.section+".messages.prompt",params.hasOwnProperty("prompt") ? params["prompt"] : "Indiquer l'adresse ou l'email du destinataire")
           if(this.ope){
-            // @ts-ignore
-            if(section && this.ope[section]){
-              // @ts-ignore
-              this.authentification=this.ope[section].authentification;
-            }
-            this.mining=params["mining"] || this.ope.lazy_mining;
+            this.title=params.hasOwnProperty("title") ? params["title"] : get_in(this.ope,this.section+".messages.title","Distribution des NFTs")
+            this.help_url=params.hasOwnProperty("help") ? params["help"] : get_in(this.ope,this.section+".messages.help","")
+            this.authentification=get_in(this.ope,this.section+".authentification",{showEmail:true})
           }
         })
       }
@@ -117,16 +113,23 @@ export class DealermachineComponent implements OnInit {
     }
   }
 
-
   valide(evt: { address:string }) {
     let addr=evt.address;
     this.address=addr.replace("'","");
     addr=this.alias.transform(addr,"pubkey");
-    if(this.nft!.address?.startsWith("db_") || this.nft!.address?.startsWith("file_")){
+    if(this.nft && (this.nft!.address?.startsWith("db_") || this.nft!.address?.startsWith("file_"))){
       $$("Ce token est issue d'une base de données, donc non miné");
       if(this.ope){
-        this.message=this.ope.store!.support.buy_message;
-        this.network.mint_for_contest(addr,this.ope.id,this.mining.miner,this.mining.metadata_storage,this.ope.network,this.nft!).subscribe((r:any)=>{
+        if(!this.ope.lazy_mining){
+          $$("Section lazy_mining manquante")
+          return;
+        }
+        let miner=this.ope.lazy_mining.networks[0].miner;
+        let network=this.ope.lazy_mining.networks[0].network;
+        this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
+
+        this.network.mint(this.nft,miner,this.address,this.ope.id,true,"",network).then((r:any)=>{
+        // this.network.mint_for_contest(addr,this.ope.id,this.ope.lazy_mining.networks[0].miner,this.ope.lazy_mining.metadata_storage,this.ope.network,this.nft).subscribe((r:any)=>{
           this.message="";
           if(r.error.length>0){
             this.message=r.error+". ";
@@ -142,7 +145,7 @@ export class DealermachineComponent implements OnInit {
       let mint_addr=this.nft!.address;
       if(mint_addr!=""){
         $$("Ce token est déjà miné, on se contente de le transférer");
-        this.message="Envoi du NFT en cours sur "+addr;
+        this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
         this.network.transfer_to(mint_addr!,addr,this.nft!.owner!,this.network.network,this.ope?.new_account.mail).subscribe((r:any)=>{
           this.message="";
           this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;
@@ -151,9 +154,8 @@ export class DealermachineComponent implements OnInit {
           } else {
             this.final_message="Le NFT est livré à l'adresse "+addr;
           }
-
         },(err:any)=>{
-          showMessage(this,"Impossible d'envoyer ce NFT");
+          showMessage(this,get_in(this.ope,this.section+".messages.cancel","Problème technique: Impossible d'envoyer ce NFT"));
           this.final_message="Problème technique: Envoi du NFT annulé";
         })
       }
@@ -174,10 +176,14 @@ export class DealermachineComponent implements OnInit {
   }
 
   validate_input_address() {
-    if(this.address && this.address.indexOf("@")==-1 && !this.address.startsWith('\'') && !this.network.isElrond(this.address)){
-      showMessage(this,"Le service n'est compatible qu'avec les adresses elrond");
+    if(!isEmail(this.address) && !this.network.isElrond(this.address)){
+      showMessage(this,"Le service n'est compatible qu'avec les adresses elrond ou les adresses mails");
     } else {
       this.valide({address:this.address});
     }
+  }
+
+  open_help() {
+    open(this.help_url,"Aide");
   }
 }

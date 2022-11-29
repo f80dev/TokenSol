@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import {getParams, setParams, showMessage} from "../../tools";
+import {$$, getParams, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {MatDialog} from "@angular/material/dialog";
@@ -41,7 +41,7 @@ export class DispenserComponent implements OnInit {
       this.message="Préparation de la page";
       this.network.get_operations(params["ope"]).subscribe((operation:Operation)=>{
         this.operation=operation;
-        this.miner=params.hasOwnProperty("miner") ? params["miner"] : operation.lazy_mining?.miner;
+        this.miner=params.hasOwnProperty("miner") ? params["miner"] : operation.lazy_mining?.networks[0].miner;
         this.message="Chargement des NFTs";
         this.network.get_tokens_to_send(operation.id,"dispenser",limit).subscribe((nfts:any) => {
           this.nfts=[];
@@ -55,11 +55,15 @@ export class DispenserComponent implements OnInit {
             }
             nft.message=nft.owner+" - "+nft.address;
             if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
-            if(operation.dispenser && nft.marketplace.price==0 && nft.owner==nft.creators[0] &&
-              (!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1)
-            ){
-              this.nfts.push(nft);
+
+            $$("Evaluation de la possibilité d'ajouté le NFT");
+            let canAdd=nft.address.startsWith("db_");
+            if(operation.dispenser){
+              if(!canAdd)canAdd=(nft.marketplace.price==0 && nft.owner==nft.creators[0]);
+              if(canAdd)canAdd=(!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1)
             }
+            if(canAdd)this.nfts.push(nft);
+
           }
         });
       })
@@ -74,9 +78,7 @@ export class DispenserComponent implements OnInit {
         section: "dispenser",
         ope: this.operation.id,
         selfWalletConnexion: this.operation.dispenser?.selfWalletConnection,
-        mining: this.operation.lazy_mining,
-        title: this.operation.dispenser?.title,
-        prompt: this.operation.dispenser?.prompt
+        mining: this.operation.lazy_mining
       });
     return null;
   }

@@ -1,15 +1,36 @@
 import base64
 import json
-import os
-from datetime import datetime
-from io import FileIO
-
 import requests
 from ipfshttpclient import Client
 from multiaddr import Multiaddr
 
+"""
+voir https://docs.ipfs.tech/how-to/run-ipfs-inside-docker/
+Gestion d'une instance IPFS sur le serveur
+mkdir /root/ipfs
+mkdir /root/ipfs/staging
+mkdir /root/ipfs/data
+firewall-cmd --zone=public --add-port=5001/tcp
+firewall-cmd --zone=public --add-port=4001/tcp
+firewall-cmd --zone=public --add-port=8080/tcp
 
+firewall-cmd --zone=trusted --remove-interface=docker0 --permanent
+firewall-cmd --reload
+
+export ipfs_staging=/root/ipfs/staging
+export ipfs_data=/root/ipfs/data
+
+docker pull ipfs/kubo
+docker rm -f ipfs_host
+docker run -d --restart=always --name ipfs_host -v $ipfs_staging:/export -v $ipfs_data:/data/ipfs -p 4001:4001/udp -p 8080:8080 -p 5001:5001 ipfs/kubo:latest
+
+A priori inutile:
+
+
+
+"""
 class IPFS:
+
     client=None
 
     def __init__(self, addr:str):

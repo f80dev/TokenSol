@@ -1,5 +1,6 @@
 import base64
 import io
+from dao import DAO
 import json
 import sys
 import time
@@ -71,21 +72,25 @@ class Elrond(Network):
     self.transactions=[]
 
 
-  def canMint(self,nft_to_check:NFT):
+
+
+  def canMint(self,nft_to_check:NFT,dest:str=""):
     """
     Vérifie si un NFT a déjà été miné ou pas
     TODO: fonction à coder
     :param nft_to_check:
     :return:
     """
-    if nft.address!="": return False
-    nfts=self.get_nfts_from_collections([nft_to_check.collection],False)
-    occ=0 #Contient le nombre de fois ou le nft a été miné
-    for nft in nfts:
-      for attr in nft.attributes:
-        if type(attr)==dict and attr["trait_type"]=="lazymint" and nft_to_check.address==attr["value"]: occ=occ+1
+    if nft_to_check.address!="" and not nft_to_check.address.startswith("db_"): return False
+    if dest!="" and not "@" in dest:
+      col=nft_to_check.collection["id"]
+      nfts=self.get_nfts(self.toAccount(dest),with_attr=False)
+      occurences=dict() #Contient le nombre de fois ou le nft a été miné
+      for nft in nfts:
+        if nft.collection:
+          occurences[col]=occurences[col]+1 if col in occurences.keys() else 1
 
-    return nft_to_check.marketplace["quantity"]>occ
+    return nft_to_check.marketplace["quantity"]>0
 
 
   def find_alias(self,addr,keys=[]):
@@ -263,14 +268,20 @@ class Elrond(Network):
     if type(creator_or_collection)==Account: creator_or_collection=creator_or_collection.address.bech32()
     if creator_or_collection.startswith("erd"):
       creator=self.toAccount(creator_or_collection)
-      url=self._proxy.url+"/address/"+creator.address.bech32()+"/registered-nfts"
-      ids=api(url,"api=gateway")["data"]["tokens"]
+      url=self._proxy.url+"/accounts/"+creator.address.bech32()+"/collections"
+      result=api(url,"gateway=api")
+      if not result is None:
+        cols=result
+      else:
+        log("Bug: Impossible de récupérer les NFTs de "+creator_or_collection)
+        return []
     else:
       ids=[creator_or_collection]
     rc=[]
-    for id in ids:
-      col=self.get_collection(id) if detail else {"id":id}
-      col["link"]="https://"+("devnet." if "devnet" in self.network else "")+"inspire.art/collections/"+id
+    for _col in cols:
+      _col["id"]=_col["collection"]
+      col=self.get_collection(_col["collection"]) if detail else _col
+      col["link"]="https://"+("devnet." if "devnet" in self.network else "")+"inspire.art/collections/"+col["id"]
       rc.append(col)
 
     rc=sorted(rc,key=lambda x:x["timestamp"] if "timestamp" in x else 0,reverse=True)
@@ -441,7 +452,7 @@ class Elrond(Network):
     return collection_id,True
 
 
-  def get_nfts_from_collections(self,collections:[str],with_attr=False):
+  def get_nfts_from_collections(self,collections:[str],with_attr=False,format="class"):
     """
     voir https://api.elrond.com/#/collections/CollectionController_getNftCollection
     :param collections:
@@ -472,7 +483,10 @@ class Elrond(Network):
         nft.address=item["identifier"]
         nft.owner=owners[i]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
         nft.marketplace={"quantity":int(owners[i]["balance"]),"price":0}
-        rc.append(nft)
+        if format=="class":
+          rc.append(nft)
+        else:
+          rc.append(nft.__dict__)
     return rc
 
 
@@ -507,26 +521,37 @@ class Elrond(Network):
 
 
   def create_account(self,email="",seed="",domain_appli="",
-                     subject="Votre compte Elrond est disponible",mail_content="mail_new_account"):
+                     subject="Votre compte Elrond est disponible",
+                     mail_new_wallet="mail_new_account",mail_existing_wallet="mail_existing_account",
+                     send_qrcode_with_mail=True,
+                     histo:DAO=None):
     """
     :param fund:
     :param name:
     :param seed_phrase:
     :return: Account, PEM,words,qrcode
     """
-    log("Création d'un nouveau compte")
+    if histo:
+      pubkey=histo.get_address(email,self.network)
+      if pubkey:
+        log("Impossible de créer un deuxième compte pour cette adresse "+pubkey)
+        _u = Account(address=pubkey)
+        send_mail(open_html_file(mail_existing_wallet,{
+          "wallet_address":pubkey,
+          "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
+          "url_explorer":("https://explorer.elrond.com" if "mainnet" in self.network else "https://devnet-explorer.elrond.com") +"/accounts/"+pubkey
+        },domain_appli=domain_appli),email,subject=subject)
+        return _u,None,None,None
 
+    log("Création d'un nouveau compte")
     if len(seed) == 0:
       words=generate_mnemonic()
-
       qr=pyqrcode.create(words)
       buffered=io.BytesIO()
       qr.png(buffered,scale=5)
       qrcode=buffered.getvalue()
-
       secret_key, pubkey = derive_keys(words)
 
-      #secret_key, pubkey = generate_pair()
       address = Address(pubkey).bech32()
       _u=Account(address=address)
       _u.secret_key=secret_key.hex()
@@ -542,8 +567,8 @@ class Elrond(Network):
 
     if len(email)>0:
       wallet_appli=self.nfluent_wallet_url(address,domain_appli)
-
-      send_mail(open_html_file(mail_content,{
+      if not send_qrcode_with_mail:qrcode=None
+      if send_mail(open_html_file(mail_new_wallet,{
         "wallet_address":address,
         "mini_wallet":wallet_appli,
         "url_wallet":"https://wallet.elrond.com" if "mainnet" in self.network else "https://devnet-wallet.elrond.com",
@@ -551,7 +576,9 @@ class Elrond(Network):
         "words":words,
         "qrcode":"cid:qrcode",
         "access_code":get_access_code_from_email(address)
-      },domain_appli=domain_appli),email,subject=subject ,attach=qrcode,filename="qrcode.png")
+      },domain_appli=domain_appli),email,subject=subject,attach=qrcode,filename="qrcode.png" if not qrcode is None else ""):
+        if histo: histo.add_email(email,address,self.network)
+
 
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
@@ -881,6 +908,12 @@ class Elrond(Network):
         key=self.find_key(user)
         if key: user=key["name"]
 
+      if len(user.split(" "))>10:
+        secret_key, pubkey = derive_keys(user.strip())
+        user=Account(address=Address(pubkey).bech32())
+        user.secret_key=secret_key.hex()
+        return user
+
       if user.startswith("erd"):
         user=Account(address=user)
       else:
@@ -930,8 +963,9 @@ class Elrond(Network):
 
   def get_keys(self,qrcode_scale=0,with_balance=False):
     rc=[]
+    log("Lecture des clés "+str(listdir(ELROND_KEY_DIR)))
     for f in listdir(ELROND_KEY_DIR):
-      log("Lecture de "+f)
+
       if f.endswith(".pem"): #or f.endswith(".json"):
         pubkey=open("./Elrond/PEM/"+f).read().split("BEGIN PRIVATE KEY for ")[1].split("---")[0]
 

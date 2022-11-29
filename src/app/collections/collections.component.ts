@@ -15,7 +15,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 export class CollectionsComponent implements OnInit {
   new_collection:Collection = {
     description: "description",
-    id: undefined,
+    id: "",
     name: "MaCollection",
     owner: undefined,
     price: undefined,

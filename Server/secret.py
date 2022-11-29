@@ -10,13 +10,15 @@ CRYPT_KEY_FOR_NFT=""
 MONGO_INITDB_ROOT_USERNAME="root"
 MONGO_INITDB_ROOT_PASSWORD="hh4271"
 WEB3_PASSWORD="hh4271!!"
-MONGO_CLUSTER_CONNECTION_STRING_2= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
-MONGO_CLUSTER_CONNECTION_STRING="mongodb+srv://nfluent:hh4271@cluster0.ygd13.mongodb.net/?retryWrites=true&w=majority"
+MONGO_CLUSTER_CONNECTION_STRING= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
+#MONGO_CLUSTER_CONNECTION_STRING="mongodb+srv://nfluent:hh4271@cluster0.ygd13.mongodb.net/?retryWrites=true&w=majority"
 
 USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"
 SECRET_JWT_KEY="hh4271"
 
+#voir https://polygonscan.com/myapikey
+POLYGON_SCAN_API_KEY="9DJA8NCHRQGYTM39UEP51DNM12JVF6XIRA"
 
 SECRET_ACCESS_CODE="42714280"
 

@@ -1,4 +1,7 @@
-<app-splash *ngIf="showSplash" appname="Token Forge" description="From design to implementation"></app-splash>
+<app-splash *ngIf="showSplash"
+            [appname]="appname"
+            [image]="visual"
+            [description]="claim"></app-splash>
 
 <mat-sidenav-container class="sidenav-container" *ngIf="!showSplash">
   <mat-sidenav #drawer class="sidenav sidemenu" fixedInViewport
@@ -57,7 +60,7 @@
 
 
       <div style="width: 80%;max-width:800px;font-size: small;display: inline-block;padding: 3px;text-align: right;">
-        <mat-form-field appearance="legacy" style="width: 20%;max-width:300px;">
+        <mat-form-field color="primary" appearance="legacy" style="width: 20%;max-width:300px;">
           <mat-select [(value)]="operation.sel_ope" (selectionChange)="refresh_ope($event)" >
             <mat-option *ngFor="let ope of operation.opes" [value]="ope">
               {{ope.title}}

@@ -39,6 +39,7 @@
       <th>Sources</th>
       <th>Filtre</th>
       <th>Mineur</th>
+      <th>Collection</th>
       <th>Destinataire</th>
       <th>Prévu pour</th>
       <th>Réalisé le</th>
@@ -57,6 +58,7 @@
       </td>
       <td>{{ask.filter}}</td>
       <td style="max-width: 200px;"><app-link [content]="ask.miner" [network]="network.network"></app-link></td>
+      <td style="max-width: 200px;">{{ask.collection_to_mint}} </td>
       <td style="max-width: 200px;">{{ask.dest | alias | slice:0:20}} </td>
       <td>{{ask.dtStart*1000 | date:'dd/MM HH:mm'}}</td>
       <td><span *ngIf="ask.dtWork">{{ask.dtWork*1000 | date:'dd/MM HH:mm'}}</span></td>
@@ -82,4 +84,5 @@
       </td>
     </tr>
   </table>
+  <app-signature style="position: absolute;display: block; bottom: 5px;width: 350px;left: 5px;" faq="minerpool"></app-signature>
 </div>

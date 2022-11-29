@@ -14,13 +14,18 @@
 
 #renouvellement des certificats
 #désactiver le parefeu puis
-#certbot certonly --standalone --email hhoareau@gmail.com -d server.f80lab.com
+#Pour le server F80: certbot certonly --standalone --email hhoareau@gmail.com -d server.f80lab.com
+#Pour le serveur NFluent: certbot certonly --standalone --email hhoareau@gmail.com -d api.nfluent.io
 #cp /etc/letsencrypt/live/server.f80lab.com/* /root/certs
 
 #fabrication: docker build -t f80hub/tokensol . && docker push f80hub/tokensol:latest
 #installation: docker rm -f tokensol && docker pull f80hub/tokensol:latest
 #Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp
-#démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io ssl
+démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io ssl
+
+
+
+
 
 #demarage sur windows :
 # du main docker run --restart=always -p 4242:4242 -v /root/temp:/temp -v /root/certs:/certs --name tokensol -ti f80hub/tokensol:latest python3 app.py 4242
@@ -28,23 +33,32 @@
 #test en mode batch : docker run --restart=always -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -ti f80hub/tokensol:latest bash
 #à tester avec la commande ./metaboss-ubuntu-latest update name --account GwCtQjSZj3CSNRbHVVJ7MqJHcMBGJJ9eHSyxL9X1yAXy --keypair admin.json --new-name dudule
 
+#Installation d'un serveur
+#il faut créer les répertoire
+#mkdir /root/Server
+#mkdir /root/Server/Configs
+#mkdir /root/Server/Fonts
+#mkdir /root/Server/Operations
 
 #Execution sur le serveur de production :
 #docker rm -f tokensol && docker pull f80hub/tokensol
-#docker run --restart=always -v /root/Server/Configs:/Configs -v /root/Server/Fonts:/Fonts -v /root/Server/Operations:/Operations -v /root/Server/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io debug ssl
+#docker run --restart=always -v /root/Server/Configs:/Configs -v /root/Server/Fonts:/Fonts -v /root/Server/Operations:/Operations -v /root/Server/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io server contact@nfluent.io debug ssl
 
+#Version pour PC
 FROM python:3.9.0-buster
+
 
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV APP_HOME .
 
+RUN export PATH="$HOME/.local/bin:$PATH"
+
 RUN pip3 -v install Flask
 RUN pip3 -v install Flask-Cors
 RUN pip3 -v install pyyaml
 RUN pip3 install --upgrade pip setuptools wheel
-RUN export PATH="$HOME/.local/bin:$PATH"
 RUN pip3 -v install pyopenssl==22.0.0
 RUN pip3 -v install solana
 RUN pip3 -v install base58
@@ -79,11 +93,16 @@ RUN pip3 -v install cryptography
 RUN pip3 -v install networkx
 RUN pip3 -v install flask-socketio
 RUN pip3 -v install simple-websocket
+RUN pip3 -v install eth-account
+RUN pip3 -v install py-solc-x
+RUN pip3 -v install web3
+
 
 WORKDIR /
 RUN mkdir Solana
 RUN mkdir Secret
 RUN mkdir Elrond
+RUN mkdir Polygon
 RUN mkdir temp
 RUN mkdir Configs
 RUN mkdir Fonts
@@ -91,6 +110,7 @@ RUN mkdir Operations
 
 RUN mkdir ./Solana/Temp
 RUN mkdir ./Elrond/PEM
+RUN mkdir ./Polygon/Keys
 RUN mkdir ./Solana/Keys
 RUN mkdir ./Secret/Keys
 VOLUME /certs
@@ -103,11 +123,13 @@ COPY *.json $APP_HOME
 COPY *.yaml $APP_HOME
 COPY *.html $APP_HOME
 COPY ./Solana/*.py $APP_HOME/Solana/
+COPY ./Polygon/*.py $APP_HOME/Polygon/
 COPY ./Secret/*.py $APP_HOME/Secret/
 COPY ./Elrond/*.py $APP_HOME/Elrond/
 
 COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
 COPY ./Elrond/PEM/*.json $APP_HOME/Elrond/PEM/
+COPY ./Polygon/Keys/*.secret $APP_HOME/Polygon/Keys/
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
 COPY ./Configs/*.yaml $APP_HOME/Configs/

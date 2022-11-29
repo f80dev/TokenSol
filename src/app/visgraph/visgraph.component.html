@@ -1,7 +1,6 @@
   <div id="toolbar"
        *ngIf="filter && filter[selFilter] && props && props.length>0"
-       class="toolbar-app"
-       style="vertical-align:center;padding: 8px;position:absolute;text-align:left;display:block;width:fit-content;height:fit-content;right:0px;top:0px;z-index:100;">
+       class="toolbar-app">
 
     <mat-form-field appearance="legacy">
       <mat-label>Propriétés</mat-label>
@@ -40,7 +39,10 @@
 
     <mat-icon (click)="clear_filter()" style="cursor: pointer;">cancel</mat-icon>
 
-    <div *ngIf="sel_node" style="display: inline-block;margin:5px;line-height: 90%;" [innerHTML]="sel_node.label"></div>
+    <div *ngIf="sel_node"
+         style="display: inline-block;margin:5px;line-height: 90%;"
+         [innerHTML]="sel_node.label">
+    </div>
 
   </div>
 
@@ -48,6 +50,7 @@
 <app-hourglass [message]="message"></app-hourglass>
 <figure #graph_zone
         *ngIf="data"
-        id="graph"
-        style="min-width:250px;min-height:400px;width: 95%;height:95%;overflow: hidden;"></figure>
+        id="graph_zone" name="graph_zone"
+        style="width: 90%;height:100%;background-color: lightgray;">
+</figure>
 

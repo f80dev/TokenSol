@@ -1,6 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
+import {NetworkService} from "../network.service";
 
 @Component({
   selector: 'app-dbtable',
@@ -8,18 +9,19 @@ import {environment} from "../../environments/environment";
   styleUrls: ['./dbtable.component.css']
 })
 export class DbtableComponent implements OnInit {
-
   @Input("table") table:string="";
-  @Input() source:any="local";
+  @Input() source:any="db";
   @Input("max_len") max_len=20;
   @Input("excludes") excludes:string="";
   rows:any[]=[];
   cols:string[]=[];
   @Input() showClear=false;
+  @Input() title="";
   @Input() dictionnary:any={};
 
   constructor(
-    public httpClient:HttpClient
+    public httpClient:HttpClient,
+    public network:NetworkService
   ) { }
 
   update_cols(cols:string[]){
@@ -45,10 +47,10 @@ export class DbtableComponent implements OnInit {
   }
 
 
-
   refresh(){
     if(this.source=="db"){
-      this.httpClient.get(environment.server+"/api/tables/"+this.table+"?excludes="+this.excludes).subscribe((rows:any)=>{
+      if(this.title.length==0)this.title=this.table;
+      this.httpClient.get(this.network.server_nfluent+"/api/tables/"+this.table+"?excludes="+this.excludes).subscribe((rows:any)=>{
         this.rows=rows;
         if(this.cols.length==0){
           for(let k in this.rows[0]){
@@ -71,7 +73,7 @@ export class DbtableComponent implements OnInit {
 
   clear() {
     if(this.source!="local"){
-      this.httpClient.delete(environment.server+"/api/tables/"+this.table).subscribe(()=>{
+      this.httpClient.delete(this.network.server_nfluent+"/api/tables/"+this.table).subscribe(()=>{
         this.refresh();
       })
     }

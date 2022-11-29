@@ -1,4 +1,123 @@
-<app-dbtable table="nfts" excludes="attributes" style="display: inline-block;margin:2%;" class="mat-elevation-z4"></app-dbtable>
-<app-dbtable table="users" excludes="attributes" style="display: inline-block;margin:2%;" class="mat-elevation-z4"></app-dbtable>
-<app-dbtable table="histo" [max_len]="20" style="display: inline-block;margin:2%;" class="mat-elevation-z4"></app-dbtable>
+<div class="mainform" style="text-align: left;">
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Tables</mat-expansion-panel-header>
+
+    <p>
+      Adresse de la base: {{server_config!.Database_Server}}<br>
+      Nom de la base : {{server_config!.Database_Name}}<br>
+    </p>
+
+
+    <mat-accordion>
+      <mat-expansion-panel *ngFor="let tablename of ['nfts','validators','users','histo','mintpool','account_by_emails']">
+        <mat-expansion-panel-header>{{tablename}}</mat-expansion-panel-header>
+        <app-dbtable excludes="attributes"
+                   [title]="tablename"
+                   [table]="tablename"
+                   [showClear]="true"
+                   class="mat-elevation-z4"></app-dbtable>
+      </mat-expansion-panel>
+    </mat-accordion>
+
+  </mat-expansion-panel>
+
+
+  <mat-expansion-panel *ngIf="server_config" [expanded]="true">
+    <mat-expansion-panel-header>Configuration</mat-expansion-panel-header>
+    <table>
+      <tr>
+        <td>Adresse du serveur: </td>
+        <td>{{server_config.Server}}</td>
+      </tr>
+      <tr>
+        <td>Adresse du client: </td>
+        <td>{{server_config.Client}}</td>
+      </tr>
+      <tr></tr>
+      <tr>
+        <td>Adresse de la base: </td>
+        <td>{{server_config.Database_Server}}</td>
+      </tr>
+      <tr></tr>
+      <tr>
+        <td>Tables</td>
+        <td>
+          Tokens      : {{server_config.Database.tokens}}<br>
+          Validateurs : {{server_config.Database.validators}}<br>
+          Pool de mint: {{server_config.Database.mintpool}}<br>
+        </td>
+      </tr>
+    </table>
+
+  </mat-expansion-panel>
+
+
+  <mat-expansion-panel [expanded]="false">
+    <mat-expansion-panel-header>Déploiement</mat-expansion-panel-header>
+    <mat-checkbox [(ngModel)]="first_install" (change)="refresh()">Première installation</mat-checkbox><br>
+
+    <app-input [(value)]="server_addr" label="Adresse du serveur" width="250px" (valueChange)="refresh()"></app-input>
+    <app-input [(value)]="appli_addr" label="Adresse de l'application" width="250px" (valueChange)="refresh()"></app-input>
+
+    <mat-checkbox [(ngModel)]="debug_mode" (change)="refresh()">Mode débug</mat-checkbox>
+    <br>
+    Base de données:
+    <app-input [(value)]="db_addr" label="Adresse de la base" width="250px"></app-input>
+    <app-input [(value)]="db_login" label="Login" width="120px"></app-input>
+    <app-input [(value)]="db_password" label="Mot de passe" width="120px"></app-input>
+    <br>
+
+
+    <app-input [(value)]="activity_report" label="Mail de réception du rapport d'activité" width="250px" (valueChange)="refresh()"></app-input>
+    <br>
+
+    <table style="width: 100%;">
+      <tr style="width: 100%;">
+        <th style="width: 50%;">Installation du serveur <mat-icon [cdkCopyToClipboard]="setup_server">content_copy</mat-icon></th>
+        <th style="width: 50%;">Lancement des applicatif <mat-icon [cdkCopyToClipboard]="setup_client">content_copy</mat-icon></th>
+      </tr>
+      <tr title="Cliquer pour copier ce contenu">
+        <td style="background: #e8e8e8;padding:15px;" [innerHTML]="setup_server" ></td>
+        <td style="background: #e8e8e8;padding:15px;" [innerHTML]="setup_client" ></td>
+      </tr>
+      <tr style="text-align: center;">
+        <td>
+          <button mat-raised-button mat-button
+                  style="margin: 10px;"
+                  (click)="test_server()">
+            Tester le serveur
+          </button>
+        </td>
+        <td>
+          <button mat-raised-button mat-button
+                  style="margin: 10px;"
+                  title="Ouvrir l'application"
+                  (click)="open_appli()">
+            Ouvrir
+          </button>
+        </td>
+      </tr>
+    </table>
+
+    <br>
+
+    <button mat-raised-button mat-button
+            title="Restaurer les valeurs par défaut"
+            (click)="reset()">
+      Valeurs par défaut
+    </button>
+
+    <button mat-raised-button mat-button
+            title="Restaurer les valeurs par défaut"
+            (click)="load_values()">
+      Valeurs enregistrées
+    </button>
+
+  </mat-expansion-panel>
+
+
+
+
+</div>
+
 

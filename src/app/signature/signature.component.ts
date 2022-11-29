@@ -13,7 +13,7 @@ export class SignatureComponent implements OnInit {
   @Input() faq="";
   appname="";
   version="";
-  @Input() color="white";
+  @Input() color="#dedede";
 
   constructor(
     public router:Router,

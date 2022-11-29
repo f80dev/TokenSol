@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {environment} from "../../environments/environment";
 import {NetworkService} from "../network.service";
-import {$$, getParams, setParams, showMessage} from "../../tools";
+import {$$, getParams, jsonToList, setParams, showError, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Clipboard} from '@angular/cdk/clipboard';
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -12,6 +12,7 @@ import {OperationService} from "../operation.service";
 import {NFT} from "../../nft";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
+import {get_in} from "../../operation";
 
 @Component({
   selector: 'app-build-ope',
@@ -28,11 +29,10 @@ export class BuildOpeComponent implements OnInit {
   collection_keys:string[]=[];
   store_collections: any[]=[];
   sources: any;
-
   candymachine_qrcode: string="";
-
-
   title: string="NFluenT Candy Machine";
+  mails: { transfer: any; new_account: any }={transfer:"",new_account:""};
+  showPrestashop: boolean=true;
 
 
   constructor(
@@ -61,7 +61,7 @@ export class BuildOpeComponent implements OnInit {
           this.refresh();
         })
     } else {
-      this.user.login();
+      this.user.login("Se connecter pour accèder à la gestion des opérations");
     }
   }
 
@@ -77,6 +77,11 @@ export class BuildOpeComponent implements OnInit {
 
     if(!this.operation.sel_ope)return;
 
+    this.mails={
+      new_account:get_in(this.operation.sel_ope,"new_account.mail","mail standard"),
+      transfer:get_in(this.operation.sel_ope,"transfer.mail","mail standard")
+    }
+
 
     $$("Mise a jour des liens avec "+$event.value.id)
 
@@ -90,23 +95,29 @@ export class BuildOpeComponent implements OnInit {
       for(let _nft of r.nfts){
         let nft:NFT=_nft;
         nft.marketplace!.price=nft.marketplace!.price  || 0;
-        let k=nft.collection!.id;
-        if(k && nft.marketplace!.quantity>0){
-          if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
-          if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
-          this.collections[k]=this.collections[k]+nft.marketplace!.quantity;
+        if(nft.collection){
+          let k=nft.collection!.id;
+          if(k && nft.marketplace!.quantity>0){
+            if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
+            if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
+            this.collections[k]=this.collections[k]+nft.marketplace!.quantity;
+            this.nfts.push(nft);
+          }
+        } else {
           this.nfts.push(nft);
         }
+
       }
 
       if(this.operation.sel_ope){
+        this.showPrestashop=!(this.operation.sel_ope.store?.prestashop==null);
         let ope=this.operation.sel_ope.id;
 
         if(this.operation.sel_ope.lottery){
           let url=this.operation.sel_ope.lottery.application.replace("$nfluent_appli$",environment.appli)+"?ope="+ope+"&toolbar=false";
           this.operation.sel_ope.lottery.application=url;
           this.operation.sel_ope.lottery.iframe_code="<iframe src='"+url+"&mode=iframe'></iframe>";
-          this.operation.sel_ope.lottery.image_code="<img src='"+environment.server+"/api/get_new_code/"+ope+"/?format=qrcode'>";
+          this.operation.sel_ope.lottery.image_code="<img src='"+this.network.server_nfluent+"/api/get_new_code/"+ope+"/?format=qrcode'>";
         }
 
         if(this.operation.sel_ope && this.operation.sel_ope.validate && this.operation.sel_ope.validate.application){
@@ -124,11 +135,14 @@ export class BuildOpeComponent implements OnInit {
         //   this.store_collections.push(_c);
         // }
 
-        this.candymachine_qrcode=environment.server+"/api/qrcode/?code="+encodeURIComponent(this.get_url_for_appli("cm",{airdrop:false}))+"&scale=13";
+        this.candymachine_qrcode=this.network.server_nfluent+"/api/qrcode/?code="+encodeURIComponent(this.get_url_for_appli("cm",{airdrop:false}))+"&scale=13";
 
       }
 
 
+    },(err:any)=>{
+      this.network.wait();
+      showError(this,err);
     });
   }
 
@@ -147,7 +161,7 @@ export class BuildOpeComponent implements OnInit {
 
   delete_ope() {
     if(this.operation.sel_ope)
-      open(environment.server+"/api/operations/"+this.operation.sel_ope.id+"?format=file","_blanck");
+      open(this.network.server_nfluent+"/api/operations/"+this.operation.sel_ope.id+"?format=file","_blanck");
   }
 
   send_mail(user="") {
@@ -166,7 +180,7 @@ export class BuildOpeComponent implements OnInit {
 
   download_ope() {
     if(this.operation.sel_ope)
-      open(environment.server+"/api/operations/"+this.operation.sel_ope.id,"download");
+      open(this.network.server_nfluent+"/api/operations/"+this.operation.sel_ope.id,"download");
   }
 
 
@@ -191,6 +205,9 @@ export class BuildOpeComponent implements OnInit {
 
     _d.toolbar=false
     _d.ope=this.operation.sel_ope.id;
+    _d.visual=get_in(this.operation.sel_ope,"branding.splash_visual",null);
+    _d.claim=get_in(this.operation.sel_ope,"branding.claim",null);
+    _d.appname=get_in(this.operation.sel_ope,"branding.appname",null);
 
     let param = setParams(_d);
     return environment.appli+"/"+appli+"?param="+param;
@@ -217,7 +234,7 @@ export class BuildOpeComponent implements OnInit {
 
   edit_ope() {
     if(this.operation.sel_ope){
-      let url="https://codebeautify.org/yaml-editor-online?url="+encodeURI(environment.server+"/api/getyaml/"+this.operation.sel_ope.id+"/txt/?dir=./Operations");
+      let url="https://codebeautify.org/yaml-editor-online?url="+encodeURIComponent(this.network.server_nfluent+"/api/getyaml/"+this.operation.sel_ope.id+"/txt/?dir=./Operations");
       open(url,"editor");
     }
   }
@@ -260,9 +277,13 @@ export class BuildOpeComponent implements OnInit {
     //Compte sur combien de NFT, addr peut effectuer l'operation operation
     let rc=0;
     for(let nft of nfts){
-      if(nft.owner==addr)rc=rc+1;
+      if(nft.owner=="" || nft.owner==addr)rc=rc+1;
       //TODO ajouter ici les roles par rapport à la collection
     }
     return rc;
+  }
+
+  showMessages(section: string):string {
+    return jsonToList(get_in(this.operation.sel_ope,section+".messages",{}));
   }
 }

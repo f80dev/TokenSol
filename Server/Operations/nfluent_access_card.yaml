@@ -20,19 +20,25 @@ wallet: "$nfluent_appli$/wallet"
 lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
-  miner: nlfuent                      #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection
-#!!!!! Attention le mineur doit être propriétaire de la collection de minage
+  networks:                           #Indique les parametres de minage suivant le réseau du destinataire
+    - network: elrond-devnet          #Le premier item est utilisé par défaut si le destinataire fourni un email
+      collection: NFLUENTA-af9ddf     #Designe la collection utilisé pour le minage
+      miner: nfluent                  #Désigne le mineur à utilisé (il doit être propriétaire de la collection ci-dessus)
 
 
-#section détaillant l'événement associé à cette opération
-event:
-  title: Ventes aux enchères
-  place: 12 rue Martel, 75010 Paris   #Lieu de l'événement
-  web:
-  dates:                              #Liste des périodes d'ouvertures
-    - start: 04/02/1971 20:00
-      end: 04/02/1971 22:00
-
+branding:                     #Utiliser pour uniformiser l'aspect des applications
+  style:
+    background-color: white
+    color: black
+    font-size: medium
+    text-align: center
+    height: 100vh
+    min-height: 100vh
+    signature-color: lightgray            #couleur de la signature
+  reverse_card:
+    background-color: lightgray
+    color: black
+    overflow: hidden
 
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
@@ -42,11 +48,6 @@ collections:
     visual:  ""
     description: "Carte d'accès au site nfluent"
 
-
-
-database:                 #base de données générale de l'outil pour les historiques
-  connexion: server
-  dbname: nfluent
 
 #la section accounts contient les clés privées (cryptées) des comptes Ã utiliser pendant l'opération
 #accounts:
@@ -68,7 +69,7 @@ new_account:
     Bonjour,<br><br>
     Bienvenue sur le réseau NFluent. Veuillez retrouver votre carte d'accès sur le site <a href='{{mini_wallet}}'>NFluent Wallet</a><br><br>
     Vous pouvez également utilisé votre carte depuis le wallet officiel de MultiversX en important le compte avec la suite de mots suivante :<br>
-    {{words}}
+    <strong style='color:red;border: red solid 1px;'>{{words}}</strong>
     <br><br>
     {{signature}}
   "
@@ -90,11 +91,10 @@ new_account:
 #"mongodb://admin:<password>@server.f80lab.com:27017"
 data:
   sources:
-    - type: network
+    - type: database
       active: True
-      connexion: elrond-devnet
-      filter:
-        limit: 200
+      connexion: cloud
+      dbname: nfluent
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
         - "NFLUENTA-af9ddf"
@@ -168,6 +168,20 @@ validate:
 
 
 
+dispenser:
+  visible: True
+  application: '$nfluent_appli$/dispenser'          #Désigne l'application en charge de la distribution
+  collections:                                      #Liste des collections concernée par la distribution (si vide toutes les collections disponibles depuis la source sont prises en compte)
+  authentification:                                 #il s'agit d'authentifier le destinataire (et non une auto-authentification)
+    address: True
+    email: True
+
+  messages:
+    title: Envoyer la carte sous forme de NFT                 #Titre afficher sur la fenetre proposant l'envoie du NFT
+    prompt: Indiquer l'email du destinataire                  #Message affiché dans la zone de saisie
+    confirm: Votre NFT est en cours de préparation et envoie
+
+  selfWalletConnection: False
 
 
 #Distribution de NFT au sein d'une ou plusieurs collecion à l'aveugle
@@ -185,8 +199,36 @@ candymachine:
     on_device: False
     google: True
 
-  collections: []                 #Liste les collections disponibles via la candy machine
+  collections:                  #Liste les collections disponibles via la candy machine
+    - "NFLUENTA-af9ddf"
 
   messages:
-    title: "Flasher ce code pour obtenir votre carte d'accès"
+    title: "Recevoir votre carte d'accès numérotée NFLUENT"
+    question: "Ou dois-je l'envoyer ?"
 
+
+
+store:              #Cette section regroupe l'ensemble des propriétés liés à la vente des NFTs via des stores dédiés
+  visible: True
+  application: '$nfluent_appli$/store'    #Désigne l'application en charge de la vente
+
+  authentification:
+    google: True
+    email: True
+
+  #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
+  collections:
+    - "NFLUENTA-af9ddf"
+
+  apparence:              #Fixe l'apparence des NFT dans le store
+    size: 250px           #Taille des NFT
+    fontsize: 12          #Taille de la police au dos
+
+  messages:      #Section regroupant les différents messages d'aides aux utilisateurs
+    confirm: "Votre NFT est en cours de préparation et envoie"
+    title: Acquerir une carte d'accès
+    subtitle: sélectionner le NFT que vous souhaitez recevoir
+    prompt: Indiquer votre email pour recevoir le NFT
+    question: "ceci est la question"
+    cancel: probleme technique
+    help_url: ""

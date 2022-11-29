@@ -55,11 +55,11 @@
   </mat-expansion-panel>
 
   <br><br>
-  <div class="mat-elevation-z4">
-    <button type="button" mat-icon-button mat-button (click)="open_graph()">
+  <div class="mat-elevation-z4" style="width:95%;height:900px;overflow: hidden;padding: 20px;">
+    <button type="button" mat-icon-button mat-button (click)="open_graph(user.addr)">
       <mat-icon>refresh</mat-icon>
     </button>
-    <app-visgraph style="width:60%;height:60%;" *ngIf="graph" [data]="graph.graph"></app-visgraph>
+    <app-visgraph *ngIf="graph" [data]="graph.graph"></app-visgraph>
   </div>
 
 </div>
