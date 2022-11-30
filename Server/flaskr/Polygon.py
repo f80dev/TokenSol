@@ -6,17 +6,17 @@ from solcx import compile_source, install_solc
 from web3.contract import Contract
 from web3.middleware import geth_poa_middleware
 
-from NFT import NFT
-from Network import Network
+from flaskr.NFT import NFT
+from flaskr.Network import Network
 
-from Tools import log, get_qrcode, send_mail, open_html_file, get_access_code_from_email
-from dao import DAO
-from ipfs import IPFS
+from flaskr.Tools import log, get_qrcode, send_mail, open_html_file, get_access_code_from_email
+from flaskr.dao import DAO
+from flaskr.ipfs import IPFS
 from web3 import Web3, HTTPProvider
 
-from secret import POLYGON_SCAN_API_KEY
+from flaskr.secret import POLYGON_SCAN_API_KEY
 
-POLYGON_KEY_DIR="./Polygon/Keys/"
+POLYGON_KEY_DIR="../Polygon/Keys/"
 install_solc(version='latest')
 
 

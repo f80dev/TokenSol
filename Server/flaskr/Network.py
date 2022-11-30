@@ -1,5 +1,5 @@
-from Tools import setParams
-from ipfs import IPFS
+from flaskr.Tools import setParams
+from flaskr.ipfs import IPFS
 
 
 class Network():

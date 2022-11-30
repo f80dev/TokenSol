@@ -1,4 +1,3 @@
-import copy
 import datetime
 import shutil
 
@@ -6,10 +5,9 @@ import requests
 import unidecode
 import xmltodict
 
-from Elrond.Elrond import Elrond
-from NFT import NFT
-from Solana.Solana import Solana
-from Tools import log
+from flaskr.settings import TEMP_DIR
+from flaskr.NFT import NFT
+from flaskr.Tools import log
 
 
 class PrestaTools:
@@ -44,7 +42,7 @@ class PrestaTools:
       return rc
 
 
-  def add_image(self, product_id, url="", filename="./temp/image.gif"):
+  def add_image(self, product_id, url="", filename=TEMP_DIR+"image.gif"):
     """"
       voir https://www.h-hennes.fr/blog/2021/03/12/prestashop-gerer-les-images-produits-via-lapi/
       https://devdocs.prestashop.com/1.7/webservice/resources/image_types/

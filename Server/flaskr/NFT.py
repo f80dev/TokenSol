@@ -5,7 +5,7 @@ import yaml
 from fontTools.ttLib import TTFont
 from reportlab.pdfbase import pdfmetrics
 
-from Tools import get_fonts
+from flaskr.Tools import get_fonts
 
 
 class NFT:
@@ -62,14 +62,16 @@ class NFT:
       self.visual=object["visual"] if "visual" in object else object["image"]
       if self.visual=="": self.visual=object["visual"] if "visual" in object else ""
 
-      self.creators=object["creators"]
+      if "properties" in object and "creators" in object["properties"]:object["creators"]=object["properties"]["creators"]
+      self.creators=object["creators"] if "creators" in object else []
+
       self.files=object["files"] if "files" in object else []
       self.attributes=object["attributes"]
       self.collection=object["collection"] if "collection" in object else ""
       self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1,"max_mint":1}
       self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)
-      self.address=object["address"] if "address" in object else ""      #Données obligatoire
-      self.network=object["network"]
+      self.address=object["address"] if "address" in object else ("db_"+str(object["_id"]) if "_id" in object else "")     #Données obligatoire
+      self.network=object["network"] if "network" in object else "database"
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
       self.tags=object["tags"] if "tags" in object else ""

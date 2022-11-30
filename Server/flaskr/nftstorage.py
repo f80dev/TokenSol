@@ -2,7 +2,7 @@ import base64
 
 import requests.api
 
-from settings import NFT_STORAGE_KEY
+from flaskr.settings import NFT_STORAGE_KEY
 
 
 class NFTStorage:

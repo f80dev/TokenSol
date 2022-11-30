@@ -21,11 +21,11 @@ from solana.transaction import Transaction
 from spl.token.constants import TOKEN_PROGRAM_ID
 from spl.token.instructions import transfer,TransferParams
 
-from NFT import NFT
-from Tools import log, send_mail, open_html_file, get_qrcode, setParams
+from flaskr.NFT import NFT
+from flaskr.Tools import log, send_mail, open_html_file, get_qrcode, setParams
 
-SOLANA_KEY_DIR="./Solana/Keys/"
-METABOSS_DIR="./Solana/"
+SOLANA_KEY_DIR="../Solana/Keys/"
+METABOSS_DIR="../Solana/"
 
 class Solana:
   alias=dict()

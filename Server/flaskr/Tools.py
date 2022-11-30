@@ -24,8 +24,8 @@ from PIL import Image,ImageSequence
 from cryptography.fernet import Fernet
 from fontTools import ttLib
 
-from secret import USERNAME, PASSWORD, SALT, GITHUB_TOKEN
-from settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
+from flaskr.secret import USERNAME, PASSWORD, SALT
+from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
 
 
 def get_fonts(dir="./Fonts/"):
@@ -72,6 +72,10 @@ def send(socketio,event_name: str, message=dict()):
   log("WebSocket.send de " + event_name)
   return rc
 
+def returnError(msg:str="",_d=dict(),status=500):
+  msg=str(msg)
+  log("Error "+msg)
+  return "Ooops ! Petit problème technique. "+msg,status
 
 
 def open_html_file(name:str,replace=dict(),domain_appli=""):
@@ -287,7 +291,7 @@ def get_operation(name:str):
     rc["id"]=name
   else:
     name=name.replace(".yaml","")
-    rc=yaml.load(open("./Operations/"+name+".yaml","r"),Loader=yaml.FullLoader)
+    rc=yaml.load(open(OPERATIONS_DIR+name+".yaml","r"),Loader=yaml.FullLoader)
 
   #Complément pour les parties manquantes
   if not "transfer" in rc:rc["transfer"]={"mail":""}
@@ -427,7 +431,7 @@ def convert_to(content:str,storage_platform=None,filename=None,format="GIF",qual
 
 
 def convert_image_to_animated(base:Image,n_frames:int,prefix_for_temp_file="temp_convert",format_to_use="gif"):
-  filename="./temp/"+prefix_for_temp_file+"_"+now("hex")+"."+format_to_use
+  filename=TEMP_DIR+prefix_for_temp_file+"_"+now("hex")+"."+format_to_use
   log("Convertion de "+str(base)+" en image animé de "+str(n_frames)+" frames -> "+filename)
 
   base=convertImageFormat(base,format_to_use)
@@ -445,7 +449,7 @@ def convert_image_to_animated(base:Image,n_frames:int,prefix_for_temp_file="temp
 
 
 def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge"):
-  filename="./temp/"+prefix_for_temp_file+"_"+now("hex")+".gif"
+  filename=TEMP_DIR+prefix_for_temp_file+"_"+now("hex")+".gif"
   wr=imageio.get_writer(filename,mode="I")
 
   frames_to_paste = [f.resize(base.size).convert("RGBA") for f in ImageSequence.Iterator(to_paste)]

@@ -2,15 +2,16 @@ from os.path import exists
 
 import yaml
 
-from NFT import NFT
-from Tools import now
+from flaskr.settings import TEMP_DIR
+from flaskr.NFT import NFT
+from flaskr.Tools import now
 
 
 class StoreFile:
   storefile_location=""
   content={"version":"1.0","nfts":[]}
 
-  def __init__(self,storefile_location="./temp/storefile.yaml"):
+  def __init__(self,storefile_location=TEMP_DIR+"storefile.yaml"):
     self.storefile_location=storefile_location
     if not exists(self.storefile_location):
       self.export_to_yaml()

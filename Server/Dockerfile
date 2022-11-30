@@ -21,7 +21,7 @@
 #fabrication: docker build -t f80hub/tokensol . && docker push f80hub/tokensol:latest
 #installation: docker rm -f tokensol && docker pull f80hub/tokensol:latest
 #Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp
-démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io ssl
+#démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 app.py https://server.f80lab.com:4242 https://tokenfactory.nfluent.io ssl
 
 
 

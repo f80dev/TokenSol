@@ -11,7 +11,7 @@ MONGO_INITDB_ROOT_USERNAME="root"
 MONGO_INITDB_ROOT_PASSWORD="hh4271"
 WEB3_PASSWORD="hh4271!!"
 MONGO_CLUSTER_CONNECTION_STRING= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
-#MONGO_CLUSTER_CONNECTION_STRING="mongodb+srv://nfluent:hh4271@cluster0.ygd13.mongodb.net/?retryWrites=true&w=majority"
+MONGO_WEB3_CONNECTION_STRING="mongodb://root:rootpassword@provider.bdl.computer:32754/"
 
 USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"

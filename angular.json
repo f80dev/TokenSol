@@ -134,6 +134,9 @@
             "production": {
               "browserTarget": "NFTCalvi:build:production"
             },
+            "debug": {
+              "browserTarget": "NFTCalvi:build:debug"
+            },
             "development": {
               "browserTarget": "NFTCalvi:build:development"
             }

@@ -9,9 +9,10 @@
         <mat-icon (click)="force_refresh()" title="Rafraichir l'écran" style="cursor: pointer;font-size: x-large;">refresh</mat-icon>
         <mat-icon (click)="open_inspire()" title="Voir dans Inspire.art" style="cursor: pointer;font-size: x-large;">visibility</mat-icon>
       </td>
+      <td>&nbsp;Taille: <mat-slider [max]="500" [min]="100" [(value)]="nft_size"></mat-slider></td>
       <td>
-        <mat-form-field style="min-width: 150px;width: 60%;max-width:500px;font-size: medium;" *ngIf="nfts.length>3">
-          <mat-label>Collections:</mat-label>
+        <mat-form-field style="min-width: 150px;width: 60%;max-width:500px;font-size: medium;" *ngIf="nfts.length>3 || sel_collection.id!='*'">
+          <mat-label>Collections</mat-label>
           <mat-select [(value)]="sel_collection" (selectionChange)="force_refresh()">
             <mat-option *ngFor="let col of collections" [value]="col">
               {{col.name}}
@@ -34,15 +35,15 @@
                      [image]="nft.visual"
                      margin="15px"
                      [style]="{backgroundColor:'0xFEFEFE',border: '1px solid lightgray'}"
-                     width="300px" height="300px"
+                     [width]="nft_size+'px'" [height]="nft_size+'px'"
                      [data]="nft"
                      (onreverse)="on_reverse($event)">
 
-      <div style="padding: 10px;">
-        <div class="mat-body-2">{{nft.collection!.name}}</div>
-        <div class="mat-title">{{nft.name}}</div>
+      <div style="width: 90%;padding:5%;overflow: hidden;">
+        <div class="mat-body-2" *ngIf="nft.collection">{{nft.collection!.name}}</div>
+        <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/10+'px'">{{nft.name}}</div>
         <br>
-        <div class="mat-body-2">{{nft.description}}</div><br>
+        <div class="mat-body-2" [style.font-size]="(nft_size || 100)/15+'px'">{{nft.description}}</div><br>
         <table style="width: 100%;">
           <tr *ngFor="let attr of nft.attributes" class="mat-body-2">
             <td>{{attr.trait_type}}</td>
@@ -230,8 +231,6 @@
 
     </div>
   </mat-tab>
-
-
 
   <mat-tab label="Préférences">
     <app-authent *ngIf="!strong"

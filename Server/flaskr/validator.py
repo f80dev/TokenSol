@@ -4,9 +4,9 @@ import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from Elrond.Elrond import Elrond
-from Tools import now, get_operation
-from dao import DAO
+from flaskr.Elrond import Elrond
+from flaskr.Tools import now, get_operation
+from flaskr.dao import DAO
 
 class Validator:
 

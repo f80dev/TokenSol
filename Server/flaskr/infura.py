@@ -2,10 +2,9 @@ import base64
 import json
 
 import requests
-from ipfshttpclient import multipart
 
-from Tools import log
-from settings import INFURA_PROJECT_ID, INFURA_PROJECT_SECRET
+from flaskr.Tools import log
+from flaskr.settings import INFURA_PROJECT_ID, INFURA_PROJECT_SECRET, TEMP_DIR
 
 
 class Infura:
@@ -16,11 +15,11 @@ class Infura:
     if type(body)==dict:
       if "filename" in body:
         log("On créé le fichier pour pouvoir l'envoyer sur ipfs via infura")
-        f=open("./Temp/"+body["filename"],"wb")
+        f=open(TEMP_DIR+body["filename"],"wb")
         f.write(base64.b64decode(body["content"].split(";base64,")[1]))
         f.close()
       else:
-        f=open("./temp/temp.json","w")
+        f=open(TEMP_DIR+"temp.json","w")
         json.dump(body,f)
         f.close()
 

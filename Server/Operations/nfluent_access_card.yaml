@@ -94,12 +94,9 @@ data:
     - type: database
       active: True
       connexion: cloud
-      dbname: nfluent
+      dbname: tokenforge
       owner:                   #Tous les NGFt de l'owner
-      collections:             #Tous les NFT des collections ci-dessous
-        - "NFLUENTA-af9ddf"
-
-
+      collections: []            #Tous les NFT des collections ci-dessous
 
 
 #Fonctionnement de la section Validate _____________________________________________________________________________________________________________________________

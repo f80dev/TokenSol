@@ -115,20 +115,27 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   add_nfts(r:NFT[],offset:number){
     for(let nft of r){
+      let col=nft.collection;
+      if(this.sel_collection.id=="*"){
+        this.nfts.push(nft);
+      } else {
+        if(nft.collection){
+          if(nft.collection.id==this.sel_collection.id){
+            this.message="";
+            this.nfts.push(nft);
+          }
+        }
+      }
       if(nft.collection){
         if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection["id"])==-1)this.collections.push(nft.collection);
-        if(this.sel_collection.id=="*" || nft.collection.id==this.sel_collection.id){
-          this.message="";
-          this.nfts.push(nft);
-        }
       }
     }
 
-    if(r.length==0 && offset==0) {
+    if(this.nfts.length==0 && offset==0) {
       showMessage(this, "Vous n'avez aucun NFT pour l'instant")
       this.tab_title="Vos NFTs";
     } else {
-      if (r.length > 1) {
+      if (this.nfts.length > 1) {
         this.tab_title = "Vos " + r.length + " NFTs";
       } else {
         this.tab_title = "Votre NFT";
@@ -141,15 +148,16 @@ export class MywalletComponent implements OnInit,OnDestroy {
     $$("Refresh de l'onglet "+index);
     if(index==0 && this.nfts.length==0){
       this.message="Chargement NFTs";
-      this.network.get_tokens_from("owner",this.addr,3,true,null,0,this.network.network).then((r:any)=>{
+      this.network.get_tokens_from("owner",this.addr,5,true,null,0,this.network.network).then((r:any)=>{
         this.add_nfts(r.result,r.offset);
       });
 
-
-      this.network.get_tokens_from("owner",this.addr,250,true,null,3,this.network.network).then((r:any)=>{
-        this.message="";
-        this.add_nfts(r.result,r.offset);
-      }).catch(err=>{showError(this,err)});
+      setTimeout(()=>{
+        this.network.get_tokens_from("owner",this.addr,250,true,null,5,this.network.network).then((r:any)=>{
+          this.message="";
+          this.add_nfts(r.result,r.offset);
+        }).catch(err=>{showError(this,err)});
+      },1500);
     }
 
     if(index==2){
@@ -172,6 +180,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   showScanner: boolean=false;
   accescode_scan: string="";
   version: any;
+  nft_size: number | null=250;
 
   handleImage(event: any) {
     let rc=event;
@@ -358,6 +367,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
   on_reverse(evt:any) {
+    if(typeof(evt.data)=="string")evt.data=JSON.parse(evt.data);
     if(evt.side && evt.data.description.length==0 && (!evt.data.attributes || evt.data.attributes.length==0)){
       this.network.get_nft(evt.data.address,this.network.network).subscribe((result:any)=>{
         let index=this.nfts.indexOf(evt.data);

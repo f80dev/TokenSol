@@ -4,8 +4,8 @@ import time
 import requests
 from requests import Request, Session
 
-from Tools import log
-from settings import FTX_API_KEY, FTX_API_SECRET
+from flaskr.Tools import log
+from flaskr.settings import FTX_API_KEY, FTX_API_SECRET
 
 
 class FTX:

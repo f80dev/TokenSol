@@ -1,6 +1,6 @@
 from json import dumps, dump
 from github import Github
-from Tools import log
+from flaskr.Tools import log
 
 
 class GithubStorage:

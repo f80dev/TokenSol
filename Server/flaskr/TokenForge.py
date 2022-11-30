@@ -1,14 +1,14 @@
 import base64
 from os.path import exists
 
-import GitHubStorage
-from GoogleCloudStorageTools import GoogleCloudStorageTools
-from Tools import normalize, log
-from infura import Infura
-from ipfs import IPFS
-from nftstorage import NFTStorage
-from secret import GITHUB_TOKEN
-from settings import IPFS_SERVER
+import flaskr.GitHubStorage
+from flaskr.GoogleCloudStorageTools import GoogleCloudStorageTools
+from flaskr.Tools import normalize, log
+from flaskr.infura import Infura
+from flaskr.ipfs import IPFS
+from flaskr.nftstorage import NFTStorage
+from flaskr.secret import GITHUB_TOKEN
+from flaskr.settings import IPFS_SERVER
 
 
 def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_appli="",domain_server="",sticker=None):
@@ -60,7 +60,7 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_a
     filename=normalize(data["filename"].split(".")[0]+"_"+cid) if "filename" in data and not data["filename"] is None else cid
 
 
-    sticker.save("./temp/"+filename)
+    sticker.save(TEMP_DIR+filename)
     rc={"cid":cid,"url":domain_server+"/api/images/"+filename+"?"+ext}
 
 

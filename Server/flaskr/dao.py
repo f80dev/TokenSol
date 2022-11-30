@@ -3,9 +3,9 @@ import pymongo
 from bson import ObjectId
 from pymongo import mongo_client, database
 
-from NFT import NFT
-from Tools import log, now
-from secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING,WEB3_PASSWORD
+from flaskr.NFT import NFT
+from flaskr.Tools import log, now
+from flaskr.secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING, MONGO_WEB3_CONNECTION_STRING
 
 #Voir les infos de connections du cloud sur
 #Localisation de l'offre cloud :
@@ -14,7 +14,7 @@ DB_SERVERS=dict(
     "local":"mongodb://127.0.0.1:27017",
     "server":"mongodb://"+MONGO_INITDB_ROOT_USERNAME+":"+MONGO_INITDB_ROOT_PASSWORD+"@server.f80lab.com:27017",
     "cloud":MONGO_CLUSTER_CONNECTION_STRING,
-    "web3":"mongodb://root:"+WEB3_PASSWORD+"@d3akash.cloud:31365/"
+    "web3":MONGO_WEB3_CONNECTION_STRING
   }
 )
 
@@ -23,13 +23,18 @@ class DAO:
   db:database=None
   url:str=""
 
-  def __init__(self,domain:str="cloud",dbname="nfluent",ope=None):
+  def __init__(self,domain:str="web3",dbname="nfluent",ope=None,config=None):
     if ope:
       self.domain=ope["database"]["connexion"]
       self.dbname=ope["database"]["dbname"]
+
+    if config:
+      self.dbname=config["DB_NAME"]
+      self.domain=config["DB_SERVER"]
     else:
-      self.dbname=dbname
-      self.domain=domain
+      if domain and dbname:
+        self.dbname=dbname
+        self.domain=domain
 
     log("Initialisation de la base de données "+self.domain+"/"+self.dbname)
     if self.connect(self.domain,self.dbname):
@@ -88,6 +93,8 @@ class DAO:
       "link_mint":"",
       "link_transaction":"",
       "out":"",
+      "cost":0,
+      "unity":"$",
       "command":"insert"
     }
     return rc

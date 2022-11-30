@@ -1,6 +1,6 @@
 import base64
 import io
-from dao import DAO
+from flaskr.dao import DAO
 import json
 import sys
 import time
@@ -8,24 +8,25 @@ from os import listdir
 from os.path import exists
 from time import sleep
 import pyqrcode
-from Tools import get_qrcode,hex_to_str,now, get_access_code_from_email
-from NFT import NFT
+from flaskr.Tools import get_qrcode,hex_to_str,now, get_access_code_from_email,int_to_hex, str_to_hex, log, api,send_mail,open_html_file, strip_accents
+from flaskr.NFT import NFT
 import textwrap
 
-from Tools import int_to_hex, str_to_hex, log, api,send_mail,open_html_file,setParams,strip_accents
-from ipfs import IPFS
+
+from flaskr.ipfs import IPFS
 from erdpy import config
 from erdpy.wallet.core import generate_mnemonic
 from erdpy.proxy import ElrondProxy
 from erdpy.transactions import Transaction
 from erdpy.accounts import Account,Address
 from erdpy.wallet import derive_keys
-from Network import Network
+from flaskr.Network import Network
 
 RESULT_SECTION="smartContractResults"
 LIMIT_GAS=200000000
 PRICE_FOR_STANDARD_NFT=50000000000000000
-ELROND_KEY_DIR="./Elrond/PEM/"
+
+ELROND_KEY_DIR="../Elrond/PEM/"
 
 
 NETWORKS={
@@ -258,7 +259,7 @@ class Elrond(Network):
 
 
 
-  def get_collections(self,creator_or_collection:str,detail:bool=True):
+  def get_collections(self,creator_or_collection:str,detail:bool=True,filter_type=""):
     """
     récupération des collections voir :
     :param creator:
@@ -282,7 +283,8 @@ class Elrond(Network):
       _col["id"]=_col["collection"]
       col=self.get_collection(_col["collection"]) if detail else _col
       col["link"]="https://"+("devnet." if "devnet" in self.network else "")+"inspire.art/collections/"+col["id"]
-      rc.append(col)
+      if len(filter_type)==0 or col["type"]==filter_type:
+        rc.append(col)
 
     rc=sorted(rc,key=lambda x:x["timestamp"] if "timestamp" in x else 0,reverse=True)
 
@@ -917,7 +919,7 @@ class Elrond(Network):
       if user.startswith("erd"):
         user=Account(address=user)
       else:
-        pem_file="./Elrond/PEM/"+user+(".pem" if not user.endswith('.pem') else '')
+        pem_file=ELROND_KEY_DIR+user+(".pem" if not user.endswith('.pem') else '')
         if exists(pem_file):
           with open(pem_file,"r") as file:
             txt=file.read()
@@ -967,7 +969,7 @@ class Elrond(Network):
     for f in listdir(ELROND_KEY_DIR):
 
       if f.endswith(".pem"): #or f.endswith(".json"):
-        pubkey=open("./Elrond/PEM/"+f).read().split("BEGIN PRIVATE KEY for ")[1].split("---")[0]
+        pubkey=open(ELROND_KEY_DIR+f).read().split("BEGIN PRIVATE KEY for ")[1].split("---")[0]
 
         rc.append({
           "name":f.replace(".pem","").replace(".json",""),

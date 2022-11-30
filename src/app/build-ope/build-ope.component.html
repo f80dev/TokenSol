@@ -462,7 +462,7 @@
         <tr style="width: 100%;">
           <th>Collection en ventes</th>
           <th>Filtres</th>
-          <th *ngIf="showPrestashop">Prestashop</th>
+          <th *ngIf="showPrestashop && operation.sel_ope!.store!.prestashop">Prestashop</th>
           <th>Vente directe</th>
         </tr>
         <tr>
@@ -474,9 +474,11 @@
             </ul>
           </td>
           <td>
-            De {{operation.sel_ope!.store!.filter!.from}} à {{operation.sel_ope!.store!.filter!.to}}
+            <div *ngIf="operation.sel_ope!.store!.filter">
+              De {{operation.sel_ope!.store!.filter!.from}} à {{operation.sel_ope!.store!.filter!.to}}
+            </div>
           </td>
-          <td *ngIf="showPrestashop">
+          <td *ngIf="showPrestashop && operation.sel_ope.store!.prestashop">
             Serveur: {{operation.sel_ope.store!.prestashop!.server}}<br>
             <a [href]="operation.sel_ope.store!.prestashop!.address.replace('$server$',operation.sel_ope.store!.prestashop!.server)" target="store">Voir la boutique</a>
             /

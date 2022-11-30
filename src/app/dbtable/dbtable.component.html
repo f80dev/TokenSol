@@ -1,4 +1,5 @@
-  <table mat-table style="text-align: center;width:100%;" [dataSource]="rows" [title]="table">
+{{rows.length}} enregistrements<br>
+<table mat-table style="text-align: center;width:100%;" [dataSource]="rows" [title]="table">
     <ng-container *ngFor="let col of cols" [matColumnDef]="col">
       <div *ngIf="!col.startsWith('i_')">
         <th mat-header-cell *matHeaderCellDef >{{col}}</th>

@@ -338,14 +338,14 @@ export class MintComponent implements OnInit {
           token.collection=this.user.find_collection(this.sel_collection);
           this.network.mint(token,this.user.key.name,this.user.key.name,this.operation.sel_ope.id,this.sign, this.sel_platform,this.network.network,this.mintfile).then((result:any)=>{
             if(!result.error || result.error==""){
-              resolve(token);
               token.address=result.result.mint;
               if(this.network.network=="file"){
                 this.clipboard.copy(result.out);
                 token.message="Le code est dans votre presse-papier"
               } else {
-                token.message="Minted for "+result.cost+" "+result.unity;
+                token.message="NFT id="+token.address+", minted for "+result.cost+" "+result.unity;
               }
+              resolve(token);
             } else {
               token.message=result.error;
               reject(result.error);

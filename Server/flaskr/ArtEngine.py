@@ -1,6 +1,5 @@
 import base64
-import copy
-import json
+
 import os
 import re
 from io import BytesIO
@@ -9,8 +8,7 @@ from os.path import exists
 from random import random,seed
 
 import ffmpeg
-import imageio
-import numpy
+
 import numpy as np
 import requests
 import svglib.svglib
@@ -21,8 +19,8 @@ from PIL.ImageOps import pad
 from reportlab.graphics import renderPM
 from svglib.svglib import svg2rlg
 
-from TokenForge import upload_on_platform
-from Tools import now, log, get_fonts, normalize, extract_image_from_string, convert_image_to_animated, merge_animated_image
+from flaskr.TokenForge import upload_on_platform
+from flaskr.Tools import now, log, get_fonts, normalize, extract_image_from_string, convert_image_to_animated, merge_animated_image
 
 class Element():
   name:str=""
@@ -84,7 +82,7 @@ class Sticker(Element):
             self.text={"text":str(base64.b64decode(image.split("base64,")[1]),"utf8")}
 
           if self.text is None:
-            with open("./temp/"+image,"r") as file:
+            with open(TEMP_DIR+image,"r") as file:
               content=file.readline()
               self.text={"text":content}
 
@@ -101,8 +99,8 @@ class Sticker(Element):
         else:
           if "/api/images/" in image:
             filename=image.split("/api/images/")[1].split("?")[0]
-            if exists("./temp/"+filename):
-              self.image=Image.open("./temp/"+filename)
+            if exists(TEMP_DIR+filename):
+              self.image=Image.open(TEMP_DIR+filename)
             else:
               r=requests.get(image)
               if r.status_code==200:
@@ -199,14 +197,14 @@ class Sticker(Element):
         svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
 
     filename=prefix_name+"_"+hex(hash(svg_code))+".svg"
-    with open("./temp/"+filename,"w",encoding="utf8") as file:
+    with open(TEMP_DIR+filename,"w",encoding="utf8") as file:
       file.writelines(svg_code)
     file.close()
 
     self.text={"text":svg_code}
 
     if with_picture:
-      svg=svg2rlg("./temp/"+filename)
+      svg=svg2rlg(TEMP_DIR+filename)
       s=renderPM.drawToString(svg,"GIF",dpi=72)
       image=extract_image_from_string(s).convert("RGBA")
 
@@ -236,7 +234,7 @@ class Sticker(Element):
   def open(self):
     if not self.image is None:
       if type(self.image)==str:
-        self.image=Image.open("./temp/"+self.image)
+        self.image=Image.open(TEMP_DIR+self.image)
       else:
         if self.image.readonly==0 and self.image.format:
           if self.image.filename!="":

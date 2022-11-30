@@ -1,7 +1,7 @@
 import networkx as nx
 from networkx import floyd_warshall_numpy
 from numpy import ndarray, save, load
-from Tools import log, now
+from flaskr.Tools import log, now
 
 class TransactionsGraph:
 
@@ -80,11 +80,11 @@ class TransactionsGraph:
   #http://localhost:8000/api/social_graph/
   def export(self,format="graphml"):
     if format=="gxf":
-      filename="./temp/test.gefx"
+      filename=TEMP_DIR+"test.gefx"
       nx.write_gexf(self.G, filename,encoding="utf-8")
 
     if format=="graphml":
-      filename="./temp/femis.graphml"
+      filename=TEMP_DIR+"femis.graphml"
       nx.write_graphml(self.G,filename,encoding="utf-8")
 
 
