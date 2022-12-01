@@ -779,6 +779,7 @@ export class NetworkService {
     return this.httpClient.get<Validator[]>(this.server_nfluent+"/api/validators/");
   }
 
+  //Inscrit un nouveau validateur en avec la token
   subscribe_as_validator(ask_for="",network="",validator_name=""){
     return this.httpClient.post<any>(this.server_nfluent+"/api/validators/",{"validator_name":validator_name,"ask_for":ask_for,network:network});
   }

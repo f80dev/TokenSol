@@ -25,7 +25,7 @@ from cryptography.fernet import Fernet
 from fontTools import ttLib
 
 from flaskr.secret import USERNAME, PASSWORD, SALT
-from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT
+from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR
 
 
 def get_fonts(dir="./Fonts/"):
@@ -75,6 +75,7 @@ def send(socketio,event_name: str, message=dict()):
 def returnError(msg:str="",_d=dict(),status=500):
   msg=str(msg)
   log("Error "+msg)
+  if msg.startswith("!"): raise RuntimeError(msg)
   return "Ooops ! Petit problème technique. "+msg,status
 
 
@@ -362,7 +363,12 @@ def normalize(s:str) -> str:
 
 
 def check_access_code(code:str) -> str:
-  s=decrypt(bytes(code,"utf8"))
+  try:
+    s=decrypt(bytes(code,"utf8"))
+  except:
+    log("Code incorrect")
+    return ""
+
   ts=int(s.split("ts:")[1])
   #On vérifie la resence du timestamp
   if ts!=get_timestamp_for_access_code(): return None

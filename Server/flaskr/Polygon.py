@@ -47,8 +47,8 @@ class Polygon (Network):
 
 
   def init_contract_interface(self):
-    src=open("./Polygon/Master/contracts/NFTCollection.sol","r").read()
-    libs=["@openzeppelin=./Polygon/Master/node_modules/@openzeppelin"]
+    src=open("../Polygon/Master/contracts/NFTCollection.sol","r").read()
+    libs=["@openzeppelin=../Polygon/Master/node_modules/@openzeppelin"]
     contract_id, contract_interface = compile_source(src,output_values=["abi","bin"],import_remappings=libs).popitem()
     return contract_interface
 

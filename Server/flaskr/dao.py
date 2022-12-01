@@ -23,18 +23,23 @@ class DAO:
   db:database=None
   url:str=""
 
-  def __init__(self,domain:str="web3",dbname="nfluent",ope=None,config=None):
+  def __init__(self,domain:str="web3",dbname="nfluent",ope=None,config=None,network=""):
     if ope:
       self.domain=ope["database"]["connexion"]
       self.dbname=ope["database"]["dbname"]
-
-    if config:
-      self.dbname=config["DB_NAME"]
-      self.domain=config["DB_SERVER"]
     else:
-      if domain and dbname:
-        self.dbname=dbname
-        self.domain=domain
+      if config:
+        self.dbname=config["DB_NAME"]
+        self.domain=config["DB_SERVER"]
+      else:
+        if len(network)>0:
+          self.domain=network.split("-")[1]
+          self.dbname=network.split("-")[2]
+        else:
+          if domain and dbname:
+            self.dbname=dbname
+            self.domain=domain
+
 
     log("Initialisation de la base de données "+self.domain+"/"+self.dbname)
     if self.connect(self.domain,self.dbname):
@@ -59,10 +64,7 @@ class DAO:
     log("Tentative de connexion sur la base de données "+self.dbname+" sur "+self.url)
     try:
       self.db: pymongo.mongo_client = pymongo.MongoClient(self.url)[self.dbname]
-      cols=self.db.__dict__
-      log("Connexion réussie. ")
-      return True
-
+      return self.db.list_collections().alive
     except Exception as inst:
       log("Base de données non disponible "+str(inst.args))
       self.db=None
@@ -84,6 +86,7 @@ class DAO:
     _data["address"]="db_"+now("hex")[2:]     #l'addresse commençant par db_ permet de désigner une base de données
     _data["ts"]=int(now()*1000)
     _data["ope"]=ope
+
     result=self.db["nfts"].replace_one(filter={"address":_data["address"]},replacement=_data,upsert=True)
     rc={
       "error":"",
@@ -220,10 +223,12 @@ class DAO:
     if rc:return rc["address"]
     return rc
 
+
+
   def add_validator(self, id,ask_for):
     """
     Ajout d'un nouveau validateur dans la liste
-    :param id:
+    :param ask_for contient une collection ou une liste de NFT
     :return:
     """
     self.db["validators"].update_one({"id":id},{"$set":{
@@ -234,6 +239,11 @@ class DAO:
       "nfts":0
     }
     },upsert=True)
+
+
+
+  def get_nft(self, nft_addr):
+    return NFT(object=self.db["nfts"].find_one({"address":nft_addr}))
 
 
 

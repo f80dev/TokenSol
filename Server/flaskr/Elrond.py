@@ -8,7 +8,8 @@ from os import listdir
 from os.path import exists
 from time import sleep
 import pyqrcode
-from flaskr.Tools import get_qrcode,hex_to_str,now, get_access_code_from_email,int_to_hex, str_to_hex, log, api,send_mail,open_html_file, strip_accents
+from flaskr.Tools import get_qrcode, hex_to_str, now, get_access_code_from_email, int_to_hex, str_to_hex, log, api, \
+  send_mail, open_html_file, strip_accents, returnError
 from flaskr.NFT import NFT
 import textwrap
 
@@ -277,7 +278,7 @@ class Elrond(Network):
         log("Bug: Impossible de récupérer les NFTs de "+creator_or_collection)
         return []
     else:
-      ids=[creator_or_collection]
+      cols=[{"collection":creator_or_collection}]
     rc=[]
     for _col in cols:
       _col["id"]=_col["collection"]
@@ -344,8 +345,17 @@ class Elrond(Network):
     :param _to:
     :return:
     """
-
     _from=self.toAccount(_from)
+    if _from is None:
+      nft=self.get_nft(collection_id+"-"+nonce,True)
+      _from=self.toAccount(nft.owner)
+
+    if _from is None:
+      returnError("!Propriétaire du NFT inconnu")
+
+    if not self.find_key(_from):
+      returnError("!Impossible de transférer sans la clé secret du propriétaire")
+
     _to=self.toAccount(_to)
     if _to is None:
       log("Destinataire inconnu")
@@ -400,7 +410,7 @@ class Elrond(Network):
     :param collection:
     :param collection_id:
     :param type:
-    :return:
+    :return: (identifiant de la collection,vrai s'il y a eu effectivement création)
 
     TODO: ajouter l'enregistrement de la collection chez Elrond via https://github.com/ElrondNetwork/assets
     """
@@ -414,6 +424,7 @@ class Elrond(Network):
     log("On recherche la collection de nom "+collection_name+" appartenant à "+owner.address.bech32())
     for col in self.get_collections(owner,True):
       if col["name"]==collection_name and owner.address.bech32()==col["owner"]:
+        log("La collection existe deja, on retourne sont identifiant")
         return col["collection"],False
 
     if collection_id is None:
@@ -426,8 +437,12 @@ class Elrond(Network):
              + "@" + str_to_hex(collection_id, False)
 
       log("Ajout des propriétés de la collection. Voir ")
-      for key in options.keys():
-        data=data + "@" + str_to_hex(key, False)+"@"+str_to_hex(str(options[key]).lower(),False)
+      if options.__class__==dict:
+        for key in options.keys():
+          data=data + "@" + str_to_hex(key, False)+"@"+str_to_hex(str(options[key]).lower(),False)
+      else:
+        for key in options.split(","):
+          data=data + "@" + str_to_hex(key, False)+"@"+str_to_hex("true",False)
 
       t = self.send_transaction(owner,
                                 Account(address=NETWORKS[self.network_name]["nft"]),
@@ -437,7 +452,7 @@ class Elrond(Network):
 
       if t is None:
         log("BUG: consulter "+self.getExplorer(owner.address.bech32(),"address"))
-        return None
+        return None,False
 
       sleep(5)
 
@@ -585,7 +600,7 @@ class Elrond(Network):
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
 
-  def analyse_attributes(self,body,with_ipfs=True) -> (list,str,str):
+  def analyse_attributes(self,body,with_ipfs=True,timeout=2000) -> (list,str,str):
     """
     analyse du champs attributes des NFT elrond (qui peut contenir les données onchain ou via IPFS)
     :param body:
@@ -618,7 +633,9 @@ class Elrond(Network):
       log("Recherche des attributs via "+cid)
       cid=cid.split("/")[0]                                         #Au cas ou le nom du fichier aurait été ajouté dans le cid
       ipfs_url="https://ipfs.io/ipfs/"+cid
-      result=api(ipfs_url,timeout=1000) if with_ipfs else ipfs_url
+      result=api(ipfs_url,timeout=timeout) if with_ipfs else ipfs_url
+      if result is None:result=dict()
+
       return result["attributes"] if "attributes" in result else "",\
              result["description"] if "description" in result else "",\
              tags
@@ -717,6 +734,7 @@ class Elrond(Network):
             collections[collection_id]=self.get_collection(collection_id) if with_collection else {"id":collection_id}
 
           collection=collections[collection_id]
+          if not "royalties" in nft or nft["royalties"]=="": nft["royalties"]=0
 
           _nft=NFT(
             name=nft["name"],
@@ -725,12 +743,12 @@ class Elrond(Network):
             attributes=nft["attributes"] if 'attributes' in nft else [],
             description=nft["description"] if "description" in nft else "",
             tags=nft["tags"],
-            visual=str(base64.b64decode(nft["uris"][0]),"utf8"),
+            visual=str(base64.b64decode(nft["uris"][0]),"utf8") if "uris" in nft and len(nft["uris"])>0 else "",
             creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
             address=nft["identifier"],
             royalties=int(nft["royalties"]),
             marketplace={"quantity":1},
-            files=nft["uris"]
+            files=nft["uris"] if "uris" in nft else []
           )
           _nft.network=self.network
           _nft.owner=_user.address.bech32()

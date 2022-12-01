@@ -14,12 +14,12 @@ from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
 from flaskr.Solana import Solana
 
-from flaskr.Tools import log, now, is_email, send_mail, open_html_file,get_operation
+from flaskr.Tools import log, now, is_email, send_mail, open_html_file, get_operation, returnError
 
 from flaskr.dao import DAO
 from flaskr.ipfs import IPFS
 
-from flaskr.settings import IPFS_SERVER
+from flaskr.settings import IPFS_SERVER, OPERATIONS_DIR
 
 
 def get_operations() -> [dict]:
@@ -68,7 +68,7 @@ def open_operation(ope):
   return rc
 
 
-def get_nfts_from_src(srcs,collections=None,with_attributes=False,domain_server=None) -> list[NFT]:
+def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
   """
   Récupération des NFTS depuis différentes sources (#getnftfromsrc)
   :param srcs:
@@ -76,6 +76,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False,domain_server=
   :return:
   """
   nfts=[]
+  if srcs.__class__!=list: srcs=[srcs]
   for src in srcs:
     if src["active"]:
       log("Récupération des nfts depuis "+str(src))
@@ -86,7 +87,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False,domain_server=
       if src["type"] in ["database","db"]:
         try:
           if not "connexion" in src or not "dbname" in src:
-            raise RuntimeError("Champs dbname ou connexion manquant dans la source")
+            returnError("!Champs dbname ou connexion manquant dans la source")
 
           _dao_temp=DAO(src["connexion"],src["dbname"])
           if collections and len(collections)>0:

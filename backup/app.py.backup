@@ -121,7 +121,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
       if src["type"] in ["database","db"]:
         try:
           if not "connexion" in src or not "dbname" in src:
-            raise RuntimeError("Champs dbname ou connexion manquant dans la source")
+            returnError("!Champs dbname ou connexion manquant dans la source")
 
           _dao_temp=DAO(src["connexion"],src["dbname"])
           if collections and len(collections)>0:

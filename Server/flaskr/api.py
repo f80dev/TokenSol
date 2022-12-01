@@ -47,7 +47,7 @@ from flaskr.Tools import log, now, is_email, send_mail, open_html_file, encrypt
 from flaskr.TransactionsGraph import TransactionsGraph
 from flaskr.dao import DAO
 
-from flaskr.apptools import async_mint, get_network_instance
+from flaskr.apptools import async_mint, get_network_instance, get_nfts_from_src
 from flaskr.ipfs import IPFS
 from flaskr.secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRETS_FILE, SECRET_ACCESS_CODE
 from flask_jwt_extended import create_access_token
@@ -80,7 +80,6 @@ def getyaml(name:str,format=None):
   dir=request.args.get("dir","../")
   dir=dir+("" if dir.endswith("/") else "/")
   if format is None: format=request.args.get("format","json")
-
 
   if name.startswith("b64:"):name=str(base64.b64decode(name[4:]),"utf8")
   if name.startswith("http"):
@@ -290,7 +289,7 @@ def api_get_collections(addresses:str):
   """
   network=request.args.get("network","elrond-devnet")
   with_detail=(request.args.get("detail","true")=="true")
-  filter_type=request.args.get("filter_type","'NonFungibleESDT'")
+  filter_type=request.args.get("filter_type","NonFungibleESDT")
   cols=[]
   for addr in addresses.split(","):
     if "elrond" in network: cols=cols+Elrond(network).get_collections(addr,with_detail,filter_type=filter_type)
@@ -367,7 +366,6 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
       if f.startswith(prefix):os.remove(TEMP_DIR+f)
     except:
       log("Impossible de supprimer "+f)
-
 
 
   archive_file="Collection_"+now("hex")+".7z"
@@ -696,6 +694,10 @@ def send_conf():
   return jsonify({"error":""})
 
 
+
+
+
+
 @bp.route('/tables/<table>',methods=["GET","DELETE"])
 #test http://127.0.0.1:4242/api/tables/nfts
 def tables(table:str):
@@ -739,35 +741,48 @@ def get_operations() -> [dict]:
 
 
 @bp.route('/transfer_to/<nft_addr>/<to>/<owner>/',methods=["POST"])
-def transfer_to(nft_addr:str,to:str,owner:str):
-  network=request.args.get("network","elrond-devnet")
+@bp.route('/transfer/<nft_addr>/<to>/<owner>/',methods=["POST"])
+@bp.route('/transfer/<nft_addr>/<to>/',methods=["POST"])
+def transfer_to(nft_addr:str,to:str,owner:str=""):
+  from_network=request.args.get("from_network","elrond-devnet")
+  to_network=request.args.get("to_network","elrond-devnet")
   _ope=get_operation(request.args.get("operation",""))
 
-  if "solana" in network:
-    solana=Solana(network)
+  #Création des comptes
+  if "solana" in to_network:
+    solana=Solana(to_network)
     if "@" in to:
-      words,to,secret_key,secret_key_ints=solana.create_account(to,domain_appli=current_app.config["DOMAIN_APPLI"],network=network)
+      words,to,secret_key,secret_key_ints=solana.create_account(to,domain_appli=current_app.config["DOMAIN_APPLI"],network=to_network)
+    if nft_addr.startswith("db_"): rc=solana.mint({},owner,True,to)
     rc=solana.transfer(nft_addr,to,owner)
 
-  if "elrond" in network:
-    elrond=Elrond(network)
-    if not elrond.find_key(owner):
-      return returnError("Impossible de transférer sans la clé secret du propriétaire "+owner)
+  if "elrond" in to_network:
+    elrond=Elrond(to_network)
+    if nft_addr.startswith("db_"):
+      _nft=DAO(network=from_network).get_nft(nft_addr)
+      t=mint(_nft,owner,to,to_network)
+      if len(t["error"])>0: return returnError("Probleme de transfert")
+      token_id=t["result"]["mint"]
+    else:
+      collection_id,nonce=elrond.extract_from_tokenid(nft_addr)
+      if "@" in to:
+        to,pem,words,qrcode=elrond.create_account(to,
+                                                  domain_appli=current_app.config["DOMAIN_APPLI"],
+                                                  mail_new_wallet=_ope["new_account"]["mail"] if not _ope is None else "",
+                                                  mail_existing_wallet=_ope["transfer"]["mail"] if not _ope is None else ""
+                                                  )
 
-    collection_id,nonce=elrond.extract_from_tokenid(nft_addr)
-    if "@" in to:
-      to,pem,words,qrcode=elrond.create_account(to,
-                                                domain_appli=current_app.config["DOMAIN_APPLI"],
-                                                mail_new_wallet=_ope["new_account"]["mail"] if not _ope is None else "",
-                                                mail_existing_wallet=_ope["transfer"]["mail"] if not _ope is None else ""
-                                                )
+      t=elrond.transfer(collection_id,nonce,elrond.toAccount(owner),to)
+      token_id=collection_id+"-"+nonce
 
-    t=elrond.transfer(collection_id,nonce,elrond.toAccount(owner),to)
-    nfluent_wallet=elrond.nfluent_wallet_url(to,network)
+    nfluent_wallet=elrond.nfluent_wallet_url(to,to_network)
     rc=(not t is None)
 
+  if "polygon" in to_network or "polygon" in from_network:
+    raise NotImplementedError()
+
   if rc:
-    return jsonify({"error":"","message":"NFT transféré","nfluent_wallet":nfluent_wallet})
+    return jsonify({"error":"","message":"NFT transféré","nfluent_wallet":nfluent_wallet,"token_id":token_id})
   else:
     return returnError("Probleme de transfert")
 
@@ -941,124 +956,6 @@ def open_operation(ope):
       break
 
   return rc
-
-
-def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
-  """
-  Récupération des NFTS depuis différentes sources (#getnftfromsrc)
-  :param srcs:
-  :param collections: filtre sur les collections à utiliser
-  :return:
-  """
-  nfts=[]
-  for src in srcs:
-    if src["active"]:
-      log("Récupération des nfts depuis "+str(src))
-
-      if not "filter" in src:src["filter"]={}
-      if not "limit" in src["filter"]: src["filter"]["limit"]=10000
-
-      if src["type"] in ["database","db"]:
-        try:
-          if not "connexion" in src or not "dbname" in src:
-            raise RuntimeError("Champs dbname ou connexion manquant dans la source")
-
-          _dao_temp=DAO(src["connexion"],src["dbname"])
-          if collections and len(collections)>0:
-            for collection in collections:
-              if _dao_temp.isConnected():
-                l_nfts=list(_dao_temp.nfts_from_collection(collection))
-                nfts=nfts+l_nfts[:src["filter"]["limit"]]
-                src["ntokens"]=len(l_nfts)
-              else:
-                log("Impossible de se connecter a la base de donnée pour récupérer les NFT")
-          else:
-            #Si le filtre sur les collections n'a pas été précisé ou si vide, on prend tous les NFTs des sources
-            if _dao_temp.isConnected():
-              l_nfts=list(_dao_temp.nfts_from_collection(None))
-              nfts=nfts+l_nfts[:src["filter"]["limit"]]
-
-          src["ntokens"]=len(l_nfts)
-        except Exception as inst:
-          log("Probleme de lecture de "+src["connexion"]+" "+str(inst.args))
-
-
-      if src["type"]=="file":
-        l_nfts=[]
-        if not "connexion" in src or len(src["connexion"])==0:
-          for nft in src["nfts"]:
-            l_nfts.append(NFT(object=nft))
-        else:
-          if src["connexion"].startswith("http"):
-            r=requests.get(src["connexion"])
-            if src["connexion"].endswith(".json"):l_nfts=l_nfts+json.loads(r.text)
-            if src["connexion"].endswith(".yaml"):l_nfts=l_nfts+yaml.load(r.text,Loader=yaml.FullLoader)
-          else:
-            sf=StoreFile(src["connexion"])
-
-        #On retrouve l'intégralité des collections en utilisant une technique de cache
-        collections=dict()
-        for nft in l_nfts:
-          if not nft.collection["id"] in collections:
-            collections[nft.collection["id"]]=Elrond(nft.network).get_collection(nft.collection["id"]) if "elrond" in nft.network else nft.collection
-          nft.collection=collections[nft.collection["id"]]
-        nfts=nfts+l_nfts
-
-
-      if src["type"]=="network":
-        if src["connexion"].startswith("solana"):
-          l_nfts=Solana(src['connexion']).get_nfts(src["owner"],limit=src["filter"]["limit"])
-          nfts=nfts+l_nfts
-          src["ntokens"]=len(l_nfts)
-
-        if src["connexion"].startswith("polygon"):
-          l_nfts=Polygon(src['connexion']).get_nfts(src["owner"],limit=src["filter"]["limit"])
-          nfts=nfts+l_nfts
-          src["ntokens"]=len(l_nfts)
-
-        if src["connexion"].startswith("elrond"):
-          elrond=Elrond(src['connexion'])
-          if src["owner"]:
-            nfts=elrond.get_nfts(src["owner"],limit=src["filter"]["limit"],with_attr=with_attributes)
-          else:
-            log("Récupération depuis les collections "+" ".join(src["collections"]))
-            nfts=elrond.get_nfts_from_collections(src["collections"],with_attr=with_attributes)
-
-          nfts=elrond.complete_collection(nfts)
-
-          src["ntokens"]=len(nfts)
-
-
-
-      if src["type"]=="config":
-        config=configs(src["connexion"],format="dict")
-        for layer in config["layers"]: layers(layer)
-
-        files=get_collection(
-          size=(config["width"],config["height"]),
-          format="list",
-          seed=src["seed"] if "seed" in src else 1,
-          limit=src["limit"] if "limit" in src else 10,
-          data={
-            "title":"MonTitre",
-            "symbol":"token__idx__",
-            "description":"madescription",
-            "collection":"macollection",
-            "properties":"propriete=valeur",
-            files:"http://monfichier"
-          }
-        )
-        for file in files:
-          id=file[file.rindex("/")+1:]
-          nfts.append({
-            "uri":file,
-            "image":current_app.config["DOMAIN_SERVER"]+"/api/images/"+id,
-            "id":id,
-            "creators":[{"address":x} for x in src["creators"]]
-          })
-
-  return nfts
-
 
 
 
@@ -1783,7 +1680,7 @@ def nfts(id=""):
   """
   network=request.args.get("network","elrond-devnet")
   account=request.args.get("account","paul")
-  with_attr="with_attr" in request.args
+  with_attr=("with_attr" in request.args) and (not "with_attr=false" in request.args)
   limit=int(request.args.get("limit","100"))
   offset=int(request.args.get("offset","0"))
 
@@ -1840,25 +1737,25 @@ def check_private_key(seed:str,addr:str,network:str):
 
 
 
-@bp.route('/validate/',methods=["GET"])
-#http://127.0.0.1:4242/api/validate/?q=symbol1&ope=calvi2022&network=devnet
-def validate():
-  rc=dict()
-
-  query=request.args.get("q","")
-  operation=request.args.get("ope","").lower()
-  network=request.args.get("network","solana-devnet").lower()
-
-  _ope=open_operation(operation)
-  if _ope:
-    with open(OPERATIONS_DIR+_ope["data"]) as csvFile:
-      data=csv.DictReader(csvFile,delimiter=";")
-      for l in list(data):
-        if l[_ope["find"]["field"]]==query:
-          nft=Solana(network).get_token(l["address"],network)
-          if nft[_ope["to_check"]] in _ope["values"]:rc={"validity":"ok"}
-
-  return jsonify(rc)
+# @bp.route('/validate/',methods=["GET"])
+# #http://127.0.0.1:4242/api/validate/?q=symbol1&ope=calvi2022&network=devnet
+# def validate():
+#   rc=dict()
+#
+#   query=request.args.get("q","")
+#   operation=request.args.get("ope","").lower()
+#   network=request.args.get("network","solana-devnet").lower()
+#
+#   _ope=open_operation(operation)
+#   if _ope:
+#     with open(OPERATIONS_DIR+_ope["data"]) as csvFile:
+#       data=csv.DictReader(csvFile,delimiter=";")
+#       for l in list(data):
+#         if l[_ope["find"]["field"]]==query:
+#           nft=Solana(network).get_token(l["address"],network)
+#           if nft[_ope["to_check"]] in _ope["values"]:rc={"validity":"ok"}
+#
+#   return jsonify(rc)
 
 
 @bp.route('/token_by_delegate/',methods=["GET"])
@@ -2019,19 +1916,24 @@ def upload_metadata():
   return jsonify(rc)
 
 
-@bp.route('/create_collection/<owner>/',methods=["POST"])
-def create_collection(owner:str):
+@bp.route('/create_collection/<miner>/',methods=["POST"])
+def create_collection(miner:str):
+  """
+  API de création d'une collection
+  :param owner:
+  :return:
+  """
   _data=request.json
   network=request.args.get("network","elrond-devnet")
   if "elrond" in network:
     elrond=Elrond(network)
-    solde=elrond.balance(owner)
-    collection_id,newCollection=elrond.add_collection(owner,_data["name"],_data["options"],type="NonFungible")
+    solde=elrond.balance(miner)
+    collection_id,newCollection=elrond.add_collection(miner,_data["name"],_data["options"],type="NonFungible")
     if not newCollection:
       return returnError("Cette collection existe déjà")
 
     new_collection=elrond.get_collection(collection_id)
-    new_solde=elrond.balance(owner)
+    new_solde=elrond.balance(miner)
 
   return jsonify({
     "collection":new_collection,
@@ -2056,14 +1958,14 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
 
   rc= {"error":"Problème technique"}
   account=None
-  collection_id=nft.collection["id"] if nft.collection else ""
-  dao=DAO(config=current_app.config)
+  collection_id=nft.collection["id"] if not nft.collection is None and "id" in nft.collection else ""
+  dao_histo=DAO(config=current_app.config)
 
   if is_email(owner):
     email=owner
     if "elrond" in network:
       elrond=Elrond(network)
-      _account,pem,words,qrcode=elrond.create_account(email=email,histo=dao,
+      _account,pem,words,qrcode=elrond.create_account(email=email,histo=dao_histo,
                                                       subject="Votre NFT '"+nft.name+"' est disponible",
                                                       domain_appli=current_app.config["DOMAIN_APPLI"],
                                                       mail_new_wallet=mail_new_wallet,mail_existing_wallet=mail_existing_wallet)
@@ -2076,7 +1978,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
       account=pubkey
 
     if "polygon" in network:
-      words,pubkey,privkey,list_int=Polygon(network).create_account(domain_appli=current_app.config["DOMAIN_APPLI"],histo=dao,
+      words,pubkey,privkey,list_int=Polygon(network).create_account(domain_appli=current_app.config["DOMAIN_APPLI"],histo=dao_histo,
                                                                     subject="Votre NFT '"+nft.name+"' est disponible")
       account=pubkey
 
@@ -2134,6 +2036,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
       collection_id,nonce = elrond.extract_from_tokenid(nft.address)
 
     if nonce is None:
+      rc["error"]="Problème technique" if not "error" in rc else rc["error"]
       rc={"error":"Mint error: "+rc["error"],"hash":rc["hash"]}
     else:
       infos=elrond.get_account(miner)
@@ -2179,16 +2082,11 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
 
   # Transfert des NFTs vers la base de données
   if "database" in network.lower() or "db-" in network.lower():
-    db_loc=request.args.get("db_loc","")
-    if len(db_loc)==0: db_loc=network.split("-")[1]
-    db_name=request.args.get("db_name","")
-    if len(db_name)==0: db_name=network.split("-")[2]
-
-    _dao=DAO(db_loc,db_name)
+    _dao=DAO(network=network)
     if _dao.isConnected():
       rc=_dao.lazy_mint(nft,"",current_app.config["APPLICATION_ROOT"])
     else:
-      log("Impossible de se connecter à "+db_loc+"/"+db_name)
+      log("Impossible de se connecter")
 
 
   if "file" in network.lower():
@@ -2213,7 +2111,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
   #   }
 
   if ("result" in rc) and ("transaction" in rc["result"]) and (network!="file"):
-    dao.add_histo(request.args.get("ope",""),"mint",miner,collection_id,rc["result"]["transaction"],network,"Minage")
+    dao_histo.add_histo(request.args.get("ope",""),"mint",miner,collection_id,rc["result"]["transaction"],network,"Minage")
 
   return rc
 
@@ -2417,6 +2315,11 @@ def login():
 @bp.route('/validators/',methods=["GET","POST"])
 @bp.route('/validators/<validator>/',methods=["PUT","GET","DELETE"])
 def validators(validator=""):
+  """
+
+  :param validator:
+  :return:
+  """
   dao=DAO(config=current_app.config)
   if request.method=="GET":
     rc=[]
