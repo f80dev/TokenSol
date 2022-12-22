@@ -1,0 +1,78 @@
+#voir https://blog.steakelectronics.com/2019/03/27/prestashop-docker-ssl-nginx-reverse-proxy/
+#créer le répertoire db_conf_presta/conf.d : mkdir ./db_conf_presta/conf.d
+#arrete docker-compose down
+#analyse docker exec -it production_nginx bash
+#Réinitialisation
+# rm -r presta_root && rm -r webroot && rm -r db_data_presta
+
+#test : http://173.249.41.158/ ou https://shop.nfluent.io
+
+version: '3'
+
+services:
+  nginx:
+    image: 'nginx:latest'
+    container_name: production_nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt/:/etc/letsencrypt/
+      - ./webroot/:/var/www/html/
+    ports:
+      - 80:80
+      - 443:443
+
+    #restart: always
+
+  mysql:
+    image: mysql
+    container_name: prestashop_db
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+      - MYSQL_USER=nfluent_user
+      - MYSQL_PASSWORD=hh42714271
+      - MYSQL_DATABASE=prestashop
+
+    volumes:
+      - ./db_data_presta:/var/lib/mysql
+      - ./db_conf_presta:/etc/mysql/
+    #restart: always
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    links:
+      - mysql
+    ports:
+      - 81:80
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=nfluent_user
+      - PMA_PASSWORD=hh42714271
+    depends_on:
+      - db_prestashop
+
+
+
+  prestashop:
+    depends_on:
+      - mysql
+
+    image: 'prestashop/prestashop:latest'
+    container_name: prestashop
+    ports:
+      - 8081:80
+
+    volumes:
+      - ./presta_root:/var/www/html/
+
+    #voir
+    environment:
+      - DB_SERVER=mysql
+      - PS_INSTALL_AUTO=1
+      - ADMIN_MAIL=contact@nfluent.io
+      - ADMIN_PASSWD=hh4271!!
+      - DB_NAME=prestashop
+      - DB_USER=nfluent_user
+      - DB_PASSWD=hh42714271
+      - PS_FOLDER_ADMIN=admin4280
+      - PS_FOLDER_INSTALL=install4280
+    #restart: always

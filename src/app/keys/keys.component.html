@@ -73,13 +73,16 @@
           Encrypter
         </button>
         <button type="button" mat-raised-button mat-button (click)="open_wallet(key)">
-          Wallet
+          Wallet interne
         </button>
         <button type="button" mat-raised-button mat-button (click)="open_extra_wallet(key)">
-          Extra Wallet
+          Wallet Nfluent
         </button>
-        <button type="button" mat-raised-button mat-button (click)="open_collections(key)">
+        <button type="button" mat-raised-button mat-button (click)="open_collections(key,'nfluent')">
           Collections
+        </button>
+        <button type="button" mat-raised-button mat-button (click)="open_collections(key,'inspire')">
+          Inspire
         </button>
         <button type="button" mat-raised-button mat-button [cdkCopyToClipboard]="user.addr" (click)="open_faucet(key)">
           Recharger

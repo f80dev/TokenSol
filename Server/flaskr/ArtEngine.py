@@ -19,6 +19,7 @@ from PIL.ImageOps import pad
 from reportlab.graphics import renderPM
 from svglib.svglib import svg2rlg
 
+from flaskr.settings import TEMP_DIR
 from flaskr.TokenForge import upload_on_platform
 from flaskr.Tools import now, log, get_fonts, normalize, extract_image_from_string, convert_image_to_animated, merge_animated_image
 
@@ -52,6 +53,7 @@ class Element():
     pass
 
 
+
 class Sticker(Element):
   image:Image=None
   text:dict=None
@@ -60,20 +62,24 @@ class Sticker(Element):
   def __init__(self,name="",image=None,
                dimension=None,text:str=None,x:int=None,y:int=None,
                fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"},
-               ext="WEBP",data=""):
+               ext=None,data=""):
+
+    #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
+    if ext is None:
+      ext="webp"
+      if type(image)==str and str(image).lower().endswith(".svg"): ext="svg"
+    else:
+      ext=ext.replace(";","").lower()
+      if "jpeg" in ext:ext="jpg"
+      if "web" in ext:ext="webp"
+
     super().__init__(name,ext)
     self.data=data
     self.attributes=dict()
 
-    #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
-    ext=ext.replace(";","").lower()
-    if "jpeg" in ext:ext="jpg"
-    if "web" in ext:ext="webp"
-    ext="image/"+ext
-
     if not image is None:
       if type(image)==str:
-        if ext=="image/svg":
+        if ext=="svg":
           if image.startswith("http"):
             svg_code=str(requests.get(image).content,"utf8")
             self.text={"text":svg_code}
@@ -82,9 +88,10 @@ class Sticker(Element):
             self.text={"text":str(base64.b64decode(image.split("base64,")[1]),"utf8")}
 
           if self.text is None:
-            with open(TEMP_DIR+image,"r") as file:
-              content=file.readline()
-              self.text={"text":content}
+            if not "/" in image:image=TEMP_DIR+image
+            with open(image,"r") as file:
+              content=file.readlines()
+              self.text={"text":"\n".join(content)}
 
           self.text["dimension"]=self.extract_dimension_from_svg(self.text["text"])
           self.render_svg(with_picture=False,dimension=self.dimension)
@@ -311,7 +318,7 @@ class Sticker(Element):
 
 
 
-  def toBase64(self,format="WEBP",factor=1,quality=98):
+  def toBase64(self,format="WEBP",factor=1,quality=98) -> str:
     buffered = BytesIO()
     if self.image is None and self.text is not None:
       self.render_text(factor)
@@ -324,7 +331,7 @@ class Sticker(Element):
 
 
 
-  def fusion(self,to_concat:Element,factor:float,replacement:dict,prefix=""):
+  def fusion(self,to_concat:Element,factor:float=1,replacement_for_svg:dict={},prefix=""):
       #log("Fusion des propriétés")
       for k in to_concat.attributes.keys():
         if k!="file":
@@ -333,10 +340,10 @@ class Sticker(Element):
             self.attributes[k].append(to_concat.attributes[k])
 
       #log("Fusion de "+self.name+" avec "+to_concat.name)
-      if to_concat.image is None and not to_concat.text is None:
+      if to_concat.ext=="svg":
         if "<svg" in to_concat.text["text"]:
           log("Collage d'un SVG")
-          src=to_concat.render_svg(replacement,self.dimension)
+          src=to_concat.render_svg(replacement_for_svg,self.dimension)
         else:
           log("Collage d'un texte")
           src=to_concat.render_text(factor)
@@ -354,7 +361,8 @@ class Sticker(Element):
           log("Collage d'une image fixe ...")
           if not self.is_animated():
             log("... sur la base fixe")
-            self.image.alpha_composite(to_concat.image.resize(self.image.size))
+            to_concat_resize=to_concat.image.resize(self.image.size).convert("RGBA")
+            self.image.alpha_composite(to_concat_resize)
           else:
             log("... sur une base animé")
             to_concat.image=convert_image_to_animated(to_concat.image,self.image.n_frames,prefix)
@@ -363,8 +371,16 @@ class Sticker(Element):
             to_concat.image.close()
 
 
+  def save_xmp_in_extra_file(self,_data,filename):
+    log("Les metadonnées ne peuvent pas être inséré diretement dans l'image")
+    l_index=filename.rindex(".")
+    xmp_filename=filename[:l_index]+".xmp"
+    with open(xmp_filename,"w") as f:
+      f.write(_data)
+    return True
 
-  def save(self,filename,quality=98,index=0):
+
+  def save(self,filename,quality=98,index=0,force_xmp_file=False):
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html#webp pour le Webp
     _data_to_add=self.data
     if len(self.data)>0:
@@ -396,6 +412,8 @@ class Sticker(Element):
       f.writelines(self.text["text"])
       f.close()
     else:
+      if force_xmp_file: self.save_xmp_in_extra_file(xmp,filename)
+
       if self.is_animated():
         log("Enregistrement d'un fichier animé "+str(self))
         frames = [f.convert("RGBA") for f in ImageSequence.Iterator(self.image)]
@@ -406,13 +424,10 @@ class Sticker(Element):
           frames[0].save(filename,append_images=frames[1:],save_all=True)
 
         if not filename.endswith("webp"):
-          log("Les metadonnées ne peuvent pas être inséré diretement dans l'image")
-          l_index=filename.rindex(".")
-          xmp_filename=filename[:l_index]+".xmp"
-          with open(xmp_filename,"w") as f:
-            f.write(xmp)
+          self.save_xmp_in_extra_file()
       else:
         log("Enregistrement d'un fichier statique "+str(self))
+
         if self.image.format=="JPEG" or self.image.format=="JPG":
           if len(xmp)>0:
             self.image.save(filename,xmp=bytes(xmp,"utf8"))
@@ -431,6 +446,7 @@ class Sticker(Element):
     :param value:
     :return:
     """
+    if self.data=="": self.data="{}"
     _d=loads(self.data) if type(self.data)==str else self.data
     _d[key]=value
     self.data=dumps(_d)
@@ -600,6 +616,8 @@ class Layer:
 
     return rc
 
+  def count(self):
+    return len(self.elements)
 
 
 class ArtEngine:
@@ -659,7 +677,7 @@ class ArtEngine:
                replacements={},
                attributes=list(),
                prefix="generate_",
-               target_platform=""
+               target_platform="",export_metadata=False
                ):
     """
     Génération des collections
@@ -685,7 +703,8 @@ class ArtEngine:
     index=0
 
     log("Association des attributes")
-    self.associate_attributes()
+    if "file" in attributes:
+      self.associate_attributes()
 
     log("Lancement de la génération de "+str(limit)+" images")
     _try=0
@@ -725,15 +744,15 @@ class ArtEngine:
           if len(dir)>0:
             filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
             rc.append(filename)
-            if collage.ext.lower()=="gif": rc.append(filename.replace(".gif",".xmp"))
+            if collage.ext.lower()=="gif" or export_metadata:
+              rc.append(filename+".xmp")
 
             if len(target_platform)>0:
               log("Upload de du résultat sur "+target_platform)
               result=upload_on_platform({"content":collage.toBase64(),"type":"image/webp"},target_platform)
               collage.add_propertie_to_data("storage",result["url"])
 
-
-            collage.save(filename,quality,index)
+            collage.save(filename,quality,index,force_xmp_file=export_metadata)
           else:
             filename=collage.toStr()
             rc.append(filename)

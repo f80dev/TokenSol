@@ -17,8 +17,10 @@ export class JsonToListComponent implements OnInit,OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if(typeof(this.data)=="string")this.data=JSON.parse(this.data);
-    this.keys=Object.keys(this.data);
+    if(this.data){
+      if(typeof(this.data)=="string")this.data=JSON.parse(this.data);
+      this.keys=Object.keys(this.data);
+    }
   }
 
 }

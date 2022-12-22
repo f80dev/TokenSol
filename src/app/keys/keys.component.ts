@@ -115,8 +115,9 @@ export class KeysComponent implements OnInit {
     open(NFLUENT_WALLET+"/?param="+setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network}))
   }
 
-  open_collections(key: CryptoKey) {
-    this.router.navigate(["collections"],{queryParams:{owner:key.pubkey}});
+  open_collections(key: CryptoKey,tools="nfluent") {
+    if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.pubkey}});
+    if(tools=="inspire")this.network.open_gallery(this.user.addr);
   }
 
   open_elrond_wallet() {

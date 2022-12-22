@@ -1,21 +1,26 @@
-<div style="display: inline-block;text-align: left;" [style.width]="width">
-  <mat-form-field appearance="legacy" style="display:inline-block;width:70%;" [title]="help_input" >
-    <mat-label *ngIf="label.length>0">{{label}}</mat-label>
-    <input matInput
+<div style="display: inline-block;">
+  <mat-form-field appearance="legacy" style="display:inline-block;" [title]="help_input" [style.width]="width">
+    <mat-label *ngIf="label.length>0" style="width: 100%;"
+               class="mat-body-2">
+      {{label}}
+    </mat-label>
+
+    <input matInput style="width: 100%;"
            [type]="value_type"
+           [maxlength]="maxlength"
            [(ngModel)]="input_value"
            [placeholder]="placeholder"
            [title]="infobulle"
            (keyup)="on_key($event)">
     <mat-icon matSuffix *ngIf="input_value!.length>0" (click)="on_cancel()">cancel</mat-icon>
-    <mat-hint>{{help}}</mat-hint>
+    <mat-hint style="font-size: x-small;opacity: 0.7;">{{help}}</mat-hint>
   </mat-form-field>
 
   <button mat-raised-button mat-button
-          style="margin:10px;"
+          style="margin:5px;"
           *ngIf="label_button.length>0"
           [title]="help_button"
           (click)="on_validate()">
-    {{label_button}}
+    <ng-content></ng-content>{{label_button}}
   </button>
 </div>

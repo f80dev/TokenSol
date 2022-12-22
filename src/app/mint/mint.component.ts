@@ -60,35 +60,39 @@ export class MintComponent implements OnInit {
 
   ngOnInit(): void {
     this.user.addr_change.subscribe((addr)=>{
-      this._location.replaceState("./mint","miner="+addr);
-      this.user.get_collection().then(()=>{
-        getParams(this.routes).then((params:any)=>{
-          if(this.user.find_collection(params["collection"])){
-            this.sel_collection=params["collection"];
-          } else {
-            this.sel_collection=this.user.collections[0].id || "";
-          }
-        })
-
-      });
+      this.init_form();
     })
     this.init_form();
   }
+
 
 
   init_form(){
     if(this.user.isConnected(true)){
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp);
+      this.user.get_collection().then((cols:any)=>{
+        if(cols.length==0){
+          showMessage(this,"Vous devez d'abord créer une collection pour pouvoir miner")
+          this.router.navigate(["collections"],{queryParams:{owner:this.user.addr}});
+        } else {
+          getParams(this.routes).then((params:any)=>{
+            if(params.hasOwnProperty("collection")){
+              if(this.user.find_collection(params["collection"])){
+                this.sel_collection=params["collection"];
+              } else {
+                this.sel_collection=this.user.collections[0].id || "";
+              }
+            }
 
-      getParams(this.routes).then((params:any)=>{
-        if(params.hasOwnProperty("miner"))this.user.init(params["miner"]);
-        if(params.hasOwnProperty("files")){
-          let files=[];
-          for(let f of params["files"]){
-            files.push({filename:f});
-          }
-          this.onFileSelected(files);
+            if(params.hasOwnProperty("files")){
+              let files=[];
+              for(let f of params["files"]){
+                files.push({filename:f});
+              }
+              this.onFileSelected(files);
+            }
+          })
         }
       })
     } else this.user.login("Le minage nécessite une authentification");
@@ -583,4 +587,18 @@ export class MintComponent implements OnInit {
     }
     showMessage(this,"Recopie terminée")
   }
+
+  batch_import(files: any) {
+    if (files.hasOwnProperty("filename")) files = [files]
+    let index = 0;
+    for (let f of files) {
+      if (f.filename.endsWith("xlsx")) {
+        this.network.upload_batch({content:f.file}).subscribe((rows:NFT[])=>{
+          this.tokens=rows;
+          showMessage(this,"Fichier importé");
+        })
+      }
+    }
+  }
+
 }

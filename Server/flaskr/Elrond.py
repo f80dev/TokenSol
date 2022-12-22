@@ -1,5 +1,7 @@
 import base64
 import io
+
+from flaskr import infura
 from flaskr.dao import DAO
 import json
 import sys
@@ -27,7 +29,7 @@ RESULT_SECTION="smartContractResults"
 LIMIT_GAS=200000000
 PRICE_FOR_STANDARD_NFT=50000000000000000
 
-ELROND_KEY_DIR="../Elrond/PEM/"
+ELROND_KEY_DIR="./Elrond/PEM/"      #Le repertoire de travail etant server
 
 
 NETWORKS={
@@ -270,7 +272,7 @@ class Elrond(Network):
     if type(creator_or_collection)==Account: creator_or_collection=creator_or_collection.address.bech32()
     if creator_or_collection.startswith("erd"):
       creator=self.toAccount(creator_or_collection)
-      url=self._proxy.url+"/accounts/"+creator.address.bech32()+"/collections"
+      url=self._proxy.url+"/accounts/"+creator.address.bech32()+"/roles/collections"
       result=api(url,"gateway=api")
       if not result is None:
         cols=result
@@ -480,7 +482,7 @@ class Elrond(Network):
     for col_id in collections:
       result=api(self._proxy.url+"/collections/"+col_id+"/nfts","gateway=api")
       result=sorted(list(result),key=lambda x:x["nonce"])
-      owners=self.get_owner_of_collections([col_id])
+      owners=self.get_owners_of_collections([col_id])
       for i in range(len(result)):
         item=result[i]
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
@@ -498,8 +500,8 @@ class Elrond(Network):
         )
         nft.network=self.network
         nft.address=item["identifier"]
-        nft.owner=owners[i]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
-        nft.marketplace={"quantity":int(owners[i]["balance"]),"price":0}
+        nft.owner=owners[0]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
+        nft.marketplace={"quantity":1,"price":0}
         if format=="class":
           rc.append(nft)
         else:
@@ -596,7 +598,6 @@ class Elrond(Network):
       },domain_appli=domain_appli),email,subject=subject,attach=qrcode,filename="qrcode.png" if not qrcode is None else ""):
         if histo: histo.add_email(email,address,self.network)
 
-
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
 
@@ -612,7 +613,7 @@ class Elrond(Network):
     except:
       attr=str(base64.b64decode(body))
 
-    log("Pour les attributs, analyse de la chaine "+attr)
+    #log("Pour les attributs, analyse de la chaine "+attr)
 
     if "tags:" in attr:
       tags=attr.split("tags:")[1].split(";")[0]
@@ -630,7 +631,7 @@ class Elrond(Network):
 
     if "metadata" in attr:
       cid=attr.split("metadata:")[1].split(";")[0]
-      log("Recherche des attributs via "+cid)
+      #log("Recherche des attributs via "+cid)
       cid=cid.split("/")[0]                                         #Au cas ou le nom du fichier aurait été ajouté dans le cid
       ipfs_url="https://ipfs.io/ipfs/"+cid
       result=api(ipfs_url,timeout=timeout) if with_ipfs else ipfs_url
@@ -678,23 +679,32 @@ class Elrond(Network):
   def complete_collection(self,nfts:[NFT]):
     collections=dict()
     for nft in nfts:
-        collection_id=nft.collection["id"]
-        if not collection_id in collections: collections[collection_id]=self.get_collection(collection_id)
-        nft.collection=collections[collection_id]
+        try:
+          collection_id=nft.collection["id"]
+          if not collection_id in collections: collections[collection_id]=self.get_collection(collection_id)
+          nft.collection=collections[collection_id]
+        except:
+          log("Impossible de compléter "+str(nft))
     return nfts
 
 
 
-  def get_owner_of_collections(self,collections:[str]) -> [dict]:
+  def get_owners_of_collections(self, collections:[str]) -> [dict]:
     """
+    Récupére les comptes qui peuvent miner des NFTs sur les collections passées en parametre
     voir https://api.elrond.com/#/collections/CollectionController_getNftAccounts
     :param collections:
     :return:
     """
+    log("Récupération des propriétaires des collections "+str(collections))
     rc=[]
     for col in collections:
       if len(col)>0:
-        rc=rc+api(self._proxy.url.replace("gateway","api")+"/collections/"+col+"/accounts")
+        result=api(self._proxy.url.replace("gateway","api")+"/collections/"+col)
+        if "roles" in result:
+          for r in result["roles"]:
+            if r["canCreate"]:      #On récupére les comptes qui ont le droit de créer des NFT
+              rc.append(self.get_account(r["address"]))
 
     return rc
 
@@ -727,7 +737,7 @@ class Elrond(Network):
           _data={}
           nft["attributes"],nft["description"],nft["tags"]=self.analyse_attributes(nft["attributes"],with_attr)
 
-          log("Analyse de "+str(nft))
+          #log("Analyse de "+str(nft))
 
           collection_id,nonce=self.extract_from_tokenid(nft["identifier"])
           if not collection_id in collections.keys():
@@ -753,7 +763,10 @@ class Elrond(Network):
           _nft.network=self.network
           _nft.owner=_user.address.bech32()
 
-          rc.insert(0,_nft)
+          if _nft.address:      #Pas d'insertion des NFT n'ayant pas d'adresse
+            rc.insert(0,_nft)
+
+
           if len(rc)>limit:break
 
     return rc
@@ -832,7 +845,12 @@ class Elrond(Network):
         "description":description,
         "attributes":properties
       }
-      cid=ipfs.add(_metadata)
+
+      try:
+        cid=ipfs.add(_metadata)
+      except:
+        log("Impossible de mettre les metadata en ligne sur le noeud IPFS propriétaire")
+        cid=infura.Infura().add(_metadata)
 
       log("Address des metadata: "+cid["url"])
       url_metadata=cid["url"]
@@ -921,6 +939,12 @@ class Elrond(Network):
 
 
   def toAccount(self, user):
+    if type(user)==dict:
+      if "address" in user:
+        user=user["address"]
+      else:
+        if "pubkey" in user:user=user["pubkey"]
+
     if type(user)==str:
       if len(user)==0: return None
 
@@ -981,22 +1005,22 @@ class Elrond(Network):
 
 
 
-  def get_keys(self,qrcode_scale=0,with_balance=False):
+  def get_keys(self,qrcode_scale=0,with_balance=False,address=""):
     rc=[]
     log("Lecture des clés "+str(listdir(ELROND_KEY_DIR)))
     for f in listdir(ELROND_KEY_DIR):
 
       if f.endswith(".pem"): #or f.endswith(".json"):
         pubkey=open(ELROND_KEY_DIR+f).read().split("BEGIN PRIVATE KEY for ")[1].split("---")[0]
-
-        rc.append({
-          "name":f.replace(".pem","").replace(".json",""),
-          "pubkey":pubkey,
-          "qrcode": get_qrcode(pubkey,qrcode_scale) if qrcode_scale>0 else "",
-          "explorer":self.getExplorer(pubkey,"address"),
-          "balance":self.balance(Account(address=pubkey)) if with_balance else 0,
-          "unity":"egld"
-        })
+        if len(address)==0 or address==pubkey:
+          rc.append({
+            "name":f.replace(".pem","").replace(".json",""),
+            "pubkey":pubkey,
+            "qrcode": get_qrcode(pubkey,qrcode_scale) if qrcode_scale>0 else "",
+            "explorer":self.getExplorer(pubkey,"address"),
+            "balance":self.balance(Account(address=pubkey)) if with_balance else 0,
+            "unity":"egld"
+          })
 
     return rc
 

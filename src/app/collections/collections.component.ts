@@ -75,9 +75,7 @@ export class CollectionsComponent implements OnInit {
       this.refresh(this.user.addr);
     })
 
-    setTimeout(()=>{
-      this.refresh(this.user.addr)
-    },1000);
+    if(this.user.addr)this.refresh();
   }
 
 
@@ -106,6 +104,11 @@ export class CollectionsComponent implements OnInit {
 
 
   create_collection() {
+    if(this.user.balance==0){
+      showMessage(this,"Solde insuffisant pour créer une collection")
+      return;
+    }
+
     if(!this.new_collection.name || this.new_collection.name.length<3 || this.new_collection.name?.indexOf(' ')>-1){
       showMessage(this,"Format du nom incorrect");
       return;
@@ -117,7 +120,7 @@ export class CollectionsComponent implements OnInit {
       }
     }
     this.network.create_collection(this.user.addr,this.new_collection).subscribe((r:any)=>{
-      this.user.collections.push(r.collection);
+      this.user.collections.splice(0,0,r.collection);
       this.network.wait();
       showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
     },(err)=>{
@@ -135,7 +138,7 @@ export class CollectionsComponent implements OnInit {
 
 
   open_miner(col: Collection) {
-    this.router.navigate(["miner"],{queryParams:{collection:col.id}})
+    this.router.navigate(["miner"],{queryParams:{collection:col.id,owner:this.user.addr}})
   }
 
 

@@ -1,6 +1,6 @@
 //Description d'une collection
 export interface Collection {
-  name: string | undefined
+  name:string
   id: string
   visual: string | undefined
   description: string | undefined

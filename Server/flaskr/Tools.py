@@ -1,4 +1,5 @@
 import base64
+import csv
 import datetime as datetime
 import hashlib
 import io
@@ -23,9 +24,10 @@ import yaml
 from PIL import Image,ImageSequence
 from cryptography.fernet import Fernet
 from fontTools import ttLib
+from pandas import read_excel
 
 from flaskr.secret import USERNAME, PASSWORD, SALT
-from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR
+from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR, TEMP_DIR, STATIC_FOLDER
 
 
 def get_fonts(dir="./Fonts/"):
@@ -79,7 +81,7 @@ def returnError(msg:str="",_d=dict(),status=500):
   return "Ooops ! Petit problème technique. "+msg,status
 
 
-def open_html_file(name:str,replace=dict(),domain_appli=""):
+def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_FOLDER):
   """
   ouvre un fichier html et remplace le code avec le dictionnaire de remplacement
   :param name:
@@ -91,8 +93,8 @@ def open_html_file(name:str,replace=dict(),domain_appli=""):
     body=name
   else:
     if not name.endswith("html"):name=name+".html"
-    if exists("./"+name):
-      with open("./"+name, 'r', encoding='utf-8') as f: body = f.read()
+    if exists(directory+name):
+      with open(directory+name, 'r', encoding='utf-8') as f: body = f.read()
     else:
       log("Le mail type "+name+" n'existe pas",raise_exception=True)
 
@@ -298,6 +300,21 @@ def get_operation(name:str):
   if not "transfer" in rc:rc["transfer"]={"mail":""}
   if not "new_account" in rc:rc["new_account"]={"mail":""}
 
+  #Complement des operations
+  if "validate" in rc:
+    if not "collections" in rc["validate"]["filters"] or len(rc["validate"]["filters"]["collections"])==0:
+      if "lazy_mining" in rc:
+        rc["validate"]["filters"]["collections"]=[rc["lazy_mining"]["networks"][0]["collection"]]
+      else:
+        for src in rc["sources"]:
+          if "collections" in src: rc["validate"]["filter"]["collections"]=src["collections"]
+
+    if "users" in rc["validate"]:
+      rc["validate"]["access_codes"]=[]
+      if rc["validate"]["users"]:
+        for user in rc["validate"]["users"]:
+          rc["validate"]["access_codes"].append(get_access_code_from_email(user))
+
   return rc
 
 
@@ -315,6 +332,20 @@ def now(format="dec"):
   if format=="hex":return hex(int(rc*10000))
   if format=="random":return hex(int(rc*10000)+random.randint(0,1000000))
   return rc
+
+
+def extract_from_dict(_d:dict,fields,default=None):
+  """
+  tag : readdict,getdict, get_dict
+  :param _d:
+  :param fields:
+  :param default:
+  :return:
+  """
+  if type(fields)==str: fields=fields.split(",")
+  for field in fields:
+    if field in _d:return _d[field]
+  return default
 
 
 start=now()
@@ -476,6 +507,89 @@ def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_me
   return rc
 
 
+
+
+def idx(col:str,row=None,default=None,max_len=100,min_len=0,replace_dict:dict={},header=list()):
+  """
+  Permet l'importation dynamique des colonnes
+  version 1.0
+  :param col:
+  :param row:
+  :param default:
+  :param max_len:
+  :param min_len:
+  :param replace_dict:
+  :param header:
+  :return:
+  """
+  for c in col.lower().split(","):
+    if c in header:
+      if row is not None and len(row)>header.index(c):
+        rc=str(row[header.index(c)])
+
+        #Application des remplacement
+        for old in replace_dict.keys():
+          rc=rc.replace(old,replace_dict[old])
+
+        if max_len>0 and len(rc)>max_len:rc=rc[:max_len]
+        if min_len==0 or len(rc)>=min_len:
+          return rc.strip()
+      else:
+        return header.index(c)
+  return default
+
+
+def importer_file(file):
+  """
+  Systeme d'importation de fichier csv ou excel
+  version 1.0
+  :param file:
+  :return:
+  """
+  d=list()
+
+  log("Importation de fichier")
+  data=file
+  if type(file)==str and len(file)>500:
+    if "base64," in file: file=str(file).split("base64,")[1]
+    data = base64.b64decode(file)
+
+  res=None
+  if type(data)==bytes:
+    res = read_excel(data)
+  else:
+    if data.endswith("xlsx"):
+      res = read_excel(data)
+    else:
+      delimiter = ";"
+      text_delimiter = False
+      log("Analyse du document")
+      for _encoding in ["utf-8", "ansi"]:
+        try:
+          txt = str(data, encoding=_encoding)
+          break
+        except:
+          pass
+      txt = txt.replace("&#8217;", "")
+      log("Méthode d'encoding " + _encoding)
+
+      if "\",\"" in txt:
+        delimiter = ","
+        text_delimiter = True
+
+        log("Importation du CSV")
+        res = csv.reader(io.StringIO(txt), delimiter=delimiter, doublequote=text_delimiter)
+
+  if res is None:
+    return None,0
+  else:
+    d.append(list(res))
+    for k in range(1, len(res)):
+      d.append(list(res.loc[k]))
+    total_record = len(d) - 1
+    log("Nombre d'enregistrements identifié " + str(total_record))
+
+  return d,total_record
 
 
 

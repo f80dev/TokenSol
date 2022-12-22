@@ -15,6 +15,7 @@ import {UserService} from "../user.service";
 import {Configuration, Layer} from "../../create";
 import {OperationService} from "../operation.service";
 import {parse} from "yaml";
+import {DeviceService} from "../device.service";
 
 
 @Component({
@@ -60,6 +61,7 @@ export class CreatorComponent implements OnInit {
     public network:NetworkService,
     public dialog:MatDialog,
     public router:Router,
+    public device:DeviceService,
     public operation:OperationService,
     public routes:ActivatedRoute,
     public user:UserService,

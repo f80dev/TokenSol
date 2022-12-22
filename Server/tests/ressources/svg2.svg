@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1500"
+   height="1500"
+   viewBox="0 0 396.87501 396.87501"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="nfluent access card.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.33540615"
+     inkscape:cx="870.5863"
+     inkscape:cy="913.81747"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     units="px"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       position="200.36654,415.01844"
+       orientation="1,0"
+       id="guide881" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <rect
+       x="61.11993"
+       y="137.14716"
+       width="487.46872"
+       height="101.36964"
+       id="rect17795" />
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Drop Shadow"
+       id="filter1722"
+       x="-0.3805802"
+       y="-0.39211299"
+       width="1.8277618"
+       height="1.8855216">
+      <feFlood
+         flood-opacity="0.945098"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood1712" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite1714" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="14.9701"
+         result="blur"
+         id="feGaussianBlur1716" />
+      <feOffset
+         dx="6.28743"
+         dy="9.28144"
+         result="offset"
+         id="feOffset1718" />
+      <feComposite
+         in="offset"
+         in2="SourceGraphic"
+         operator="out"
+         result="composite2"
+         id="feComposite1720" />
+    </filter>
+  </defs>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g988"
+       transform="matrix(5.9938648,0,0,5.9953592,37.857366,60.065634)"
+       style="stroke-width:0.166817">
+      <ellipse
+         style="fill:#b3b3b3;fill-opacity:1;stroke-width:0.580635;filter:url(#filter1722)"
+         id="ellipse1049"
+         cx="6.7592697"
+         cy="84.425446"
+         rx="47.201931"
+         ry="45.813633"
+         inkscape:export-filename="C:\Users\hhoar\IdeaProjects\NFluentWebSite\src\assets\logo_png_mat.png"
+         inkscape:export-xdpi="152.39999"
+         inkscape:export-ydpi="152.39999"
+         transform="matrix(0.37610423,0,0,0.37089447,25.129114,-5.31468)" />
+      <g
+         id="g1110"
+         transform="matrix(0.42881214,0,0,0.42587922,-3.8645322,-5.8031899)"
+         style="stroke-width:0.39036">
+        <ellipse
+           style="opacity:1;fill:#ffffff;fill-opacity:1;stroke-width:0.507463"
+           id="path5285"
+           cx="73.109955"
+           cy="75.412231"
+           rx="47.201931"
+           ry="45.813633"
+           inkscape:export-filename="C:\Users\hhoar\IdeaProjects\NFluentWebSite\src\assets\logo_png_mat.png"
+           inkscape:export-xdpi="152.39999"
+           inkscape:export-ydpi="152.39999" />
+        <g
+           id="g5253"
+           transform="matrix(0.83831991,0,0,0.83831991,-59.839766,35.233788)"
+           style="stroke-width:0.465644">
+          <ellipse
+             style="opacity:1;fill:#5b00b9;fill-opacity:0.298039;stroke-width:0.605342"
+             id="path858"
+             cx="158.20105"
+             cy="47.783363"
+             rx="56.605583"
+             ry="54.642384" />
+          <ellipse
+             style="opacity:1;fill:#5a00b7;fill-opacity:0.580392;stroke-width:0.605334"
+             id="ellipse2432"
+             cx="157.81412"
+             cy="49.458351"
+             rx="35.284687"
+             ry="34.060932" />
+          <ellipse
+             style="opacity:1;fill:#5900b7;fill-opacity:1;stroke-width:0.605334"
+             id="ellipse3606"
+             cx="157.75182"
+             cy="48.613968"
+             rx="13.621853"
+             ry="13.149418" />
+        </g>
+      </g>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:21.3528px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;inline-size:262.892;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.952;stroke-miterlimit:4;stroke-dasharray:none"
+       x="10.963223"
+       y="160.63841"
+       id="text3026"
+       transform="matrix(1.4529883,0,0,1.4149064,-7.523266,163.02756)"><tspan
+         x="10.963223"
+         y="160.63841"
+         id="tspan953">NFLUENT ACCESS CARD</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:77.5049px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264582"
+       x="135.6239"
+       y="116.04449"
+       id="text4129"
+       transform="scale(1.0039386,0.99607686)"><desc
+         id="desc12914">001|002|003|004|005|006|007|008|009|010|011|012|013|014|015|016|017|018|019|020|021|022|023|024|025|026|027|028|029|030|031|032|033|034|035|036|037|038|039|040|041|042|043|044|045|046|047|048|049|050|051|052|053|054|055|056|057|058|059|060|061|062|063|064|065|066|067|068|069|070|071|072|073|074|075|076|077|078|079|080|081|082|083|084|085|086|087|088|089|090|091|092|093|094|095|096|097|098|099|100</desc><tspan
+         sodipodi:role="line"
+         id="tspan4127"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:77.5049px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke:none;stroke-width:0.264582"
+         x="135.6239"
+         y="116.04449">005</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.3528px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;inline-size:137.395;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.09309;stroke-miterlimit:4;stroke-dasharray:none"
+       x="10.963223"
+       y="160.63841"
+       id="text868"
+       transform="matrix(1.2944318,0,0,1.2046742,129.5901,-142.81277)"><tspan
+         x="10.963223"
+         y="160.63841"
+         id="tspan955">CARD ID</tspan></text>
+  </g>
+</svg>

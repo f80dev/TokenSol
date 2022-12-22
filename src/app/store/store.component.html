@@ -11,8 +11,11 @@
                      [height]="operation?.store?.apparence?.size || '200px'">
 
       <div [ngStyle]="style_reverse_card">
-        <div [style.font-size]="fontsize+'px'">{{nft.collection!.name}}</div>
-        <div style="margin-top: 10px" [style.font-size]="2*fontsize+'px'">{{nft.name}}</div>
+        <div *ngIf="nft.collection" [style.font-size]="fontsize+'px'">{{nft.collection.name}}</div>
+        <div style="margin-top: 10px"
+             [style.font-size]="2*fontsize+'px'">
+          {{nft.name}}
+        </div>
 
         <button type="button" mat-raised-button mat-button color="primary" style="display: inline-block;position: absolute;right: 20px;bottom: 20px;"
                 (click)="buy(nft)">

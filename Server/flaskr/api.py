@@ -13,13 +13,9 @@ from os import listdir
 from os.path import exists
 from random import random
 from xml.dom import minidom
-from xml.dom.minidom import Element
 from zipfile import ZipFile
 
 from flask_socketio import SocketIO
-
-from flaskr import GitHubStorage
-from flaskr.TokenForge import upload_on_platform
 
 import py7zr
 import pyqrcode
@@ -31,28 +27,25 @@ from flask import request, jsonify, send_file, make_response, Blueprint, current
 from werkzeug.datastructures import FileStorage
 from yaml import dump
 
-import flaskr.GitHubStorage
-from flaskr.ArtEngine import Layer, Sticker, ArtEngine
-from flaskr.Elrond import Elrond, ELROND_KEY_DIR
 from flaskr.NFT import NFT
 from flaskr.PrestaTools import PrestaTools
 from flaskr.Polygon import Polygon, POLYGON_KEY_DIR
 from flaskr.Solana import SOLANA_KEY_DIR, Solana
 from flaskr.StoreFile import StoreFile
-
-from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, send, convert_to, returnError
-from flaskr.Tools import setParams, get_access_code, check_access_code, get_fonts
-from flaskr.Tools import log, now, is_email, send_mail, open_html_file, encrypt
-
+from flaskr.GitHubStorage import GithubStorage
+from flaskr.TokenForge import upload_on_platform
+from flaskr.ArtEngine import Layer, Sticker, ArtEngine, Element
+from flaskr.Elrond import Elrond, ELROND_KEY_DIR
+from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, send, convert_to, returnError, setParams, \
+  get_access_code, check_access_code, get_fonts, log, now, is_email, send_mail, open_html_file, encrypt, importer_file, \
+  idx
 from flaskr.TransactionsGraph import TransactionsGraph
 from flaskr.dao import DAO
-
 from flaskr.apptools import async_mint, get_network_instance, get_nfts_from_src
 from flaskr.ipfs import IPFS
 from flaskr.secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRETS_FILE, SECRET_ACCESS_CODE
 from flask_jwt_extended import create_access_token
-
-from flaskr.settings import IPFS_SERVER, OPERATIONS_DIR, TEMP_DIR
+from flaskr.settings import IPFS_SERVER, OPERATIONS_DIR, TEMP_DIR, CONFIG_DIR
 
 bp=Blueprint("api",__name__,url_prefix="/api")
 
@@ -70,6 +63,40 @@ def update():
 def get_palettes():
   palette=json.load(open("./palettes.json","r"))
   return jsonify(palette)
+
+
+
+@bp.route('/upload_batch/',methods=["POST"])
+#http://127.0.0.1:4242/api/upload_batch/
+def api_upload_batch():
+  data=request.json["content"]
+  rows,n_rows=importer_file(data)
+  header = [x.lower().strip() for x in rows[0]]
+  default_collection="NFLUENTA-af9ddf"
+  default_creator="nfluent"
+
+  rc=[]
+  for row in rows[1:]:
+    nft:NFT=NFT(
+      name=idx("titre,title,name,nom",row,"monnft",header=header),
+      visual=idx("visual,visuel,image,photo",row,"",header=header),
+      description=idx("desc,description,commentaire",row,"",header=header),
+      creators=[idx("createur,createurs,creators",row,default_creator,header=header)],
+      collection=idx("collection",row,default_collection,header=header),
+      tags=idx("tag,tags",row,"",header=header),
+      symbol=idx("symbol,id,identifiant",row,"",header=header),
+      marketplace={"price":idx("price,prix,tarif",row,0,header=header),"quantity":idx("quantity,quantité,nombre",row,1,header=header)},
+      royalties=idx("royalties,percent,part",row,0,header=header),
+      attributes=idx("attributs,attributes,propriétés,properties,property",row,{},header=header)
+    )
+    rc.append(nft.__dict__)
+
+  return jsonify(rc)
+
+
+
+
+
 
 
 
@@ -284,16 +311,19 @@ def generate_svg():
 def api_get_collections(addresses:str):
   """
   retourne l'ensemble des collections appartenant à un utilisateur
-  :param owner:
   :return:
   """
   network=request.args.get("network","elrond-devnet")
   with_detail=(request.args.get("detail","true")=="true")
-  filter_type=request.args.get("filter_type","NonFungibleESDT")
+
   cols=[]
   for addr in addresses.split(","):
-    if "elrond" in network: cols=cols+Elrond(network).get_collections(addr,with_detail,filter_type=filter_type)
+    if "elrond" in network:
+      filter_type=request.args.get("filter_type","NonFungibleESDT")
+      cols=cols+Elrond(network).get_collections(addr,with_detail,filter_type=filter_type)
+
     if "polygon" in network: cols=cols+Polygon(network).get_collections(addr)
+
     if "solana" in network: cols=cols+Solana(network).get_collections(addr)
 
   return jsonify(cols)
@@ -335,7 +365,6 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     for elt in layer.elements:
       if elt.ext=="SVG":
         must_register_font=True
-
 
   if type(data)!=dict:
     s_data= urllib.parse.unquote(str(base64.b64decode(data), "utf8"))
@@ -491,8 +520,9 @@ def infos():
     "Client":current_app.config["DOMAIN_APPLI"],
     "Database_Server":current_app.config["DB_SERVER"],
     "Database_Name":current_app.config["DB_NAME"],
-    "Upload_Folder":current_app.config["UPDLOAD_FOLDER"],
+    "Upload_Folder":current_app.config["UPLOAD_FOLDER"],
     "Activity_Report":current_app.config["ACTIVITY_REPORT"],
+    "Static_Folder":current_app.config["STATIC_FOLDER"],
     "Database":{
       "tokens":dao.db["nfts"].count_documents(filter={}),
       "validators":dao.db["validators"].count_documents(filter={}),
@@ -667,7 +697,7 @@ def export_to_prestashop():
                                      tags=["NFT"]
                                      )
       if product is None:
-        return returnError("Impossible de créer "+nft.toString())
+        return returnError("Impossible de créer "+str(nft))
       else:
         prestashop.set_product_quantity(product,nft.get_quantity())
         filename=TEMP_DIR+"image"+now("hex")+".gif"
@@ -740,8 +770,8 @@ def get_operations() -> [dict]:
 
 
 
-@bp.route('/transfer_to/<nft_addr>/<to>/<owner>/',methods=["POST"])
 @bp.route('/transfer/<nft_addr>/<to>/<owner>/',methods=["POST"])
+@bp.route('/transfer/<nft_addr>/<to>/',methods=["POST"])
 @bp.route('/transfer/<nft_addr>/<to>/',methods=["POST"])
 def transfer_to(nft_addr:str,to:str,owner:str=""):
   from_network=request.args.get("from_network","elrond-devnet")
@@ -854,7 +884,7 @@ def action():
         else:
           log("Modification direct du fichier")
           if section_method["storage"]=="github":
-            rc=GitHubStorage.GithubStorage(section_method["repository"],"main",GITHUB_ACCOUNT,GITHUB_TOKEN).add(body["offchain"],body["uri"],True)
+            rc=GithubStorage(section_method["repository"],"main",GITHUB_ACCOUNT,GITHUB_TOKEN).add(body["offchain"],body["uri"],True)
             DAO(config=current_app.config).add_histo(operation["id"],
                           "update_metadata_file",
                           GITHUB_ACCOUNT,"",
@@ -900,11 +930,7 @@ def manage_operations(ope=""):
             rc=_opes
             break
 
-    if rc and type(rc)==dict and "validate" in rc and "users" in rc["validate"]:
-      rc["validate"]["access_codes"]=[]
-      if rc["validate"]["users"]:
-        for user in rc["validate"]["users"]:
-          rc["validate"]["access_codes"].append(get_access_code_from_email(user))
+
 
 
   if request.method=="POST":
@@ -1031,18 +1057,20 @@ def api_check_access_code(code:str):
     return jsonify({"address":addr})
 
 
-@bp.route('/mintpool/',methods=["GET"])
-@bp.route('/minerpool/',methods=["GET"])
+@bp.route('/mintpool/',methods=["GET","DELETE"])
+@bp.route('/minerpool/',methods=["GET","DELETE"])
 @bp.route('/minerpool/<id>/',methods=["DELETE","POST"])
 # http://127.0.0.1:4242/api/minerpool/
-def get_minerpool(id=""):
+def api_minerpool(id=""):
   """
   retourne le contenu de la pool de minage pour les NFTs obtenus via la dealermachine
   :param id:
   :return:
   """
   dao=DAO(config=current_app.config)
-  asks=dao.db["mintpool"].find()
+  if dao.isConnected():
+    asks=dao.get_mintpool()
+
   rc=[]
   if request.method=="POST":
     rc={"updated":dao.edit_pool(ObjectId(id),None,"")}
@@ -1054,8 +1082,12 @@ def get_minerpool(id=""):
       rc.append(ask)
 
   if request.method=="DELETE":
+    if len(id)>0:
       tx=dao.db["mintpool"].delete_one({"_id":ObjectId(id)})
       rc={"deleted":tx.deleted_count}
+    else:
+      dao.reset_mintpool()
+      rc={"deleted":"all"}
 
   return jsonify(rc)
 
@@ -1064,8 +1096,8 @@ def get_minerpool(id=""):
 # http://127.0.0.1:4242/api/async_mint/3/
 @bp.route('/async_mint/<nbr_items>/',methods=["GET"])
 def api_async_mint(nbr_items:str="3"):
-  async_mint(nbr_items=int(nbr_items),filter=request.args.get("filter",""))
-  return jsonify({"message":"ok"})
+  rc=async_mint(current_app.config,nbr_items=int(nbr_items),filter=request.args.get("filter",""))
+  return jsonify({"message":"ok","n_treated_ask":rc})
 
 
 @bp.route('/add_user_for_nft/',methods=["POST"])
@@ -1076,27 +1108,31 @@ def add_user_for_nft():
   """
   dao=DAO(config=current_app.config)
 
-  _ope:dict=request.json["operation"]
   network=request.json["network"]
   target_collection=None
 
-  if "lazy_mining" in _ope:
+  _ope:dict=request.json["operation"] if "operation" in request.json else None
+  sources=_ope["data"]["sources"] if _ope is not None else request.json["sources"]
+
+  if _ope and "lazy_mining" in _ope:
+    #On determine le miner en fonction du réseau sélectionné
     for n in _ope["lazy_mining"]["networks"]:
       if n["network"]==network:
         target_collection=n["collection"]
         miner=n["miner"]
   else:
-    miner=None
+    miner=request.json["miner"] if "miner" in request.json else None
 
   id=dao.add_nft_to_mint(
                       miner=miner,
-                      operation=_ope["id"],
-                      sources=_ope["data"]["sources"],
+                      operation="" if _ope is None else _ope["id"],
+                      sources=sources,
                       network=network,
                       collections=request.json["collections"],
                       destinataires=request.json["owner"],
                       wallet=request.json["wallet"],
-                      collection_to_mint=target_collection)
+                      collection_to_mint=target_collection
+  )
 
   return jsonify({"message":"ok","ask_id":id})
 
@@ -1430,8 +1466,8 @@ def configs(location:str="",format=""):
       return jsonify(yaml.load(location,Loader=yaml.FullLoader))
 
     rc=[]
-    for f in os.listdir("./Configs"):
-      with open("./Configs/"+f,"r",encoding="utf8") as file:
+    for f in os.listdir(CONFIG_DIR):
+      with open(CONFIG_DIR+f,"r",encoding="utf8") as file:
         config=yaml.load(file,Loader=yaml.FullLoader)
         if not "text" in config:config["text"]={}
         if not "text_to_add" in config["text"]:config["text"]["text_to_add"]=""
@@ -1506,7 +1542,7 @@ def configs(location:str="",format=""):
 
 
 @bp.route('/keys/',methods=["GET"])
-@bp.route('/keys/<name>/',methods=["DELETE","POST"])
+@bp.route('/keys/<name>/',methods=["DELETE","POST","GET"])
 #https://metaboss.rs/set.html
 #test http://127.0.0.1:4242/api/keys/
 #test https://server.f80lab.com:4242/api/keys/
@@ -1517,7 +1553,7 @@ def keys(name:str=""):
   if request.method=="GET":
     with_balance=(request.args.get("with_balance","false")=="true")
     if "elrond" in network:
-      return jsonify(Elrond(network).get_keys(qrcode_scale=int(request.args.get("qrcode_scale","0")),with_balance=with_balance))
+      return jsonify(Elrond(network).get_keys(qrcode_scale=int(request.args.get("qrcode_scale","0")),with_balance=with_balance,address=name))
 
     if "solana" in network:
       rc=Solana(network).get_keys(with_private=(request.args.get("with_private","false")=="true"),with_balance=with_balance,with_qrcode=True)
@@ -1959,6 +1995,9 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
   rc= {"error":"Problème technique"}
   account=None
   collection_id=nft.collection["id"] if not nft.collection is None and "id" in nft.collection else ""
+  if collection_id=="" and not network.startswith("db-"):
+    returnError("!La collection est indispensable")
+
   dao_histo=DAO(config=current_app.config)
 
   if is_email(owner):
@@ -2111,7 +2150,11 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
   #   }
 
   if ("result" in rc) and ("transaction" in rc["result"]) and (network!="file"):
-    dao_histo.add_histo(request.args.get("ope",""),"mint",miner,collection_id,rc["result"]["transaction"],network,"Minage")
+    try:
+      ope=request.args.get("ope","")
+    except:
+      ope=""
+    dao_histo.add_histo(ope,"mint",miner,collection_id,rc["result"]["transaction"],network,"Minage")
 
   return rc
 
@@ -2336,8 +2379,8 @@ def validators(validator=""):
     return jsonify({"message":"deleted"})
 
   if request.method=="POST":
-    log("Un validateur demande son inscription")
     validator_name="val_"+now("hex") if len(request.json["validator_name"])==0 else request.json["validator_name"]
+    log("Un validateur demande son inscription. Attribution du nom="+validator_name)
     access_code=str(base64.b64encode(encrypt(validator_name)),"utf8")
     ask_for:str=request.json["ask_for"]
     dao.add_validator(validator_name,ask_for)
@@ -2353,7 +2396,7 @@ def validators(validator=""):
       owner=[x.owner for x in nfts]
     else:
       elrond=Elrond(request.json["network"])
-      owners=list(set([x["address"] for x in elrond.get_owner_of_collections(ask_for.split(","))]))
+      owners=list(set([x["address"] for x in elrond.get_owners_of_collections(ask_for.split(","))]))
 
     return jsonify({
       "access_code":access_code,
@@ -2371,19 +2414,22 @@ def validators(validator=""):
 @bp.route('/scan_for_access/',methods=["POST"])
 def scan_for_access():
   """
-  Validation de la connexion via le nfluent wallet en mode wallet_connect
+  Validation de la connexion via le nfluent wallet en mode wallet_connect.
   Cette api est appelé par le visiteur via la webcam du nfluent wallet
+  il transmet dans le body le code du validateur et l'adresse de son wallet
   :return:
   """
   _data=request.json
   if "/api/qrcode/" in _data["validator"]:_data["validator"]=_data["validator"].split("/api/qrcode/")[1]
 
   validator=decrypt(_data["validator"])
-  log("Validateur en charge de la validation : "+validator)
-  socketio=SocketIO(current_app(),cors_allowed_origins="*")
+  log("Le validateur en charge de la validation : "+validator)
+
+  log("Le serveur transmet au validateur l'adresse du wallet ayant réalisé le flashage")
+  socketio=SocketIO(current_app,cors_allowed_origins="*")
   send(socketio,validator, {"address":_data["address"]})
 
-  log("Ajout de l'adresse "+_data["address"]+" pour validation")
+  log("Ajout de l'adresse "+_data["address"]+" pour validation dans la base")
   DAO(config=current_app.config).db["validators"].update_one({"id":validator},{"$set": {"user":_data["address"]}})
   return jsonify({"message":"ok"})
 

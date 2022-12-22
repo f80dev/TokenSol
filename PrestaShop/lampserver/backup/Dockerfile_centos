@@ -1,0 +1,13 @@
+FROM centos
+
+RUN sudo dnf install httpd mariadb-server php php-cli php-bcmath php-mysqli php-gd php-pdo php-xmlrpc php-intl php-posix php-json php-curl php-zip unzip -y
+
+
+RUN a2enmod ssl && a2enmod rewrite
+RUN mkdir -p /etc/apache2/ssl
+
+COPY ./certs/*.pem /etc/apache2/ssl/
+COPY ../000-default.conf /etc/apache2/sites-available/000-default.conf
+
+EXPOSE 80
+EXPOSE 443

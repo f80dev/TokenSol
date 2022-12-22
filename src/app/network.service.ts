@@ -19,7 +19,6 @@ import {NFT, SolanaToken, SplTokenInfo, Validator} from "../nft";
 import {Configuration, Layer} from "../create";
 
 
-
 @Injectable({
   providedIn: 'root'
 })
@@ -80,11 +79,6 @@ export class NetworkService {
     this._connection = value;
   }
 
-  getBalance(publicKey: PublicKey) : Promise<number> {
-    return new Promise((resolve, reject) => {
-      this.connection.getBalance(publicKey).then(r => {resolve(r/1000000000);});
-    });
-  }
 
   airdrop(publicKey: PublicKey) : Promise<RpcResponseAndContext<SignatureResult>> {
     this.waiting="Airdrop en cours";
@@ -659,7 +653,7 @@ export class NetworkService {
   transfer_to(mint_addr: string, to_addr: string,owner:string,network="",mail_content="mail_new_account") {
     if(network.length==0)network=this.network;
     return this.httpClient.post(
-      this.server_nfluent+"/api/transfer_to/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network,
+      this.server_nfluent+"/api/transfer/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network,
       {mail_content:mail_content}
     );
   }
@@ -834,6 +828,12 @@ export class NetworkService {
     return this.httpClient.get(this.server_nfluent+"/api/check_private_key/"+seed+"/"+address+"/"+this.network);
   }
 
+  getBalance(addr:string,network="") {
+    if(network.length==0)network=this.network;
+    return this.httpClient.get(this.server_nfluent+"/api/keys/"+addr+"/?with_balance=true&network="+network);
+  }
+
+
   upload_attributes(config_name:string,file:string) {
     //Associer un fichier d'attributs au visuel des calques
     return this.httpClient.post(this.server_nfluent+"/api/upload_attributes_file/"+config_name+"/",file);
@@ -849,5 +849,9 @@ export class NetworkService {
 
   info_server() {
     return this.httpClient.get(this.server_nfluent+"/api/infos/").pipe(retry(1),timeout(2000));
+  }
+
+  upload_batch(content:any) {
+    return this.httpClient.post<NFT[]>(this.server_nfluent+"/api/upload_batch/",content);
   }
 }

@@ -10,6 +10,7 @@ from flaskr.TokenForge import upload_on_platform
 import requests
 import yaml
 from flask import request
+
 from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
 from flaskr.Solana import Solana
@@ -19,7 +20,7 @@ from flaskr.Tools import log, now, is_email, send_mail, open_html_file, get_oper
 from flaskr.dao import DAO
 from flaskr.ipfs import IPFS
 
-from flaskr.settings import IPFS_SERVER, OPERATIONS_DIR
+from flaskr.settings import IPFS_SERVER, OPERATIONS_DIR, TEMP_DIR
 
 
 def get_operations() -> [dict]:
@@ -75,6 +76,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
   :param collections: filtre sur les collections à utiliser
   :return:
   """
+  if type(collections)==str:collections=[collections]
   nfts=[]
   if srcs.__class__!=list: srcs=[srcs]
   for src in srcs:
@@ -86,6 +88,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
 
       if src["type"] in ["database","db"]:
         try:
+          if src["connexion"].startswith("db-") and not "dbname" in src:src["dbname"]=src["connexion"].split("-")[2]
           if not "connexion" in src or not "dbname" in src:
             returnError("!Champs dbname ou connexion manquant dans la source")
 
@@ -197,10 +200,13 @@ def get_network_instance(network:str):
 
 
 
-def async_mint(dao,nbr_items=3,filter=""):
+def async_mint(config:dict,nbr_items=3,filter="") -> int:
+  n_treatment=0
   message=""
+  dao=DAO(config=config)
   if not dao.isConnected():
     message="Impossible de se connecter à la base"
+    return n_treatment
 
   if message=="":
     for ask in dao.get_nfts_to_mint(int(nbr_items),filter):
@@ -227,7 +233,8 @@ def async_mint(dao,nbr_items=3,filter=""):
             else:
               if not _miner is None and nft_to_mint.owner==_miner.address.bech32(): break
         else:
-          log("Aucun NFT à miner")
+          log("Aucun NFT à miner depuis la source "+str(ask["sources"]))
+          dao.edit_pool(ask["_id"],now(),"Aucun NFT dans la source "+str(ask["sources"]))
 
       if not nft_to_mint is None:
         log("Minage de "+nft_to_mint.name+" en cours")
@@ -246,13 +253,16 @@ def async_mint(dao,nbr_items=3,filter=""):
                   _miner.address.bech32(),
                   ask["dest"],
                   ask["network"],
-                  mail_new_wallet=_ope["new_account"]["mail"],mail_existing_wallet=_ope["transfer"]["mail"]
+                  domain_appli=config["DOMAIN_APPLI"],
+                  mail_new_wallet=_ope["new_account"]["mail"] if not _ope is None else "",
+                  mail_existing_wallet=_ope["transfer"]["mail"] if not _ope is None else ""
                   )
           if not rc or rc["error"]!="":
             log("Problème de minage voir "+rc["hash"])
             message="Error"+rc["error"]+" voir "+elrond.getExplorer(rc["hash"])
           else:
             message="Ok. Transaction="+rc["hash"]
+            n_treatment=n_treatment+1
 
         log("Mise a jour des données de la pool de minage avec message:"+message)
         dao.edit_pool(ask["_id"],now(),message)
@@ -261,6 +271,8 @@ def async_mint(dao,nbr_items=3,filter=""):
         message="Aucun NFT disponible pour le minage"
         log(message)
         dao.edit_pool(ask["_id"],now(),message)
+
+  return n_treatment
 
 
 def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile="",mail_new_wallet="",mail_existing_wallet="",
@@ -436,7 +448,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
   #     "command":"file"
   #   }
 
-  if ("result" in rc) and ("transaction" in rc["result"]) and (network!="file"):
+  if ("result" in rc) and ("transaction" in rc["result"]) and (network!="file") and not dao is None:
     dao.add_histo(request.args.get("ope",""),"mint",miner,collection_id,rc["result"]["transaction"],network,"Minage")
 
   return rc
@@ -444,7 +456,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
 
 
 
-def activity_report_sender(app,dest:str,event:str="CR d'activité"):
+def activity_report_sender(config,event:str="CR d'activité"):
   """
   Envoi un mail sur l'activité du serveur
   :param activity_report_dest:
@@ -453,19 +465,17 @@ def activity_report_sender(app,dest:str,event:str="CR d'activité"):
   :param event:
   :return:
   """
-  domain_server=app.config["DOMAIN_SERVER"]
-  domain_appli=app.config["DOMAIN_APPLI"]
+  domain_server=config["DOMAIN_SERVER"]
+  domain_appli=config["DOMAIN_APPLI"]
+  dest=config["ACTIVITY_REPORT"]
   log(event)
-  mail=open_html_file("mail_activity_report",{
-    "DOMAIN_SERVER":domain_server,
-    "DOMAIN_APPLI":domain_appli,
-    "event":event
-  })
-
   if not "localhost" in domain_server and not "127.0.0.1" in domain_server:
+    mail=open_html_file(config["STATIC_FOLDER"]+"/mail_activity_report",{
+      "DOMAIN_SERVER":domain_server,
+      "DOMAIN_APPLI":domain_appli,
+      "event":event
+    })
     send_mail(mail,_to=dest,subject="ACTIVITY REPORT de "+domain_server+" - "+event[:60])
-  else:
-    log(mail)
 
 
 

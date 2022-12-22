@@ -29,6 +29,7 @@ class DAO:
       self.dbname=ope["database"]["dbname"]
     else:
       if config:
+        if config["DB_SERVER"] in DB_SERVERS:config["DB_SERVER"]=DB_SERVERS[config["DB_SERVER"]]
         self.dbname=config["DB_NAME"]
         self.domain=config["DB_SERVER"]
       else:
@@ -37,13 +38,13 @@ class DAO:
           self.dbname=network.split("-")[2]
         else:
           if domain and dbname:
-            self.dbname=dbname
-            self.domain=domain
+            self.dbname=dbname if not "-" in domain else domain.split("-")[2]
+            self.domain=domain if not "-" in domain else domain.split("-")[1]
 
 
-    log("Initialisation de la base de données "+self.domain+"/"+self.dbname)
-    if self.connect(self.domain,self.dbname):
-      log("Tentative de connexion ok")
+    #log("Initialisation de la base de données "+self.domain+"/"+self.dbname)
+    if not self.connect(self.domain,self.dbname):
+      log("connexion impossible a "+self.domain)
 
 
   def isConnected(self) -> bool:
@@ -61,7 +62,7 @@ class DAO:
       return True
 
     self.url=DB_SERVERS[self.domain] if self.domain in DB_SERVERS else self.domain
-    log("Tentative de connexion sur la base de données "+self.dbname+" sur "+self.url)
+    #log("Tentative de connexion sur la base de données "+self.dbname+" sur "+self.url)
     try:
       self.db: pymongo.mongo_client = pymongo.MongoClient(self.url)[self.dbname]
       return self.db.list_collections().alive
@@ -124,12 +125,13 @@ class DAO:
   def delete(self, id):
     return self.db["nfts"].delete_one(filter={"id":id})
 
-  def add_dict(self, data):
-    rc=self.db["dicts"].insert_one(data)
+  def add_data(self, data):
+    if type(data)==str:data={"content":data}
+    rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
 
-  def get_dict(self, id):
-    return self.db["dicts"].find_one(filter={"_id":ObjectId(id)})
+  def get_data(self, id):
+    return self.db["storage"].find_one(filter={"_id":ObjectId(id)})
 
   def add_histo(self, ope,command,account, collection_id,transaction_id,network="",comment="",params=list()):
     if not self.db is None:
@@ -157,6 +159,14 @@ class DAO:
     self.db["nfts"].update_one({"address":_data["address"]},{ "$set": { field: _data[field] } })
 
 
+  def get_mintpool(self):
+    return list(self.db["mintpool"].find())
+
+  def reset_mintpool(self):
+    try:
+      self.db["mintpool"].drop()
+    except:
+      pass
 
   def get_nfts_to_mint(self,limit=100,filter_id=""):
     """
@@ -244,7 +254,6 @@ class DAO:
 
   def get_nft(self, nft_addr):
     return NFT(object=self.db["nfts"].find_one({"address":nft_addr}))
-
 
 
 

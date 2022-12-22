@@ -1,4 +1,5 @@
 import base64
+from json import dumps
 
 import requests.api
 
@@ -17,6 +18,7 @@ class NFTStorage:
     :param type:
     :return:
     """
+    content_type="image/webp"
     if type(content)==str:
       if _type is None:
         _type=content.split(";base64,")[0].split("data:")[1]
@@ -24,14 +26,19 @@ class NFTStorage:
       service="upload"
 
     if type(content)==dict:
-      data=content
-      service="store"
+      data=dumps(content)
+      content_type="application/octet-stream"
+      service="upload"
 
     if type(content)==bytes:
       data=content
       service="upload"
 
-    result=requests.api.post("https://api.nft.storage/"+service,data,headers={"Authorization":"Bearer "+NFT_STORAGE_KEY}).json()
+    result=requests.api.post("https://api.nft.storage/"+service,data,
+                             headers={
+                               "Authorization":"Bearer "+NFT_STORAGE_KEY,
+                               "Content-Type": content_type
+                             }).json()
     cid=result["value"]["cid"]
     url="https://"+cid+".ipfs.nftstorage.link"
     return {"cid":cid,"url":url+(("?"+filename) if len(filename)>0 else "")}

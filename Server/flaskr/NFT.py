@@ -1,23 +1,22 @@
 import base64
 import json
-
 import yaml
-from fontTools.ttLib import TTFont
-from reportlab.pdfbase import pdfmetrics
+from PIL import Image
 
-from flaskr.Tools import get_fonts
+from flaskr.Tools import extract_from_dict
 
 
 class NFT:
   collection:dict
   attributes:list
   name:str
+  symbol=""
   dtCreate:int=0
-  description:str
+  description:str=""
   tags:str
-  visual:str
+  visual:str=""
   creators:list
-  address:str
+  address:str=None
   royalties:int
   owner:str=""
   amount:int=1
@@ -36,15 +35,20 @@ class NFT:
                creators: list=list(),
                address: str="",
                royalties: int=0,
-               marketplace:dict={},
+               marketplace:dict={"quantity":1,"price":0},
                files:list=[],
                dtCreate:int=0,
-               object=None) -> object:
-    if object is None:
+               object=None,
+               image=None) -> object:
+    if name!="" and visual!="":
       self.name=name
       self.description=description
       self.collection=collection
+
+      if type(attributes)==str:attributes={"value":attributes}
+      if type(attributes)==dict: attributes=[attributes]
       self.attributes=attributes
+
       self.symbol=symbol
       self.visual=visual
       self.creators=creators
@@ -54,19 +58,23 @@ class NFT:
       self.marketplace=marketplace
       self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
       self.dtCreate=dtCreate
-    else:
-      self.name=object["name"]
+
+    if image:
+      img=Image.open(image)
+
+    if not object is None:
+      self.name=extract_from_dict(object,["name","title"],"NFT")
+
       self.dtCreate=object["dtCreate"] if "dtCreate" in object else 0
-      self.symbol=object["symbol"]
-      self.description=object["description"]
-      self.visual=object["visual"] if "visual" in object else object["image"]
-      if self.visual=="": self.visual=object["visual"] if "visual" in object else ""
+      self.symbol=extract_from_dict(object,"symbol","")
+      self.description=extract_from_dict(object,"description","")
+      self.visual=extract_from_dict(object,"visual,image,storage","")
 
       if "properties" in object and "creators" in object["properties"]:object["creators"]=object["properties"]["creators"]
-      self.creators=object["creators"] if "creators" in object else []
+      self.creators=extract_from_dict(object,"creator",[])
 
-      self.files=object["files"] if "files" in object else []
-      self.attributes=object["attributes"]
+      self.files=extract_from_dict(object,"files",[])
+      self.attributes=object["attributes"] if "attributes" in object else ""
       self.collection=object["collection"] if "collection" in object else ""
       self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1,"max_mint":1}
       self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)
@@ -78,11 +86,13 @@ class NFT:
 
 
 
+  def __str__(self):
+    rc=self.address if not self.address is None else "NoAddresse"
+    if self.symbol: rc=rc+" ("+self.symbol+")"
+    return rc
+
   def toJson(self):
     return json.dumps(self, default=lambda o: o.__dict__,sort_keys=True, indent=4)
-
-  def toString(self):
-    return self.name+" "+self.symbol
 
   def get_price(self):
     return self.marketplace["price"] if "price" in self.marketplace else 0

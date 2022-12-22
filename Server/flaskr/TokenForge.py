@@ -1,17 +1,24 @@
 import base64
+import hashlib
+import json
+from io import BytesIO
 from os.path import exists
 
-import flaskr.GitHubStorage
+from PIL import Image
+
+from flaskr.GitHubStorage import GithubStorage
+from flaskr.dao import DAO
+
 from flaskr.GoogleCloudStorageTools import GoogleCloudStorageTools
-from flaskr.Tools import normalize, log
+from flaskr.Tools import normalize, log, extract_from_dict
 from flaskr.infura import Infura
 from flaskr.ipfs import IPFS
 from flaskr.nftstorage import NFTStorage
 from flaskr.secret import GITHUB_TOKEN
-from flaskr.settings import IPFS_SERVER
+from flaskr.settings import IPFS_SERVER, TEMP_DIR
 
 
-def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_appli="",domain_server="",sticker=None):
+def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_appli="",domain_server="",github_token=GITHUB_TOKEN):
   """
   Charge une image sur une platforme
   :param data:
@@ -30,7 +37,6 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_a
     else:
       sticker=Sticker(cid,data["content"],ext=ext)
 
-
   """
 
   if platform=="ipfs":
@@ -43,25 +49,32 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_a
     cid=infura.add(data)
     rc={"cid":cid["Hash"],"url":cid["url"]}
 
-  if platform=="mongodb":
-    cid=dao.add_dict(data)
+  if platform.startswith("db-"):
+    cid=DAO(network=platform).add_data(data)
     rc={"cid":cid,"url":domain_appli+"/api/json/"+cid}
 
-  if platform.startswith("nfluent"):
-    ext=data["type"].split("/")[1].split("+")[0]
+  if platform=="server" or platform.startswith("nfluent"):
+    b=None
+    if type(data)==str:
+      b=base64.b64decode(data.split("base64,")[1])
+    else:
+      if "content" in data:
+        b=base64.b64decode(data["content"].split("base64,")[1])
 
-    if "filename" in data and not data["filename"] is None and len(data["filename"])>0 and exists(data["filename"]):
-      log("Le fichier est déjà présent sur le serveur")
-      cid=data["filename"][data["filename"].rindex("/")+1:]
-      return {"cid":cid,"url":domain_server+"/api/images/"+cid+"?"+ext}
+    if b:
+      img=Image.open(BytesIO(b))
+      filename=extract_from_dict(data,"filename","")
+      if filename=="":filename="store_"+hashlib.sha256(b).hexdigest()+"."+img.format.lower()
 
-    b=base64.b64decode(data["content"].split("base64,")[1])
-    cid=hex(hash(data["content"]))+"."+ext
-    filename=normalize(data["filename"].split(".")[0]+"_"+cid) if "filename" in data and not data["filename"] is None else cid
+      if not exists(TEMP_DIR+filename):
+        img.save(TEMP_DIR+filename)
+    else:
+      filename="store_"+hashlib.sha256(bytes(json.dumps(data),"utf8")).hexdigest()+".json"
+      if not exists(TEMP_DIR+filename):
+        with open(TEMP_DIR+filename,"w") as file:
+          json.dump(data,file)
 
-
-    sticker.save(TEMP_DIR+filename)
-    rc={"cid":cid,"url":domain_server+"/api/images/"+filename+"?"+ext}
+    return {"cid":filename,"url":domain_server+"/api/images/"+filename}
 
 
   if platform=="nftstorage":
@@ -74,8 +87,18 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_a
     rc=GoogleCloudStorageTools().add(data,id)
 
   if platform.startswith("github"):
-    repo=options["repository"] if "repository" in options else platform.split("/")[1].strip()
-    github_storage=GitHubStorage.GithubStorage(repo,"main","nfluentdev",GITHUB_TOKEN)
-    rc= github_storage.add(data,id,overwrite=False)
+    try:
+      repo=extract_from_dict(options,"repository",platform.split("-")[2].strip())
+      github_account=extract_from_dict(options,"account",platform.split("-")[1].strip())
+      branch=extract_from_dict(options,"branch","main")
+    except:
+      log("La syntaxe doit être github-<account>-<repository>")
+      return None
+
+    try:
+      github_storage=GithubStorage(repo,branch,github_account,github_token)
+      rc= github_storage.add(data,id,overwrite=True)
+    except:
+      log("Impossible de pousser le contenu. Pour obtenir un token valide voir https://github.com/settings/tokens et accorder les propriétés admin:org et repo")
 
   return rc

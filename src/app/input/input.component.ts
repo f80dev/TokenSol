@@ -8,7 +8,8 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 export class InputComponent implements OnInit {
   @Input() infobulle:string="";
   @Input() label:string="";
-  @Input() label_button:string="Valider";
+  @Input() label_button:string="";
+  @Input() maxlength:string=""
   @Input() width:string="100%";
   @Input() value:string="";
   @Input() placeholder:string="";

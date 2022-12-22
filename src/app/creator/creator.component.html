@@ -9,8 +9,7 @@
     <table>
       <tr>
         <th>Charger une configuration</th>
-        <th>Créer une nouvelle configuration</th>
-        <th>Enregistrer la configuration</th>
+        <th *ngIf="device.large">Enregistrer la configuration</th>
       </tr>
       <tr style="width: 100%;text-align: center;">
         <td style="width:50%;">
@@ -21,7 +20,7 @@
             Importer <mat-icon>arrow_right</mat-icon>
           </app-upload-file>
 
-          <mat-form-field style="fontsize:small">
+          <mat-form-field style="fontsize:small" style="width:40%;max-width: 200px;">
             <mat-label>Depuis le serveur</mat-label>
             <mat-select [(ngModel)]="sel_config" (ngModelChange)="update_config()">
               <mat-option *ngFor="let config of configs" [value]="config">
@@ -36,20 +35,18 @@
 
           <br>
           <button type="button" mat-raised-button mat-button (click)="online_config()">
-            Utiliser un fichier en ligne
+            {{"Utiliser un fichier en ligne" | screencutter:"En ligne"}}
           </button>
-
-
-
-        </td>
-        <td style="width:25%;">
+          <br>
+          <br>
           <button type="button" mat-raised-button mat-button (click)="reset()" color="primary">
-            Nouvelle
+            {{"Nouvelle Config" | screencutter:"Nouvelle"}}
           </button>
 
           <button type="button" mat-raised-button mat-button [disabled]="!sel_config" (click)="clone()">
             Cloner
           </button>
+
         </td>
 
         <td style="width:25%;">

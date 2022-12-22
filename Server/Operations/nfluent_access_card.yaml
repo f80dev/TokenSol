@@ -12,7 +12,7 @@ id: "nfluent_access_card"          #cet Id doit être cohérent avec le nom du f
 title: "Nfluent Access Card"     #est le titre usuel de l'operation qui apparait pour les validateurs
 description: "Carte d'acces au site nfluent"
 website: "https://nfluent.io"   #désigne le site concerné par l'opération
-version: 0.1
+version: 0.3
 network: elrond-devnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
 wallet: "$nfluent_appli$/wallet"
 
@@ -20,9 +20,9 @@ wallet: "$nfluent_appli$/wallet"
 lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
-  networks:                           #Indique les parametres de minage suivant le réseau du destinataire
+  networks:                           #Indique les parametres de minage suivant le réseau du destinataire (il est possible de mettre plusieurs réseau de destination)
     - network: elrond-devnet          #Le premier item est utilisé par défaut si le destinataire fourni un email
-      collection: NFLUENTA-af9ddf     #Designe la collection utilisé pour le minage
+      collection: NEWACCES-71f874     #Designe la collection utilisée pour le minage
       miner: nfluent                  #Désigne le mineur à utilisé (il doit être propriétaire de la collection ci-dessus)
 
 
@@ -43,7 +43,7 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "NFLUENTA-af9ddf"          #Id de la collection. A priori cet id doit se trouver dans les sources
+  - id: "MACOLLEC-4356f0"          #Id de la collection. A priori cet id doit se trouver dans les sources
     name: "Nluent Access Card"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
     visual:  ""
     description: "Carte d'accès au site nfluent"
@@ -93,11 +93,9 @@ data:
   sources:
     - type: database
       active: True
-      connexion: cloud
-      dbname: tokenforge
-      owner:                   #Tous les NGFt de l'owner
-      collections: []            #Tous les NFT des collections ci-dessous
-
+      connexion: db-web3-nfluent
+      collections:             #Tous les NFT des collections ci-dessous
+        - MACOLLEC-4356f0
 
 #Fonctionnement de la section Validate _____________________________________________________________________________________________________________________________
 #Section responsable du process de validation des NFTs
@@ -160,8 +158,7 @@ validate:
   #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
   filters:
     mint_authority: ''
-    collections:                #Liste des collections que le visiteur doit posséder pour avoir l'accès
-      - "NFLUENTA-af9ddf"
+    collections: []       #Liste des collections que le visiteur doit posséder pour avoir l'accès, si vide on prend la collection de src ou du lazy mining
 
 
 
@@ -196,8 +193,8 @@ candymachine:
     on_device: False
     google: True
 
-  collections:                  #Liste les collections disponibles via la candy machine
-    - "NFLUENTA-af9ddf"
+  collections: []                 #Liste les collections disponibles via la candy machine
+
 
   messages:
     title: "Recevoir votre carte d'accès numérotée NFLUENT"
@@ -214,8 +211,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
     email: True
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
-  collections:
-    - "NFLUENTA-af9ddf"
+  collections: []
 
   apparence:              #Fixe l'apparence des NFT dans le store
     size: 250px           #Taille des NFT
@@ -224,7 +220,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
   messages:      #Section regroupant les différents messages d'aides aux utilisateurs
     confirm: "Votre NFT est en cours de préparation et envoie"
     title: Acquerir une carte d'accès
-    subtitle: sélectionner le NFT que vous souhaitez recevoir
+    subtitle: Sélectionner le NFT que vous souhaitez recevoir
     prompt: Indiquer votre email pour recevoir le NFT
     question: "ceci est la question"
     cancel: probleme technique

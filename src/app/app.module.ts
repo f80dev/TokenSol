@@ -84,6 +84,7 @@ import { JsonToListComponent } from './json-to-list/json-to-list.component';
 import { SignatureComponent } from './signature/signature.component';
 import { ShowroomComponent } from './showroom/showroom.component';
 import { InputComponent } from './input/input.component';
+import { ScreencutterPipe } from './screencutter.pipe';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -138,7 +139,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         JsonToListComponent,
         SignatureComponent,
         ShowroomComponent,
-        InputComponent
+        InputComponent,
+        ScreencutterPipe
     ],
     imports: [
         BrowserModule,

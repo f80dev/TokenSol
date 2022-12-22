@@ -20,10 +20,34 @@
   </mat-form-field>
   <br>
 
-  <div style="display: inline-block;" *ngIf="showGoogle">
-    <asl-google-signin-button  type="standard" size="medium" style="display: inline-block;"
-                              title="Authentification simplifiée pour les utisateurs de gmail">
-    </asl-google-signin-button>
+  <div style="display: flex;flex-wrap: wrap;width:100%;justify-content: center;">
+    <div *ngIf="showGoogle" style="text-align: right;height: 100px;margin-left:10px;">
+      <asl-google-signin-button  type="standard" size="medium"
+                                 style="display: inline-block;margin-top:20%;"
+                                 title="Authentification simplifiée pour les utisateurs de gmail">
+      </asl-google-signin-button>
+    </div>
+
+    <div style="text-align: left;width: fit-content;">
+      <app-input *ngIf="showAddress || showEmail"
+                 style="display: inline-block;min-width: 320px;width:90%;max-width: 600px;text-align: center;"
+                 width="350px"
+                 [label]="intro_message"
+                 label_button="Valider"
+                 [placeholder]="prompt"
+                 [(value)]="address"
+                 (validate)="validate()"
+                 [help]="explain_message">
+      </app-input>
+    </div>
+
+  </div>
+
+
+
+
+  <div style="display: inline-block;" >
+
   </div>
 
 <!--  <button type="button"  mat-raised-button mat-button (click)="connect('google')"-->
@@ -31,21 +55,6 @@
 <!--          *ngIf="showGoogle">-->
 <!--    Via Google-->
 <!--  </button>-->
-
-  <span *ngIf="showGoogle && (showAddress || showEmail)" style="margin: 10px;">
-    ou
-  </span>
-
-  <app-input *ngIf="showAddress || showEmail"
-             style="display: inline-block;min-width: 320px;width:80%;max-width: 600px;"
-             [label]="intro_message"
-             label_button="Valider"
-             [placeholder]="prompt"
-             [(value)]="address"
-             (validate)="validate()"
-             [help]="explain_message">
-  </app-input>
-
 
   <br>
   <app-scanner *ngIf="showWebcam"

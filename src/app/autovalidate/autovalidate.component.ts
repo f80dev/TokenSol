@@ -24,11 +24,10 @@ export class AutovalidateComponent implements OnInit {
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
       this.validator_name=params["validator_name"]
-      this.network.get_operations(params["ope"]).subscribe((ope)=>{
-        this.operation=ope;
-      })
+      this.network.get_operations(params["ope"]).subscribe((ope)=>{this.operation=ope;})
     })
   }
+
 
   on_authent($event: { address:string,strong:boolean,nftchecked:boolean}) {
     if($event.strong){

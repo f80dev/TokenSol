@@ -1,5 +1,5 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import {AfterContentInit, Component, OnInit} from '@angular/core';
+import {AfterContentInit, Component, HostListener, OnInit} from '@angular/core';
 import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
 import {Observable} from 'rxjs';
 import {map,shareReplay } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import {$$, getBrowserName, getParams, showMessage} from "../tools";
 import {OperationService} from "./operation.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {MatSelectChange} from "@angular/material/select";
+import {DeviceService} from "./device.service";
 
 @Component({
   selector: 'app-root',
@@ -35,6 +36,7 @@ export class AppComponent implements AfterContentInit {
   claim:string="";
   visual:string="./assets/forge.jpg";
 
+
   constructor(
     private breakpointObserver: BreakpointObserver,
     public user:UserService,
@@ -44,11 +46,19 @@ export class AppComponent implements AfterContentInit {
     public _location:Location,
     public toast:MatSnackBar,
     public operation:OperationService,
-    public metaboss:MetabossService
+    public metaboss:MetabossService,
+    public device:DeviceService
   ) {
   }
 
+  @HostListener('window:resize', ['$event'])
+  onResize(event:any) {
+    this.device.resize(event.target.innerWidth);
+  }
+
+
   init_form(){
+    setTimeout(()=>{this.showSplash=false;},3000);
     getParams(this.routes).then((params:any)=>{
       if(params.hasOwnProperty("server")){
         this.network_service.server_nfluent=params["server"];
@@ -81,7 +91,6 @@ export class AppComponent implements AfterContentInit {
       else {
         this.toolbar_visible="true";
       }
-      setTimeout(()=>{this.showSplash=false;},3000);
 
     }).catch(()=>{
       debugger

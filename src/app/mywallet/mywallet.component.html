@@ -3,7 +3,7 @@
                style="padding: 10px;width:100%;  text-align: center;">
   <mat-tab [label]="tab_title">
 
-    <table style="display: inline-block;width:fit-content;margin-top: 10px;height:min-content;width:100%;"><tr>
+    <table style="display: inline-block;width:fit-content;margin-top: 10px;height:min-content;"><tr>
       <td>
         <mat-icon (click)="show_elrond_addr()" title="Recevoir directement d'autres NFT" *ngIf="qrcode_addr.length==0" style="cursor: pointer;font-size: x-large;">download</mat-icon>
         <mat-icon (click)="force_refresh()" title="Rafraichir l'écran" style="cursor: pointer;font-size: x-large;">refresh</mat-icon>
@@ -30,6 +30,7 @@
       Utiliser ce QRCode pour recevoir des NFT<br>
       <img [src]="qrcode_addr" style="width: 200px;" [cdkCopyToClipboard]="addr" (click)="qrcode_addr=''">
     </div>
+    <br>
 
     <app-reversebloc *ngFor="let nft of nfts"
                      [image]="nft.visual"
@@ -85,23 +86,23 @@
     </div>
 
     <div *ngIf="showScanner">
-      <br><br>
+      <br>
 <!--      scanner pour assusrer la connexion au nfluent wallet connect-->
-      <app-scanner style="margin-top: 50px;"
-                   (flash)="on_scan($event)">
-      </app-scanner>
 
-      <div *ngIf="!isProd()">
-        <mat-form-field appearance="legacy" style="width: 50%;max-width: 300px;" >
-          <mat-label>Saisissez le code</mat-label>
-          <input matInput type="text" [(ngModel)]="accescode_scan">
-        </mat-form-field>
 
-        <button type="button" mat-raised-button mat-button (click)="on_scan({data:accescode_scan})">
-          Envoyer
-        </button>
+        <app-scanner style="margin-top: 50px;"
+                     (flash)="on_scan($event)">
+        </app-scanner>
+        <br>
 
-      </div>
+        <app-input label="Saisissez le code"
+                   *ngIf="!isProd()"
+                   label_button="Valider"
+                   (validate)="on_scan({data:accescode_scan})"
+                   [(value)]="accescode_scan"
+                   value_type="text">
+        </app-input>
+
 
       <br>
       <button type="button" mat-raised-button mat-button (click)="showScanner=false">
@@ -111,8 +112,6 @@
 
     <app-signature faq="nfluent_wallet" color="black"></app-signature>
   </mat-tab>
-
-
 
 
   <mat-tab label="NFTlive" *ngIf="opes.length>0">

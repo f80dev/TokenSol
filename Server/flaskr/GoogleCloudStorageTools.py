@@ -1,5 +1,7 @@
 import os
 #from google.cloud import storage
+from flaskr.Tools import now
+
 
 class GoogleCloudStorageTools:
   """
@@ -14,14 +16,14 @@ class GoogleCloudStorageTools:
 #    self.bucket.make_public()
 
 
-  # def add(self,data:dict,id=None):
-  #   if id is None: id=data["symbol"]+"_"+str(int(now()))
-  #
-  #   blob = self.bucket.blob(id)
-  #   blob.upload_from_string(dumps(data),content_type="application/json")
-  #   blob.make_public()
-  #
-  #   return {"cid":id,"url":blob.public_url}
+  def add(self,data:dict,id=None):
+    if id is None: id=data["symbol"]+"_"+str(int(now()))
+
+    blob = self.bucket.blob(id)
+    # blob.upload_from_string(dumps(data),content_type="application/json")
+    blob.make_public()
+
+    return {"cid":id,"url":blob.public_url}
 
 
 

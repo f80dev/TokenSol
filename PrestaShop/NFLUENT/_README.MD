@@ -3,8 +3,19 @@
 ##Installation standard sur un serveur UBUNTU
 
   Installation de Ubuntu 22 sur un VPS à 4 coeurs
-  Suivi du processus d'installation décrit ici : https://www.how2shout.com/linux/how-to-install-prestashop-on-ubuntu-22-04-server/
+  Suivi du processus d'installation décrit ici :
+
+    https://www.how2shout.com/linux/how-to-install-prestashop-on-ubuntu-22-04-server/
+
   avec le mots de passe habituel
+
+  il manque dans la procédure ci-dessus, l'ouverture des firewall:
+
+    firewall-cmd --zone=public --permanent --add-service=http
+    firewall-cmd --zone=public --permanent --add-service=https
+
+  Suivre également ce tuto : https://www.howtoforge.com/how-to-install-prestashop-on-centos-8/
+
 
   Puis installation du certificat :
   https://serverspace.io/support/help/how-to-get-lets-encrypt-ssl-on-ubuntu/
@@ -48,9 +59,8 @@ a2ensite prestashop.conf
 a2dissite 000-default.conf
 systemctl restart apache2
 
-firewall-cmd --zone=public --add-port=80/tcp
-firewall-cmd --zone=public --add-port=443/tcp
-
+firewall-cmd --zone=public --permanent --add-service=http
+firewall-cmd --zone=public --permanent --add-service=https
 
 Sécurisation du server
 

@@ -1,6 +1,6 @@
 <div class="mainform" style="text-align: left;">
   <mat-expansion-panel>
-    <mat-expansion-panel-header>Tables</mat-expansion-panel-header>
+    <mat-expansion-panel-header class="color-primary">Tables</mat-expansion-panel-header>
 
     <p>
       Adresse de la base: {{server_config!.Database_Server}}<br>
@@ -9,13 +9,12 @@
 
 
     <mat-accordion>
-      <mat-expansion-panel *ngFor="let tablename of ['nfts','validators','users','histo','mintpool','account_by_emails']">
-        <mat-expansion-panel-header>{{tablename}}</mat-expansion-panel-header>
+      <mat-expansion-panel  *ngFor="let tablename of ['nfts','validators','users','histo','mintpool','account_by_emails']">
+        <mat-expansion-panel-header class="color-accent">{{tablename}}</mat-expansion-panel-header>
         <app-dbtable excludes="attributes"
                    [title]="tablename"
                    [table]="tablename"
-                   [showClear]="true"
-                   class="mat-elevation-z4"></app-dbtable>
+                   [showClear]="true"></app-dbtable>
       </mat-expansion-panel>
     </mat-accordion>
 
@@ -61,14 +60,15 @@
 
     <mat-checkbox [(ngModel)]="debug_mode" (change)="refresh()">Mode débug</mat-checkbox>
     <br>
-    Base de données:
+    Base de données:<br>
     <app-input [(value)]="db_addr" label="Adresse de la base" width="250px"></app-input>
-    <app-input [(value)]="db_login" label="Login" width="120px"></app-input>
-    <app-input [(value)]="db_password" label="Mot de passe" width="120px"></app-input>
+    <app-input [(value)]="db_login" label="Login admin pour la base" width="150px"></app-input>
+    <app-input [(value)]="db_password" label="Mot de passe" width="150px"></app-input>
     <br>
 
 
-    <app-input [(value)]="activity_report" label="Mail de réception du rapport d'activité" width="250px" (valueChange)="refresh()"></app-input>
+    <app-input [(value)]="activity_report" width="300px"
+               label="Mail de réception du rapport d'activité" width="250px" (valueChange)="refresh()"></app-input>
     <br>
 
     <table style="width: 100%;">

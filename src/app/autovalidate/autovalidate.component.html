@@ -1,5 +1,6 @@
 <div class="mainform" style="height: 100vh;">
 <!--
+              L'integration des fonctionnalité de l'authent peut se faire directement dans le code sans passer par un fichier d'operation
                [checknft]="operation.validate.filters.collections"
                [showWalletConnect]="operation.validate.authentification.wallet_connect"
                [showAddress]="operation.validate.authentification.address"
@@ -8,6 +9,7 @@
 -->
   <app-authent (authent)="on_authent($event)"
                size="300px"
+               [directShowQRCode]="true"
                [validator_name]="validator_name"
                *ngIf="operation && operation!.validate && operation!.validate.authentification && operation.validate.filters"
                [operation]="operation.id"

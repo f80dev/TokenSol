@@ -35,7 +35,8 @@
     </div>
 
     <div *ngIf="operation && operation.candymachine && !airdrop">
-      <h2>{{operation.candymachine.messages.question}}</h2>
+      <br><br>
+      <h3>{{operation.candymachine.messages.question}}</h3>
       <app-authent
         [showGoogle]="operation.candymachine.connexion.google"
         [showWebcam]="operation.candymachine.connexion.webcam"

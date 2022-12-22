@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
-import {environment} from "../environments/environment";
-import {$$, CryptoKey} from "../tools";
+import {$$, CryptoKey, isLocal} from "../tools";
 import {WalletConnectProvider} from "@elrondnetwork/erdjs-wallet-connect-provider/out";
 import {NetworkService} from "./network.service";
 import {Collection, Operation} from "../operation";
 import {Subject} from "rxjs";
-
+import {PublicKey} from "@solana/web3.js";
+import {environment} from "../environments/environment";
 
 
 @Injectable({
@@ -32,6 +32,7 @@ export class UserService {
   strong:boolean=false;
   email: string="";
   name:string="";
+  balance: number=0;
 
   constructor(
     private httpClient : HttpClient,
@@ -44,6 +45,7 @@ export class UserService {
   isConnected(strong:boolean=false) {
     return this.connected(strong);
   }
+
 
   login(message="") {
     if(!this.isConnected()){
@@ -66,18 +68,25 @@ export class UserService {
     return new Promise((resolve, reject) => {
       if(addr.length>0){
         this.addr=addr
-        if(addr.indexOf("@")>-1)this.email=addr;
-          this.get_collection().then(()=>{
-            this.httpClient.get(this.network.server_nfluent+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
-              this.profil = r;
-              r.address=addr;
-              this.addr_change.next(addr);
-              resolve(r);
-            },(err)=>{
-              $$("!probleme de récupération des permissions")
-              reject(err);
-            });
+        if(addr.indexOf("@")>-1){
+          this.email=addr;
+        }else{
+          this.network.getBalance(addr,this.network.network).subscribe((r:any)=>{
+            this.balance=r[0].balance;
+          })
+        }
+
+        this.get_collection().then(()=>{
+          this.httpClient.get(this.network.server_nfluent+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
+            this.profil = r;
+            r.address=addr;
+            this.addr_change.next(addr);
+            resolve(r);
+          },(err)=>{
+            $$("!probleme de récupération des permissions")
+            reject(err);
           });
+        });
       }
     });
   }
@@ -99,6 +108,7 @@ export class UserService {
 
   connected(strong:boolean=false) {
     let rc=(this.addr && this.addr.length>0) || this.email.length>0;
+    if(isLocal(environment.appli))this.strong=true;
     if(strong)rc=rc && this.strong;
     return rc;
   }
@@ -174,5 +184,11 @@ export class UserService {
     for(let col of this.collections)
       if(col.id==sel_collection)return col;
     return null;
+  }
+
+  refresh_balance() {
+    return this.network.getBalance(this.addr).subscribe((balance:any)=>{
+      this.balance=balance
+    });
   }
 }

@@ -8,8 +8,20 @@
   <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br>
 
   <div style="width: 300px;display: inline-block;text-align: center;margin-top: 20px;">
-    <app-upload-file (uploaded)="onFileSelected($event)" width="200px" extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels</app-upload-file><br>
+    <app-upload-file (uploaded)="onFileSelected($event)"
+                     width="180px"
+                     extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels
+    </app-upload-file>
+
+    <app-upload-file (uploaded)="batch_import($event)"
+                     width="100px"
+                     extensions=".xlsx,.xls,.csv">
+      Importer
+    </app-upload-file>
+
   </div>
+
+
 
   <mat-form-field style="fontsize:small">
     <mat-label>Plateforme de stockage</mat-label>
