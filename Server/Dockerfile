@@ -56,7 +56,7 @@ RUN export PATH="$HOME/.local/bin:$PATH"
 RUN pip3 -v install Flask
 RUN pip3 -v install Flask-Cors
 RUN pip3 -v install pyyaml
-RUN pip3 install --upgrade pip setuptools wheel
+RUN pip3 -v install --upgrade pip setuptools wheel
 RUN pip3 -v install pyopenssl==22.0.0
 RUN pip3 -v install solana
 RUN pip3 -v install base58
@@ -124,7 +124,7 @@ COPY *.json $APP_HOME
 COPY *.yaml $APP_HOME
 COPY *.html $APP_HOME
 COPY ./flaskr/*.py $APP_HOME/flaskr/
-COPY ./flaskr/static/* $APP_HOME/flaskr/static
+COPY ./flaskr/static/* $APP_HOME/flaskr/static/
 COPY ./Solana/*.py $APP_HOME/Solana/
 COPY ./Polygon/*.py $APP_HOME/Polygon/
 COPY ./Secret/*.py $APP_HOME/Secret/

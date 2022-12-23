@@ -14,7 +14,6 @@ OPERATIONS_DIR="./Operations/"
 CONFIG_DIR="./Configs/"
 STATIC_FOLDER="./flaskr/static/"
 
-
 IPFS_PORT=5001
 IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"
 

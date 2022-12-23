@@ -11,9 +11,8 @@ from flaskr.Tools import log
 
 
 if __name__=="__main__":
-  log("Working directory : "+os.getcwd())
-
   app,scheduler=create_app(sys.argv[1] if len(sys.argv)>1 else "localConfig")
+  log("Version du serveur : "+app.config["VERSION"])
 
   socketio = SocketIO(app,cors_allowed_origins="*")
   log("Initialisation de la websocket")
@@ -33,7 +32,9 @@ if __name__=="__main__":
   debug_mode=app.config["DEBUG"]
   domain_server=app.config["DOMAIN_SERVER"]
 
-  if not "127.0.0.1" in domain_server:
+  log("Working directory : "+os.getcwd())
+
+  if not "127.0.0.1" in domain_server and not "localhost" in domain_server:
     activity_report_sender(app.config,"Démarage du serveur "+app.config["DOMAIN_SERVER"]+" en mode "+("debug" if debug_mode else "prod"))
 
   if "ssl" in sys.argv:

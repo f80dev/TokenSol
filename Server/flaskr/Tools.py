@@ -96,8 +96,8 @@ def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_FOLD
     if exists(directory+name):
       with open(directory+name, 'r', encoding='utf-8') as f: body = f.read()
     else:
-      log("Le mail type "+name+" n'existe pas",raise_exception=True)
-
+      log("Le mail type "+name+" n'existe pas")
+      return None
 
   style="""
         <style>
@@ -171,7 +171,7 @@ def encrypt(text:str,secret_key_filename="./secret_key"):
 
 
 def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename=""):
-  if not is_email(_to):return False
+  if body is None or not is_email(_to):return False
   with smtplib.SMTP(SMTP_SERVER, SMTP_SERVER_PORT,timeout=10) as server:
     server.ehlo()
     server.starttls()

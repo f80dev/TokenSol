@@ -470,7 +470,7 @@ def activity_report_sender(config,event:str="CR d'activité"):
   dest=config["ACTIVITY_REPORT"]
   log(event)
   if not "localhost" in domain_server and not "127.0.0.1" in domain_server:
-    mail=open_html_file(config["STATIC_FOLDER"]+"/mail_activity_report",{
+    mail=open_html_file(config["STATIC_FOLDER"]+"mail_activity_report",{
       "DOMAIN_SERVER":domain_server,
       "DOMAIN_APPLI":domain_appli,
       "event":event

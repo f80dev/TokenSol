@@ -21,6 +21,7 @@ class Config:
   CACHE_DEFAULT_TIMEOUT=300
   ACTIVITY_REPORT="paul.dudule@gmail.com"
   DB_SERVER = MONGO_WEB3_CONNECTION_STRING
+  VERSION="0.1"
 
 
 class prodConfig(Config):
@@ -45,6 +46,7 @@ class devConfig(Config):
   DB_NAME="nfluent_dev"
   DOMAIN_APPLI="https://tokenfactory.nfluent.io"
   DOMAIN_SERVER="https://server.f80lab.com:4242"          #address du serveur ou s'execute flask
+
 
 
 
