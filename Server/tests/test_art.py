@@ -7,7 +7,7 @@ from flaskr.ArtEngine import ArtEngine, Sticker, Layer
 from flaskr.TokenForge import upload_on_platform
 from tests.test_tools import TEMP_TEST_DIR,RESSOURCE_TEST_DIR
 
-PLATFORM_LIST=["github-nfluentdev-tests","server","ipfs","nftstorage","db-server-tokenforge"]
+PLATFORM_LIST=["db-web3-tokenforge","server","infura","nftstorage"] #manque "github-nfluentdev-tests"
 
 IMAGES={
   "backgrounds":[
@@ -124,6 +124,7 @@ def test_collection_with_animated():
 def test_all_platform_with_image(platforms=PLATFORM_LIST):
   img=Sticker(image=IMAGES["stickers"][1])
   for platform in platforms:
+    print("Test de la platform "+platform)
     rc=upload_on_platform(img.toBase64(),platform)
     assert len(rc["url"])>0
     assert len(rc["cid"])>0

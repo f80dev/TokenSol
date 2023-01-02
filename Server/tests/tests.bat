@@ -1,1 +1,2 @@
+cd ..
 pytest --cov -v

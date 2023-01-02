@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --open --live-reload",
+    "start": "ng serve --open",
     "start_debug": "ng serve --open --live-reload --configuration debug",
     "start_intranet": "ng serve --open --live-reload",
     "start_4201": "ng serve --port 4201 --open --live-reload",

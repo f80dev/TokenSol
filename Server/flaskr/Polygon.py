@@ -16,7 +16,8 @@ from web3 import Web3, HTTPProvider
 
 from flaskr.secret import POLYGON_SCAN_API_KEY
 
-POLYGON_KEY_DIR="../Polygon/Keys/"
+POLYGON_DIR="./Polygon/"
+POLYGON_KEY_DIR=POLYGON_DIR+"Keys/"
 install_solc(version='latest')
 
 
@@ -47,8 +48,8 @@ class Polygon (Network):
 
 
   def init_contract_interface(self):
-    src=open("../Polygon/Master/contracts/NFTCollection.sol","r").read()
-    libs=["@openzeppelin=../Polygon/Master/node_modules/@openzeppelin"]
+    src=open(POLYGON_DIR+"Master/contracts/NFTCollection.sol","r").read()
+    libs=["@openzeppelin="+POLYGON_DIR+"Master/node_modules/@openzeppelin"]
     contract_id, contract_interface = compile_source(src,output_values=["abi","bin"],import_remappings=libs).popitem()
     return contract_interface
 
@@ -96,20 +97,31 @@ class Polygon (Network):
     return self.polygon_scan(address,"txlist")
 
 
-  def get_metadata(self,uri):
+  def get_metadata(self,uri,timeout=5):
+    """
+    voir https://docs.opensea.io/docs/metadata-standards
+    :param uri:
+    :param timeout:
+    :return:
+    """
     if uri is None:return None
 
     if not uri in self.metadata_cache:
-      metadata=requests.get(uri,timeout=60000)
-      if metadata.status_code==200:
-        self.metadata_cache[uri]=metadata.json()
-      else:
-        return None
+      try:
+        metadata=requests.get(uri,timeout=timeout)
+        if metadata.status_code==200:
+          self.metadata_cache[uri]=metadata.json()
+          return self.metadata_cache[uri]
+        else:
+          log("Impossible de lire "+uri+", errorcode="+str(metadata.status_code))
+      except:
+        log("Impossible de lire "+uri+" dans le delai")
 
-    return self.metadata_cache[uri]
+    return None
 
 
-  def get_nft(self,addr):
+
+  def get_nft(self,addr,metadata_timeout=5):
     contract_addr=addr.split("-")[0]
     log("Récupération du contract "+self.getExplorer(contract_addr))
 
@@ -119,29 +131,28 @@ class Polygon (Network):
 
     _contract=self.w3.eth.contract(address=self.w3.toChecksumAddress(contract_addr),abi=self.abi)
 
-    metadata=self.get_metadata(_contract.functions.baseTokenURI().call())
-    if not metadata is None:
-      _nft=NFT(name=metadata["name"],
-               description=metadata["description"],
-               visual=metadata["image"],
-               attributes=metadata["attributes"],
-               address=addr,
-               creators=metadata["creators"] if "creators" in metadata else [],
-               marketplace=metadata["marketplace"] if "marketplace" in metadata else {"price":0,"quantity":1},
-               royalties=100
-               )
-      return _nft
-    else:
-      return None
+    metadata=self.get_metadata(_contract.functions.baseTokenURI().call(),timeout=metadata_timeout)
+    _nft=NFT(name=metadata["name"] if metadata else "",
+             description=metadata["description"]  if metadata else "",
+             visual=metadata["image"]  if metadata else "",
+             attributes=metadata["attributes"]  if metadata else "",
+             address=addr,
+             creators=metadata["creators"] if metadata and "creators" in metadata else [],
+             marketplace=metadata["marketplace"] if metadata and "marketplace" in metadata else {"price":0,"quantity":1},
+             royalties=100
+             )
+    return _nft
 
 
-  def get_nfts(self,_user,limit=2000,with_attr=False,offset=0,with_collection=False):
+
+
+  def get_nfts(self,_user,limit=2000,with_attr=False,offset=0,with_collection=False,metadata_timeout=5):
     rc=[]
     _user=self.toAccount(_user)
     if _user:
       nfts=self.polygon_scan(_user.address,"tokennfttx")
       for t in nfts[offset:limit]:
-        _nft=self.get_nft(t["contractAddress"]+"-"+t['tokenID'])
+        _nft=self.get_nft(t["contractAddress"]+"-"+t['tokenID'],metadata_timeout=metadata_timeout)
         _nft.symbol=t["tokenSymbol"]
         _nft.owner=t["to"]
 
@@ -306,7 +317,12 @@ class Polygon (Network):
     return rc
 
   def get_collections(self, addr):
-    return []
+    nfts=self.get_nfts(addr,with_attr=True,with_collection=True,metadata_timeout=1)
+    rc=[]
+    for nft in nfts:
+      if nft.collection!={}:
+        rc.append(nft["collection"])
+    return rc
 
   def toAccount(self, addr):
     for k in self.get_keys(with_account=True):

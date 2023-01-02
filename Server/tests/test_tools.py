@@ -5,8 +5,10 @@ from flaskr import create_app, log
 from flaskr.settings import TEMP_DIR, STATIC_FOLDER
 from flaskr.NFT import NFT
 
+MAIN_POLYGON_ACCOUNT="0xa617546acC33A600f128051455e6aD2a628f4a79"
 MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  # bob
 MAIN_NETWORK = "elrond-devnet"
+NETWORKS=["polygon-devnet","polygon-mainnet","elrond-devnet","elrond-mainnet"]
 MAIN_EMAIL = "paul.dudule@gmail.com"
 MAIN_COLLECTION = "NFLUENTA-af9ddf"
 DB_NETWORK = "db-cloud-test"

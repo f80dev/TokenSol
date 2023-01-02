@@ -40,27 +40,6 @@ class NFT:
                dtCreate:int=0,
                object=None,
                image=None) -> object:
-    if name!="" and visual!="":
-      self.name=name
-      self.description=description
-      self.collection=collection
-
-      if type(attributes)==str:attributes={"value":attributes}
-      if type(attributes)==dict: attributes=[attributes]
-      self.attributes=attributes
-
-      self.symbol=symbol
-      self.visual=visual
-      self.creators=creators
-      self.address=address
-      self.tags=tags
-      self.royalties=royalties
-      self.marketplace=marketplace
-      self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
-      self.dtCreate=dtCreate
-
-    if image:
-      img=Image.open(image)
 
     if not object is None:
       self.name=extract_from_dict(object,["name","title"],"NFT")
@@ -83,6 +62,27 @@ class NFT:
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
       self.tags=object["tags"] if "tags" in object else ""
+    else:
+      self.name=name
+      self.description=description
+      self.collection=collection
+
+      if type(attributes)==str:attributes={"value":attributes}
+      if type(attributes)==dict: attributes=[attributes]
+      self.attributes=attributes
+
+      self.symbol=symbol
+      self.visual=visual
+      self.creators=creators
+      self.address=address
+      self.tags=tags
+      self.royalties=royalties
+      self.marketplace=marketplace
+      self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
+      self.dtCreate=dtCreate
+
+      if image:
+        img=Image.open(image)
 
 
 

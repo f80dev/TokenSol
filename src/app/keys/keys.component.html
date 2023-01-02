@@ -84,7 +84,9 @@
         <button type="button" mat-raised-button mat-button (click)="open_collections(key,'inspire')">
           Inspire
         </button>
-        <button type="button" mat-raised-button mat-button [cdkCopyToClipboard]="user.addr" (click)="open_faucet(key)">
+        <button type="button" mat-raised-button mat-button
+                [cdkCopyToClipboard]="key.pubkey"
+                (click)="open_faucet(key)">
           Recharger
         </button>
       </td>

@@ -13,6 +13,10 @@ class GithubStorage:
     self.repo=repo
     self.branch=branch
     self.login=login
+    try:
+      r = Github(self.token).get_user(self.login).get_repo(self.repo)
+    except:
+      log("Probleme de connexion avec "+self.token+" pour "+self.login + "/"+ self.repo)
 
 
   def add(self,data:dict,id,overwrite=False):

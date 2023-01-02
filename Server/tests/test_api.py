@@ -34,7 +34,7 @@ def test_api_get_collections(test_client, network=MAIN_NETWORK, col_or_account=M
 def test_api_get_collections_for_main_account(test_client, network=MAIN_NETWORK):
 	rc = test_api_get_collections(test_client, network, MAIN_ACCOUNT)
 	assert len(rc) > 0
-	assert "NFLUENTA-af9ddf" in [x["collection"] for x in rc]
+	assert 'TESTCOLF-64ad12' in [x["collection"] for x in rc]
 
 
 
@@ -43,15 +43,20 @@ def test_infos(test_client):
 	assert "Server" in rc
 
 
-def test_keys(test_client, network=MAIN_NETWORK, seuil=1):
-	rc = get_account(test_client, network, 0)
+def test_keys_networks(test_client,networks=NETWORKS):
+	for network in networks:
+		print("Analyse du réseau "+network)
+		test_keys(test_client,network,0,"")
+
+def test_keys(test_client, network=MAIN_NETWORK, seuil=1,filter="bob,carol,dan,eve,frank,grace"):
+	rc = get_account(test_client, network, 0,filter=filter)
 	assert rc is not None, "Aucun compte disponible"
 
-	rc = get_account(test_client, network, seuil=seuil)
+	rc = get_account(test_client, network, seuil=seuil,filter=filter)
 	assert rc != None, "Aucun compte disponible avec un solde > " + str(seuil)
 	assert rc["balance"] >= seuil
 
-	rc = get_account(test_client, network, seuil=1000000000)
+	rc = get_account(test_client, network, seuil=1000000000,filter=filter)
 	assert rc is None, "Le solde ne doit pas fonctionner"
 
 
@@ -62,7 +67,6 @@ def test_create_account_from_email(network=MAIN_NETWORK,email=MAIN_EMAIL):
 	assert len(rc)==4
 	assert len(rc[2].split(" "))>10
 	assert len(rc[3])>20
-
 
 
 def test_nfts_from_collection(test_client, col_id="", network=MAIN_NETWORK):
@@ -91,8 +95,8 @@ def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK):
 	return rc
 
 
-def find_collection_to_mint(test_client, miner):
-	cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT")
+def find_collection_to_mint(test_client, miner,network="elrond-devnet"):
+	cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)
 	if len(cols) > 0:
 		col_id = None
 		for col in cols:
@@ -117,9 +121,13 @@ def mint_from_file(test_client, filename: str = RESSOURCE_TEST_DIR+"image_1.webp
 	return rc
 
 
+def test_mint_polygon(test_client):
+	test_api_mint(test_client,miner=MAIN_POLYGON_ACCOUNT,col_id="",network="polygon-devnet")
+
+
 def test_api_mint(test_client, miner="", col_id=MAIN_COLLECTION, network=MAIN_NETWORK) -> (str, str):
 	if col_id == "":
-		col_id = find_collection_to_mint(test_client, miner)
+		col_id = find_collection_to_mint(test_client, miner,network)
 
 	if miner == "" and not "db-" in network:
 		cols = test_api_get_collections(test_client, network, col_id)

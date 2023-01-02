@@ -18,7 +18,7 @@ from flaskr.secret import GITHUB_TOKEN
 from flaskr.settings import IPFS_SERVER, TEMP_DIR
 
 
-def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_appli="",domain_server="",github_token=GITHUB_TOKEN):
+def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",domain_server="",github_token=GITHUB_TOKEN):
   """
   Charge une image sur une platforme
   :param data:
@@ -69,6 +69,7 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_a
       if not exists(TEMP_DIR+filename):
         img.save(TEMP_DIR+filename)
     else:
+      if "_id" in data: del data["_id"]
       filename="store_"+hashlib.sha256(bytes(json.dumps(data),"utf8")).hexdigest()+".json"
       if not exists(TEMP_DIR+filename):
         with open(TEMP_DIR+filename,"w") as file:
@@ -97,7 +98,7 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},dao=None,domain_a
 
     try:
       github_storage=GithubStorage(repo,branch,github_account,github_token)
-      rc= github_storage.add(data,id,overwrite=True)
+      rc=github_storage.add(data,id,overwrite=True)
     except:
       log("Impossible de pousser le contenu. Pour obtenir un token valide voir https://github.com/settings/tokens et accorder les propriétés admin:org et repo")
 
