@@ -1,6 +1,6 @@
 from json import dumps, dump
 from github import Github
-from flaskr.Tools import log
+from flaskr.Tools import log, get_filename_from_content
 
 
 class GithubStorage:
@@ -23,7 +23,7 @@ class GithubStorage:
     r = Github(self.token).get_user(self.login).get_repo(self.repo)
     content=dumps(data)
 
-    if id is None or len(id)==0:id=hex(hash(content))
+    if id is None or len(id)==0:id=get_filename_from_content(content)
     if "/" in id:id=id[id.rindex("/")+1:]
 
     url="https://raw.githubusercontent.com/"+self.login+"/"+self.repo+"/"+self.branch+"/"+id

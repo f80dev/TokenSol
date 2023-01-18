@@ -2,7 +2,7 @@
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
-    <div class="mat-display-1 color-primary" *ngIf="title.length>0">{{title}}</div>
+    <div class="mat-headline-4 color-primary" *ngIf="title.length>0">{{title}}</div>
 
     <img [src]="nft?.visual" *ngIf="nft?.visual"
          style="max-width: 200px;width:80%;margin-bottom: 10px;"
@@ -10,9 +10,10 @@
     <br>
 
     <div *ngIf="!selfWalletConnexion">
-      <app-input style="width:50%;max-width: 400px;" label_button="Envoyer"
+      <app-input style="width:50%;max-width: 300px;" label_button="Envoyer"
+                 (valueChange)="address=$event" [value]="address"
                  [label]="prompt" (validate)="validate_input_address()"
-                 value_type="text" [(value)]="address"></app-input>
+                 value_type="text" ></app-input>
 
 
       <button type="button" mat-raised-button mat-button
@@ -35,7 +36,7 @@
 
     <!--    gestion de la facture -->
     <app-input *ngIf="ope?.payment?.billing && nft.marketplace && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1"
-               [(ngModel)]="billing_address"
+               [value]="billing_address" (valueChange)="billing_address=$event"
                value_type="text"
                label="Indiquez une adresse mail pour recevoir une facture"
                help="Une facture vous seras adressée"></app-input>
@@ -81,7 +82,7 @@
                  (authent)="valide($event)"
                  [prompt]="prompt"
                  (cancel)="cancel()"
-                 style="max-height: 300px;">
+                 style="max-height: 300px;max-width: 350px;">
     </app-authent>
 
 

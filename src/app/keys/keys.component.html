@@ -1,43 +1,38 @@
 <div class="mainform">
-  <div class="mat-display-3 color-primary">Gestion des clés hébergées</div>
-  <mat-form-field appearance="fill" style="max-width: 320px">
-    <mat-label>Coller ici votre clé privée</mat-label>
-    <input matInput type="text" maxlength="200" [(ngModel)]="privateKey" >
-    <mat-hint>Plusieurs formats sont acceptés</mat-hint>
-  </mat-form-field>
+  <div class="mat-headline-2 color-primary">Gestion des clés hébergées</div>
 
-  <mat-form-field appearance="fill" style="max-width: 320px">
-    <mat-label>Donner un nom</mat-label>
-    <input matInput type="text" maxlength="200" [(ngModel)]="name" >
-    <mat-hint>Plusieurs formats sont acceptés</mat-hint>
-  </mat-form-field>
+  <div style="display: flex;align-items: center;justify-content: center;flex-wrap: wrap;">
+    <app-input label="Coller ici votre clé privée" [value]="privateKey" help="Plusieurs formats sont acceptés" maxlength="200"></app-input>
+    <app-input label="Donner un nom" [value]="name" help="Nom court" maxlength="200"></app-input>
 
-  <button
-    type="button" aria-label="Ajouter" mat-raised-button
-    [disabled]="name=='' || privateKey==''"
-    (click)="add_key()">
-    Ajouter
-  </button>
+    <button
+            type="button" aria-label="Ajouter" mat-raised-button
+            [disabled]="name=='' || privateKey==''"
+            (click)="add_key()">
+      Ajouter
+    </button>
 
-  <button
-    type="button" aria-label="Ajouter" mat-raised-button
-    [disabled]="name==''"
-    (click)="new_key()">
-    Nouveau wallet
-  </button>
+    <button
+            type="button" aria-label="Ajouter" mat-raised-button
+            [disabled]="name==''"
+            (click)="new_key()">
+      Nouveau wallet
+    </button>
 
-  <button
-    type="button" aria-label="Ajouter" mat-raised-button
-    (click)="open_elrond_wallet()">
-    Wallet Elrond
-  </button>
+    <button
+            type="button" aria-label="Ajouter" mat-raised-button
+            (click)="open_elrond_wallet()">
+      Wallet Elrond
+    </button>
 
-  <app-upload-file extensions=".key,.txt"
-                   style="margin:10px;"
-                   (uploaded)="onuploaded_key_file($event)">Charger les fichiers de clé
-  </app-upload-file>
+    <app-upload-file extensions=".key,.txt"
+                     style="margin:10px;"
+                     (uploaded)="onuploaded_key_file($event)">Charger les fichiers de clé
+    </app-upload-file>
 
-  <br><br>
+  </div>
+
+  <br>
   <h2>
     Liste des clés disponibles sur le serveur pour le {{network.network}}
     <mat-icon (click)="refresh()">refresh</mat-icon>
@@ -50,33 +45,33 @@
       <th>Alias</th>
       <th>Public Key</th>
       <th>QRCode</th>
-      <th></th>
+      <th>Commandes</th>
       <th></th>
       <th>Solde</th>
     </tr>
-    <tr *ngFor="let key of metaboss.keys">
+    <tr *ngFor="let key of network.keys">
       <td>
         <a [href]="key.explorer" target="_blank"><strong>{{key.name}}</strong></a>
       </td>
       <td style="font-size: small;">
-        <a [href]="key.explorer">{{key.pubkey.substring(0,5)+' ... '+key.pubkey.substring(key.pubkey.length-5)}}</a>
-        &nbsp;<mat-icon [cdkCopyToClipboard]="key.pubkey" style="cursor: copy;font-size: small;display: inline;">content_copy</mat-icon>
+        <a [href]="key.explorer">{{key.address.substring(0,5)+' ... '+key.address.substring(key.address.length-5)}}</a>
+        &nbsp;<mat-icon [cdkCopyToClipboard]="key.address" style="cursor: copy;font-size: small;display: inline;">content_copy</mat-icon>
       </td>
       <td>
-        <img *ngIf="key.qrcode!.length>0" [src]="key.qrcode" style="width: 100px;cursor: pointer;" title="cliquer pour copier l'adresse" [cdkCopyToClipboard]="key.pubkey">
+        <img *ngIf="key.qrcode!.length>0" [src]="key.qrcode" style="width: 100px;cursor: pointer;" title="cliquer pour copier l'adresse" [cdkCopyToClipboard]="key.address">
       </td>
-      <td>
-        <button type="button" mat-raised-button mat-button (click)="del_key(key.name)">
-          Supprimer
+      <td style="display: flex;flex-wrap: wrap;justify-content: center;">
+        <button mat-icon-button (click)="del_key(key.name)" title="supprimer">
+          <mat-icon>delete</mat-icon>
         </button>
-        <button type="button" mat-raised-button mat-button (click)="encrypt(key)">
-          Encrypter
+        <button mat-icon-button  (click)="encrypt(key)" title="Encrypter">
+          <mat-icon>key</mat-icon>
         </button>
         <button type="button" mat-raised-button mat-button (click)="open_wallet(key)">
           Wallet interne
         </button>
-        <button type="button" mat-raised-button mat-button (click)="open_extra_wallet(key)">
-          Wallet Nfluent
+        <button type="button" mat-raised-button mat-button (click)="open_lazy_wallet(key)">
+          Lazy
         </button>
         <button type="button" mat-raised-button mat-button (click)="open_collections(key,'nfluent')">
           Collections
@@ -85,14 +80,14 @@
           Inspire
         </button>
         <button type="button" mat-raised-button mat-button
-                [cdkCopyToClipboard]="key.pubkey"
+                [cdkCopyToClipboard]="key.address"
                 (click)="open_faucet(key)">
           Recharger
         </button>
       </td>
       <td></td>
       <td>
-        {{key.balance}} {{key.unity}}
+        <span *ngIf="key.balance">{{key.balance/1e18 | number}} {{key.unity}}</span>
       </td>
     </tr>
   </table>

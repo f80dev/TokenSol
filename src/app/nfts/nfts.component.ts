@@ -3,10 +3,8 @@ import {NetworkService} from "../network.service";
 import {getExplorer, showError, showMessage} from "../../tools";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
-import {MetabossService} from "../metaboss.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Creator, NFT} from "../../nft";
-
 
 @Component({
   selector: 'app-nfts',
@@ -24,7 +22,6 @@ export class NftsComponent implements OnInit {
     public network:NetworkService,
     public dialog:MatDialog,
     public toast:MatSnackBar,
-    public metaboss:MetabossService
   ) {}
 
 
@@ -95,11 +92,14 @@ export class NftsComponent implements OnInit {
       showMessage(this,"Ce NFT n'est plus modifiable");
       return;
     }
-    this.metaboss.burn(nft.address,this.network.network).then(success=>{
-      if(success)this.onrefresh.emit();
-    }).catch(err => {
-      showError(this,err)
-    })
+
+      this.network.burn(nft.address, this.user!, this.network.network).then(success=>{
+        if(success)this.onrefresh.emit();
+      }).catch(err => {
+        showError(this,err)
+      })
+
+
   }
 
 
@@ -111,7 +111,7 @@ export class NftsComponent implements OnInit {
       return;
     }
 
-    // if(nft.metadataOnchain?.updateAuthority!=this.metaboss.admin_key?.pubkey){
+    // if(nft.metadataOnchain?.updateAuthority!=this.network.admin_key?.address){
     //   showMessage(this,"Cette signature ne permet pas la mise a jour du NFT");
     //   return;
     // }
@@ -124,12 +124,13 @@ export class NftsComponent implements OnInit {
         }
       }
         this.network.wait("Modification en cours");
-        this.metaboss.update_obj(nft.address,nft.metadataOffchain,this.network.network).then(success=>{
-          this.network.wait("");
-          showMessage(this,"Modification effectuée, un délai peut être nécéssaire avant validation par la blockchain");
-        }).catch((err)=>{
-          showMessage(this,err);
-        })
+        //TODO a retablir
+        // this.network.update_obj(nft.address,nft.metadataOffchain,this.network.network).then(success=>{
+        //   this.network.wait("");
+        //   showMessage(this,"Modification effectuée, un délai peut être nécéssaire avant validation par la blockchain");
+        // }).catch((err)=>{
+        //   showMessage(this,err);
+        // })
       })
   }
 
@@ -139,19 +140,19 @@ export class NftsComponent implements OnInit {
 
   use_token(nft:any){
     this.network.wait("Utilisation en cours");
-    this.metaboss.use(nft.address,this.network.network).then(()=>{
-      showMessage(this,nft.metadataOnchain.data.name+" utilisé. Mise a jour de la blockchain en cours");
-      this.network.wait("");
-    });
+    // this.network.use(nft.address,this.network.network).then(()=>{
+    //   showMessage(this,nft.metadataOnchain.data.name+" utilisé. Mise a jour de la blockchain en cours");
+    //   this.network.wait("");
+    // });
   }
 
   sign_token(nft: any,creator:Creator) {
     this.network.wait("Signature en cours");
-    this.metaboss.sign(nft.address,creator.address,this.network.network).then(()=>{
-      showMessage(this,nft.metadataOnchain.data.name+" signé. Mise a jour de la blockchain en cours");
-      this.network.wait("");
-      setTimeout(()=>{this.onrefresh.emit();},4000);
-    });
+    // this.network.sign(nft.address,creator.address,this.network.network).then(()=>{
+    //   showMessage(this,nft.metadataOnchain.data.name+" signé. Mise a jour de la blockchain en cours");
+    //   this.network.wait("");
+    //   setTimeout(()=>{this.onrefresh.emit();},4000);
+    // });
   }
 
 

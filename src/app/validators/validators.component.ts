@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
-import {Operation} from "../../operation";
-import {showMessage} from "../../tools";
+import {Connexion, Operation} from "../../operation";
+import {setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {environment} from "../../environments/environment";
 import {Validator} from "../../nft";
+import {Router} from "@angular/router";
+import {_prompt} from "../prompt/prompt.component";
+import {MatDialog} from "@angular/material/dialog";
+import {OperationService} from "../operation.service";
 
 
 @Component({
@@ -18,7 +21,10 @@ export class ValidatorsComponent implements OnInit {
 
   constructor(
     public network:NetworkService,
-    public toast:MatSnackBar
+    public operation:OperationService,
+    public toast:MatSnackBar,
+    public router:Router,
+    public dialog:MatDialog
   ) { }
 
 
@@ -73,4 +79,26 @@ export class ValidatorsComponent implements OnInit {
 
       })
   }
+
+    receive_nft(validator:any) {
+      this.network.get_nfts_from_collection(validator.ask,this.network.network).subscribe((result)=>{
+        let nft=result.nfts[0];
+        let param=setParams({
+          token:nft,
+          section:"store"
+        })
+        this.router.navigate(["dm"],{queryParams:{param:param}});
+      })
+
+    }
+
+    add_validator() {
+      _prompt(this,"Nom du validateur","fictif").then((rep)=>{
+        if(this.operation.sel_ope){
+          open("./autovalidate?validator_name="+rep+"&ope="+this.operation.sel_ope.id,"_blank");
+          setTimeout(()=>{this.refresh();},3000);
+        }
+      })
+
+    }
 }

@@ -61,10 +61,7 @@ export class CollectionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.routes.queryParams.subscribe((params:any)=>{
-      if(params.hasOwnProperty("owner")){
-        this.user.addr=params["owner"]
-        this.user.init(this.user.addr);
-      }
+      if(params.hasOwnProperty("owner"))this.user.init(params["owner"]);
     })
 
     this.user.addr_change.subscribe((addr)=>{
@@ -75,23 +72,28 @@ export class CollectionsComponent implements OnInit {
       this.refresh(this.user.addr);
     })
 
-    if(this.user.addr)this.refresh();
+    this.refresh(this.user.addr);
   }
 
 
 
-  refresh(addr=""){
+  refresh(addr:string){
     this.network.wait("Récupération des collections");
     this._location.replaceState("./collections","owner="+addr);
     this.network.get_collections(addr,this.network.network,true).subscribe((r:any)=>{
       this.network.wait();
       this.user.collections=[];
       for(let col of r){
-        for(let r of col.roles){
-          delete r.roles;
+        if(col.roles){
+          for(let r of col.roles){
+            delete r.roles;
+          }
         }
         this.user.collections.push(col);
       }
+    },(error:any)=>{
+      this.network.wait();
+      showError(this,error);
     })
   }
 

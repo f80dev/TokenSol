@@ -14,9 +14,10 @@ class Validator:
   operation={}
   nfts=[]
 
-  def __init__(self,id=""):
-    self.id=id if len(id)>0 else "validator_"+now("hex")
-    self.dao.add_validator(id)
+  def __init__(self,id=None,operation_or_collection=""):
+    if not id:id="validator_"+now("hex")
+    self.id=id
+    self.dao.add_validator(id,operation_or_collection)
 
 
 
@@ -84,7 +85,8 @@ def destroy():
 
 
 if __name__ == '__main__':
-  validator=Validator(argv[1])
+  validator=Validator()
+  validator
   validator.get_nfts()
 
   scheduler.add_job(func=validator.get_nfts, trigger="interval", seconds=20)      #Récupération de l'ensemble des NFT à fréquence régulière

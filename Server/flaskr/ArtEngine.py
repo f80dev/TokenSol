@@ -21,7 +21,9 @@ from svglib.svglib import svg2rlg
 
 from flaskr.settings import TEMP_DIR
 from flaskr.TokenForge import upload_on_platform
-from flaskr.Tools import now, log, get_fonts, normalize, extract_image_from_string, convert_image_to_animated, merge_animated_image
+from flaskr.Tools import now, log, get_fonts, normalize, extract_image_from_string, convert_image_to_animated, \
+  merge_animated_image, get_filename_from_content, save_svg
+
 
 class Element():
   name:str=""
@@ -197,16 +199,8 @@ class Sticker(Element):
 
 
   def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,prefix_name="svg"):
-    svg_code=self.text["text"]
-    svg_code="<svg"+svg_code.split("<svg")[1]
-    if dictionnary!={}:
-      for k in dictionnary.keys():
-        svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
 
-    filename=prefix_name+"_"+hex(hash(svg_code))+".svg"
-    with open(TEMP_DIR+filename,"w",encoding="utf8") as file:
-      file.writelines(svg_code)
-    file.close()
+    filename,svg_code=save_svg(svg_code=self.text["text"],dir=TEMP_DIR,dictionnary=dictionnary)
 
     self.text={"text":svg_code}
 
@@ -227,7 +221,6 @@ class Sticker(Element):
       self.text["dimension"]=(self.image.width,self.image.height)
     else:
       self.text["dimension"]=self.extract_dimension_from_svg(svg_code)
-
 
       self.image=filename
 

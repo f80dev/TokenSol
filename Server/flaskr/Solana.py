@@ -162,7 +162,7 @@ class Solana:
         key={
           "name":f.replace(".json",""),
           "explorer":self.getExplorer(pubkey),
-          "pubkey":pubkey,
+          "address":pubkey,
           "qrcode":get_qrcode(pubkey) if with_qrcode else "",
           "unity":"SOL"
         }
@@ -174,7 +174,7 @@ class Solana:
           key["privatekey"]=str(l)
 
         if with_balance:
-          key["balance"]=self.balance(key["pubkey"])
+          key["balance"]=self.balance(key["address"])
         else:
           key["balance"]=-1
 
@@ -185,7 +185,7 @@ class Solana:
 
   def find_json_from_address(self,addr:str):
     for k in self.get_keys():
-      if k["pubkey"]==addr:
+      if k["address"]==addr:
         return SOLANA_KEY_DIR+k["name"]+".json"
     return addr
 
@@ -199,7 +199,7 @@ class Solana:
       return bytes(rc)[32:]
     return None
 
-  def find_address_from_json(self,name:str,field="pubkey",dir=SOLANA_KEY_DIR):
+  def find_address_from_json(self,name:str,field="address",dir=SOLANA_KEY_DIR):
     name=name.replace(SOLANA_KEY_DIR,"").replace(".json","")
     if len(name)>40:return name
     for k in self.get_keys(dir=dir):
@@ -374,7 +374,7 @@ class Solana:
 
     return mnemonic,pubkey,privkey,str(integers_private_key)
 
-  def getExplorer(self, addr,type="account"):
+  def getExplorer(self, addr="",type="account") -> str:
     return "https://solscan.io/"+type+"/"+addr+"?cluster="+self.network
 
   def get_keypair(self,addr):

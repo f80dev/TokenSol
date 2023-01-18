@@ -7,7 +7,6 @@ import {MatSnackBarModule} from "@angular/material/snack-bar";
 import {RouterTestingModule} from "@angular/router/testing";
 import {AliasPipe} from "../alias.pipe";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
-import {commit} from "ipfs-core/types/src/version";
 
 describe('CollectionsComponent', () => {
   let component: CollectionsComponent;

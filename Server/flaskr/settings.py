@@ -15,7 +15,8 @@ CONFIG_DIR="./Configs/"
 STATIC_FOLDER="./flaskr/static/"
 
 IPFS_PORT=5001
-IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"
+#IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"   #
+IPFS_SERVER="/ip4/173.249.41.158/tcp/"+str(IPFS_PORT)+"/http"   #
 
 FTX_API_KEY="GN5PIvejHZ0h2BXDmXziybR5XW4fdSrzRFa0R2Fw"
 FTX_API_SECRET="Rge4X3p8KtV3ZJvd0yQXSCqIRiWZDeLEXTLO6O_s"
@@ -33,3 +34,6 @@ IMAP_SERVER="imap.ionos.fr"
 #Localisation de la base de donnée général du système, notamment pour les pool de mining
 DBSERVER_SYSTEM="server"
 DBNAME_SYSTEM="tokenforge"
+
+MAIL_NEW_ACCOUNT="mail_new_account"
+MAIL_EXISTING_ACCOUNT="mail_existing_account"

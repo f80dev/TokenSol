@@ -67,7 +67,9 @@ export class MinerpoolComponent implements OnInit {
       if(all || (ask.dtWork && ask.dtWork>0)){
         this.network.delete_ask(ask.id).subscribe(()=>{
           i=i-1;
-          if((i==0 && all) || (i>0 && !all))this.refresh();
+          if((i==0 && all) || (i>0 && !all)){
+            this.refresh();
+          }
         });
       }
     }

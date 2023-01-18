@@ -10,7 +10,7 @@ from flaskr.GitHubStorage import GithubStorage
 from flaskr.dao import DAO
 
 from flaskr.GoogleCloudStorageTools import GoogleCloudStorageTools
-from flaskr.Tools import normalize, log, extract_from_dict
+from flaskr.Tools import normalize, log, extract_from_dict, get_filename_from_content
 from flaskr.infura import Infura
 from flaskr.ipfs import IPFS
 from flaskr.nftstorage import NFTStorage
@@ -38,6 +38,18 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",d
       sticker=Sticker(cid,data["content"],ext=ext)
 
   """
+  rc=None
+
+  b=None
+  if type(data)==str:
+    b=base64.b64decode(data.split("base64,")[1])
+    data={"content":data,"type":"webp"}
+  else:
+    if "content" in data:
+      if data["content"].startswith("data:"):
+        b=base64.b64decode(data["content"].split("base64,")[1])
+      else:
+        b=bytes(data["content"],"utf8")
 
   if platform=="ipfs":
     ipfs=IPFS(IPFS_SERVER)
@@ -51,26 +63,26 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",d
 
   if platform.startswith("db-"):
     cid=DAO(network=platform).add_data(data)
-    rc={"cid":cid,"url":domain_appli+"/api/json/"+cid}
+    rc={"cid":cid,"url":domain_appli+"/api/json/"+cid,"hash":hash}
 
   if platform=="server" or platform.startswith("nfluent"):
-    b=None
-    if type(data)==str:
-      b=base64.b64decode(data.split("base64,")[1])
-    else:
-      if "content" in data:
-        b=base64.b64decode(data["content"].split("base64,")[1])
-
     if b:
-      img=Image.open(BytesIO(b))
-      filename=extract_from_dict(data,"filename","")
-      if filename=="":filename="store_"+hashlib.sha256(b).hexdigest()+"."+img.format.lower()
+      filename=get_filename_from_content(data["content"],"store",data["type"])
+      with open(TEMP_DIR+filename,"wb") as file:
+        file.write(b)
+      return {"cid":filename,"url":domain_server+"/api/images/"+filename}
+      # else:
+      #   img=Image.open(BytesIO(b))
+      #   filename=extract_from_dict(data,"filename","")
+      #   if filename is None or filename=="":filename=get_filename_from_content(b,"store",img.format.lower())
+      #
+      #   if not exists(TEMP_DIR+filename):
+      #     img.save(TEMP_DIR+filename,save_all=True)
 
-      if not exists(TEMP_DIR+filename):
-        img.save(TEMP_DIR+filename)
     else:
+
       if "_id" in data: del data["_id"]
-      filename="store_"+hashlib.sha256(bytes(json.dumps(data),"utf8")).hexdigest()+".json"
+      filename=get_filename_from_content(json.dumps(data),"store","json")
       if not exists(TEMP_DIR+filename):
         with open(TEMP_DIR+filename,"w") as file:
           json.dump(data,file)

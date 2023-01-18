@@ -119,4 +119,18 @@ export class DispenserComponent implements OnInit {
     }
 
   }
+
+    get_all_nfts(field_separator="\t",line_separator="\n") {
+        let rc:string="Address;Name;Collection;Destinataire"+line_separator;
+        for(let nft of this.nfts){
+          rc=rc+nft.address+";"+nft.name+";"+nft.collection?.id+line_separator;
+        }
+        rc=rc.replace(/\;/gi,field_separator)
+        this.clipboardService.copy(rc);
+        showMessage(this,"L'ensemble des NFTs sont dans votre presse-papier. Vous pouvez utiliser un fichier excel pour les envoyer en masse")
+    }
+
+  on_upload($event: any) {
+    debugger
+  }
 }

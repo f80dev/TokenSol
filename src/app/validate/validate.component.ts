@@ -92,7 +92,7 @@ export class ValidateComponent implements OnInit {
   update_token(address:string){
     if(address.length==0 || this.operation!.validate==null)return;
 
-    let addr=this.alias.transform(address,"pubkey");
+    let addr=this.alias.transform(address,"address");
     this.message="Recherche des NFTs";
 
     let filters=this.operation!.validate.filters;

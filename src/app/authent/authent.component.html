@@ -7,39 +7,47 @@
   </div>
   <br>
 
-  <mat-form-field appearance="fill" style="width:300px;font-size: large;" *ngIf="showAccesCode">
-    <mat-label>Votre code d'accès</mat-label>
-    <input matInput type="text" maxlength="8" [(ngModel)]="access_code" (ngModelChange)="connect('code')">
-    <mat-hint>Ce code se trouve dans le mail reçu à la création de votre wallet</mat-hint>
-  </mat-form-field>
+  <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
 
-  <mat-form-field appearance="fill" style="width:300px;font-size: medium;" *ngIf="showPrivateKey">
-    <mat-label>Votre phrase secrete</mat-label>
-    <textarea matInput [(ngModel)]="private_key" (ngModelChange)="connect('private_key')"></textarea>
-    <mat-hint>Cette phrase vous a été envoyé dans le mail de création</mat-hint>
-  </mat-form-field>
+    <app-input *ngIf="showAccesCode"
+               [value]="access_code"
+               (valueChange)="access_code=$event"
+               (validate)="connect('code')" label_button="Valider"
+               help="Ce code se trouve dans le mail reçu à la création de votre wallet"
+               label="Votre code d'accès">
+    </app-input>
+    <app-input *ngIf="showPrivateKey"
+               (valueChange)="private_key=$event" label_button="Valider"
+               [value]="private_key" (validate)="connect('private_key')"
+               help="Cette phrase vous a été envoyé dans le mail de création"
+               label="Votre phrase secrete">
+    </app-input>
+
+  </div>
+
+
   <br>
 
-  <div style="display: flex;flex-wrap: wrap;width:100%;justify-content: center;">
-    <div *ngIf="showGoogle" style="text-align: right;height: 100px;margin-left:10px;">
-      <asl-google-signin-button  type="standard" size="medium"
-                                 style="display: inline-block;margin-top:20%;"
+  <div style="display: flex;flex-wrap: wrap;width:100%;justify-content: center;align-items: center;">
+
+      <asl-google-signin-button  *ngIf="showGoogle"  type="standard" size="medium"
+                                 style="display: inline-block;"
                                  title="Authentification simplifiée pour les utisateurs de gmail">
       </asl-google-signin-button>
-    </div>
 
-    <div style="text-align: left;width: fit-content;">
+
+
       <app-input *ngIf="showAddress || showEmail"
                  style="display: inline-block;min-width: 320px;width:90%;max-width: 600px;text-align: center;"
                  width="350px"
                  [label]="intro_message"
                  label_button="Valider"
                  [placeholder]="prompt"
-                 [(value)]="address"
-                 (validate)="validate()"
+                 [value]="address" (valueChange)="address=$event"
+                 (validate)="validate($event)"
                  [help]="explain_message">
       </app-input>
-    </div>
+
 
   </div>
 

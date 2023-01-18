@@ -1,27 +1,40 @@
-<input #csvInput [hidden]="true"
-       type="file" onclick="this.value=null"
-       [multiple]="true"
-       [style.width]="width"
-       (change)="import($event)"
-       [accept]="extensions"/>
 
-<button mat-button mat-icon-button *ngIf="icon.length>0" style="width: fit-content" (click)="csvInput.click()">
-  <mat-icon>{{icon}}</mat-icon>
-</button>
+<div appFileDragNDrop
+     (filesChangeEmiter)="import($event)" style="display: inline-block;border: none;">
 
-<button mat-raised-button
-        mat-button style="display: inline-block;"
-        [style.width]="width"
-        *ngIf="icon.length==0"
-        [title]="title"
-        (click)="csvInput.click()">
-  <ng-content></ng-content>
-</button>
+  <input #csvInput
+         type="file"
+         style="display: none"
+         onclick="this.value=null"
+         [multiple]="true"
+         [style.width]="width"
+         (change)="import($event)"
+         [accept]="extensions"/>
 
-<button mat-raised-button
-        *ngIf="show_cancel"
-        mat-button
-        class="app-button"
-        (click)="cancel()">
-  Annuler
-</button>
+  <button mat-icon-button
+          *ngIf="icon.length>0"
+          style="width: fit-content"
+          (click)="csvInput.click()">
+    <mat-icon>{{icon}}</mat-icon>
+  </button>
+
+  <button mat-raised-button
+          mat-button style="display: inline-block;"
+          [style.width]="width"
+          *ngIf="icon.length==0"
+          [title]="title"
+          (click)="csvInput.click()">
+    <ng-content></ng-content>
+  </button>
+
+  <button mat-raised-button
+          *ngIf="show_cancel"
+          mat-button
+          class="app-button"
+          (click)="cancel()">
+    Annuler
+  </button>
+
+
+</div>
+

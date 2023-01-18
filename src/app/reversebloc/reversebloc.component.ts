@@ -18,9 +18,11 @@ export class ReverseblocComponent implements OnInit {
   @Input() reverse=false;
 
   @Output() onreverse: EventEmitter<any>=new EventEmitter();
-  @Input() fontsize="large";
+  @Input() fontsize="";
   @Input() color="white";
   @Input() title="";
+  @Input() icon="";
+  @Input() border_color="transparent";
 
 
 

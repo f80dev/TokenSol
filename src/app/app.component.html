@@ -3,100 +3,86 @@
             [image]="visual"
             [description]="claim"></app-splash>
 
+<mat-toolbar class="mat-body-2" color="primary" *ngIf="toolbar_visible=='true' && !showSplash">
+
+  <mat-icon (click)="drawer!.toggle()" *ngIf="isHandset$ | async">menu</mat-icon>
+
+  <div *ngIf="!(isHandset$ | async)">
+      {{title}}<br>
+      <small>v{{version}}</small>
+  </div>
+
+  <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-headline-5">
+    <mat-spinner *ngIf="!network_service.waiting.startsWith('!')" style="display: inline-block;" color="warn" diameter="20"></mat-spinner>
+    <mat-icon *ngIf="network_service.waiting.startsWith('!')">danger</mat-icon>
+    &nbsp;{{network_service.waiting}}
+  </div>
+
+  <span class="spacer"></span>
+
+  <div style="width: 90%;max-width:600px;display: flex;justify-content:flex-end;align-content: center;">
+
+    <app-input [value]="selected_operation" color="white"
+               [options]="operation.opes" value_type="list"
+               (valueChange)="refresh_ope($event)"></app-input>
+
+    <app-input [value]="sel_network"
+               [options]="networks"
+               value_type="list" color="white"
+               (valueChange)="update_network($event)"></app-input>
+
+    <app-input value_type="list" color="white"
+               [options]="network_service.keys" value_field="address"
+               [value]="sel_addr"
+               (valueChange)="set_key($event)">
+    </app-input>
+
+    <button mat-icon-button
+            *ngIf="!(isHandset$ | async)"
+            title="Copier l'adresse publique"
+            [cdkCopyToClipboard]="user.addr"
+            (click)="informe_copy()">
+      <mat-icon style="font-size: x-large;">content_copy</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="open_wallet()" *ngIf="!(isHandset$ | async)">
+      <mat-icon style="font-size: x-large;">local_atm</mat-icon>
+    </button>
+
+  </div>
+
+</mat-toolbar>
+
 <mat-sidenav-container class="sidenav-container" *ngIf="!showSplash">
-  <mat-sidenav #drawer class="sidenav sidemenu" fixedInViewport
+  <mat-sidenav #drawer class="sidenav sidemenu"
                [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
                [mode]="(isHandset$ | async) ? 'over' : 'side'"
                [opened]="(isHandset$ | async) === false && toolbar_visible=='true'">
 
-    <mat-toolbar class="mat-body-2" color="primary">
-      <div style="line-height: 90%;font-size: medium;" *ngIf="!user.connected()">
-        {{title}}<br>
-        <small>v{{version}}</small>
-      </div>
-
-      <div *ngIf="user.connected()" style="font-size: small">
-        {{user.addr | alias}}
-        {{user.email}}
-      </div>
-    </mat-toolbar>
-
-    <mat-nav-list>
-      <a mat-list-item [routerLink]="'creator'">Générateur de NFTs</a>
-      <a mat-list-item [routerLink]="'collections'">Gestion des collections</a>
-      <a mat-list-item [routerLink]="'keys'">Gestion des clés</a>
-      <a mat-list-item [routerLink]="'mint'">Miner</a>
-      <a mat-list-item [routerLink]="'build'">Gestion des opérations</a>
-      <a mat-list-item [routerLink]="'analytics'">Analyse</a>
-      <a mat-list-item [routerLink]="'manage'">Gestion des NFTs</a>
-      <a mat-list-item [routerLink]="'pool'">Pool de minage</a>
-      <a mat-list-item [routerLink]="'validators'">Validateurs</a>
-      <a mat-list-item [routerLink]="'wallet'">Mes NFTs</a>
-      <a mat-list-item [routerLink]="'admin'">Administrateur</a>
-      <a mat-list-item [routerLink]="'help'">Aide</a>
-      <a mat-list-item [routerLink]="'faqs'">Questions Fréquentes</a>
-      <a mat-list-item [routerLink]="'about'">A propros</a>
+    <mat-nav-list (mouseup)="close_menu()" class="mat-headline-6" >
+      <a mat-list-item [routerLink]="'creator'"><span class="item-menu">Générateur de NFTs</span></a>
+      <a mat-list-item [routerLink]="'collections'"><span class="item-menu">Gestion des collections</span></a>
+      <a mat-list-item [routerLink]="'keys'"><span class="item-menu">Gestion des clés</span></a>
+      <a mat-list-item [routerLink]="'mint'"><span class="item-menu">Miner</span></a>
+      <a mat-list-item [routerLink]="'build'"><span class="item-menu">Gestion des opérations</span></a>
+      <a mat-list-item [routerLink]="'analytics'"><span class="item-menu">Analyse</span></a>
+      <a mat-list-item [routerLink]="'manage'"><span class="item-menu">Gestion des NFTs</span></a>
+      <a mat-list-item [routerLink]="'pool'"><span class="item-menu">Pool de minage</span></a>
+      <a mat-list-item [routerLink]="'validators'"><span class="item-menu">Validateurs</span></a>
+      <a mat-list-item [routerLink]="'wallet'"><span class="item-menu">Mes NFTs</span></a>
+      <a mat-list-item (click)="logout()" *ngIf="user.connected()"><span class="item-menu">Se déconnecter</span></a>
+      <a mat-list-item [routerLink]="'admin'"><span class="item-menu">Administrateur</span></a>
+      <a mat-list-item [routerLink]="'help'"><span class="item-menu">Aide</span></a>
+      <a mat-list-item [routerLink]="'faqs'"><span class="item-menu">Questions Fréquentes</span></a>
+      <a mat-list-item [routerLink]="'about'"><span class="item-menu">A propros</span></a>
     </mat-nav-list>
   </mat-sidenav>
 
 
   <mat-sidenav-content>
-    <mat-toolbar color="primary" class="mat-subheading-1" *ngIf="toolbar_visible=='true'" >
-      <button
-        type="button"
-        mat-icon-button
-        (click)="drawer.toggle()"
-        *ngIf="isHandset$ | async">
-        <mat-icon>menu</mat-icon>
-      </button>
-
-      <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-subheading-2">
-        <mat-spinner *ngIf="!network_service.waiting.startsWith('!')" style="display: inline-block;" color="warn" diameter="20"></mat-spinner>
-        <mat-icon *ngIf="network_service.waiting.startsWith('!')">danger</mat-icon>
-        &nbsp;{{network_service.waiting}}
-      </div>
-
-      <span class="example-spacer"></span>
-
-
-      <div style="width: 80%;max-width:800px;font-size: small;display: inline-block;padding: 3px;text-align: right;">
-        <mat-form-field color="primary" appearance="legacy" style="width: 20%;max-width:300px;">
-          <mat-select [(value)]="operation.sel_ope" (selectionChange)="refresh_ope($event)" >
-            <mat-option *ngFor="let ope of operation.opes" [value]="ope">
-              {{ope.title}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field style="width: 20%;min-width: 100px;" appearance="legacy">
-          <mat-select  [(value)]="network_service.network" (selectionChange)="update_network()">
-            <mat-option *ngFor="let network of networks" [value]="network" >
-              {{network}}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <app-selectkey [keys]="metaboss.keys"
-                        apparence="legacy"
-                       [network]="network_service.network"
-                       [selected_addr]="user.addr">
-        </app-selectkey>&nbsp;&nbsp;
-      </div>
-
-
-
-      <button type="button"
-              *ngIf="user.connected()"
-              aria-label="Connexion"
-              mat-icon-button
-              title="Se déconnecter"
-              (click)="logout()">
-        <mat-icon>logout</mat-icon>
-      </button>
-
-    </mat-toolbar>
     <router-outlet></router-outlet>
   </mat-sidenav-content>
+
 </mat-sidenav-container>
 
 

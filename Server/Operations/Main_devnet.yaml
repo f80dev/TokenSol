@@ -28,7 +28,7 @@ lazy_mining:
 
     - network: polygon-devnet
       collection:
-      miner: nfluent
+      miner: 0xa617546acC33A600f128051455e6aD2a628f4a79
 
 
 #section détaillant l'événement associé à cette opération

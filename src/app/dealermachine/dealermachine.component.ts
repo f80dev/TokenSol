@@ -116,7 +116,7 @@ export class DealermachineComponent implements OnInit {
   valide(evt: { address:string }) {
     let addr=evt.address;
     this.address=addr.replace("'","");
-    addr=this.alias.transform(addr,"pubkey");
+    addr=this.alias.transform(addr,"address");
     if(this.nft && (this.nft!.address?.startsWith("db_") || this.nft!.address?.startsWith("file_"))){
       $$("Ce token est issue d'une base de données, donc non miné");
       if(this.ope){

@@ -38,7 +38,7 @@ from flaskr.ArtEngine import Layer, Sticker, ArtEngine, Element
 from flaskr.Elrond import Elrond, ELROND_KEY_DIR
 from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, send, convert_to, returnError, setParams, \
   get_access_code, check_access_code, get_fonts, log, now, is_email, send_mail, open_html_file, encrypt, importer_file, \
-  idx
+  idx, generate_svg_from_fields, get_filename_from_content
 from flaskr.TransactionsGraph import TransactionsGraph
 from flaskr.dao import DAO
 from flaskr.apptools import async_mint, get_network_instance, get_nfts_from_src
@@ -96,22 +96,22 @@ def api_upload_batch():
 
 
 
-
-
-
-
 @bp.route('/getyaml/<name>/')
 @bp.route('/getyaml/<name>/<format>/')
 #http://127.0.0.1:4242/api/getyaml/calvi22/txt/?dir=Operations
 def getyaml(name:str,format=None):
-  dir=request.args.get("dir","../")
+  dir=request.args.get("dir","./flaskr/static")
   dir=dir+("" if dir.endswith("/") else "/")
   if format is None: format=request.args.get("format","json")
 
   if name.startswith("b64:"):name=str(base64.b64decode(name[4:]),"utf8")
   if name.startswith("http"):
-    _d=yaml.load(requests.get(name).text,Loader=yaml.FullLoader)
-    return jsonify(_d)
+    try:
+      _d=yaml.load(requests.get(name).text,Loader=yaml.FullLoader)
+      return jsonify(_d)
+    except:
+      return returnError("La syntaxe du fichier "+name+" est incorrecte")
+
 
   filename=dir+name+(".yaml" if not name.endswith(".yaml") else "")
   if not exists(filename): return returnError("Fichier "+filename+" introuvable")
@@ -231,9 +231,18 @@ def layers(body=None):
                   fontstyle=elt["text"]["fontstyle"])
       else:
         if elt["image"] and len(elt["image"])>0:
-          ext=elt["image"].split("?")[1] if "?" in elt["image"] else elt["image"][elt["image"].rindex(".")+1:]
-          name=elt["image"].split("images/")[1].split("_0x")[0]
-          s=Sticker(name=name,image=elt["image"],ext=ext,dimension=(body["width"],body["height"]))
+          if not elt["image"].startswith("data:"):
+            ext=elt["image"].split("?")[1] if "?" in elt["image"] else elt["image"][elt["image"].rindex(".")+1:]
+            if "/" in elt["image"]:
+              name=elt["image"][elt["image"].rindex("/")+1:].split("_0x")[0]
+            else:
+              name=elt["image"]
+          else:
+            ext="image/webp"
+            name=now("hex")
+
+          s=Sticker(name=name,image=elt["image"],ext=ext,
+                    dimension=(body["width"] if "width" in body else 500,body["height"] if "height" in body else 500))
 
       if s:
         layer.add(s)
@@ -266,42 +275,12 @@ def layers(body=None):
 
 @bp.route('/generate_svg/',methods=["POST"])
 def generate_svg():
-  rc=list()
+  """
+  :return:
+  """
   _data=request.json
   master=Sticker(image=_data["file"],ext="svg")
-
-  #voir https://docs.python.org/fr/3/library/xml.dom.html#dom-element-objects
-  doc=minidom.parseString(master.text["text"])
-  bCreateFromMaster=False
-  for elt in doc.getElementsByTagName("desc"):
-    for node in elt.childNodes:
-      if len(node.data.split("|"))>1:
-        bCreateFromMaster=True
-        for text in node.data.split("|"):
-          s=master.clone()
-          pere:Element=node.parentNode.parentNode
-          pere.getElementsByTagName("tspan")[0].childNodes[0].data=text
-          s.text["text"]=doc.toxml()
-          file=s.render_svg(with_picture=False,prefix_name="svg")
-          rc.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+file)
-
-  if not bCreateFromMaster:
-    rc.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+master.image)
-
-  # if "_idx_" in master.text["text"] or "_text_" in master.text["text"]:
-  #   limit=len(_data["sequence"])
-  #   for index in range(limit):
-  #     replacements={
-  #       "idx":index+1,
-  #       "text": _data["sequence"][index]
-  #     }
-  #     s=master.clone()
-  #     file=s.render_svg(dictionnary=replacements,
-  #                       with_picture=False,
-  #                       prefix_name="svg")
-  #     rc.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+file)
-  # else:
-  #   rc.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+master.image)
+  rc=generate_svg_from_fields(master.text["text"])
 
   return jsonify(rc)
 
@@ -313,18 +292,13 @@ def api_get_collections(addresses:str):
   retourne l'ensemble des collections appartenant à un utilisateur
   :return:
   """
-  network=request.args.get("network","elrond-devnet")
-  with_detail=(request.args.get("detail","true")=="true")
+  bl=get_network_instance(request.args.get("network","elrond-devnet"))
+  detail=(request.args.get("detail","true")=="true")
 
   cols=[]
   for addr in addresses.split(","):
-    if "elrond" in network:
-      filter_type=request.args.get("filter_type","NonFungibleESDT")
-      cols=cols+Elrond(network).get_collections(addr,with_detail,filter_type=filter_type)
-
-    if "polygon" in network: cols=cols+Polygon(network).get_collections(addr)
-
-    if "solana" in network: cols=cols+Solana(network).get_collections(addr)
+    filter_type=request.args.get("filter_type","NonFungibleESDT")
+    cols=cols+bl.get_collections(addr,detail=detail,filter_type=filter_type)
 
   return jsonify(cols)
 
@@ -422,7 +396,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
   for filename in files:
     f=open(filename,"rb")
     only_filename=filename[filename.rindex("/")+1:]
-    rc.append({"src":"data:image/jpeg;base64,"+str(base64.b64encode(f.read()),"utf8"),"filename":only_filename})
+    rc.append({"src":"data:image/webp;base64,"+str(base64.b64encode(f.read()),"utf8"),"filename":only_filename})
     f.close()
     os.remove(filename)
 
@@ -906,6 +880,22 @@ def action():
   return jsonify({"error":"","status":"ko","message":"Aucun passe disponible pour ce nft"})
 
 
+def analyse_operation(ope):
+  """
+  Analyse l'opération pour remonter d'éventuelle incoherence dans le message warning
+  """
+  log("Analyse de "+ope["title"])
+  ope["warning"]=""
+  if "lazy_mining" in ope:
+    for section in ope["lazy_mining"]["networks"]:
+      bl=get_network_instance(section["network"])
+      account=bl.get_account(section["miner"])
+      if account is None:
+        warning=section["miner"]+" inconnu"
+      else:
+        if account["amount"]<0.1: ope["warning"]="Balance du miner très faible"
+
+  return ope
 
 
 @bp.route('/operations/',methods=["GET","POST"])
@@ -917,21 +907,27 @@ def manage_operations(ope=""):
   if request.method=="GET":
     if len(ope)>0:
       rc=get_operation(ope.strip())
+      rc=analyse_operation(rc)
     else:
       rc=[]
       for o in os.listdir(OPERATIONS_DIR):
         if o.endswith("yaml"):
-          with open(OPERATIONS_DIR+o,"rb") as file:
-            _opes= yaml.load(file, Loader=yaml.FullLoader)
+          log("Chargement de "+o)
+          with open(OPERATIONS_DIR+o,"r",encoding="utf8") as file:
+            try:
+              _opes= yaml.load(file, Loader=yaml.FullLoader)
+            except:
+              _opes={"title":o,"id":file,"message":"Format incorrect"}
+
             _opes["filename"]=o
+            _opes=analyse_operation(_opes)
+
+            log("Opération conforme")
             rc.append(_opes)
 
           if ope.lower()==_opes["id"].lower():
             rc=_opes
             break
-
-
-
 
   if request.method=="POST":
     with open(OPERATIONS_DIR+request.json["filename"],"w",encoding="utf8") as file:
@@ -1505,41 +1501,6 @@ def configs(location:str="",format=""):
 
 
 
-#
-# @bp.route('/ftx/tokens/',methods=["GET"])
-# @bp.route('/ftx/nfts/',methods=["GET"])
-# #test http://127.0.0.1:4242/api/ftx/tokens/?key=solMintAddress&value=!none&out=solMintAddress,description,id
-# #test https://server.f80lab.com:4242/api/ftx/tokens/?key=solMintAddress&value=!none&out=solMintAddress,description,id
-# def ftx_tokens():
-#   key=request.args.get("key","solMintAddress")
-#   value=request.args.get("value","!none")
-#   out=request.args.get("out","")
-#   rc=ftx.nfts("nfts",key,value,out,timeout=int(request.args.get("timeout","0")))
-#   if rc["status_code"]==200:
-#     log(str(len(rc))+" NFTs trouvés")
-#
-#   return jsonify(rc)
-
-
-
-# @bp.route('/ftx/collections/',methods=["GET"])
-# #test http://127.0.0.1:4242/api/ftx/collections/
-# #test https://server.f80lab.com:4242/api/ftx_tokens/
-# def ftx_collections():
-#   filter=request.args.get("filter","")
-#   rc=ftx.collections(filter)
-#   return jsonify(rc)
-#
-#
-# @bp.route('/ftx/account/',methods=["GET"])
-# #test http://127.0.0.1:4242/api/ftx/account/
-# def ftx_account():
-#   rc=ftx.account()
-#   return jsonify(rc)
-
-
-
-
 
 @bp.route('/keys/',methods=["GET"])
 @bp.route('/keys/<name>/',methods=["DELETE","POST","GET"])
@@ -1562,6 +1523,9 @@ def keys(name:str=""):
     if "polygon" in network:
       rc=Polygon(network).get_keys(3,with_balance=with_balance)
       return jsonify(rc)
+
+    if network.startswith("db-") or network=="database":
+      return jsonify([])
 
 
   if request.method=="DELETE":
@@ -1631,6 +1595,7 @@ def use():
 #http://localhost:4242/api/images/
 @bp.route('/images/<cid>',methods=["GET","DELETE"])
 @bp.route('/images/',methods=["GET","DELETE"])
+@bp.route('/files/<cid>',methods=["GET","DELETE"])
 def get_image(cid:str=""):
   """
   note: l'upload des images se fait via l'api upload
@@ -1639,31 +1604,35 @@ def get_image(cid:str=""):
   """
   if request.method=="GET":
     if len(cid)==0:
+      #On retourne l'ensemble du répertoire
       return jsonify({"files":os.listdir("./temp")})
     else:
+      ext=cid.split(".")[1] if "." in cid else "webp"
+      format="application/"+ext
+      if ext in ["webp","jpg","jpeg","gif","png"]:format="image/"+ext
+      if ext=="svg": format="image/svg+xml"
+
+      if ext in ["json","yaml","txt"]: format="text/"+ext
+
       filename=TEMP_DIR+cid
       if exists(filename):
-        if filename.endswith(".yaml"):
+        if format.startswith("text/"):
           f=open(filename,"r")
-          format="text/yaml"
         else:
-          f=open(filename,"r" if cid.endswith(".svg") else "rb")
-          if filename.endswith("7z"):
-            format="application/zip"
-          else:
-            format="image/svg+xml" if cid.endswith(".svg") else "image/webp"
+          f=open(filename,"rb")
 
         response = make_response(f.read())
         response.headers.set('Content-Type', format)
+        if len(request.args.get("filename",""))>0 and not "image/" in format:
+          response.headers.set('Content-Disposition','attachment;filename='+request.args.get("filename",""))
+
         return response
       else:
         return returnError("Fichier inexistant",status=404)
 
-
   if request.method=="DELETE":
     if "/api/images/" in cid:cid=cid.split("/api/images/")[1].split("?")[0]
-    if cid in os.listdir(TEMP_DIR):
-      os.remove(TEMP_DIR+cid)
+    if exists(TEMP_DIR+cid):rc=os.remove(TEMP_DIR+cid)
     return "Ok",200
 
 
@@ -1710,8 +1679,8 @@ def sign():
 @bp.route('/nfts/<id>/',methods=["GET"])
 def nfts(id=""):
   """
-  Récupération des NFTS appartement à un compte
-  :param id:
+  Récupération des NFTS appartement à un compte ou d'un nft en particulier
+  :param id: id/address du nft
   :return:
   """
   network=request.args.get("network","elrond-devnet")
@@ -1723,17 +1692,12 @@ def nfts(id=""):
   log("Récupération de "+str(limit)+" nfts sur "+network+" à partir de "+str(offset))
 
   rc=[]
-  if "elrond" in network:
-    if id=="":
-      l_nfts=Elrond(network).get_nfts(account,limit,with_attr=with_attr,offset=offset,with_collection=True)
-    else:
-      l_nfts=[Elrond(network).get_nft(token_id=id,attr=True)]
+  _network=get_network_instance(network)
+  if id=="":
+    l_nfts=_network.get_nfts(account,limit,with_attr=with_attr,offset=offset,with_collection=True)
+  else:
+    l_nfts=[_network.get_nft(token_id=id,attr=True)]
 
-  if "solana" in network:
-    l_nfts=Solana(network).get_nfts(account,offset,limit)
-
-  if "polygon" in network:
-    l_nfts=Polygon(network).get_nfts(account,offset=offset,limit=limit)
 
   log(str(len(l_nfts))+" NFT identifiés")
 
@@ -1865,56 +1829,54 @@ def upload():
   Chargement des visuels
   :return:
   """
-
   platform=request.args.get("platform","ipfs")
+  _type=request.args.get("type","image/webp")
+
   if str(request.data,"utf8").startswith("{"):
     body=request.json
   else:
     content=str(request.data,"utf8")
-    if not "base64" in content:content=";base64,"+content
+    if not "base64" in content and not "<svg" in content:content=";base64,"+content
     body={
-      "filename":request.args.get("filename"),
+      "filename":get_filename_from_content(content,"store",_type),
       "content":content,
-      "type":request.args.get("type","")
+      "type":_type
     }
 
-  if request.args.get("convert","")!="":
-    format=request.args.get("convert","webp")
-    buffered=convert_to(body["content"],format=format,quality=95)
-    body["content"]="data:image/"+format+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
-    body["type"]="image/"+format
 
-  if body["type"]=="":
-    if "filename" in body and body["filename"].startswith("qrcode:"):
-      body["type"]="image/png"
+  if _type=="qrcode":
+    log("Enregistrement d'un qrcode")
+    buffered = BytesIO()
+    pyqrcode.create(body["filename"].split("qrcode:")[1]).png(buffered,scale=3)
 
-      qr=pyqrcode.create(body["filename"].split("qrcode:")[1])
-      buffered = BytesIO()
-      qr.png(buffered,scale=3)
+    body["content"]=";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
+    body["filename"]=get_filename_from_content(body["content"],"store","png")
+    body["type"]="image/png"
 
-      body["content"]=";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
-      body["filename"]="qrcode.png"
 
-    else:
-      if body["type"]=="":
-        if body["filename"].endswith(".mp4") or body["filename"].endswith(".avi") or body["filename"].endswith(".webm"):
-          body["type"]="video/"+body["filename"]
-        else:
-          body["type"]="image/"+body["filename"].split(".")[1]
-
-  if "zip" in body["type"]:
-    rc=[]
-    b=BytesIO(base64.b64decode(body["content"].split("base64,")[1]))
-    with py7zr.SevenZipFile(b, 'r') as zip:
-      zip.extractall(".")
-      for fname in zip.getnames():
-        rc.append(upload_on_platform({
-          "filename":fname,
-          "type":"image/"+fname[fname.rindex('.')+1:]
-        },platform))
-
+  if "svg" in _type:
+    if "base64," in body["content"]: body["content"]=str(base64.b64decode(body["content"].split("base64,")[1]),"utf8")
   else:
-    rc=upload_on_platform(body,platform)
+    format=request.args.get("convert","")
+    if format!="":
+      log("Conversion du fichier au format "+format)
+      buffered=convert_to(body["content"],format=format,quality=95)
+      body["content"]="data:image/"+format+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
+      body["type"]="image/"+format
+
+  #TODO: probablement a revoir
+  # if body["type"].startswith("image/zip"):
+  #   rc=[]
+  #   b=BytesIO(base64.b64decode(body["content"].split("base64,")[1]))
+  #   with py7zr.SevenZipFile(b, 'r') as zip:
+  #     zip.extractall(".")
+  #     for fname in zip.getnames():
+  #       rc.append(upload_on_platform({
+  #         "filename":fname,
+  #         "type":"image/"+fname[fname.rindex('.')+1:]
+  #       },platform))
+
+  rc=upload_on_platform(body,platform,domain_server=current_app.config["DOMAIN_SERVER"])
 
   return jsonify(rc)
 
@@ -1952,6 +1914,15 @@ def upload_metadata():
   return jsonify(rc)
 
 
+
+
+@bp.route('/account/<addr>/',methods=["GET"])
+def api_get_account(addr:str):
+  _network=get_network_instance(request.args.get("network","elrond-devnet"))
+  return jsonify(_network.get_account(addr))
+
+
+
 @bp.route('/create_collection/<miner>/',methods=["POST"])
 def create_collection(miner:str):
   """
@@ -1961,6 +1932,9 @@ def create_collection(miner:str):
   """
   _data=request.json
   network=request.args.get("network","elrond-devnet")
+  if network.startswith("db-"):
+    return returnError("Impossible d'utiliser une base de données comme réseau cible d'une collection")
+
   if "elrond" in network:
     elrond=Elrond(network)
     solde=elrond.balance(miner)
@@ -1995,10 +1969,15 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
   rc= {"error":"Problème technique"}
   account=None
   collection_id=nft.collection["id"] if not nft.collection is None and "id" in nft.collection else ""
-  if collection_id=="" and not network.startswith("db-"):
+  if collection_id=="":
     returnError("!La collection est indispensable")
 
   dao_histo=DAO(config=current_app.config)
+
+  if miner and len(miner)>0:
+    if (not owner or owner=="undefined" or owner=="") and not "db-" in network:owner=miner
+  else:
+    miner=owner
 
   if is_email(owner):
     email=owner
@@ -2033,7 +2012,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
     # if not _ope is None:
     #   dao.add_histo(_ope["id"],"new_account",account,"","",_ope["network"],"Création d'un compte pour "+owner,owner)
 
-  if len(miner)==0:miner=owner
+
 
 
   if "polygon" in network:
@@ -2068,7 +2047,8 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
                               ipfs=IPFS(IPFS_SERVER),
                               quantity=nft.marketplace["quantity"] if not nft.marketplace is None and "quantity" in nft.marketplace else 1,
                               royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
-                              visual=nft.visual
+                              visual=nft.visual,
+                              creators=nft.creators
                               )
     else:
       rc={"error":"NFT deja miné","hash":"","result":{"mint":nft.address}}
@@ -2188,9 +2168,12 @@ def api_mint():
   mail_new_wallet="" if _ope is None else _ope["new_account"]["mail"]
   mail_existing_wallet="" if _ope is None else _ope["transfer"]["mail"]
 
-  rc=mint(_data,keyfile,owner,network,offchaindata_platform,storagefile,
-          mail_new_wallet=mail_new_wallet,
-          mail_existing_wallet=mail_existing_wallet)
+  try:
+    rc=mint(_data,keyfile,owner,network,offchaindata_platform,storagefile,
+            mail_new_wallet=mail_new_wallet,
+            mail_existing_wallet=mail_existing_wallet)
+  except Exception as inst:
+    return returnError(inst)
 
   if not _data.visual.startswith("http"):
     return jsonify({"error":"Vous devez uploader les images avant le minage"})
@@ -2383,20 +2366,23 @@ def validators(validator=""):
     log("Un validateur demande son inscription. Attribution du nom="+validator_name)
     access_code=str(base64.b64encode(encrypt(validator_name)),"utf8")
     ask_for:str=request.json["ask_for"]
-    dao.add_validator(validator_name,ask_for)
+    if not dao.add_validator(validator_name,ask_for):
+      return returnError("Impossible d'inscrire le validateur")
 
     nfts=[]
     if ask_for.startswith("operation:"):
       operation=open_operation(ask_for.split("operation:")[1])
       elrond=Elrond(operation["network"])
+      log("On retourne la liste des propriétaire des NFT des sources de l'operation "+ask_for)
       for nft in get_nfts_from_src(operation["data"]["sources"]):
         if len(operation["validate"]["filters"]["collections"])==0 or nft.collection in operation["validate"]["filters"]["collections"]:
           if not nft.owner: nft=elrond.get_nft(nft.address)
           nfts.append(nft)
-      owner=[x.owner for x in nfts]
+      owners=[x.owner for x in nfts]
     else:
+      log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
       elrond=Elrond(request.json["network"])
-      owners=list(set([x["address"] for x in elrond.get_owners_of_collections(ask_for.split(","))]))
+      owners=list(set([x.owner for x in elrond.get_nfts_from_collections(ask_for.split(","))]))
 
     return jsonify({
       "access_code":access_code,
@@ -2420,12 +2406,13 @@ def scan_for_access():
   :return:
   """
   _data=request.json
+  if not _data["validator"] or len(_data["validator"])==0: log("Le client doit spécifier le validateur en charge de la validation")
   if "/api/qrcode/" in _data["validator"]:_data["validator"]=_data["validator"].split("/api/qrcode/")[1]
 
   validator=decrypt(_data["validator"])
   log("Le validateur en charge de la validation : "+validator)
 
-  log("Le serveur transmet au validateur l'adresse du wallet ayant réalisé le flashage")
+  log("Le serveur transmet au validateur "+validator+" l'adresse du wallet ayant réalisé le flashage "+_data["address"])
   socketio=SocketIO(current_app,cors_allowed_origins="*")
   send(socketio,validator, {"address":_data["address"]})
 

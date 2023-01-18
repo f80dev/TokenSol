@@ -1,15 +1,26 @@
 /* You can add global styles to this file, and also import other style files */
 //@import '~ngx-sharebuttons/themes/circles';
 
+@import "nfluent";
+
 html, body { height: 100%;  }
 body { margin: 0;}
 
-.example-spacer {
-  flex: 1 1 auto;
+.spacer {
+  flex: auto;
 }
 
-.color-primary > mat-expansion-panel-header {
+.titleform {
+  @extend .mat-headline-3, .color-primary;
+}
+
+.item-menu {
+  @extend .mat-headline-6;
   font-weight: bold;
+}
+
+.item-menu:hover {
+  color: white;
 }
 
 .mainform {
@@ -24,20 +35,13 @@ body { margin: 0;}
 }
 
 .app-prompt {
-  padding: 0px;
-  margin: 0px;
+  padding: 0;
+  margin: 0;
   position: relative;
 }
 
 button {
-  min-width: 120px;
   width: fit-content;
-  margin: 20px;
+  margin: 2px;
+  padding: 1px;
 }
-
-mat-form-field {
-  margin: 10px
-}
-
-
-

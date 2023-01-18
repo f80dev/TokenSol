@@ -17,6 +17,23 @@
                (disconnect)="on_disconnect()">
   </app-authent>
 
+<!--  authentification sans operation -->
+  <app-authent (authent)="on_authent($event)"
+               size="300px"
+               [directShowQRCode]="true"
+               [validator_name]="validator_name"
+               *ngIf="!operation && collections"
+               [showWalletConnect]="authentification!.wallet_connect"
+               [showAddress]="authentification!.address"
+               [showWebcam]="authentification!.webcam"
+               [showNfluentWalletConnect]="authentification!.nfluent_wallet_connect || false"
+               [checknft]="collections"
+               (invalid)="on_invalid()"
+               (disconnect)="on_disconnect()">
+  </app-authent>
+
+
+
   <div style="font-size: large;width: 100%;text-align: center;margin-top: 50px;">
     {{message}}
   </div>

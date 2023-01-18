@@ -4,6 +4,7 @@ import {NetworkService} from "../network.service";
 import {$$, getParams, jsonToList, setParams, showError, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Clipboard} from '@angular/cdk/clipboard';
+import {Location} from '@angular/common'
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {UserService} from "../user.service";
 import {NgNavigatorShareService } from 'ng-navigator-share';
@@ -12,7 +13,7 @@ import {OperationService} from "../operation.service";
 import {NFT} from "../../nft";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
-import {get_in} from "../../operation";
+import {get_in, Operation} from "../../operation";
 
 @Component({
   selector: 'app-build-ope',
@@ -33,6 +34,7 @@ export class BuildOpeComponent implements OnInit {
   title: string="NFluenT Candy Machine";
   mails: { transfer: any; new_account: any }={transfer:"",new_account:""};
   showPrestashop: boolean=true;
+  warning="";
 
 
   constructor(
@@ -44,13 +46,14 @@ export class BuildOpeComponent implements OnInit {
     public dialog:MatDialog,
     public clipboardService:Clipboard,
     public router:Router,
+    public _location:Location,
     public ngShare:NgNavigatorShareService
   ) {
     this.user.addr_change.subscribe(()=>{
       this.refresh();
     })
-    this.operation.sel_ope_change.subscribe(()=>{
-      this.refresh();
+    this.operation.sel_ope_change.subscribe((ope:Operation)=>{
+      this.refresh_ope(ope);
     })
   }
 
@@ -66,14 +69,13 @@ export class BuildOpeComponent implements OnInit {
   }
 
   refresh () {
-    this.refresh_ope({value:this.operation.sel_ope});
+    if(this.operation.sel_ope) this.refresh_ope(this.operation.sel_ope);
   }
 
 
-  refresh_ope($event: any) {
-
-    if(!$event.value)return;
-    // this.operation.select($event.value.id);
+  refresh_ope(ope:Operation) {
+    if(!ope)return;
+    this._location.replaceState("/build","ope="+ope.id,true);
 
     if(!this.operation.sel_ope)return;
 
@@ -82,9 +84,7 @@ export class BuildOpeComponent implements OnInit {
       transfer:get_in(this.operation.sel_ope,"transfer.mail","mail standard")
     }
 
-
-    $$("Mise a jour des liens avec "+$event.value.id)
-
+    $$("Mise a jour des liens avec "+ope.id)
 
     this.network.wait("Récupération des NFTs issue des sources",500);
     this.network.get_nfts_from_operation(this.operation.sel_ope.id).subscribe((r:any)=>{

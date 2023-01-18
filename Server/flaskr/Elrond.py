@@ -24,6 +24,7 @@ from erdpy.transactions import Transaction
 from erdpy.accounts import Account,Address
 from erdpy.wallet import derive_keys
 from flaskr.Network import Network
+from flaskr.settings import MAIL_NEW_ACCOUNT, MAIL_EXISTING_ACCOUNT
 
 RESULT_SECTION="smartContractResults"
 LIMIT_GAS=200000000
@@ -36,9 +37,9 @@ NETWORKS={
   "testnet":{
     "unity":"xEgld",
     "faucet":"https://r3d4.fr/elrond/testnet/index.php",
-    "proxy":"https://testnet-gateway.elrond.com",
-    "explorer":"https://testnet-explorer.elrond.com",
-    "wallet":"http://testnet-wallet.elrond.com",
+    "proxy":"https://testnet-api.multiversx.com",
+    "explorer":"https://testnet-explorer.multiversx.com",
+    "wallet":"http://testnet-wallet.multiversx.com",
     "nft":"erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u",
     "shard":0
   },
@@ -48,9 +49,9 @@ NETWORKS={
     "unity":"xEgld",
     "identifier":"TFE-116a67",
     "faucet":"https://r3d4.fr/elrond/devnet/index.php",
-    "proxy":"https://devnet-gateway.elrond.com",
-    "explorer":"https://devnet-explorer.elrond.com",
-    "wallet":"https://devnet-wallet.elrond.com",
+    "proxy":"https://devnet-api.multiversx.com",
+    "explorer":"https://devnet-explorer.multiversx.com",
+    "wallet":"https://devnet-wallet.multiversx.com",
     "nft":"erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u",
     "shard": 1
   },
@@ -59,9 +60,9 @@ NETWORKS={
     "unity":"Egld",
     "identifier":"",
     "faucet":"",
-    "proxy":"https://api.elrond.com",
-    "explorer":"https://explorer.elrond.com",
-    "wallet":"https://wallet.elrond.com",
+    "proxy":"https://api.multiversx.com",
+    "explorer":"https://explorer.multiversx.com",
+    "wallet":"https://wallet.multiversx.com",
     "nft":"erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u",
     "shard": 1
   }
@@ -100,16 +101,16 @@ class Elrond(Network):
   def find_alias(self,addr,keys=[]):
     if len(keys)==0:keys=self.get_keys()
     for k in keys:
-      if k["pubkey"]==addr:
+      if k["address"]==addr:
         return k["name"]
 
     result=api(self._proxy.url.replace("gateway","api")+"/accounts/"+addr)
 
     if "username" in result and len(result["username"])>0:
-      keys.append({"pubkey":addr,"name":result["username"]})
+      keys.append({"address":addr,"name":result["username"]})
       return result["username"]
 
-    keys.append({"pubkey":addr,"name":addr})
+    keys.append({"address":addr,"name":addr})
     return addr
 
 
@@ -207,15 +208,14 @@ class Elrond(Network):
 
 
 
-  def getExplorer(self, tx, type="transactions"):
-    url = NETWORKS[self.network_name]["explorer"] + "/" + type + "/" + tx
+  def getExplorer(self, tx="", type="transactions") -> str:
+    url = NETWORKS[self.network_name]["explorer"] + "/" + type + "/"
+    if len(tx)>0:url=url+tx
     url=url.replace("api","explorer")
-    if "elrond.com" in self._proxy.url:
-      return url
-    else:
-      type = type.replace("transactions", "transaction")
-      return self._proxy.url + "/" + type + "/" + tx
+    return url
 
+  def getWallet(self,addr=""):
+    return NETWORKS[self.network_name]["wallet"] + "/" + addr
 
 
 
@@ -321,7 +321,7 @@ class Elrond(Network):
     for c in _data["creators"]:
       for k in keys:
         if k["name"]==c["address"]:
-          c["address"]=k["pubkey"]
+          c["address"]=k["address"]
 
     return {
       "properties":{
@@ -510,11 +510,21 @@ class Elrond(Network):
 
 
 
-  def get_account(self,_user):
-    _user=self.toAccount(_user)
-    rc=self._proxy.get_account(_user.address)
-    rc["amount"]=int(rc["balance"])/1e18
+  def get_account(self,addr):
+    rc=self.get_keys(with_balance=True,address=addr)
+    if len(rc)==0:
+      _user=self.toAccount(addr)
+      rc=self._proxy.get_account(_user.address)
+      rc["amount"]=int(rc["balance"])/1e18
+      rc["private_key"]=_user.secret_key
+    else:
+      rc=rc[0]
+
     return rc
+
+  def get_balance(self,addr):
+    _user=self.get_account(addr)
+    return _user["amount"]
 
 
 
@@ -541,26 +551,31 @@ class Elrond(Network):
 
   def create_account(self,email="",seed="",domain_appli="",
                      subject="Votre compte Elrond est disponible",
-                     mail_new_wallet="mail_new_account",mail_existing_wallet="mail_existing_account",
+                     mail_new_wallet="",mail_existing_wallet="",
                      send_qrcode_with_mail=True,
-                     histo:DAO=None):
+                     histo:DAO=None,send_real_email=True):
     """
     :param fund:
     :param name:
     :param seed_phrase:
     :return: Account, PEM,words,qrcode
     """
+    if mail_new_wallet is None or mail_new_wallet=="":mail_new_wallet=MAIL_NEW_ACCOUNT
+    if mail_existing_wallet is None or mail_existing_wallet=="":mail_existing_wallet=MAIL_EXISTING_ACCOUNT
+
     if histo:
       pubkey=histo.get_address(email,self.network)
       if pubkey:
         log("Impossible de créer un deuxième compte pour cette adresse "+pubkey)
         _u = Account(address=pubkey)
-        send_mail(open_html_file(mail_existing_wallet,{
-          "wallet_address":pubkey,
-          "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
-          "url_explorer":("https://explorer.elrond.com" if "mainnet" in self.network else "https://devnet-explorer.elrond.com") +"/accounts/"+pubkey
-        },domain_appli=domain_appli),email,subject=subject)
-        return _u,None,None,None
+        if send_real_email:
+          url_explorer=self.getExplorer(pubkey,"accounts")
+          send_mail(open_html_file(mail_existing_wallet,{
+            "wallet_address":pubkey,
+            "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
+            "url_explorer":url_explorer
+          },domain_appli=domain_appli),email,subject=subject)
+          return _u,None,None,None
 
     log("Création d'un nouveau compte")
     if len(seed) == 0:
@@ -587,16 +602,19 @@ class Elrond(Network):
     if len(email)>0:
       wallet_appli=self.nfluent_wallet_url(address,domain_appli)
       if not send_qrcode_with_mail:qrcode=None
-      if send_mail(open_html_file(mail_new_wallet,{
-        "wallet_address":address,
-        "mini_wallet":wallet_appli,
-        "url_wallet":"https://wallet.elrond.com" if "mainnet" in self.network else "https://devnet-wallet.elrond.com",
-        "url_explorer":("https://explorer.elrond.com" if "mainnet" in self.network else "https://devnet-explorer.elrond.com") +"/accounts/"+address,
-        "words":words,
-        "qrcode":"cid:qrcode",
-        "access_code":get_access_code_from_email(address)
-      },domain_appli=domain_appli),email,subject=subject,attach=qrcode,filename="qrcode.png" if not qrcode is None else ""):
-        if histo: histo.add_email(email,address,self.network)
+      if send_real_email:
+        url_explorer=self.getExplorer(address,"accounts")
+
+        if send_mail(open_html_file(mail_new_wallet,{
+          "wallet_address":address,
+          "mini_wallet":wallet_appli,
+          "url_wallet":self.getWallet(address),
+          "url_explorer":url_explorer,
+          "words":words,
+          "qrcode":"cid:qrcode",
+          "access_code":get_access_code_from_email(address)
+        },domain_appli=domain_appli),email,subject=subject,attach=qrcode,filename="qrcode.png" if not qrcode is None else ""):
+          if histo: histo.add_email(email,address,self.network)
 
     return _u, self.get_pem(secret_key,pubkey),words,qrcode
 
@@ -824,7 +842,7 @@ class Elrond(Network):
 
 
 
-  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags=""):
+  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",creators=[]):
     """
     Fabriquer un NFT au standard elrond
     https://docs.elrond.com/tokens/nft-tokens/#nftsft-fields
@@ -843,7 +861,8 @@ class Elrond(Network):
         "name":title,
         "id":now("hex"),
         "description":description,
-        "attributes":properties
+        "attributes":properties,
+        "creators":creators
       }
 
       try:
@@ -943,7 +962,7 @@ class Elrond(Network):
       if "address" in user:
         user=user["address"]
       else:
-        if "pubkey" in user:user=user["pubkey"]
+        if "address" in user:user=user["address"]
 
     if type(user)==str:
       if len(user)==0: return None
@@ -1006,19 +1025,29 @@ class Elrond(Network):
 
 
   def get_keys(self,qrcode_scale=0,with_balance=False,address=""):
+    """
+    retourne l'ensemble des clé ou une seul filtré par l'adresse ou le nom
+    :param qrcode_scale:
+    :param with_balance:
+    :param address:
+    :return:
+    """
     rc=[]
     log("Lecture des clés "+str(listdir(ELROND_KEY_DIR)))
     for f in listdir(ELROND_KEY_DIR):
 
       if f.endswith(".pem"): #or f.endswith(".json"):
         pubkey=open(ELROND_KEY_DIR+f).read().split("BEGIN PRIVATE KEY for ")[1].split("---")[0]
-        if len(address)==0 or address==pubkey:
+        name=f.replace(".pem","").replace(".json","")
+        if len(address)==0 or (address==pubkey and address.startswith("erd")) or (not address.startswith("erd") and address==name):
+          balance=self.balance(Account(address=pubkey)) if with_balance else 0
           rc.append({
-            "name":f.replace(".pem","").replace(".json",""),
-            "pubkey":pubkey,
+            "name":name,
+            "address":pubkey,
             "qrcode": get_qrcode(pubkey,qrcode_scale) if qrcode_scale>0 else "",
             "explorer":self.getExplorer(pubkey,"address"),
-            "balance":self.balance(Account(address=pubkey)) if with_balance else 0,
+            "amount":balance,
+            "balance":balance*1e18,
             "unity":"egld"
           })
 
@@ -1030,7 +1059,7 @@ class Elrond(Network):
       address_or_name=address_or_name.address.bech32()
 
     for k in self.get_keys():
-      if k["pubkey"]==address_or_name or k["name"]==address_or_name:
+      if k["address"]==address_or_name or k["name"]==address_or_name:
         return k
 
     return None

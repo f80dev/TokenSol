@@ -61,7 +61,7 @@ export const letters = (val: any): Array<string> => {
   tokens.forEach((token: string) => {
     let i = 0;
     while (i + 1 < token.length) {
-      tokens.push(token.substr(i, token.length));
+      tokens.push(token.substring(i, token.length));
       i += 1;
     }
   });

@@ -1,19 +1,46 @@
-<div style="display: inline-block;">
-  <mat-form-field appearance="legacy" style="display:inline-block;" [title]="help_input" [style.width]="width">
-    <mat-label *ngIf="label.length>0" style="width: 100%;"
-               class="mat-body-2">
-      {{label}}
-    </mat-label>
+<div style="display: flex;flex-wrap: wrap;align-items: start;margin:3px;width:100%;">
 
+  <mat-form-field style="width: 100%;"
+                  *ngIf="value_type=='list' || options.length>0"
+                  appearance="fill">
+    <mat-label *ngIf="label.length>0" class="mat-headline-6">{{label}}</mat-label>
+    <mat-select [(value)]="value" (selectionChange)="sel_change($event)" class="mat-body-2">
+      <mat-option *ngFor="let option of options" [value]="option.value" class="mat-body-2">
+        {{option.label}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+
+
+  <mat-form-field style="width: 100%;" *ngIf="cols>0 && rows>0" appearance="fill" class="mat-body-2">
+    <mat-label *ngIf="label.length>0" style="width: 100%;" class="mat-headline-6">{{label}}</mat-label>
+
+    <textarea [placeholder]="placeholder" title="infobull" style="width: 100%;" matInput
+              [(ngModel)]="value"
+            [rows]="rows" [cols]="cols" (focusin)="showHelp=true" (focusout)="showHelp=false" (keyup)="on_key($event)">
+    </textarea>
+
+    <mat-icon matSuffix *ngIf="value && value!.length>0" (click)="on_clear()">cancel</mat-icon>
+    <mat-hint *ngIf="showHelp" class="mat-body-1" style="opacity: 0.7;">{{help}}</mat-hint>
+  </mat-form-field>
+
+
+
+  <mat-form-field appearance="fill" class="mat-body-2"
+                  *ngIf="value_type!='list' && options.length==0 && cols==0 && rows==0"
+                  style="display:inline-block;width: 100%;" [title]="help_input">
+    <mat-label *ngIf="label.length>0" style="width: 100%;" class="mat-headline-6">{{label}}</mat-label>
     <input matInput style="width: 100%;"
+           class="mat-body-2"
            [type]="value_type"
            [maxlength]="maxlength"
-           [(ngModel)]="input_value"
+           [(ngModel)]="value"
            [placeholder]="placeholder"
            [title]="infobulle"
-           (keyup)="on_key($event)">
-    <mat-icon matSuffix *ngIf="input_value!.length>0" (click)="on_cancel()">cancel</mat-icon>
-    <mat-hint style="font-size: x-small;opacity: 0.7;">{{help}}</mat-hint>
+           (focusin)="showHelp=true" (focusout)="showHelp=false" (keyup)="on_key($event)">
+    <mat-icon matSuffix *ngIf="value_type!='number' && value && value!.length>0" (click)="on_clear()">cancel</mat-icon>
+    <mat-hint *ngIf="showHelp" class="mat-body-1" style="opacity: 0.7;">{{help}}</mat-hint>
   </mat-form-field>
 
   <button mat-raised-button mat-button
@@ -21,6 +48,16 @@
           *ngIf="label_button.length>0"
           [title]="help_button"
           (click)="on_validate()">
-    <ng-content></ng-content>{{label_button}}
+    {{label_button}}
   </button>
+
+  <button mat-raised-button mat-button
+          style="margin:5px;"
+          *ngIf="cancel_button.length>0"
+          [title]="help_button"
+          (click)="on_cancel()">
+    {{cancel_button}}
+  </button>
+
+  <ng-content></ng-content>
 </div>

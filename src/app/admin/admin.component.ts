@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {UserService} from "../user.service";
 import {setParams, showError, showMessage} from "../../tools";
 import {NetworkService} from "../network.service";
+import {environment} from "../../environments/environment";
 
 interface ConfigServer {
   Server:string
@@ -102,9 +103,8 @@ export class AdminComponent implements OnInit {
   }
 
   reset() {
-    this.server_addr="https://server.f80lab.com:4242";
-    this.appli_addr="https://tokenforge.nfluent.io:4200";
-    this.db_addr="mongodb://server.f80lab.com:27027";
+    this.server_addr=environment.server;
+    this.appli_addr=environment.appli;
     this.db_login="root";
     this.db_password="hh4271";
     this.activity_report="contact@nfluent.io";

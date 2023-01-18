@@ -1,5 +1,5 @@
 <div class="mainform" [ngStyle]="operation?.branding?.style">
-  <h2 *ngIf="title!.length>0" class="color-primary">{{title}}</h2>
+  <div class="titleform" *ngIf="title!.length>0">{{title}}</div>
   <div *ngIf="subtitle!.length>0">{{subtitle}}</div>
   <br>
   <app-hourglass [message]="message"></app-hourglass>

@@ -4,9 +4,8 @@ import {Router} from "@angular/router";
 import {$$, CryptoKey, isLocal} from "../tools";
 import {WalletConnectProvider} from "@elrondnetwork/erdjs-wallet-connect-provider/out";
 import {NetworkService} from "./network.service";
-import {Collection, Operation} from "../operation";
+import {Collection} from "../operation";
 import {Subject} from "rxjs";
-import {PublicKey} from "@solana/web3.js";
 import {environment} from "../environments/environment";
 
 
@@ -33,6 +32,7 @@ export class UserService {
   email: string="";
   name:string="";
   balance: number=0;
+  nfts_to_mint: any[]=[]
 
   constructor(
     private httpClient : HttpClient,
@@ -55,6 +55,7 @@ export class UserService {
   }
 
   get_collection(){
+    //Retourne l'ensemble des collections disponibles
     return new Promise((resolve, reject) => {
       this.network.get_collections(this.addr, this.network.network, false).subscribe((cols: any) => {
         this.collections = cols;
@@ -66,13 +67,25 @@ export class UserService {
 
   init(addr:string,route=""){
     return new Promise((resolve, reject) => {
-      if(addr.length>0){
+      if(addr.length>0 && addr!="undefined"){
         this.addr=addr
+
         if(addr.indexOf("@")>-1){
           this.email=addr;
         }else{
-          this.network.getBalance(addr,this.network.network).subscribe((r:any)=>{
-            this.balance=r[0].balance;
+          this.network.get_account(addr,this.network.network).subscribe((r:any)=>{
+            this.balance=r.amount;
+            this.key={
+              balance: r.balance,
+              encrypt: "",
+              explorer: "",
+              name: r.name,
+              privatekey: r.private_key,
+              address: r.address,
+              qrcode: "",
+              unity: r.unity
+            }
+            this.addr_change.next(r.address);
           })
         }
 
@@ -179,7 +192,7 @@ export class UserService {
     // });
   }
 
-  find_collection(sel_collection: string) {
+  find_collection(sel_collection: string | undefined) {
     if(!sel_collection)return null;
     for(let col of this.collections)
       if(col.id==sel_collection)return col;

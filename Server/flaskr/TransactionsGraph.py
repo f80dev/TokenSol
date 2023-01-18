@@ -2,6 +2,8 @@ import networkx as nx
 from networkx import floyd_warshall_numpy
 from numpy import ndarray, save, load
 from flaskr.Tools import log, now
+from flaskr.apptools import get_network_instance
+
 
 class TransactionsGraph:
 
@@ -34,10 +36,11 @@ class TransactionsGraph:
   def load(self,transactions:[dict],network="elrond-devnet",tokens=dict()):
     ids = []
     visual="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/google/350/person_1f9d1.png"
+    _network=get_network_instance(network)
     for t in transactions:
 
-      self.G.add_node(t["from"],label=t["from"],visual=visual,url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/accounts/"+t["from"])
-      self.G.add_node(t["to"],label=t["to"],visual=visual,url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/accounts/"+t["to"])
+      self.G.add_node(t["from"],label=t["from"],visual=visual,url=_network.getExplorer(t["from"],"account"))
+      self.G.add_node(t["to"],label=t["to"],visual=visual,url=_network.getExplorer(t["to"],"account"))
 
       self.G.add_edge(t["from"],t["to"],
                       title=t["method"],
@@ -45,7 +48,7 @@ class TransactionsGraph:
                       token=tokens[t["token"]] if t["token"] in tokens else t["token"],
                       timestamp=t["ts"],
                       value=t["value"],
-                      url="https://"+("devnet-" if "devnet" in network else "")+"explorer.elrond.com/transactions/"+t["id"]
+                      url=_network.getExplorer(t["id"],"transactions")
                       )
 
     return len(self.G.nodes)

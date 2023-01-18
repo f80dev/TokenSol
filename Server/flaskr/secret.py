@@ -3,15 +3,17 @@ APP_SECRET_KEY="hh4271"
 CRYPT_KEY_FOR_NFT=""
 
 #Initialisation de la base sur le serveur:
-#ouverture du firewall : firewall-cmd --zone=public --add-port=27017/tcp
+#ouverture du firewall : firewall-cmd --zone=public --add-port=27017/tcp ou "ufw allow 27017/tcp" si on utilise ufw
 #docker rm -f f80db
 #docker run -d --name f80db --restart=always -v /root/f80db:/data/db -p 27017:27017 -e  MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=hh4271 mongo
 
 MONGO_INITDB_ROOT_USERNAME="root"
 MONGO_INITDB_ROOT_PASSWORD="hh4271"
+
 WEB3_PASSWORD="hh4271!!"
 MONGO_CLUSTER_CONNECTION_STRING= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
 MONGO_WEB3_CONNECTION_STRING="mongodb://root:rootpassword@provider.bdl.computer:32754/"
+MONGO_SERVER_CONNECTION_STRING="mongodb://root:rootpassword@109.205.183.200:27017/"
 
 USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"
@@ -20,7 +22,7 @@ SECRET_JWT_KEY="hh4271"
 #voir https://polygonscan.com/myapikey
 POLYGON_SCAN_API_KEY="9DJA8NCHRQGYTM39UEP51DNM12JVF6XIRA"
 
-SECRET_ACCESS_CODE="42714280"
+SECRET_ACCESS_CODE="42714271"
 
 SECRETS_FILE="./secrets_access.pkl"
 

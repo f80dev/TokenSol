@@ -4,7 +4,7 @@ import {_prompt, PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
-import {$$, getParams, hashCode, normalize, setParams, showError, showMessage} from "../../tools";
+import {$$, getParams, hashCode, isLocal, normalize, setParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {PLATFORMS} from "../../definitions";
 import {ActivatedRoute, Router} from "@angular/router";
@@ -29,7 +29,7 @@ export class CreatorComponent implements OnInit {
   backcolor="black";
 
   platforms=PLATFORMS;
-
+  show_advanced_commande: boolean=false;
   webstorage_platform=[
     {label:"NFT storage",value:"nftstorage"},
     {label:"IPFS",value:"ipfs"},
@@ -39,14 +39,16 @@ export class CreatorComponent implements OnInit {
   show_addtext:any;
   configs:Configuration[]=[];
   previews:any[]=[];
-  sel_ext: string="webp";
+  formats=[{label:"webp",value:"webp"},{label:"gif",value:"gif"}]
+  sel_ext:{ label:string,value:string }=this.formats[0];
   sel_palette: string="purple";
   palette_names: string[]=[];
   usePalette: boolean=false;
   sel_colors: any[]=[];
   upload_files=[];
 
-  sel_platform: any="nfluent";
+  sel_platform: { label:string,value:string }=PLATFORMS[3];
+
   sel_webstorage_platform: any="nftstorage";
 
   sel_config: Configuration | null=null;
@@ -56,6 +58,7 @@ export class CreatorComponent implements OnInit {
   message="";
   max_items: number=8;
   palette: any={};
+  quality: number=95;
 
   constructor(
     public network:NetworkService,
@@ -93,7 +96,7 @@ export class CreatorComponent implements OnInit {
    * Charge l'ensemble des configurations du serveur
    */
   load_configs(){
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if(this.configs.length>0){
         resolve(this.configs);
       } else {
@@ -111,10 +114,6 @@ export class CreatorComponent implements OnInit {
 
 
   ngOnInit(): void {
-    if(environment.appli.indexOf("127.0.0.1")>-1 || environment.appli.indexOf("localhost")>-1){
-      this.sel_platform="nfluent"
-    }
-
     this.network.get_palettes().subscribe((p)=>{
       this.palette_names=Object.keys(p);
       this.palette=p;
@@ -163,31 +162,7 @@ export class CreatorComponent implements OnInit {
   }
 
 
-  //add_image_to_layer ajouter une image
-  on_upload(evt: any,layer:Layer) {
 
-    let body={
-      filename:evt.filename,
-      "content":evt.file,
-      "type":evt.type
-    }
-
-    if(body.filename.endsWith("svg")){
-      this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe((r:any)=>{
-        layer.elements=[];
-        for(let img of r)
-          layer.elements.push({"image":img,"name":normalize(evt.filename)});
-      })
-    }else{
-      this.network.wait("Chargement des visuels");
-      this.network.upload(body,this.sel_platform,"image/png","webp").subscribe((r:any)=>{
-        this.network.wait();
-        layer.elements.push({image:r.url,name:normalize(evt.filename)});
-      },(err:any)=>{
-        showError(this,err);
-      })
-    }
-  }
 
 
 
@@ -239,7 +214,7 @@ export class CreatorComponent implements OnInit {
 
 
   url_collection="";
-  generate_collection(format="zip") {
+  generate_collection(format="zip",direct_mint=false) {
 
     if(!this.sel_config)return;
     this.url_collection="";
@@ -260,21 +235,38 @@ export class CreatorComponent implements OnInit {
     this.network.reset_collection().subscribe(()=>{
       this.fill_layer(i,this.sel_config?.width || 800,this.sel_config?.height || 800,0,()=>{
 
-        this.sel_config!.data.sequence=this.sel_config?.text.text_to_add.split("|");
-        if(this.operation!.sel_ope!.nftlive){
-          this.sel_config!.data.operation=this.operation.sel_ope?.id;
+        if(this.sel_config && this.sel_config.data){
+          this.sel_config!.data.sequence=this.sel_config?.text.text_to_add.split("|");
+          if(this.operation!.sel_ope && this.operation!.sel_ope!.nftlive){
+            this.sel_config!.data.operation=this.operation.sel_ope?.id;
+          }
+          if(this.sel_config.data.creators.length==0)this.sel_config.data.creators=this.user.addr+":100%";
         }
 
         this.network.wait("Fabrication de la collection ...");
         showMessage(this,"L'aperçu se limite à 10 NFT maximum");
 
         this.url_collection="";
+
         // @ts-ignore
-        this.network.get_collection(Math.min(this.sel_config.limit,format=="preview" ? 10 : 1000),this.filename_format,this.sel_ext,this.sel_config!.width+","+this.sel_config!.height,this.sel_config.seed,this.quality,format,this.sel_config!.data,this.attributes).subscribe((r:any)=>{
-          showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
-          this.url_collection=this.network.server_nfluent+"/api/images/"+r.archive;
-          this.network.wait("");
-          this.previews=r.preview;
+        this.network.get_collection(
+            Math.min(this.sel_config!.limit,format=="preview" ? 10 : 1000),
+            this.filename_format,this.sel_ext.value,
+            this.sel_config!.width+","+this.sel_config!.height,
+            this.sel_config!.seed,
+            this.quality,format,
+            this.sel_config!.data,
+            this.sel_config!.data.properties,this.sel_webstorage_platform.value).subscribe((r:any)=>{
+
+              showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
+              this.url_collection=this.network.server_nfluent+"/api/images/"+r.archive;
+              this.network.wait("");
+              this.previews=r.preview;
+              if(direct_mint){
+                this.user.nfts_to_mint=this.previews;
+                this.router.navigate(["mint"]);
+              }
+
         },(err)=>{showError(this,err);})
 
 
@@ -293,6 +285,10 @@ export class CreatorComponent implements OnInit {
       });
     },(err)=>{showError(this,err);})
   }
+
+  attributes(arg0: number, filename_format: string, value: string, arg3: string, seed: number, quality: number | undefined, format: string, data: { title: string; symbol: string; description: string; properties: string; files: string; operation: string | undefined; tags: string; sequence: string[] | undefined; }, attributes: any) {
+        throw new Error('Method not implemented.');
+    }
 
 
   //Génére un sticker sur la base d'un texte et l'ajoute à la layer l
@@ -347,6 +343,14 @@ export class CreatorComponent implements OnInit {
       $event.stopPropagation();
       let pos=layer.elements.indexOf(element);
       if($event.ctrlKey){
+        layer.elements.splice(pos,1);
+      }
+
+      if($event.altKey){
+        let index=this.sel_config!.layers.indexOf(layer);
+        if(index==this.sel_config!.layers.length-1)index=-1;
+        let new_layer=this.sel_config!.layers[index+1];
+        new_layer.elements.push(element);
         layer.elements.splice(pos,1);
       }
 
@@ -405,44 +409,47 @@ export class CreatorComponent implements OnInit {
 
 
   build_sample(layers:any[],data:any={},reset=true) {
-    if(reset)this.sel_config!.layers=[];
+    _prompt(this,"Effacer la configuration actuelle","","","boolean").then(()=>{
+      if(reset)this.sel_config!.layers=[];
 
-    for(let l of layers){
-      $$("Mise a jour des noms de fichier avec le chemin complet");
-      for(let k=0;k<100;k++)l["files"]=l["files"].replace("$appli$",environment.appli);
+      for(let l of layers){
+        $$("Mise a jour des noms de fichier avec le chemin complet");
+        for(let k=0;k<100;k++)l["files"]=l["files"].replace("$appli$",environment.appli);
 
-      let layer:Layer={
-        params:{},
-        name:l.hasOwnProperty("name") ? l.name : "layer",
-        elements:[],
-        text:l["text"],
-        unique:false,
-        indexed:true,
-        position:l.position,
-        translation:{x:0,y:0},
-        scale:{x:1,y:1}
-      }
-
-      if(l["text"]){
-        for(let text of l["text"].split("|")){
-          layer.elements.push({text:this.create_element(text)})
+        let layer:Layer={
+          params:{},
+          name:l.hasOwnProperty("name") ? l.name : "layer",
+          elements:[],
+          text:l["text"],
+          unique:false,
+          indexed:true,
+          position:l.position,
+          translation:{x:0,y:0},
+          scale:{x:1,y:1}
         }
-      } else {
-        if(l["files"] && l["files"].length>0)
-          for(let file of l["files"].split(",")){
-            layer.elements.push({image:file});
+
+        if(l["text"]){
+          for(let text of l["text"].split("|")){
+            layer.elements.push({text:this.create_element(text)})
           }
+        } else {
+          if(l["files"] && l["files"].length>0)
+            for(let file of l["files"].split(",")){
+              layer.elements.push({image:file});
+            }
+        }
+
+        this.network.update_layer(layer).subscribe((r:any)=>{
+          layer.elements=r.elements;
+          this.sel_config!.layers.push(layer);
+          if(this.sel_config!.layers.length==layers.length)this.sort_layers();
+        });
+
+        this.sel_config!.data=data;
+
       }
 
-      this.network.update_layer(layer).subscribe((r:any)=>{
-        layer.elements=r.elements;
-        this.sel_config!.layers.push(layer);
-        if(this.sel_config!.layers.length==layers.length)this.sort_layers();
-      });
-
-      this.sel_config!.data=data;
-
-    }
+    })
 
   }
 
@@ -464,20 +471,30 @@ export class CreatorComponent implements OnInit {
   }
 
 
-  update_config() {
-    if (this.sel_config) {
+  update_config(sel_config:Configuration | null) {
+    this.sel_config=sel_config;
+    if(this.sel_config){
       this._location.replaceState("./creator?config=" + this.sel_config.location);
       this.sel_platform = this.sel_config.platform;
+      if(!this.sel_platform || this.sel_platform.value==""){
+        this.sel_platform=PLATFORMS[isLocal(environment.appli) ? 4 : 3];
+      }
+
+
       if (this.sel_config.layers) {
         for (let l of this.sel_config.layers) {
           for (let e of l.elements) {
-            if (this.sel_platform == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
-            if (this.sel_platform == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
+            if (this.sel_platform.value == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
+            if (this.sel_platform.value == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
           }
         }
       }
       this.previews = [];
+
+    } else {
+      this._location.replaceState("/creator");
     }
+
   }
 
   //https://server.f80lab.com/api/configs/?format=file
@@ -511,7 +528,7 @@ export class CreatorComponent implements OnInit {
   on_upload_config($event: any) {
     let config:Configuration=parse($event.file);
     this.configs.push(config);
-    this.sel_config=config;
+    this.update_config(config);
   }
 
   add_serial(layer: Layer) {
@@ -602,12 +619,15 @@ export class CreatorComponent implements OnInit {
 
 
   new_conf(new_name:string){
-    //let new_name=await _prompt(this,"Nom de la configuration");
-    this.sel_config={
+    this.update_config({
       quality: 98,
       height: 800,
       width: 800,
-      data: { description: "", files: "", operation: "", properties: "", symbol: "token__idx__", title: "",tags:"",sequence:[]},
+      data: { description: "", files: "",
+        operation: "", properties: "",
+        symbol: "token__idx__", title: "",
+        tags:"",sequence:[],
+        creators:this.user.addr+":100%"},
       attributes: {},
       layers: [],
       limit: 10,
@@ -617,13 +637,11 @@ export class CreatorComponent implements OnInit {
       seed: 0,
       text: {color: "#FFFFFF", fontsize: 12, position_text: {x: 10, y: 10}, text_to_add: "Texte ici",font:{name:"Corbel",file:"corbel.ttf"}},
       location: this.create_location_from_name(new_name)
-    }
+    })
 
     this.add_layer("fond",true);
     this.add_layer("image",true);
     this.add_layer("texte",true);
-
-    this._location.replaceState("/creator?config="+this.sel_config!.location);
   }
 
 
@@ -632,7 +650,7 @@ export class CreatorComponent implements OnInit {
     let r="yes";
     let default_name="maconfig";
     if(this.sel_config){
-      default_name=this.sel_config.name;
+      default_name=this.sel_config.name+"_v2";
       r=await _prompt(this,"Effacer la configuration actuelle ?","","","","ok","annuler",true);
     }
     if(r=="yes"){
@@ -660,6 +678,43 @@ export class CreatorComponent implements OnInit {
   }
 
 
+  //add_image_to_layer ajouter une image
+
+  on_upload(evt: any,layer:Layer) {
+
+    let body={
+      filename:evt.filename,
+      "content":evt.file,
+      "type":evt.type
+    }
+
+    if(body.filename.endsWith("svg")){
+      this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe((r:any)=>{
+        for(let img of r)
+          this.network.upload(img,this.sel_platform.value,"image/svg").subscribe((r:any)=>{
+            layer.elements.push({"image":r.url,type:"image/svg"});
+          })
+      })
+    }else{
+      this.network.wait("Chargement des visuels");
+      this.network.upload(body,this.sel_platform.value,"image/png","webp").subscribe((r:any)=>{
+        this.network.wait();
+        layer.elements.push({image:r.url,name:normalize(evt.filename)});
+      },(err:any)=>{
+        showError(this,err);
+      })
+    }
+  }
+
+  file_treatment(blob:any,layer:Layer){
+    let reader = new FileReader();
+    reader.onload=()=>{
+      let body={filename:blob.name,file:reader.result,type:blob.type};
+      this.on_upload(body,layer);
+    }
+    reader.readAsDataURL(blob)
+  }
+
 
   paste_picture(layer: Layer) {
     navigator.clipboard.read().then((content)=>{
@@ -667,19 +722,9 @@ export class CreatorComponent implements OnInit {
         if (!item.types.includes('image/png')) {
           showMessage(this,"Ce contenu ne peut être intégré. Enregistrez l'image sur votre ordinateur et importez là ensuite");
         }
-        item.getType('image/png').then((blob)=>{
-          let reader = new FileReader();
-          reader.readAsDataURL(blob)
-          reader.onload=()=>{
-            let s=reader.result;
-            this.network.upload(s,this.sel_platform,blob.type,"webp").subscribe((r:any)=>{
-              layer.elements.push({image:r.url});
-              this.network.wait("")
-            },()=>{showError(this);})
-          }
-        },()=>{
-
-        })
+        item.getType('image/png').then((blob:Blob)=>{
+          this.file_treatment(blob,layer);
+        });
       }
     })
   }
@@ -689,8 +734,7 @@ export class CreatorComponent implements OnInit {
       showMessage(this, "Configuration supprimé");
       this.configs=[];
       await this.load_configs();
-      this.sel_config=null;
-      this._location.replaceState("/creator");
+      this.update_config(null);
     })
   }
 
@@ -751,13 +795,12 @@ export class CreatorComponent implements OnInit {
   }
 
 
-
-
   clear_data() {
     this.sel_config!.data = {
       operation: this.operation.sel_ope?.id,
       tags: "",
       title: "",
+      creators:this.user.addr+":100%",
       symbol: "",
       description: "",
       sequence:[],
@@ -765,10 +808,6 @@ export class CreatorComponent implements OnInit {
       files: ""
     }
   }
-
-
-
-
 
   async online_config() {
     let url=await _prompt(this,"Lien url de votre config","https://");
@@ -784,5 +823,11 @@ export class CreatorComponent implements OnInit {
     this.sel_config!.name=new_name;
     this.sel_config!.location=this.create_location_from_name(new_name);
     this.configs.push(this.sel_config!);
+  }
+
+  drop(layer: Layer, $event: any) {
+    for(let file of $event){
+      this.file_treatment(file,layer);
+    }
   }
 }

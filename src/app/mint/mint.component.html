@@ -1,17 +1,15 @@
 <div class="mainform">
 
-  <div class="mat-display-3 color-primary">Minage des NFTs</div>
-  <div class="mat-subheading-2 color-accent" style="margin-top: -50px">
+  <div class="mat-headline-2 color-primary">Minage des NFTs</div>
+  <div class="mat-headline-5 color-accent" style="margin-top: -50px">
     Minage sur {{network.network}} prévu pour {{tokens.length}} NFTs assuré par {{user.key?.name}}
   </div>
 
-  <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br>
 
-  <div style="width: 300px;display: inline-block;text-align: center;margin-top: 20px;">
-    <app-upload-file (uploaded)="onFileSelected($event)"
-                     width="180px"
-                     extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels
-    </app-upload-file>
+
+  <mat-expansion-panel style="max-width: 500px;">
+    <mat-expansion-panel-header>Traitement en masse</mat-expansion-panel-header>
+    <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
 
     <app-upload-file (uploaded)="batch_import($event)"
                      width="100px"
@@ -19,76 +17,88 @@
       Importer
     </app-upload-file>
 
-  </div>
+  </mat-expansion-panel>
+
+  <div style="display: flex;flex-wrap: wrap;align-items: center;">
+
+
+    <app-upload-file (uploaded)="onFileSelected($event)"
+                     width="180px"
+                     extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels
+    </app-upload-file>
 
 
 
-  <mat-form-field style="fontsize:small">
-    <mat-label>Plateforme de stockage</mat-label>
-    <mat-select [(value)]="sel_platform">
-      <mat-option *ngFor="let platform of platforms" [value]="platform.value">
-        {{platform.label}}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+
+    <app-input [options]="platforms" style="max-width: 170px;"
+               label="Plateforme de stockage"
+               [value]="sel_platform"
+               (valueChange)="sel_platform=$event"></app-input>
 
 
+    <app-input label="Collection à utiliser"
+               [value]="sel_collection" style="max-width: 200px;"
+               (valueChange)="sel_collection=$event"
+               [options]="user.collections"></app-input>
 
-  <div style="display: inline-block">
-
-    <mat-form-field style="fontsize:small">
-      <mat-label>Collection à utiliser</mat-label>
-      <mat-select [(value)]="sel_collection">
-        <mat-option *ngFor="let collection of user.collections" [value]="collection.id">
-           {{collection.id}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
 
     <button type="button" mat-icon-button
-            mat-button
             title="Voir les collections disponibles"
             (click)="open_collections()">
       <mat-icon>visibility</mat-icon>
     </button>
 
-    <button type="button"
-            mat-raised-button mat-button
-            (click)="upload_all_tokens()">
-      Upload visuel
-    </button>
-
-    <button type="button" [disabled]="user.key==undefined && network.network.indexOf('database')==-1"
-            mat-raised-button mat-button
-            (click)="confirm_mint()">
-      Tout miner
-    </button>
-
-    <button type="button"
-            mat-raised-button mat-button
-            (click)="add_creator()">
-      <mat-icon>add_circle</mat-icon>&nbsp;Créateur
-    </button>
+    <app-input label="Cible"
+               [value]="sel_target" style="max-width: 130px;"
+               (valueChange)="sel_target=$event"
+               [options]="targets"></app-input>
 
 
-    <button type="button"
-            mat-raised-button mat-button
-            (click)="download_all()">
-      Enregistrer
-    </button>
+    <div *ngIf="tokens.length>0" style="display: flex;">
+      <button type="button"
+              mat-raised-button mat-button
+              (click)="upload_all_tokens()">
+        Upload visuel
+      </button>
 
-    <button type="button"
-            mat-raised-button mat-button
-            (click)="clear()">
-      Effacer
-    </button>
+      <button type="button" [disabled]="user.key==undefined && network.network.indexOf('database')==-1"
+              mat-raised-button mat-button
+              (click)="confirm_mint()">
+        Tout miner
+      </button>
+
+      <button type="button"
+              mat-raised-button mat-button
+              (click)="add_creator()">
+        <mat-icon>add_circle</mat-icon>&nbsp;Créateur
+      </button>
+
+
+      <button type="button"
+              mat-raised-button mat-button
+              (click)="download_all()">
+        Enregistrer
+      </button>
+
+      <button type="button"
+              mat-raised-button mat-button
+              (click)="clear()">
+        Effacer
+      </button>
+
+      <button type="button" mat-raised-button mat-button
+              title="Synchronize les paramètres sur l'operation sélectionnée"
+              (click)="sync_on_ope()">
+        Depuis l'opération
+      </button>
+
+    </div>
 
 
   </div>
 
-  <div id="command_panel" style="display: inline-block;margin:10px;">
-    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>
-
+  <div id="command_panel" style="display: inline-block;margin:10px;" *ngIf="tokens.length>0">
+    <!--    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>-->
 
     <div style="width: fit-content;display: inline-block;">
       <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
@@ -102,8 +112,8 @@
 
   <br><br>
 
-  <table style="padding: 5px;width:100%;text-align: center;">
-    <tr>
+  <table style="padding: 5px;width:100%;text-align: center;" *ngIf="tokens.length>0">
+    <tr class="mat-headline-6">
       <th>Visuel</th>
       <th>
         Titre /
@@ -114,7 +124,9 @@
                   (click)="clone_name()">refresh</mat-icon>
 
       </th>
-      <th>Fichiers</th>
+      <th>
+        Fichiers / Liens
+      </th>
       <th>
         Price / Quantity
         <mat-icon title="recopie les attributs du premier NFT sur les autres"
@@ -122,14 +134,14 @@
                   (click)="clone_marketplace()">refresh</mat-icon>
 
       </th>
-      <th style="vertical-align: center;">
+      <th style="vertical-align: center;width: fit-content;">
         Attributs
-      <mat-icon title="recopie les attributs du premier NFT sur les autres"
-                style="cursor: pointer;font-size: medium;"
-                (click)="clone_attribute()">refresh</mat-icon>
-      <mat-icon title="Ajouter un attribut"
-                style="cursor: pointer;font-size: medium;"
-                (click)="add_attribute()">add_circle</mat-icon>
+        <mat-icon title="recopie les attributs du premier NFT sur les autres"
+                  style="cursor: pointer;font-size: medium;"
+                  (click)="clone_attribute()">refresh</mat-icon>
+        <mat-icon title="Ajouter un attribut"
+                  style="cursor: pointer;font-size: medium;"
+                  (click)="add_attribute()">add_circle</mat-icon>
         <mat-icon title="Effacer les attributs"
                   style="cursor: pointer;font-size: medium;"
                   (click)="clear_attribute()">clear</mat-icon>
@@ -139,6 +151,7 @@
         <mat-icon (click)="reset_creator()" style="cursor: pointer;font-size: medium;">cancel</mat-icon>
       </th>
       <th>Commandes</th>
+
       <th style="min-width: 200px;">Message</th>
     </tr>
     <tr *ngFor="let token of tokens" style="margin: 5px;">
@@ -157,41 +170,56 @@
         <table>
           <tr>
             <td>Nom</td>
-            <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.name"></td>
+            <td><input matInput type="text" [(ngModel)]="token.name"></td>
           </tr>
           <tr>
 
             <td>Desc.</td>
-            <td><textarea rows="2" col="40" matInput class="mat-elevation-z2" [(ngModel)]="token.description"></textarea></td>
+            <td><textarea rows="2" col="40" matInput  [(ngModel)]="token.description"></textarea></td>
           </tr>
           <tr>
             <td>Tags</td>
-            <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.tags"></td>
+            <td><input matInput type="text" [(ngModel)]="token.tags"></td>
           </tr>
           <tr *ngIf="!network.isElrond()">
             <td>Symbole</td>
-            <td><input matInput class="mat-elevation-z2" type="text" [(ngModel)]="token.symbol"></td>
+            <td><input matInput type="text" [(ngModel)]="token.symbol"></td>
           </tr>
         </table>
 
       </td>
 
-      <td style="max-width: 50px;">
-        <app-link *ngFor="let file of token.files" [content]="file">
-          <mat-icon>link</mat-icon>
-        </app-link>
+      <td style="max-width: 50px;text-align: left;vertical-align: top;" appFileDragNDrop (filesChangeEmiter)="drop($event,token)">
+        <table style="width: 95%;vert-align: middle;">
+          <tr *ngFor="let file of token.files">
+            <td>
+              <app-link [content]="file">
+                <span *ngIf="file.indexOf('f=')>0">"{{file.split('f=')[1].split("h=")[0]}}</span>
+                <span *ngIf="file.indexOf('f=')==-1">"{{file.split("h=")[0]}}</span>
+              </app-link>
+            </td>
+            <td style="text-align: right;width:15px;" *ngIf="file">
+              <mat-icon style="font-size: medium;" (click)="delete_link(token,file)">delete</mat-icon>
+            </td>
+          </tr>
+        </table>
       </td>
 
       <td style="max-width: 50px;">
         <table>
           <tr>
-            <td>Price</td><td><input matInput type="number" style="max-width: 50px;text-align: right;" class="mat-elevation-z2" min="0" [(ngModel)]="token.marketplace!.price" ></td><td>€</td>
+            <td>Price</td>
+            <td><input matInput type="number" style="max-width: 50px;text-align: right;" min="0" [(ngModel)]="token.marketplace!.price" ></td>
+            <td>€</td>
           </tr>
           <tr>
-            <td>Quantity</td><td><input matInput type="number" style="max-width: 50px;text-align: right;"  class="mat-elevation-z2" min="0" [(ngModel)]="token.marketplace!.quantity" ></td>
+            <td>Quantity</td>
+            <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" [(ngModel)]="token.marketplace!.quantity" ></td>
           </tr>
           <tr>
-            <td>Royalties</td><td><input matInput type="number" style="max-width: 50px;text-align: right;"  class="mat-elevation-z2" min="0" max="100" [(ngModel)]="token.royalties" ></td><td>%</td>
+            <td>Royalties</td>
+            <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" max="100" [(ngModel)]="token.royalties" ></td>
+            <td>%</td>
           </tr>
         </table>
 
@@ -203,36 +231,31 @@
       <td style="text-align: left;">
         <ul>
           <li *ngFor="let a of token.attributes" (click)="edit_attribute(a)" style="cursor: pointer;">
-            <strong *ngIf="a['trait_type'].length>0">{{a['trait_type']}}:</strong> {{a.value}}
+            <strong *ngIf="a['trait_type'] && a['trait_type'].length>0">{{a['trait_type']}}:</strong> {{a.value}}
           </li>
         </ul>
       </td>
 
 
-      <td >
-        <div *ngIf="!network.isElrond()">
-          <app-link *ngFor="let creator of token.creators"
-                    [content]="'https://solscan.io/account/'+creator.address+'?cluster=devnet'">
-            {{(creator.address | alias:network.network).substring(0,15)+'..'}}&nbsp;({{creator?.share}}%)
-            <br>
-          </app-link>
+      <td style="text-align: left;width: min-content;">
+        <div *ngFor="let creator of token.creators" class="mat-body-2">
+          {{(creator.address | alias:network.network).substring(0,15)+(creator.address.length>15 ? '..' : '')}}&nbsp;({{creator?.share}}%)
         </div>
-        <div *ngIf="network.isElrond()">
-          Le créateur est le mineur sur Elrond
-        </div>
-
       </td>
 
       <td>
         <mat-icon style="cursor: pointer" (click)="upload_token(token)" title="upload du visuel" *ngIf="token.visual.startsWith('data')">upload</mat-icon>
-        <mat-icon style="cursor: pointer" (click)="miner(token)" title="minage du NFT" *ngIf="user.key">build</mat-icon>
-        <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0" (click)="see_in_hub(token)">visibility</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="miner(token)"
+                  title="minage du NFT"
+                  *ngIf="user.key && !token.address">build</mat-icon>
+        <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0"
+                  (click)="see_in_hub(token)">
+          visibility
+        </mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
-        <br>
-        <mat-icon style="cursor: pointer" >content_copy</mat-icon>
-        <mat-icon style="cursor: pointer" (click)="download(token)">download</mat-icon>
-        <app-upload-file (uploaded)="onUploadXMP($event,token)" extensions=".xmp" icon="note">
-        </app-upload-file>
+        <app-upload-file title="Associer un fichier d'attributs"
+                         (uploaded)="onUploadXMP($event,token)"
+                         extensions=".xmp" icon="note"></app-upload-file>
       </td>
 
       <td style="width: 50px;" *ngIf="token.message">

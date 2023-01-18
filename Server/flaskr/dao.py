@@ -1,7 +1,7 @@
 import hashlib
 import pymongo
 from bson import ObjectId
-from pymongo import mongo_client, database
+from pymongo import database
 
 from flaskr.NFT import NFT
 from flaskr.Tools import log, now
@@ -12,7 +12,7 @@ from flaskr.secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD
 DB_SERVERS=dict(
   {
     "local":"mongodb://127.0.0.1:27017",
-    "server":"mongodb://"+MONGO_INITDB_ROOT_USERNAME+":"+MONGO_INITDB_ROOT_PASSWORD+"@server.f80lab.com:27017",
+    "server":"mongodb://"+MONGO_INITDB_ROOT_USERNAME+":"+MONGO_INITDB_ROOT_PASSWORD+"@109.205.183.200:27017",
     "cloud":MONGO_CLUSTER_CONNECTION_STRING,
     "web3":MONGO_WEB3_CONNECTION_STRING
   }
@@ -23,7 +23,7 @@ class DAO:
   db:database=None
   url:str=""
 
-  def __init__(self,domain:str="web3",dbname="nfluent",ope=None,config=None,network=""):
+  def __init__(self,domain:str="server",dbname="nfluent",ope=None,config=None,network=""):
     if ope:
       self.domain=ope["database"]["connexion"]
       self.dbname=ope["database"]["dbname"]
@@ -62,6 +62,7 @@ class DAO:
       return True
 
     self.url=DB_SERVERS[self.domain] if self.domain in DB_SERVERS else self.domain
+    self.url=self.url.replace("rootpassword",MONGO_INITDB_ROOT_PASSWORD)
     #log("Tentative de connexion sur la base de données "+self.dbname+" sur "+self.url)
     try:
       self.db: pymongo.mongo_client = pymongo.MongoClient(self.url)[self.dbname]
@@ -72,7 +73,13 @@ class DAO:
 
     return False
 
-
+  def get_nfts(self,addr:str,limit=2000,with_attr=False,offset=0,with_collection=False):
+    rc=[]
+    nfts=list(self.db["nfts"].find({"owner":addr}))
+    if len(nfts)<offset: return []
+    for nft in nfts[offset:offset+limit]:
+      rc.append(NFT(object=nft))
+    return rc
 
   def lazy_mint(self, nft,ope,server_addr="https://server.f80lab.com",id=""):
     """
@@ -89,6 +96,7 @@ class DAO:
     _data["ope"]=ope
 
     result=self.db["nfts"].replace_one(filter={"address":_data["address"]},replacement=_data,upsert=True)
+
     rc={
       "error":"",
       "tx":"",
@@ -129,6 +137,15 @@ class DAO:
     if type(data)==str:data={"content":data}
     rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
+
+  def get_collections(self,owner:str,detail:bool=False,filter_type=""):
+    rc=[]
+    if "nfts" in self.db.list_collection_names():
+      for nft in self.db["nfts"].find():
+        _nft=NFT(object=nft)
+        if _nft.owner==owner or _nft.owner=="":
+          if _nft.collection and _nft.collection not in rc: rc.append(_nft.collection)
+    return rc
 
   def get_data(self, id):
     return self.db["storage"].find_one(filter={"_id":ObjectId(id)})
@@ -241,6 +258,10 @@ class DAO:
     :param ask_for contient une collection ou une liste de NFT
     :return:
     """
+    if ask_for is None or len(ask_for)==0:
+      log("Inscription rejetée car aucune demande de collection ou d'opération associée")
+      return False
+
     self.db["validators"].update_one({"id":id},{"$set":{
       "id":id,
       "dtStart":now(),
@@ -249,6 +270,7 @@ class DAO:
       "nfts":0
     }
     },upsert=True)
+    return True
 
 
 

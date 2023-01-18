@@ -50,12 +50,14 @@ class IPFS:
     def add(self,body,removeFile=False,temp_dir="./Solana/Temp/"):
         f=None
         if type(body)==dict or type(body)==list:
-          if "filename" in body:
-            f=open(temp_dir+body["filename"],"wb")
-            f.write(base64.b64decode(body["content"].split(";base64,")[1]))
-            f.close()
+          if "filename" in body and "content" in body:
+            body=base64.b64decode(body["content"].split(";base64,")[1])
 
-            cid=self.client.add(temp_dir+body["filename"])
+            # f=open(temp_dir+body["filename"],"wb")
+            # f.write()
+            # f.close()
+            #
+            # cid=self.client.add(temp_dir+body["filename"])
           else:
             cid={"Hash":self.client.add_json(body)}
 

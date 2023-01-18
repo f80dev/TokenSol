@@ -13,6 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from io import BytesIO
 from os.path import exists
+from xml.dom import minidom
 
 import imageio
 import numpy
@@ -28,6 +29,84 @@ from pandas import read_excel
 
 from flaskr.secret import USERNAME, PASSWORD, SALT
 from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR, TEMP_DIR, STATIC_FOLDER
+
+
+def get_filename_from_content(content,prefix_name="",ext="webp") -> str:
+  if "/" in ext: ext=ext.split("/")[1].split("+")[0]
+  if type(content)==dict:
+    content=json.dumps(content)
+
+  if type(content)==str:
+    if "<svg" in content: ext="svg"
+    content=bytes(content,"utf8")
+
+  return prefix_name+"_"+hashlib.sha256(content).hexdigest()+"."+ext
+
+
+def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
+  """
+  enregistrement d'un fichier svg après remplacement des mots clé contenu dans le fichier suivant le dictionnaire
+  :param svg_code:
+  :param dir:
+  :param dictionnary:
+  :param prefix_name:
+  :return:
+  """
+  svg_code="<svg"+svg_code.split("<svg")[1]
+  if dictionnary!={}:
+    for k in dictionnary.keys():
+      svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
+
+  filename=get_filename_from_content(svg_code,prefix_name)
+  with open(dir+filename,"w",encoding="utf8") as file:
+    file.writelines(svg_code)
+  file.close()
+
+  return filename,svg_code
+
+
+def generate_svg_from_fields(svg_code) -> list:
+  """
+  génére plusieurs SVG en fonction des champs contenu dans le SVG si ces derniers contiennent des listes (format element_1|element_2|...|element_n)
+  TODO: a améliorer pour croiser plusieurs listes
+  :param svg_code:
+  :return:
+  """
+  rc=[]
+
+  #voir https://docs.python.org/fr/3/library/xml.dom.html#dom-element-objects
+  doc=minidom.parseString(svg_code)
+
+  for elt in doc.getElementsByTagName("desc")+doc.getElementsByTagName("title"):
+    for node in elt.childNodes:
+      if len(node.data.split("|"))>1:
+
+        for text in node.data.split("|"):
+          pere=node.parentNode.parentNode
+          pere.getElementsByTagName("tspan")[0].childNodes[0].data=text
+
+          rc.append(doc.toxml())
+
+  if len(rc)==0: rc.append(svg_code)
+
+  # if not bCreateFromMaster:
+  #   rc.append(domain_server+"/api/images/"+file)
+
+    # if "_idx_" in master.text["text"] or "_text_" in master.text["text"]:
+    #   limit=len(_data["sequence"])
+    #   for index in range(limit):
+    #     replacements={
+    #       "idx":index+1,
+    #       "text": _data["sequence"][index]
+    #     }
+    #     s=master.clone()
+    #     file=s.render_svg(dictionnary=replacements,
+    #                       with_picture=False,
+    #                       prefix_name="svg")
+    #     rc.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+file)
+    # else:
+    #   rc.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+master.image)
+  return rc
 
 
 def get_fonts(dir="./Fonts/"):
@@ -75,9 +154,10 @@ def send(socketio,event_name: str, message=dict()):
   return rc
 
 def returnError(msg:str="",_d=dict(),status=500):
+  if type(msg)==RuntimeError: msg=str(msg.args[0])
   msg=str(msg)
   log("Error "+msg)
-  if msg.startswith("!"): raise RuntimeError(msg)
+  if msg.startswith("!"): raise RuntimeError(msg[1:])
   return "Ooops ! Petit problème technique. "+msg,status
 
 
@@ -342,9 +422,13 @@ def extract_from_dict(_d:dict,fields,default=None):
   :param default:
   :return:
   """
-  if type(fields)==str: fields=fields.split(",")
+  if type(fields)==str:
+    sep="," if not "\n" in fields else "\n"
+    fields=fields.split(sep)
+
   for field in fields:
     if field in _d:return _d[field]
+  log("Aucun champs "+" ".join(fields)+" dans "+str(_d))
   return default
 
 
@@ -433,8 +517,12 @@ def extract_image_from_string(content:str) -> Image:
 
   if "base64" in content:
     content=content.split("base64,")[1]
+    content=base64.b64decode(content)
 
-  return Image.open(io.BytesIO(base64.b64decode(content)))
+  if "<svg" in str(content):
+    return str(content,"utf8")      #On est en présence d'un SVG
+
+  return Image.open(io.BytesIO(content))
 
 
 
@@ -550,9 +638,14 @@ def importer_file(file):
 
   log("Importation de fichier")
   data=file
-  if type(file)==str and len(file)>500:
-    if "base64," in file: file=str(file).split("base64,")[1]
-    data = base64.b64decode(file)
+  if type(file)==str:
+    if len(file)>500:
+      if "base64," in file: file=str(file).split("base64,")[1]
+      data = base64.b64decode(file)
+    else:
+      #test http://localhost:4200/mint?import=https:%2F%2Fgithub.com%2Ff80dev%2FTokenSol%2Fblob%2Fmaster%2FServer%2Ftests%2Fressources%2Fbatch_importation.xlsx%3Fraw%3Dtrue
+      if file.startswith("http"):
+        data=requests.get(file).content
 
   res=None
   if type(data)==bytes:

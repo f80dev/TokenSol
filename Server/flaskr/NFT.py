@@ -50,7 +50,7 @@ class NFT:
       self.visual=extract_from_dict(object,"visual,image,storage","")
 
       if "properties" in object and "creators" in object["properties"]:object["creators"]=object["properties"]["creators"]
-      self.creators=extract_from_dict(object,"creator",[])
+      self.creators=extract_from_dict(object,"creators",[])
 
       self.files=extract_from_dict(object,"files",[])
       self.attributes=object["attributes"] if "attributes" in object else ""

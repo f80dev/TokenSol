@@ -35,6 +35,12 @@ class Polygon (Network):
       log("Connexion impossible a "+rpc)
 
 
+  def isEtherAddress(self,addr):
+    if type(addr)==int: addr=hex(addr)
+    if not addr.startswith("0x"): return False
+    if not len(addr)==42: return False
+    return True
+
   def send_transaction(self,method,account) -> str:
     _account=self.toAccount(account)
     gas_needed=method.estimate_gas({"from":_account.address})
@@ -144,6 +150,27 @@ class Polygon (Network):
     return _nft
 
 
+  def toEtherAddress(self,addr):
+    if type(addr)==int: addr=hex(addr)
+    try:
+      addr=self.w3.toChecksumAddress(addr.lower())
+    except:
+      addr=None
+    return addr
+
+
+  def get_account(self,addr):
+    addr=self.toEtherAddress(addr)
+    if addr is None: return None
+
+    rc={"address":addr}
+    for k in self.get_keys():
+      if k["address"]==addr or k["name"]==addr:
+        rc=k
+
+    rc["balance"]=self.w3.eth.get_balance(addr)
+    rc["amount"]=float(rc["balance"])/1e18
+    return rc
 
 
   def get_nfts(self,_user,limit=2000,with_attr=False,offset=0,with_collection=False,metadata_timeout=5):
@@ -221,7 +248,7 @@ class Polygon (Network):
     return self.w3.eth.get_balance(account)/1e18
 
 
-  def getExplorer(self,address:str,type_param="address"):
+  def getExplorer(self,address:str="",type_param="address") -> str:
     return "https://"+("mumbai." if "devnet" in self.network else "")+"polygonscan.com/"+type_param+"/"+address
 
 
@@ -294,21 +321,23 @@ class Polygon (Network):
     """
 
     rc=[]
-    log("Lecture des clés "+str(listdir(POLYGON_KEY_DIR)))
+    log("Lecture des clés "+str(",".join(listdir(POLYGON_KEY_DIR))))
     for fname in listdir(POLYGON_KEY_DIR):
       #log("Lecture de "+fname)
 
       if fname.endswith("admin.secret"): #or f.endswith(".json"):
-        f=open(POLYGON_KEY_DIR+fname,"r")
+        f=open(POLYGON_KEY_DIR+fname,"r",encoding="utf8")
         key = f.read().replace("\n","")
         _u = self.w3.eth.account.from_key(key)
 
+        amount=self.balance(_u.address) if with_balance else 0
         rc.append({
           "name":fname.replace(".secret",""),
-          "pubkey":_u.address,
+          "address":_u.address,
           "qrcode": get_qrcode(_u.address,qrcode_scale) if qrcode_scale>0 else "",
           "explorer":self.getExplorer(_u.address,"address"),
-          "balance":self.balance(_u.address) if with_balance else 0,
+          "balance":amount*1e18,
+          "amount":amount,
           "unity":"MATIC",
           "account":_u if with_account else None
         })
@@ -316,7 +345,7 @@ class Polygon (Network):
 
     return rc
 
-  def get_collections(self, addr):
+  def get_collections(self, addr,detail=False,filter_type="NFT"):
     nfts=self.get_nfts(addr,with_attr=True,with_collection=True,metadata_timeout=1)
     rc=[]
     for nft in nfts:
@@ -326,6 +355,7 @@ class Polygon (Network):
 
   def toAccount(self, addr):
     for k in self.get_keys(with_account=True):
-      if k["pubkey"]==addr or k["name"]==addr: return k["account"]
+      if k["address"]==addr or k["name"]==addr:
+        return k["account"]
 
 

@@ -196,6 +196,7 @@ def get_network_instance(network:str):
   if "elrond" in network:return Elrond(network)
   if "solana" in network:return Solana(network)
   if "polygon" in network:return Polygon(network)
+  if network.startswith("db-"): return DAO(network=network)
   return None
 
 

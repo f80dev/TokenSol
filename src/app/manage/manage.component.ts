@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
-import {MetabossService} from "../metaboss.service";
 import {ActivatedRoute} from "@angular/router";
 import {Location} from "@angular/common"
 import {$$, showError, showMessage} from "../../tools";
@@ -19,7 +18,7 @@ import {UserService} from "../user.service";
 })
 export class ManageComponent implements OnInit {
   nfts: NFT[]=[];
-  pubkey: string="";
+  address: string="";
   search_metadata: string = "";
   search_collection:string="";
   type_addr="owner";
@@ -27,7 +26,6 @@ export class ManageComponent implements OnInit {
 
   constructor(
     public network:NetworkService,
-    public metaboss:MetabossService,
     public user:UserService,
     public routes:ActivatedRoute,
     public _location:Location,
@@ -50,18 +48,13 @@ export class ManageComponent implements OnInit {
     this.refresh();
     let account=this.routes.snapshot.queryParamMap.get("account") || "";
     this.type_addr=this.routes.snapshot.queryParamMap.get("search") || "owner";
-    this.pubkey=this.routes.snapshot.queryParamMap.get("view") || "";
+    this.address=this.routes.snapshot.queryParamMap.get("view") || "";
     this.network.network=this.routes.snapshot.queryParamMap.get("network") || "elrond-devnet";
-    setTimeout(()=>{
-      this.metaboss.sel_key(account).then(()=>{
-        this.refresh();
-      });
-    },500);
   }
 
 
   clear_pubkey(){
-    this.pubkey="";
+    this.address="";
     this.refresh();
   }
 
@@ -76,10 +69,10 @@ export class ManageComponent implements OnInit {
       }
     }else{
       if(this.user.key && this.type_addr!=""){
-        let new_url="./manage/?search="+this.type_addr+"&account="+this.user.key.name+"&view="+this.pubkey+"&network="+this.network.network;
+        let new_url="./manage/?search="+this.type_addr+"&account="+this.user.key.name+"&view="+this.address+"&network="+this.network.network;
         this._location.replaceState(new_url);
         this.nfts=[];
-        let pubkey=this.alias_pipe.transform(this.pubkey,"pubkey");
+        let pubkey=this.alias_pipe.transform(this.address,"address");
 
         if(this.type_addr=="token" && pubkey.length<40)return;
         if(pubkey.length==0)return;
@@ -120,14 +113,14 @@ export class ManageComponent implements OnInit {
 
   burn_all() {
     this.mass_treatment((nft:NFT)=>{
-      this.metaboss.burn(nft.address,this.network.network,1).then(success=>{}).catch(err => {showError(this,err)})
+      this.network.burn(nft.address,this.user.addr,this.network.network,1).then(success=>{}).catch(err => {showError(this,err)})
     })
   }
 
   transfer_all() {
     this.mass_treatment((nft:NFT)=>{
       if(nft.address && this.user.key){
-        this.network.transfer_to(nft.address,this.user.key.pubkey,this.pubkey,this.network.network).subscribe(()=>{
+        this.network.transfer_to(nft.address,this.user.key.address,this.address,this.network.network).subscribe(()=>{
           showMessage(this,nft.address+" transféré");
         })
       }
@@ -136,7 +129,7 @@ export class ManageComponent implements OnInit {
 
   onkeypress($event: KeyboardEvent) {
     if($event.keyCode==13){
-      localStorage.setItem("view",this.pubkey.toLowerCase());
+      localStorage.setItem("view",this.address.toLowerCase());
       this.refresh();
     }
   }

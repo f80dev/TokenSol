@@ -52,7 +52,23 @@ content:
     content: "
       Les fichiers vectoriels peuvent être utilisés dans la conception des NFT<br>
       Ils doivent être au format SVG
+    "
 
+  - index: perso_svg
+    title: Comment construire des NFTs personnalisés avec des séquences de caractères ?
+    order: 0
+    format: html
+    content: "
+      Il est possible d'injecter dans les visuels des NFTs ou dans les propriétés des séquences de chaine de caractères comme 
+      <ul>
+        <li>des listes de noms,</li>
+        <li>des liste d'emails,</li>
+        <li>des dates,
+      </ul>
+      
+      Pour un visuel, la séquence doit être insérer dans la propriété description du champs texte à personnaliser.
+      Si le champ description contient la chaine __idx__, celui ci sera remplacé par l'identifiant du NFT.
+          
     "
 
   - index: dispenser

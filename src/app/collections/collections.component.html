@@ -1,33 +1,47 @@
 <div class="mainform">
-  <h1>Gestion des collections de {{user.addr | alias}}</h1>
+  <div class="titleform">Gestion des collections de {{user.addr | alias}}</div>
 
-  <app-input [(value)]="new_collection.name" id="txtCollectionName"
-             label="Nom de la collection" maxlength="20"
-             help="Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux ou espace"></app-input>
 
 <!--  <mat-form-field appearance="fill" style="max-width: 120px" id="txtCollectionDescription">-->
 <!--    <mat-label>Description</mat-label>-->
 <!--    <input matInput type="text" max="20" [(ngModel)]="new_collection.description">-->
 <!--  </mat-form-field>-->
 
-  <div style="width: fit-content;display: inline-block;margin-left: 15px;">
+  <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;">
+    <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
+    <div style="width: fit-content;display: flex;flex-wrap:wrap;margin-left: 15px;">
+    <app-input [(value)]="new_collection.name"
+               id="txtCollectionName" style="max-width: 200px"
+               label="Nom de la collection" maxlength="20"
+               help="Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux ou espace"></app-input>
+
     <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">
       {{collection_option.label}}
     </mat-checkbox>
-  </div>
 
-  <button type="button" mat-raised-button mat-button
-          (click)="create_collection()"
-          id="cmdBuild"
-          [disabled]="!user.addr || user.balance==0">
-    Fabriquer
-  </button>
+      <div *ngIf="user.balance==0">
+        Vous devez abonder le compte pour créer une collection
+      </div>
+
+      <br>
+    <button type="button" mat-raised-button mat-button
+            color="primary"
+            (click)="create_collection()"
+            id="cmdBuild"
+            *ngIf="user.addr && user.balance>0">
+      Fabriquer
+    </button>
+
+    </div>
+  </mat-expansion-panel>
+
+
 
   <button type="button" mat-raised-button mat-button (click)="open_inspire()" [disabled]="!user.addr">
     Inspire.ART
   </button>
 
-  <button type="button" mat-raised-button mat-button (click)="refresh()">
+  <button type="button" mat-raised-button mat-button (click)="refresh(user.addr)">
     Actualiser
   </button>
 

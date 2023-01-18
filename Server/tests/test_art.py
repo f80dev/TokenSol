@@ -7,7 +7,7 @@ from flaskr.ArtEngine import ArtEngine, Sticker, Layer
 from flaskr.TokenForge import upload_on_platform
 from tests.test_tools import TEMP_TEST_DIR,RESSOURCE_TEST_DIR
 
-PLATFORM_LIST=["db-web3-tokenforge","server","infura","nftstorage"] #manque "github-nfluentdev-tests"
+PLATFORM_LIST=["db-server-tokenforge","server","infura","nftstorage"] #manque "github-nfluentdev-tests"
 
 IMAGES={
   "backgrounds":[
@@ -99,16 +99,17 @@ def test_paste_multiple_format():
 
 
 
+
 def test_generate_collection(w=500,h=500,limit=10,dir=TEMP_TEST_DIR,
                              data={"title":"NFT de test","description":"ceci est la description"},
                              sections=["backgrounds","stickers"],
-                             target_platform="server"):
+                             target_platform="server",collection_name="collection_test",seed=0):
   clear_directory(dir)
-  artEngine=ArtEngine("collection_test")
+  artEngine=ArtEngine(collection_name)
   for n in sections:
     layer=test_create_layer(n,images=IMAGES[n])
     artEngine.add(layer)
-  rc=artEngine.generate(dir,limit,0,width=w,height=h,data=data,target_platform=target_platform,export_metadata=True)
+  rc=artEngine.generate(dir,limit,seed_generator=seed,width=w,height=h,data=data,target_platform=target_platform,export_metadata=True)
   assert not rc is None
   assert len(rc)==len(os.listdir(dir)),"Il manque des fichiers"
   return rc
@@ -116,7 +117,8 @@ def test_generate_collection(w=500,h=500,limit=10,dir=TEMP_TEST_DIR,
 
 
 def test_collection_with_animated():
-  test_generate_collection(sections=["animated","stickers"],limit=3)
+  clear_directory(TEMP_TEST_DIR)
+  test_generate_collection(sections=["animated","stickers"],limit=3,seed=1)
   test_generate_collection(sections=["backgrounds","animated","stickers"],limit=3)
 
 

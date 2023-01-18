@@ -36,8 +36,8 @@
 
   <mat-form-field appearance="fill" style="width: 375px" *ngIf="type_addr!='token_list'">
     <mat-label>Addresse ou pseudo</mat-label>
-    <input matInput type="text" maxlength="64" [(ngModel)]="pubkey" (keypress)="onkeypress($event)" >
-    <mat-icon *ngIf="pubkey!=''" matSuffix style="cursor: pointer" (click)="clear_pubkey()">cancel</mat-icon>
+    <input matInput type="text" maxlength="64" [(ngModel)]="address" (keypress)="onkeypress($event)" >
+    <mat-icon *ngIf="address!=''" matSuffix style="cursor: pointer" (click)="clear_pubkey()">cancel</mat-icon>
     <mat-hint>L'adresse correspond à la clé publique</mat-hint>
   </mat-form-field>
 
@@ -78,7 +78,7 @@
   <div *ngIf="nfts!.length>0">{{nfts.length}} NFT trouvé(s)<br></div>
   <app-nfts [nfts]="nfts | filter: ['collection',search_collection] | filter: ['metadata',search_metadata]" format="obj"
             (refresh)="refresh()"
-            [user]="user.key?.pubkey">
+            [user]="user.key?.address">
   </app-nfts>
 
 </div>

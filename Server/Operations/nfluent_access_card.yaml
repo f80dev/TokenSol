@@ -8,12 +8,12 @@
 # $nfluent_appli$ est utilisé dans les API pour désigner l'appli nfluent. A terme il est possible d'utiliser des applis propriétaires
 
 format: "yamlv1"
-id: "nfluent_access_card"          #cet Id doit être cohérent avec le nom du fichier
-title: "Nfluent Access Card"     #est le titre usuel de l'operation qui apparait pour les validateurs
+id: "nfluent_access_card"             #cet Id doit être cohérent avec le nom du fichier
+title: "Nfluent Access Card"          #est le titre usuel de l'operation qui apparait pour les validateurs
 description: "Carte d'acces au site nfluent"
-website: "https://nfluent.io"   #désigne le site concerné par l'opération
+website: "https://nfluent.io"         #désigne le site concerné par l'opération
 version: 0.3
-network: elrond-devnet      #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
+network: elrond-devnet                #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
 wallet: "$nfluent_appli$/wallet"
 
 #Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
@@ -93,7 +93,7 @@ data:
   sources:
     - type: database
       active: True
-      connexion: db-web3-nfluent
+      connexion: db-server-nfluent
       collections:             #Tous les NFT des collections ci-dessous
         - MACOLLEC-4356f0
 

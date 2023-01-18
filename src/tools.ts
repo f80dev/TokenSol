@@ -3,7 +3,7 @@ import {ActivatedRoute} from "@angular/router";
 
 export interface CryptoKey {
   name: string
-  pubkey: string
+  address: string
   privatekey:string | null
   encrypt:string | null
   balance:number | null
@@ -19,6 +19,8 @@ export function url_wallet(network:string) : string {
     return "";
   }
 }
+
+
 
 
 export function hashCode(s:string):number {
@@ -216,7 +218,7 @@ export function showMessage(vm:any,s:string="",duration=4000,func:any= null,labe
   $$("Affichage du message :",s)
   if(s.startsWith("#")){
     //Affichage en mode plein écran
-    s=s.substr(1);
+    s=s.substring(1);
     vm.message=s;
     if(s.length>0)setTimeout(()=>{vm.showMessage=true;},500);
   } else {
@@ -301,6 +303,15 @@ export function $$(s: string, obj: any= null) {
   }
   console.log(lg + ' ' + obj);
   if (lg.indexOf('!!') > -1) {alert(lg); }
+}
+
+export function find(liste:any[],elt_to_search:any,index_name:any=0){
+  let rc=0;
+  for(let item of liste){
+    if(item[index_name]==elt_to_search[index_name])return rc;
+    rc=rc+1;
+  }
+  return -1;
 }
 
 export function detect_network(addr:string) {

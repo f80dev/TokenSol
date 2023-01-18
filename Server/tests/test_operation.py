@@ -14,7 +14,7 @@ def test_operations(test_client):
 
 
 def test_get_nfts_from_src(test_client,network="elrond-devnet",owner="bob"):
-  src={"active":True,"type":"database","dbname":"test","connexion":"web3"}
+  src={"active":True,"type":"database","dbname":"test","connexion":"server"}
   nfts=get_nfts_from_src(src)
   assert nfts is not None
   #assert len(nfts)>0,"Aucun nft trouvé dans la source database"

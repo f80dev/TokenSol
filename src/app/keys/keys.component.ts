@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import {Clipboard} from '@angular/cdk/clipboard';
-import {MetabossService} from "../metaboss.service";
 import {$$, CryptoKey, getParams, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
@@ -21,7 +20,6 @@ export class KeysComponent implements OnInit {
   name: string="";
 
   constructor(
-    public metaboss:MetabossService,
     public dialog:MatDialog,
     public clipboard: Clipboard,
     public router:Router,
@@ -45,31 +43,33 @@ export class KeysComponent implements OnInit {
 
   refresh(){
     this.user.connect().then((profil)=> {
-      this.metaboss.init_keys(this.network.network,true).then(()=>{this.network.wait();});
+      this.network.init_keys(this.network.network,true).then(()=>{this.network.wait();});
     });
   }
 
   add_key() {
-    this.metaboss.add_key({name:this.name, key:this.privateKey
-    }).subscribe(()=>{
+    this.network.add_key({name:this.name, key:this.privateKey}).subscribe(()=>{
       this.refresh();
       this.name="";
     })
   }
 
   sel_key(name:string) {
-    this.metaboss.sel_key(name);
+    // this.network.sel_key(name);
     showMessage(this,name+" sélectionnée");
   }
 
+
+
+
   del_key(name: string) {
-    this.metaboss.del_key(name).subscribe(()=>{
+    this.network.del_key(name).subscribe(()=>{
       setTimeout(()=>{this.refresh();},1000);
     });
   }
 
   encrypt(key: any) {
-    this.metaboss.encrypte_key(key.name).subscribe((r:any)=>{
+    this.network.encrypte_key(key.name).subscribe((r:any)=>{
       this.clipboard.copy(key.name+": "+r.encrypt);
       showMessage(this,"La clé est disponible dans le presse papier")
     });
@@ -79,7 +79,7 @@ export class KeysComponent implements OnInit {
     let content=atob($event.file.split("base64,")[1]);
     let name=$event.filename.split(".")[0]
     $$("Upload de "+name);
-      this.metaboss.add_key({name:name, key:content}).subscribe(()=>{
+      this.network.add_key({name:name, key:content}).subscribe(()=>{
         showMessage(this,name+" importé");
       })
     }
@@ -97,7 +97,7 @@ export class KeysComponent implements OnInit {
         }
     }).afterClosed().subscribe(resp => {
       if(!resp)resp="";
-      this.metaboss.add_key({name:this.name},this.network.network,resp).subscribe((key:any)=>{
+      this.network.add_key({name:this.name},this.network.network,resp).subscribe((key:any)=>{
         this.refresh();
       })
     });
@@ -107,16 +107,23 @@ export class KeysComponent implements OnInit {
   open_wallet(key: CryptoKey) {
     this.router.navigate(
       ["wallet"],
-      {queryParams:{param:setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network})}}
+      {queryParams:{param:setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.network.network})}}
+    );
+  }
+
+  open_lazy_wallet(key: CryptoKey) {
+    this.router.navigate(
+      ["wallet"],
+      {queryParams:{param:setParams({addr:key.address,toolbar:false,takePhoto:true,network:"db-server-nfluent"})}}
     );
   }
 
   open_extra_wallet(key: CryptoKey) {
-    open(NFLUENT_WALLET+"/?param="+setParams({addr:key.pubkey,toolbar:false,takePhoto:true,network:this.network.network}))
+    open(NFLUENT_WALLET+"/?param="+setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.network.network}))
   }
 
   open_collections(key: CryptoKey,tools="nfluent") {
-    if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.pubkey}});
+    if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.address}});
     if(tools=="inspire")this.network.open_gallery(this.user.addr);
   }
 
@@ -127,6 +134,7 @@ export class KeysComponent implements OnInit {
   }
 
   open_faucet(key: CryptoKey) {
+    showMessage(this,"L'adresse du compte est dans le presse-papier")
     if(this.network.isElrond()){
       //TODO ici ajouter l'ouverture du rechargement
     }

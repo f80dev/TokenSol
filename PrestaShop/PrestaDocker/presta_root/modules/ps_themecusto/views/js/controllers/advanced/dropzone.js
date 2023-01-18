@@ -1333,7 +1333,7 @@ var Dropzone = function (_Emitter) {
           },
           "drop": function drop(e) {
             noPropagation(e);
-            return _this3.drop(e);
+            return _this3.drop(layer, e);
           },
           "dragend": function dragend(e) {
             return _this3.emit("dragend", e);

@@ -1,5 +1,7 @@
 import pytest
 
+from flaskr.Tools import generate_svg_from_fields
+from flaskr.apptools import get_network_instance
 from flaskr.secret import SECRET_JWT_KEY
 from flaskr import create_app, log
 from flaskr.settings import TEMP_DIR, STATIC_FOLDER
@@ -9,9 +11,14 @@ MAIN_POLYGON_ACCOUNT="0xa617546acC33A600f128051455e6aD2a628f4a79"
 MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  # bob
 MAIN_NETWORK = "elrond-devnet"
 NETWORKS=["polygon-devnet","polygon-mainnet","elrond-devnet","elrond-mainnet"]
+PLATFORMS=["nftstorage","nfluent","ipfs"]
 MAIN_EMAIL = "paul.dudule@gmail.com"
 MAIN_COLLECTION = "NFLUENTA-af9ddf"
 DB_NETWORK = "db-cloud-test"
+MAIN_ACCOUNTS={
+  "elrond":MAIN_ACCOUNT,
+  "polygon":MAIN_POLYGON_ACCOUNT
+}
 
 TEMP_TEST_DIR="./tests/temp/"
 RESSOURCE_TEST_DIR="./tests/ressources/"
@@ -26,6 +33,25 @@ def get_nft(name: str, collection: str,visual="https://hips.hearstapps.com/hmg-p
              )
 
 
+def test_explorer(networks=NETWORKS):
+  for network in networks:
+    url=get_network_instance(network).getExplorer()
+    assert not url is None
+
+
+def test_generate_svg_from_field():
+  with open(RESSOURCE_TEST_DIR+"/voeux2023.svg","r") as file:
+    rc=generate_svg_from_fields(file.read())
+    assert len(rc)==5
+    assert ">Herv" in rc[0]
+
+  with open(RESSOURCE_TEST_DIR+"/svg1.svg","r") as file:
+    rc=generate_svg_from_fields(file.read())
+    assert len(rc)==1
+
+
+
+
 def get_account(test_client, network=MAIN_NETWORK, seuil=1, filter="bob,carol,dan,eve,frank,grace"):
   """Retourne un compte avec au moins x egld"""
   if network.startswith("db-"):network="elrond-devnet"
@@ -33,7 +59,7 @@ def get_account(test_client, network=MAIN_NETWORK, seuil=1, filter="bob,carol,da
   accounts = call_api(test_client, "keys/", "with_balance=" + with_balance + "&network=" + network)
   rc=None
   for account in accounts:
-    if account["balance"] >= seuil and (len(filter) == 0 or account["name"] in filter):
+    if account["amount"] >= seuil and (len(filter) == 0 or account["name"] in filter):
       rc=account
       break
 
@@ -45,7 +71,7 @@ def call_api(test_client,url, params="", body=None, method=None, status_must_be=
   if method is None: method = "GET" if body is None else "POST"
   if not url.startswith("/"): url = "/" + url
 
-  url="/api" + url + "?" + params
+  url="/api" + url + ("?" + params if len(params)>0 else "")
   if len(message)>0:log(message+" -> "+url)
 
   if method == "GET": response = test_client.get(url)
@@ -53,7 +79,13 @@ def call_api(test_client,url, params="", body=None, method=None, status_must_be=
   if method == "DELETE": response = test_client.delete(url)
 
   assert response.status_code == status_must_be
-  return response.json
+
+  format=response.headers[0][1] if response.headers[0][0]=="Content-Type" else "text/json"
+
+  if "json" in format:
+    return response.json
+  else:
+    return response.data
 
 
 

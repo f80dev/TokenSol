@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {ActivatedRoute} from "@angular/router";
 import {NetworkService} from "../network.service";
 import {getParams, showMessage} from "../../tools";
-import {Operation} from "../../operation";
+import {Connexion, Operation} from "../../operation";
 import {MatSnackBar} from "@angular/material/snack-bar";
 
 @Component({
@@ -14,6 +14,8 @@ export class AutovalidateComponent implements OnInit {
   operation: Operation | null=null;
   message: string | undefined ="";
   validator_name: any;
+  authentification: Connexion | undefined;
+  collections:string[]=[];
 
   constructor(
     public routes:ActivatedRoute,
@@ -21,10 +23,13 @@ export class AutovalidateComponent implements OnInit {
     public network:NetworkService
   ) { }
 
+
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
       this.validator_name=params["validator_name"]
-      this.network.get_operations(params["ope"]).subscribe((ope)=>{this.operation=ope;})
+      this.authentification=params["authentification"];
+      if(params.hasOwnProperty("collections"))this.collections=params["collections"].split(",");
+      if(params.hasOwnProperty("ope"))this.network.get_operations(params["ope"]).subscribe((ope)=>{this.operation=ope;})
     })
   }
 

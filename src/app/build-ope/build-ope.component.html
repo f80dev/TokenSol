@@ -48,18 +48,24 @@
   </mat-expansion-panel>
 
   <div *ngIf="operation.sel_ope">
-    <div class="mat-display-1" style="margin: 0px;">
+    <div class="mat-headline-4" style="margin: 0px;">
       {{operation.sel_ope.title}}
       <mat-icon (click)="refresh()">refresh</mat-icon>
     </div>
-    <small class="color-primary mat-subheading-1">{{operation.sel_ope.description}}&nbsp;(v{{operation.sel_ope.version}})</small>
+    <small class="color-primary mat-headline-6">{{operation.sel_ope.description}}&nbsp;(v{{operation.sel_ope.version}})</small>
 
     <table style="line-height: 125%;">
       <tr style="font-size: medium">
         <td>
           Id: {{operation.sel_ope.id}}
         </td>
-        <td style="text-align: right;">Blockchain: {{operation.sel_ope.network}}</td>
+        <td style="text-align: right;">
+          Blockchain: {{operation.sel_ope.network}}<br>
+          <span style="color:red;font-size: x-large;" *ngIf="operation.sel_ope.warning.length>0">
+            Warning: {{operation.sel_ope.warning}}
+          </span>
+
+        </td>
       </tr>
       <tr>
         <td>Version: {{operation.sel_ope.version}}</td>
@@ -79,7 +85,7 @@
         <tr>
           <td>
             Les NFTs disponibles pour cette opérations sont extraits <br><br>
-            <ul class="mat-subheading-1">
+            <ul>
               <li *ngFor="let src of sources">
                   <span *ngIf="src.type=='file'">
                     <span *ngIf="src.connexion!.length>0" class="color-accent">du fichier {{src.connexion}}</span>

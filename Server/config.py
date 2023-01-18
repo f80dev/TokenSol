@@ -4,7 +4,7 @@ from os import environ, path
 from flaskr.settings import STATIC_FOLDER
 
 from flaskr import TEMP_DIR
-from flaskr.secret import MONGO_WEB3_CONNECTION_STRING
+from flaskr.secret import MONGO_WEB3_CONNECTION_STRING, MONGO_SERVER_CONNECTION_STRING
 
 basedir = path.abspath(path.dirname(__file__))
 
@@ -20,7 +20,7 @@ class Config:
   UPLOAD_FOLDER=TEMP_DIR
   CACHE_DEFAULT_TIMEOUT=300
   ACTIVITY_REPORT="paul.dudule@gmail.com"
-  DB_SERVER = MONGO_WEB3_CONNECTION_STRING
+  DB_SERVER = MONGO_SERVER_CONNECTION_STRING
   VERSION="0.1"
 
 

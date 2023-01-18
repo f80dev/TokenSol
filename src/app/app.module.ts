@@ -30,7 +30,6 @@ import {MatInputModule} from "@angular/material/input";
 import {KeysComponent} from "./keys/keys.component";
 import { MintComponent } from './mint/mint.component';
 import {MatProgressBarModule} from "@angular/material/progress-bar";
-import { SelectkeyComponent } from './selectkey/selectkey.component';
 import {MatButtonToggleModule} from "@angular/material/button-toggle";
 import {MatCheckboxModule} from "@angular/material/checkbox";
 import {MatSnackBarModule} from "@angular/material/snack-bar";
@@ -85,6 +84,9 @@ import { SignatureComponent } from './signature/signature.component';
 import { ShowroomComponent } from './showroom/showroom.component';
 import { InputComponent } from './input/input.component';
 import { ScreencutterPipe } from './screencutter.pipe';
+import {DragDropModule} from "@angular/cdk/drag-drop";
+import { FileDragNDropDirective } from './file-drag-ndrop.directive';
+import { ImageSelectorComponent } from './image-selector/image-selector.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -100,7 +102,6 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         SafePipe,
         KeysComponent,
         MintComponent,
-        SelectkeyComponent,
         ManageComponent,
         VisgraphComponent,
         LinkComponent,
@@ -140,7 +141,9 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         SignatureComponent,
         ShowroomComponent,
         InputComponent,
-        ScreencutterPipe
+        ScreencutterPipe,
+        FileDragNDropDirective,
+        ImageSelectorComponent
     ],
     imports: [
         BrowserModule,
@@ -149,6 +152,7 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         SocketIoModule.forRoot(config),
         BrowserAnimationsModule,
         ColorPickerModule,
+        DragDropModule,
         ClipboardModule,
         HttpClientModule,
         MatDialogModule,

@@ -1,4 +1,4 @@
-<div *ngIf="content">
+<div *ngIf="content" style="display: inline-block;">
   <div *ngIf="!content.startsWith('erd') && !content.startsWith('http') && !content.startsWith('mailto')">{{content}}</div>
   <a *ngIf="content.startsWith('http') || content.startsWith('mailto')" target="_blank" [href]="content" [title]="content">
     <ng-content></ng-content>

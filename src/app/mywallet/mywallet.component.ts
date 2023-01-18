@@ -97,7 +97,11 @@ export class MywalletComponent implements OnInit,OnDestroy {
       if(!this.addr)this.addr=this.user.addr;
       if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
       this.showDetail=params["show_detail"] || false;
-      this.network.network=params["network"] || "elrond-mainnet";
+
+      let network=params["network"] || "elrond-mainnet";
+      if(network=="db")network="db-server-nfluent";
+      this.network.network=network;
+
       this.generate_qrcode();
       this.hAccessCode=setInterval(()=>{this.generate_qrcode()},30000);
       this.refresh();
@@ -107,8 +111,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
 
-  force_refresh(){
+  force_refresh(col:Collection | null=null){
     this.nfts=[];
+    if(col)this.sel_collection=col;
     this.refresh(0);
   }
 
@@ -127,7 +132,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
         }
       }
       if(nft.collection){
-        if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection["id"])==-1)this.collections.push(nft.collection);
+        if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection["id"])==-1){
+          this.collections.push(nft.collection);
+        }
       }
     }
 
@@ -147,8 +154,8 @@ export class MywalletComponent implements OnInit,OnDestroy {
   refresh(index:number=0) {
     $$("Refresh de l'onglet "+index);
     if(index==0 && this.nfts.length==0){
-      this.message="Chargement NFTs";
-      this.network.get_tokens_from("owner",this.addr,5,true,null,0,this.network.network).then((r:any)=>{
+      this.message=(this.sel_collection.name=="Toutes") ? "Chargement de tous vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
+      this.network.get_tokens_from("owner",this.addr,50,true,null,0,this.network.network).then((r:any)=>{
         this.add_nfts(r.result,r.offset);
       });
 
@@ -268,9 +275,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
         })
       }
     }
-
   }
-
 
 
   ngOnDestroy(): void {

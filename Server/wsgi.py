@@ -48,8 +48,9 @@ if __name__=="__main__":
       log("Le répertoire /root/certs doit contenir les certificats sous forme de fichier fullchain.pem et privkey.pem")
     log("Fonctionnement en mode SSL activé")
   else:
-    app.run(port=_port,host="0.0.0.0")
-  #socketio.run(app,port=_port,host="0.0.0.0",debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=debug_mode)
+    #app.run(port=_port,host="0.0.0.0")
+    host=domain_server.split("//")[1].split(":")[0]
+    socketio.run(app,port=_port,host=host,debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=debug_mode)
 
   if not "127.0.0.1" in domain_server:
     activity_report_sender(app.config,"Arret du server en mode "+("debug" if debug_mode else "prod"))

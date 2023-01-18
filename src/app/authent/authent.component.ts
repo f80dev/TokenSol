@@ -54,7 +54,7 @@ export class AuthentComponent implements OnInit,OnDestroy {
   @Input() address: string="";
   @Input() nfluent_server: string=environment.server;
 
-  @Input() directShowQRCode=false;      //Propose directement les qrcodes ou laisse l'utilisateur le demander (par défaut)
+  @Input() directShowQRCode:boolean=false;      //Propose directement les qrcodes ou laisse l'utilisateur le demander (par défaut)
 
   strong=false;                     //Niveau d'authentification
   @Input() size="350px";
@@ -116,29 +116,32 @@ export class AuthentComponent implements OnInit,OnDestroy {
 
 
   subscribe_as_validator(){
-    $$("Le systeme d'authent demande le QRCode en mode wallet_connect")
-    this.api.subscribe_as_validator(this.checknft.join(","),this.network,this.validator_name).subscribe((result:any)=>{
-      //On inscrit le systeme à la reception de message
-      this.validator=result.id;
-      $$("Le validator est enregistré sour "+this.validator)
-      this.autorized_users=result.addresses;
-      $$("Le validateur s'inscrit à la réception des événements")
-      this.socket.on(result.id,(data:any) => {
-        $$("Réception d'un message de la part du serveur",data);
-        let user_to_validate=data.address;
-        if(this.autorized_users.length==0 || this.autorized_users.indexOf(user_to_validate)>-1){
-          $$("L'adresse reçue fait bien partie des adresses autorisés")
-          this.onauthent.emit({address:user_to_validate,strong:true,nftchecked:true});
-        } else {
-          $$("L'adresse reçue ne fait pas partie des adresses autorisés")
-          this.oninvalid.emit({address:user_to_validate,strong:false,nftchecked:false});
-        }
-      });
-      this.nfluent_wallet_connect_qrcode=this.api.server_nfluent+"/api/qrcode/"+encodeURIComponent(result.access_code);
-      if(this.title=="" && this.showNfluentWalletConnect)this.title="Pointer ce QRcode avec votre 'NFluent Wallet'";
-    },(err)=>{
-      showError(this);
-    })
+    if(this.checknft.length>0 && this.validator_name.length>0){
+      $$("Le systeme d'authent demande le QRCode en mode wallet_connect")
+
+      this.api.subscribe_as_validator(this.checknft.join(","),this.network,this.validator_name).subscribe((result:any)=>{
+        //On inscrit le systeme à la reception de message
+        this.validator=result.id;
+        $$("Le validator est enregistré sour "+this.validator)
+        this.autorized_users=result.addresses;
+        $$("Le validateur s'inscrit à la réception des événements")
+        this.socket.on(result.id,(data:any) => {
+          $$("Réception d'un message de la part du serveur",data);
+          let user_to_validate=data.address;
+          if(this.autorized_users.length==0 || this.autorized_users.indexOf(user_to_validate)>-1){
+            $$("L'adresse reçue fait bien partie des adresses autorisés")
+            this.onauthent.emit({address:user_to_validate,strong:true,nftchecked:true});
+          } else {
+            $$("L'adresse reçue ne fait pas partie des adresses autorisés")
+            this.oninvalid.emit({address:user_to_validate,strong:false,nftchecked:false});
+          }
+        });
+        this.nfluent_wallet_connect_qrcode=this.api.server_nfluent+"/api/qrcode/"+encodeURIComponent(result.access_code);
+        if(this.title=="" && this.showNfluentWalletConnect)this.title="Pointer ce QRcode avec votre 'NFluent Wallet'";
+      },(err)=>{
+        showError(this);
+      })
+    }
   }
 
 
@@ -247,7 +250,8 @@ export class AuthentComponent implements OnInit,OnDestroy {
   }
 
 
-  validate() {
+  validate(address="") {
+    if(address.length>0)this.address=address;
     if(!isEmail(this.address) && !this.api.isElrond(this.address)){
       showMessage(this,"Pour l'instant, Le service n'est compatible qu'avec les adresses mail ou elrond");
     } else {

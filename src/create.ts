@@ -21,7 +21,7 @@ export interface Layer {
 //Décrit la structure d'une configuration pour la création des NFTs
 export interface Configuration {
   name: string
-  location: string //peut être sur le serveur ou directement sur internet
+  location: string  //peut être sur le serveur ou directement sur internet
   platform: {
     label: string
     value: string
@@ -55,5 +55,6 @@ export interface Configuration {
     operation:string | undefined,
     tags:string
     sequence:string[] | undefined
+    creators:string
   }
 }
