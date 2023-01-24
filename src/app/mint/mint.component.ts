@@ -54,16 +54,15 @@ export class MintComponent implements OnInit {
     public clipboard:Clipboard,
     public routes:ActivatedRoute,
   ) {
-
+    this.user.addr_change.subscribe((addr)=>{
+      this.init_form();
+    })
   }
 
 
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
       if(params.import){this.batch_import_from_url(params.import);}
-    })
-    this.user.addr_change.subscribe((addr)=>{
-      this.init_form();
     })
     this.init_form();
   }
@@ -74,47 +73,47 @@ export class MintComponent implements OnInit {
     if(this.user.isConnected(true)){
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp);
-      this.user.get_collection().then((cols:any)=>{
-        if(cols.length==0){
-          showMessage(this,"Vous devez d'abord créer une collection pour pouvoir miner")
-          this.router.navigate(["collections"],{queryParams:{owner:this.user.addr}});
-        } else {
-          getParams(this.routes).then((params:any)=>{
-            if(params.hasOwnProperty("collection")){
-              if(this.user.find_collection(params["collection"])){
-                this.sel_collection=params["collection"];
-              } else {
-                this.sel_collection=this.user.collections[0];
-              }
-            }
 
-            if(params.hasOwnProperty("files")){
-              let files=[];
-              for(let f of params["files"]){
-                files.push({filename:f});
-              }
-              this.onFileSelected(files);
-            }
+      if (this.user.nfts_to_mint.length > 0) {
+        this.onFileSelected(this.user.nfts_to_mint);
+        this.user.nfts_to_mint=[];
+      }
 
-            if(this.user.nfts_to_mint.length>0){
-              this.onFileSelected(this.user.nfts_to_mint);
-            }
-
-          })
+      getParams(this.routes).then((params:any)=> {
+        if (params.hasOwnProperty("collection")) {
+          if (this.user.find_collection(params["collection"])) {
+            this.sel_collection = params["collection"];
+          } else {
+            this.sel_collection = this.user.collections[0];
+          }
         }
+
+        if (params.hasOwnProperty("files")) {
+          let files = [];
+          for (let f of params["files"]) {
+            files.push({filename: f});
+          }
+          this.onFileSelected(files);
+        }
+
       })
-    } else this.user.login("Le minage nécessite une authentification");
+  }
+
+
+
   }
 
 
 
   get_token_from_xmp(_infos:any,url:string):NFT {
     let creators:any[]=[];
-    if(_infos.creators.length>0){
+    if(_infos.creators && _infos.creators.length>0){
       for(let line of _infos.creators.split("\n")){
-        let addr=line.split("=")[0].trim();
-        let share=Number(line.split("=")[1].trim().replace("%",""));
-        creators.push({address:addr,share:share,verified:0})
+        if(line && line.indexOf("=")>-1){
+          let addr=line.split("=")[0].trim();
+          let share=Number(line.split("=")[1].trim().replace("%",""));
+          creators.push({address:addr,share:share,verified:0})
+        }
       }
     } else {
       if(this.user.key){
@@ -157,6 +156,7 @@ export class MintComponent implements OnInit {
       marketplace: {price:this.price,quantity:this.quantity},
       name: _infos.title,
       network: this.network.network,
+      miner:"",
       owner: this.user.addr,
       royalties: 0,
       visual: url,
@@ -384,7 +384,7 @@ export class MintComponent implements OnInit {
             target_network=this.network.network;
             token.network=target_network
           }
-          this.network.mint(token,this.user.key.name,token.owner || "",id_operation,this.sign, this.sel_platform.value,target_network,this.mintfile).then((result:any)=>{
+          this.network.mint(token,this.user.key.address,token.owner || "",id_operation,this.sign, this.sel_platform.value,target_network,this.mintfile).then((result:any)=>{
             if(!result.error || result.error==""){
               token.address=result.result.mint;
               if(this.network.network=="file"){
@@ -424,10 +424,6 @@ export class MintComponent implements OnInit {
     } else {
       this.network.open_gallery(nft.address);
     }
-  }
-
-  to_string(token: any) {
-
   }
 
 
@@ -654,9 +650,13 @@ export class MintComponent implements OnInit {
         let reader = new FileReader();
         reader.onload=()=>{
           let body={filename:file.name,content:reader.result,type:file.type};
+          this.network.wait("Mise en ligne du document");
           this.network.upload(body,this.sel_platform.value,file.type).subscribe((r:any)=>{
-            token.files.push(r.url+"?f="+file.name);
+            this.network.wait();
+            token.files.push(r.url+"?f="+encodeURIComponent(file.name));
+            this.local_save();
           });
+
         }
         reader.readAsDataURL(file)
       }
@@ -670,6 +670,8 @@ export class MintComponent implements OnInit {
     token.files.splice(idx,1);
   }
 
+
+
   sync_on_ope() {
     if(this.operation.sel_ope) {
       let ope: Operation = this.operation.sel_ope;
@@ -678,20 +680,17 @@ export class MintComponent implements OnInit {
           let _n: any = ope.lazy_mining?.networks[0];
           if (_n) {
             this.network.network_change.subscribe(() => {
-              setTimeout(()=>{
                 this.user.init(_n.miner).then(()=>{
-                  setTimeout(()=> {
-                    this.sel_collection = _n.collection;
-                  },1000);
+                    let index=find(this.user.collections,_n.collection,"id");
+                    if(index>-1)this.sel_collection = this.user.collections[index];
                 })
-              },1000);
             })
             this.network.network = _n.network;
 
             for(let src of ope.data.sources){
               if(src.type=="database"){
-                let index=find(this.targets,{value:src.connexion,label:src.connexion});
-                this.sel_target=this.targets[index];
+                let index=find(this.targets,{value:src.connexion,label:src.connexion},"value");
+                if(index>-1)this.sel_target=this.targets[index];
               }
             }
           } else {
@@ -705,5 +704,9 @@ export class MintComponent implements OnInit {
 
   show_transaction(token: NFT) {
 
+  }
+
+  informe_copy_collection() {
+    showMessage(this,"La collection est copié. Vous pouvez l'insérer dans le fichier d'opération")
   }
 }

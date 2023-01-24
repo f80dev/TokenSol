@@ -9,6 +9,8 @@ export const NFT_STORAGE_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiO
 
 export const NFLUENT_WALLET="https://wallet.nfluent.io";
 
+export const DEFAULT_DATABASE="db-server-nfluent";
+
 export const QUOTA=800000
 
 export const NETWORKS=[
@@ -28,6 +30,7 @@ export const PLATFORMS=[
   {label:"nFluent Local Server",value:"nfluent_local"},
   {label:"La configuration",value:"infile"},
   {label:"Github",value:"github-nfluent-storage"},
+  {label:"MongoDB",value:"mongodb"}
 ]
 
 //Voir https://console.cloud.google.com/apis/credentials/oauthclient/1047581333959-f7rub1f23lkhuts4ig50pabhv3cakf6u.apps.googleusercontent.com?project=nfluenttokenfactory

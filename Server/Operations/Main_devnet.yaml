@@ -18,40 +18,41 @@ wallet: "$nfluent_appli$/wallet"
 
 #Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
 lazy_mining:
-  metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
-  content_storage: NFTstorage         #plateforme de destibation des images
+  metadata_storage: github/test6      #plateforme de destination des propriétés du NFT
+  content_storage: NFTstorage         #plateforme de destination des images
   miner:                              #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection !!!!! Attention le mineur doit être propriétaire de la collection de minage
-  networks:                           #Indique les parametres de minage suivant le réseau du destinataire
+  networks:                           #Si le NFT n'a pas de collection, réseau cette section indique les parametres de minage suivant le réseau du destinataire
+                                      #Si le NFT à miner à déjà une collection, un réseau et un owner cette section n'est pas prise en compte
     - network: elrond-devnet          #Le premier item est utilisé par défaut si le destinataire fourni un email
-      collection: PHILHARM-f25fc0     #Designe la collection utilisé pour le minage
-      miner: nfluent                  #Désigne le mineur à utilisé (il doit être propriétaire de la collection ci-dessus)
+      collection: TESTCOLF-024191     #Designe la collection utilisée pour le minage si la collection n'a pas été précisé dans le NFT stocké dans la base
+      miner: nfluent                  #Désigne le mineur à utilisé (il doit être propriétaire de la collection ci-dessus) si non désigné dans le NFT stocké dans la base
 
-    - network: polygon-devnet
+    - network: polygon-devnet         #Si le destinataire donne une adresse polygon, on utilisera les paramètres suivant
       collection:
       miner: 0xa617546acC33A600f128051455e6aD2a628f4a79
 
 
-#section détaillant l'événement associé à cette opération
+#section détaillant l'événement associé à cette opération. Cette section peut être utilisé dans les écrans de distribution automatiques
 event:
-  title: Ventes aux enchères
+  title: Ventes de NFT aux enchères
   place: 12 rue Martel, 75010 Paris   #Lieu de l'événement
   web:
   dates:                              #Liste des périodes d'ouvertures
-    - start: 04/02/1971 20:00
+    - start: 04/02/1971 20:00         #Cette date de début et fin peuvent être utilisé pour le distributeur automatique
       end: 04/02/1971 22:00
 
 
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "PHILHARM-f25fc0"          #Id de la collection. A priori cet id doit se trouver dans les sources
-    name: "PhilarmonieDeParis"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
+  - id: "TESTCOLF-367682"          #Id de la collection. A priori cet id doit se trouver dans les sources
+    name: "Collection de test"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
     visual:  https://img.over-blog-kiwi.com/1/48/41/00/20161126/ob_602568_philarmonieparis-logo.png
     description: Collection de NFTs dédiés au brainstorm avec la philarmonie
 
 
 
-database:                 #base de données générale de l'outil pour les historiques
+database:                 #base de données générale de l'outil pour les historiques et la gestion des rappels de wallet
   connexion: server
   dbname: nfluent
 
@@ -109,22 +110,23 @@ transfer:
 #"mongodb://admin:<password>@server.f80lab.com:27017"
 data:
   sources:
-    - type: network
-      active: False
-      connexion: elrond-devnet
-      filter:
-        limit: 200
-      owner:                   #Tous les NGFt de l'owner
-      collections:             #Tous les NFT des collections ci-dessous
-        - "PHILHARM-f25fc0"
+#    - type: network
+#      active: False
+#      connexion: elrond-devnet
+#      filter:
+#        limit: 200
+#      owner:                   #Tous les NGFt de l'owner
+#      collections:             #Tous les NFT des collections ci-dessous
+#        - "PHILHARM-f25fc0"
 
 
     - type: database
       active: True
-      connexion: cloud          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
+      connexion: server          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
       dbname: nfluent           #Nom de la base de données contenant les NFTS
       filter:
-        limit: 200
+        limit: 200                        #Au plus 200 NFTs seront extraits
+        collection: MACOLLEC-4356f0       #Seul les NFT de cette collection seront extrait
 
 
 #    - type: json              #Les NFTs sont contenus dans un fichier json
@@ -286,7 +288,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "PHILHARM-f25fc0"
+    - "TESTCOLF-367682"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:
@@ -477,7 +479,7 @@ nftlive:
 
   nft_target:                               #désigne les caractéristiques du NFT qui sera miné
     miner: paul
-    collection: "PHILHARM-f25fc0"           #collection auquel appartiendra le NFT (Vérifier que le miner à les droits sur cette collection)
+    collection: "TESTCOLF-367682"           #collection auquel appartiendra le NFT (Vérifier que le miner à les droits sur cette collection)
     royalties: 20                           #royalties pour le mineur
     configuration: "philharmonie_nftlive"   #nom de la configuration à utiliser
     dimension:                              #dimension est optionnelle, et permet d'écraser la valeur contenu dans le fichier de configuration
@@ -486,7 +488,4 @@ nftlive:
       transfer: True
       update_name: True
       update_attributes: True
-
-
-
 

@@ -71,7 +71,7 @@
 
   <!--  Travail sur les textes -->
   <div *ngIf="sel_config">
-    <mat-expansion-panel [expanded]="show_addtext!=null">
+    <mat-expansion-panel [expanded]="show_addtext!=null" *ngIf="show_advanced_commande">
       <mat-expansion-panel-header>Ajout de texte</mat-expansion-panel-header>
       <table style="width: 100%;vertical-align: middle;">
         <tr>
@@ -181,8 +181,8 @@
           <th>Nom</th>
           <th style="display: flex;align-content: start;">
             Commandes
-            <mat-icon *ngIf="!show_advanced_commande" style="cursor: pointer;font-size: small;" (click)="show_advanced_commande=true">add</mat-icon>
-            <mat-icon *ngIf="show_advanced_commande" style="cursor: pointer;font-size: small;" (click)="show_advanced_commande=false">minus</mat-icon>
+            <mat-icon *ngIf="!show_advanced_commande" style="cursor: pointer;font-size: small;" (click)="show_advanced_commande=true">add_circle_outline</mat-icon>
+            <mat-icon *ngIf="show_advanced_commande" style="cursor: pointer;font-size: small;" (click)="show_advanced_commande=false">remove_circle_outline</mat-icon>
           </th>
           <th>Sélection des photos</th>
           <th>Cliquer sur une image + CTRL sur le clavier pour la supprimer ou SHIFT pour la déplacer</th>
@@ -245,7 +245,7 @@
       <br>
 
       <button type="button" mat-raised-button mat-button (click)="add_layer()">
-        <mat-icon>add_circle</mat-icon> une couche
+        <mat-icon>add_circle_outline</mat-icon> une couche
       </button>
 
       <button type="button" mat-raised-button mat-button
@@ -369,7 +369,8 @@
     <mat-expansion-panel>
       <mat-expansion-panel-header>Datas</mat-expansion-panel-header>
       <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
-      <br>
+
+      <br><br>
       <app-upload-file (uploaded)="on_upload_attributs($event)"
                        title="Associer aux visuels un fichier de descriptions / attributs"
                        extensions=".csv,.txt">
@@ -379,6 +380,7 @@
       <button type="button" mat-raised-button mat-button (click)="clear_data()">
         Effacer tout
       </button>
+      <br><br>
 
       <div style="display: flex;flex-wrap: wrap;align-content: start ;justify-content: space-between;">
 

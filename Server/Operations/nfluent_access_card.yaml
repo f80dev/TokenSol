@@ -16,14 +16,18 @@ version: 0.3
 network: elrond-devnet                #Réseau concerné par l'opération, utilisé également comme cible lorsque le destinataire n'a pas de wallet
 wallet: "$nfluent_appli$/wallet"
 
+database:                 #base de données générale de l'outil pour les historiques et la gestion des rappels de wallet
+  connexion: server
+  dbname: nfluent
+
 #Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
 lazy_mining:
   metadata_storage: github/test6      #plateforme de destibation des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destibation des images
   networks:                           #Indique les parametres de minage suivant le réseau du destinataire (il est possible de mettre plusieurs réseau de destination)
     - network: elrond-devnet          #Le premier item est utilisé par défaut si le destinataire fourni un email
-      collection: NEWACCES-71f874     #Designe la collection utilisée pour le minage
-      miner: nfluent                  #Désigne le mineur à utilisé (il doit être propriétaire de la collection ci-dessus)
+      collection: TESTCOLF-024191     #Designe la collection utilisée pour le minage si la collection n'a pas été précisé dans le NFT stocké dans la base
+      miner: nfluent                  #Désigne le mineur à utilisé (il doit être propriétaire de la collection ci-dessus) si non désigné dans le NFT stocké dans la base
 
 
 branding:                     #Utiliser pour uniformiser l'aspect des applications
@@ -43,7 +47,7 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "MACOLLEC-4356f0"          #Id de la collection. A priori cet id doit se trouver dans les sources
+  - id: "TESTCOLF-024191"          #Id de la collection. A priori cet id doit se trouver dans les sources
     name: "Nluent Access Card"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
     visual:  ""
     description: "Carte d'accès au site nfluent"
@@ -95,7 +99,7 @@ data:
       active: True
       connexion: db-server-nfluent
       collections:             #Tous les NFT des collections ci-dessous
-        - MACOLLEC-4356f0
+        - TESTCOLF-024191
 
 #Fonctionnement de la section Validate _____________________________________________________________________________________________________________________________
 #Section responsable du process de validation des NFTs
@@ -113,6 +117,7 @@ validate:
     wallet_connect: False
     google: False
     address: False
+    email: False
     nfluent_wallet_connect: True
 
   support:
@@ -157,8 +162,8 @@ validate:
 
   #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
   filters:
-    mint_authority: ''
-    collections: []       #Liste des collections que le visiteur doit posséder pour avoir l'accès, si vide on prend la collection de src ou du lazy mining
+    collections: []         #Liste des collections que le visiteur doit posséder pour avoir l'accès,
+                            #si vide on prend la collection de src ou du lazy mining
 
 
 

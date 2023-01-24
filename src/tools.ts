@@ -1,5 +1,6 @@
 import {environment} from "./environments/environment";
 import {ActivatedRoute} from "@angular/router";
+import {NFT} from "./nft";
 
 export interface CryptoKey {
   name: string
@@ -123,6 +124,7 @@ export function now(){
 export function getParams(routes:ActivatedRoute,local_setting_params="") {
   return new Promise((resolve, reject) => {
     routes.queryParams.subscribe((params:any) => {
+      if(params.hasOwnProperty("params"))params["param"]=params["params"];
       if(params.hasOwnProperty("param")){
         let rc=analyse_params(decodeURIComponent(params["param"]));
         if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["param"]);
@@ -305,10 +307,31 @@ export function $$(s: string, obj: any= null) {
   if (lg.indexOf('!!') > -1) {alert(lg); }
 }
 
+
+
+export function canTransfer(nft:NFT,by_addr:string) : boolean {
+  //canMint
+  //Détermine si un NFT peut être transférer d'une blockchain à une autre
+  if(nft.network && nft.network.startsWith("db-")){
+    if(nft.marketplace?.quantity==0)return false;
+    if(nft.miner!="" && nft.miner!=by_addr)return false;
+    return true;
+  } else {
+    if(by_addr==nft.owner)return true;
+  }
+  return false;
+}
+
+
+
 export function find(liste:any[],elt_to_search:any,index_name:any=0){
   let rc=0;
   for(let item of liste){
-    if(item[index_name]==elt_to_search[index_name])return rc;
+    if(typeof elt_to_search=="object") {
+      if (item[index_name] == elt_to_search[index_name]) return rc;
+    } else {
+      if(item[index_name]==elt_to_search) return rc;
+    }
     rc=rc+1;
   }
   return -1;

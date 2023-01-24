@@ -95,7 +95,7 @@ export class AppComponent implements AfterContentInit {
 
 
   init_form(){
-    setTimeout(()=>{this.showSplash=false;},1000);
+
     getParams(this.routes).then((params:any)=>{
 
       if(params.hasOwnProperty("server")){
@@ -125,6 +125,8 @@ export class AppComponent implements AfterContentInit {
           this.user.init(key);
         }
       }
+
+      setTimeout(()=>{this.showSplash=false;},1000);
 
       this.network_service.version=params["version"] || "main";
       if(params.hasOwnProperty("toolbar")){

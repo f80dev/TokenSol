@@ -124,12 +124,12 @@ export class DealermachineComponent implements OnInit {
           $$("Section lazy_mining manquante")
           return;
         }
+        //TODO: pour l'instant on ne prend en compte que le premier network de lazy_mint. Il va falloir implémenter un choix plus pertinent
         let miner=this.ope.lazy_mining.networks[0].miner;
         let network=this.ope.lazy_mining.networks[0].network;
         this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
 
         this.network.mint(this.nft,miner,this.address,this.ope.id,true,"",network).then((r:any)=>{
-        // this.network.mint_for_contest(addr,this.ope.id,this.ope.lazy_mining.networks[0].miner,this.ope.lazy_mining.metadata_storage,this.ope.network,this.nft).subscribe((r:any)=>{
           this.message="";
           if(r.error.length>0){
             this.message=r.error+". ";

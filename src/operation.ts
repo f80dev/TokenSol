@@ -69,7 +69,10 @@ export interface Operation {
 
   collections:Collection[]
 
-  database: any | null
+  database: {
+    connexion: string
+    dbname: string
+  } | null
   accounts: any | null
 
   branding: {

@@ -4,11 +4,23 @@
   <mat-tab [label]="tab_title">
     <div style="display: flex;margin-top: 10px;flex-wrap: wrap;justify-content: center;align-items: center;">
 
-        <mat-icon (click)="show_elrond_addr()" title="Recevoir directement d'autres NFT" *ngIf="qrcode_addr.length==0" style="cursor: pointer;font-size: x-large;">download</mat-icon>
-        <mat-icon (click)="force_refresh()" title="Rafraichir l'écran" style="cursor: pointer;font-size: x-large;">refresh</mat-icon>
-        <mat-icon (click)="open_inspire()" title="Voir dans Inspire.art" style="cursor: pointer;font-size: x-large;">visibility</mat-icon>
 
-        <mat-slider [max]="500" [min]="100" title="Taille des NFTs affichés">
+        <button mat-icon-button (click)="show_elrond_addr()"
+                title="Recevoir directement d'autres NFT"
+                *ngIf="qrcode_addr.length==0">
+          <mat-icon>download</mat-icon>
+        </button>
+        <button mat-icon-button (click)="force_refresh()"
+                title="Rafraichir l'écran">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-icon-button (click)="open_inspire()"
+                title="Voir dans Inspire.art">
+          <mat-icon>visibility</mat-icon>
+        </button>
+
+        <mat-slider [max]="500" [min]="100" title="Taille des NFTs affichés"
+                    style="margin-left: 10px;width: 100px;">
           <input matSliderThumb [(ngModel)]="nft_size">
         </mat-slider>
 
@@ -19,10 +31,8 @@
                    [value]="sel_collection" (valueChange)="force_refresh($event)">
         </app-input>
 
-
-        <app-hourglass [message]="message"></app-hourglass>
-
     </div>
+    <app-hourglass [message]="message"></app-hourglass>
 
     <div *ngIf="qrcode_addr.length>0">
       <br>
@@ -283,6 +293,11 @@
   </mat-tab>
 
   <mat-tab label="Aide">
+    <div *ngIf="network.isDevnet()">
+      Réseau: {{network.network}}<br>
+      Addresse: {{addr | alias}}
+    </div>
+    <br>
     <app-faqs filter="nfluent_wallet"></app-faqs>
   </mat-tab>
 

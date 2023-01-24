@@ -2,6 +2,10 @@
 APP_SECRET_KEY="hh4271"
 CRYPT_KEY_FOR_NFT=""
 
+STORJ_API_KEY="122VG2geFi1BY9bcHu2PpU4Na6YAQUTYdT2jLYNAgmhxdNa5irTAV11b6EG5TRZQ48i91jWDAxiBZLC32VQkCtdLNqbqCkvj9YAhPCyAHz8dTSYPDtSLf7iFGF2tyro3Rc8pX9N7"
+STORJ_SATTELITE_ADDR="12L9ZFwhzVpuEKMUNUqkaTLGzwY9G24tbiigLiXpmZWKwmcNDDs@eu1.storj.io:7777"
+STORJ_PASSPHRASE="hh4271!!"
+
 #Initialisation de la base sur le serveur:
 #ouverture du firewall : firewall-cmd --zone=public --add-port=27017/tcp ou "ufw allow 27017/tcp" si on utilise ufw
 #docker rm -f f80db

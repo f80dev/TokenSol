@@ -1,6 +1,6 @@
 import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, getParams, isLocal, showError, showMessage} from "../../tools";
+import {$$, getParams, isLocal, setParams, showError, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {environment} from "../../environments/environment";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -11,6 +11,7 @@ import {NFT} from "../../nft";
 import {Collection, Operation} from "../../operation";
 import {UserService} from "../user.service";
 import {Clipboard} from "@angular/cdk/clipboard";
+import {DEFAULT_DATABASE} from "../../definitions";
 
 //Test : http://localhost:4200/wallet?addr=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr&toolbar=false
 @Component({
@@ -91,16 +92,21 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   ngOnInit(): void {
-    getParams(this.routes,"wallet_params").then((params:any)=>{
+    getParams(this.routes,"").then((params:any)=>{
       $$("Récupération des paramètres: ",params);
-      this.addr=params["addr"];
-      if(!this.addr)this.addr=this.user.addr;
-      if(!this.addr)showMessage(this,"Adresse non disponible, vous pouvez fermer cette fenêtre");
-      this.showDetail=params["show_detail"] || false;
 
       let network=params["network"] || "elrond-mainnet";
       if(network=="db")network="db-server-nfluent";
       this.network.network=network;
+
+      this.addr=params["addr"];
+      if(!this.addr){
+        let params={network:network,db:DEFAULT_DATABASE};
+        this.router.navigate(["rescue"],{queryParams:{params:setParams(params)}})
+      }
+
+      this.showDetail=params["show_detail"] || false;
+
 
       this.generate_qrcode();
       this.hAccessCode=setInterval(()=>{this.generate_qrcode()},30000);
@@ -248,6 +254,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
         tags:"",
         collection: collection,
         description: "description",
+        miner:this.sel_ope.nftlive.nft_target.miner,
         files: [],
         marketplace: {quantity: 1, price: 0},
         message: undefined,
@@ -263,12 +270,12 @@ export class MywalletComponent implements OnInit,OnDestroy {
         style: undefined
       }
 
-      if(this.sel_ope?.nftlive?.nft_target.miner){
+      if(token.miner){
 
         if(!this.owner)this.owner=this.addr;
 
         this.message="Minage en cours";
-        this.network.mint(token,this.sel_ope?.nftlive?.nft_target.miner,this.owner,this.sel_ope.id,false,"nftstorage",this.network.network).then((r:any)=>{
+        this.network.mint(token,token.miner,this.owner,this.sel_ope.id,false,"nftstorage",this.network.network).then((r:any)=>{
           this.message="";
           showMessage(this,"Votre NFT est miné et envoyé. Vous pouvez en miner un autre");
           this.token_to_send=null;

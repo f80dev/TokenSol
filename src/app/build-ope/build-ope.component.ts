@@ -214,10 +214,10 @@ export class BuildOpeComponent implements OnInit {
   }
 
   open_appli(appli:string,add_param:any={}) {
-    if(this.nft_filter_by_account(this.nfts,this.user.addr)==0){
-      showMessage(this,"le compte sélectionné ne peut transféré aucun NFT issue de la source")
-      return;
-    }
+    // if(this.nft_filter_by_account(this.nfts,this.user.addr)==0){
+    //   showMessage(this,"le compte sélectionné ne peut transféré aucun NFT issue de la source")
+    //   return;
+    // }
     if(this.operation.sel_ope){
       if(appli=="validate" && (!this.operation.sel_ope.validate?.users || this.operation.sel_ope.validate?.users.length==0)){
         _prompt(this,"Nom du validateur","dudule").then((name:string)=>{

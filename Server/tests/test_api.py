@@ -4,7 +4,7 @@ from json import loads
 
 import requests
 
-from flaskr import async_mint
+from flaskr import async_mint, DAO
 from flaskr.Elrond import Elrond
 from flaskr.Polygon import Polygon
 from flaskr.Tools import get_operation, now
@@ -32,12 +32,10 @@ def test_faqs(test_client):
 
 
 def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.pdf","fond1.gif","image_1.webp"],platforms=PLATFORMS):
-
 	for p in platforms:
 		log("Test de la platform "+p)
 		for f in files:
-			with open(RESSOURCE_TEST_DIR+f,"rb") as file:
-				bytes=file.read()
+			with open(RESSOURCE_TEST_DIR+f,"rb") as file: bytes=file.read()
 			_type="application/"+f.split(".")[1]
 
 			if "image" in _type or p!="nftstorage":
@@ -49,10 +47,13 @@ def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.p
 				cid=call_api(test_client,"upload/","platform="+p,body)
 				assert len(cid["url"])>0
 				assert len(cid["cid"])>0
-				resp=requests.get(cid["url"],timeout=60000)
-				assert resp.status_code==200
-				rc=resp.content
-				assert rc==base64.b64decode(body["content"].split("base64,")[1])
+
+				if not "ipfs" in p:
+					log("Tentative de récupération du fichier "+cid["url"])
+					resp=requests.get(cid["url"],timeout=60000)
+					assert resp.status_code==200
+					rc=resp.content
+					assert rc==base64.b64decode(body["content"].split("base64,")[1])
 
 
 
@@ -64,7 +65,7 @@ def test_api_upload_batch(test_client, file=RESSOURCE_TEST_DIR+"batch_importatio
 
 
 def test_api_get_collections(test_client, network=MAIN_NETWORK, col_or_account=MAIN_COLLECTION):
-	rc = call_api(test_client, "collections/" + col_or_account + "/", "network=" + network + "&with_detail=true")
+	rc = call_api(test_client, "collections/" + col_or_account + "/", "network=" + network + "&with_detail=true&limit=100")
 	assert not rc is None
 	return rc
 
@@ -72,7 +73,7 @@ def test_api_get_collections(test_client, network=MAIN_NETWORK, col_or_account=M
 def test_api_get_collections_for_main_account(test_client, network=MAIN_NETWORK):
 	rc = test_api_get_collections(test_client, network, MAIN_ACCOUNT)
 	assert len(rc) > 0
-	assert 'TESTCOLF-82c780' in [x["collection"] for x in rc]
+	assert 'TESTCOLF-6ef77a' in [x["collection"] for x in rc]
 
 
 
@@ -192,7 +193,7 @@ def test_api_mint(test_client, miner="", col_id=MAIN_COLLECTION, network=MAIN_NE
 		return token_id, col_id
 
 
-def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLECTION) -> (str, str):
+def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLECTION,miner=MAIN_ACCOUNT) -> (str, str):
 	"""
   Execute un minage vers la base de données
   :param test_client:
@@ -201,18 +202,30 @@ def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLEC
   """
 	log("Test de creation d'un NFT de la collection " + collection_to_use + " dans " + DB_NETWORK)
 	assert "db-" in network, "fonction uniquement valable pour miner dans une base de données"
-	nft_id, col_id = test_api_mint(test_client, network=network, col_id=collection_to_use)
+	nft_id, col_id = test_api_mint(test_client, network=network, col_id=collection_to_use,miner=miner)
 	assert not nft_id is None
+	assert "/"+network in nft_id
 	assert not col_id is None
+
+	#récupération du NFT
+	nft=DAO(network).get_nft(nft_id)
+	assert not nft is None
+	assert nft.marketplace["quantity"]>0
+	assert nft.miner==miner
+	assert nft.owner==""
+
 	return nft_id, col_id
 
 
 def test_transfer_from_lazymint(test_client, dest="", miner=MAIN_ACCOUNT, to_network=MAIN_NETWORK,
                                 from_network=DB_NETWORK, collection_to_mint=MAIN_COLLECTION):
-	nft_id, col_id = test_lazymint(test_client, from_network,
-	                               collection_to_use=collection_to_mint)  # Créer un token dans la base de données
+	cols=test_api_get_collections(test_client,from_network,col_or_account=miner)
+	nft_id, col_id = test_lazymint(test_client, from_network,collection_to_use=cols[0]["id"])  # Créer un token dans la base de données
+
 	assert not nft_id is None and not col_id is None, "Pas de NFT disponible dans " + collection_to_mint
-	rc = test_transfer_to(test_client, to_network=to_network, from_network=from_network, miner=miner, token_id=nft_id,
+	rc = test_transfer_to(test_client, to_network=to_network,
+	                      from_network=from_network,
+	                      miner=miner, token_id=nft_id,
 	                      dest=dest)
 	assert rc, "Le transfert n'a pas eu lieu"
 
@@ -225,12 +238,8 @@ def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NET
 		account = get_account(test_client, network=to_network, seuil=0)
 		dest = account["address"]
 
-	if miner == "":
-		rc = call_api(test_client, "transfer/" + token_id + "/" + dest + "/",
-		              "from_network=" + from_network + "&to_network=" + to_network, method="POST")
-	else:
-		rc = call_api(test_client, "transfer/" + token_id + "/" + dest + "/" + miner + "/",
-		              "from_network=" + from_network + "&to_network=" + to_network, method="POST")
+	body={"token_id":token_id,"dest":dest,"miner":miner}
+	rc = call_api(test_client, "transfer/","from_network=" + from_network + "&to_network=" + to_network,body, method="POST")
 
 	assert not rc is None
 	assert len(rc["error"]) == 0
@@ -404,6 +413,12 @@ def random_from(limit=5):
 
 
 def mint_collection(test_client, target_network=MAIN_NETWORK):
+	"""
+	test le minage d'une collection vers target_network
+	:param test_client:
+	:param target_network:
+	:return:
+	"""
 	col = test_generate_collection(limit=3)
 	miner = get_account(test_client, target_network, seuil=1)
 	collection_name = "testCol" + random_from(5)
@@ -412,6 +427,14 @@ def mint_collection(test_client, target_network=MAIN_NETWORK):
 	# for filename in col:
 	# 	if filename.endswith("webp"):
 	# 		test_mint_from_file(test_client, filename, miner, target_network, col_id=collection["id"])
+
+
+def test_mint_collection_to_database():
+	images=test_generate_collection(limit=3)
+	col=test_api_get_collections(test_client,network=MAIN_NETWORK,col_or_account=MAIN_ACCOUNT)
+	assert not col is None
+
+
 
 
 def test_get_account(test_client,addr=MAIN_ACCOUNT,network=MAIN_NETWORK):

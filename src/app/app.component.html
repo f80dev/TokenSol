@@ -59,7 +59,7 @@
                [mode]="(isHandset$ | async) ? 'over' : 'side'"
                [opened]="(isHandset$ | async) === false && toolbar_visible=='true'">
 
-    <mat-nav-list (mouseup)="close_menu()" class="mat-headline-6" >
+    <mat-nav-list (mouseup)="close_menu()" >
       <a mat-list-item [routerLink]="'creator'"><span class="item-menu">Générateur de NFTs</span></a>
       <a mat-list-item [routerLink]="'collections'"><span class="item-menu">Gestion des collections</span></a>
       <a mat-list-item [routerLink]="'keys'"><span class="item-menu">Gestion des clés</span></a>
@@ -70,7 +70,8 @@
       <a mat-list-item [routerLink]="'pool'"><span class="item-menu">Pool de minage</span></a>
       <a mat-list-item [routerLink]="'validators'"><span class="item-menu">Validateurs</span></a>
       <a mat-list-item [routerLink]="'wallet'"><span class="item-menu">Mes NFTs</span></a>
-      <a mat-list-item (click)="logout()" *ngIf="user.connected()"><span class="item-menu">Se déconnecter</span></a>
+      <a mat-list-item [routerLink]="'rescue'" [queryParams]="{'ope':operation.sel_ope!.id,'network':network_service.network}"><span class="item-menu">Restauration de Wallet</span></a>
+      <a mat-list-item (click)="logout()" *ngIf="user.isConnected()"><span class="item-menu">Se déconnecter</span></a>
       <a mat-list-item [routerLink]="'admin'"><span class="item-menu">Administrateur</span></a>
       <a mat-list-item [routerLink]="'help'"><span class="item-menu">Aide</span></a>
       <a mat-list-item [routerLink]="'faqs'"><span class="item-menu">Questions Fréquentes</span></a>

@@ -35,14 +35,41 @@
 
       <div class="mat-body-2 color-primary" style="margin:5px;">{{nft.name}}</div>
 
-      <app-reversebloc [image]="nft.visual" width="200px" height="200px" border_color="lightgray">
-        <div style="padding: 5%;color: black;" class="mat-body-1">
+      <app-reversebloc [image]="nft.visual" width="300px" height="300px" border_color="lightgray">
+        <div style="padding: 1%;color: black;" class="mat-body-1">
           <br>
-          <div [cdkCopyToClipboard]="nft.address!" style="cursor: copy;">Adresse: {{nft.address}}</div>
-          <div *ngIf="nft.collection"><strong>Collection:</strong> <span [title]="nft.collection!.description">{{nft.collection!.name}}</span></div>
-          <div *ngIf="nft.marketplace!.quantity>1"><strong>Quantité: </strong>{{nft.marketplace!.quantity}}</div>
-          <br>
-
+          <table>
+            <tr [cdkCopyToClipboard]="nft.address!" style="cursor: copy;">
+              <td>Adresse</td>
+              <td>{{nft.address!.split("/")[0]}}</td>
+            </tr>
+            <tr *ngIf="nft.collection">
+              <td>Collection</td><td><span [title]="nft.collection!.description">{{nft.collection!.name}}</span></td>
+            </tr>
+            <tr *ngIf="nft.marketplace!.quantity>1">
+              <td>Quantité<br>Price</td>
+              <td>{{nft.marketplace!.quantity}}<br>{{nft.marketplace!.price}}</td>
+            </tr>
+            <tr>
+              <td>
+                Propriétés
+              </td>
+              <td>
+                {{nft.attributes.join('\n')}}
+              </td>
+            </tr>
+            <br>
+            <tr>
+              <td>
+                Créateurs
+              </td>
+              <td>
+                <div *ngFor="let creator of nft.creators">
+                  {{creator.address}}: {{creator.share}}%
+                </div>
+              </td>
+            </tr>
+          </table>
         </div>
 
         <div style="display: block;position:absolute;bottom: 10px;text-align: right;left:0px;width: 95%;">

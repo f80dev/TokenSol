@@ -93,21 +93,24 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
             returnError("!Champs dbname ou connexion manquant dans la source")
 
           _dao_temp=DAO(src["connexion"],src["dbname"])
-          if collections and len(collections)>0:
-            for collection in collections:
-              if _dao_temp.isConnected():
-                l_nfts=list(_dao_temp.nfts_from_collection(collection))
-                nfts=nfts+l_nfts[:src["filter"]["limit"]]
-                src["ntokens"]=len(l_nfts)
-              else:
-                log("Impossible de se connecter a la base de donnée pour récupérer les NFT")
+          if not _dao_temp.isConnected():
+            log("Impossible de se connecter a la base de donnée pour récupérer les NFT")
           else:
-            #Si le filtre sur les collections n'a pas été précisé ou si vide, on prend tous les NFTs des sources
-            if _dao_temp.isConnected():
-              l_nfts=list(_dao_temp.nfts_from_collection(None))
-              nfts=nfts+l_nfts[:src["filter"]["limit"]]
+            if collections and len(collections)>0:
+              for collection in collections:
+                tmp=list(_dao_temp.nfts_from_collection(collection))
+            else:
+              #Si le filtre sur les collections n'a pas été précisé ou si vide, on prend tous les NFTs des sources
+              tmp=list(_dao_temp.nfts_from_collection(None))
 
-          src["ntokens"]=len(l_nfts)
+            nfts=[]
+            #Application du filtre de limit et de collection par source
+            for n in tmp[:src["filter"]["limit"]]:
+              if not "collection" in src["filter"] or n.collection.id==src["filter"]["collection"]:
+                nfts.append(n)
+
+          src["ntokens"]=len(nfts)
+
         except Exception as inst:
           log("Probleme de lecture de "+src["connexion"]+" "+str(inst.args))
 
@@ -256,7 +259,8 @@ def async_mint(config:dict,nbr_items=3,filter="") -> int:
                   ask["network"],
                   domain_appli=config["DOMAIN_APPLI"],
                   mail_new_wallet=_ope["new_account"]["mail"] if not _ope is None else "",
-                  mail_existing_wallet=_ope["transfer"]["mail"] if not _ope is None else ""
+                  mail_existing_wallet=_ope["transfer"]["mail"] if not _ope is None else "",
+                  operation_id=_ope["id"] if _ope else ""
                   )
           if not rc or rc["error"]!="":
             log("Problème de minage voir "+rc["hash"])
@@ -276,8 +280,11 @@ def async_mint(config:dict,nbr_items=3,filter="") -> int:
   return n_treatment
 
 
-def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile="",mail_new_wallet="",mail_existing_wallet="",
-         application_root=None,domain_appli=None,dao=None):
+def mint(nft:NFT,miner,owner,network,
+         offchaindata_platform="IPFS",storagefile="",
+         mail_new_wallet="",mail_existing_wallet="",
+         application_root=None,domain_appli=None,
+         dao=None,operation_id=""):
   """
   minage du NFT
   :param nft:
@@ -423,7 +430,7 @@ def mint(nft:NFT,miner,owner,network,offchaindata_platform="IPFS",storagefile=""
 
     _dao=DAO(db_loc,db_name)
     if _dao.isConnected():
-      rc=_dao.lazy_mint(nft,"",application_root)
+      rc=_dao.lazy_mint(nft,ope=operation_id)
     else:
       log("Impossible de se connecter à "+db_loc+"/"+db_name)
 

@@ -81,6 +81,7 @@ export interface NFT {
   address:string | undefined
   royalties:number
   owner:string | undefined
+  miner:string
   marketplace: {
     price: number
     quantity: number

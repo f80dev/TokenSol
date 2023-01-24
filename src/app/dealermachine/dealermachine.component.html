@@ -9,12 +9,12 @@
          class="mat-elevation-z4">
     <br>
 
-    <div *ngIf="!selfWalletConnexion">
+    <div *ngIf="!selfWalletConnexion" style="max-width: 450px;display: inline-block;">
+
       <app-input style="width:50%;max-width: 300px;" label_button="Envoyer"
                  (valueChange)="address=$event" [value]="address"
                  [label]="prompt" (validate)="validate_input_address()"
                  value_type="text" ></app-input>
-
 
       <button type="button" mat-raised-button mat-button
               title="Aide / FAQ"
@@ -22,8 +22,6 @@
               (click)="open_help()">
         Aide
       </button>
-
-
       <br>
 
       <div *ngIf="authentification?.webcam">

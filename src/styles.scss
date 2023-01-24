@@ -11,12 +11,11 @@ body { margin: 0;}
 }
 
 .titleform {
-  @extend .mat-headline-3, .color-primary;
+  @extend .mat-headline-4, .color-primary;
 }
 
 .item-menu {
-  @extend .mat-headline-6;
-  font-weight: bold;
+  @extend .mat-caption;
 }
 
 .item-menu:hover {

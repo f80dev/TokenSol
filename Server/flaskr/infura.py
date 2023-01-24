@@ -3,11 +3,12 @@ import json
 
 import requests
 
+from flaskr.Storage import Storage
 from flaskr.Tools import log
 from flaskr.settings import INFURA_PROJECT_ID, INFURA_PROJECT_SECRET, TEMP_DIR
 
 
-class Infura:
+class Infura(Storage):
   def __init__(self):
     pass
 
@@ -18,6 +19,7 @@ class Infura:
         f=open(TEMP_DIR+body["filename"],"wb")
         f.write(base64.b64decode(body["content"].split(";base64,")[1]))
         f.close()
+
       else:
         f=open(TEMP_DIR+"temp.json","w")
         json.dump(body,f)
@@ -29,6 +31,7 @@ class Infura:
 
     rc=response.json()
     rc["url"]="https://ipfs.io/ipfs/"+rc["Hash"]+("?"+body["type"] if "type" in body else "")
+    if "filename" in body: rc["filename"]=body["filename"]
     return rc
 
 

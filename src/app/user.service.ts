@@ -43,7 +43,12 @@ export class UserService {
   }
 
   isConnected(strong:boolean=false) {
-    return this.connected(strong);
+    let rc=(this.addr && this.addr.length>0) || this.email.length>0;
+    if(isLocal(environment.appli)){
+      this.strong=true;
+      rc=true;
+    }
+    return rc;
   }
 
 
@@ -60,7 +65,7 @@ export class UserService {
       this.network.get_collections(this.addr, this.network.network, false).subscribe((cols: any) => {
         this.collections = cols;
         resolve(cols);
-      });
+      },(err:any)=>{reject(err);});
     });
   }
 
@@ -68,8 +73,6 @@ export class UserService {
   init(addr:string,route=""){
     return new Promise((resolve, reject) => {
       if(addr.length>0 && addr!="undefined"){
-        this.addr=addr
-
         if(addr.indexOf("@")>-1){
           this.email=addr;
         }else{
@@ -85,21 +88,14 @@ export class UserService {
               qrcode: "",
               unity: r.unity
             }
-            this.addr_change.next(r.address);
+            this.addr=r.address;
+            this.get_collection().then(()=>{
+              this.httpClient.get(this.network.server_nfluent+"/api/perms/"+this.addr+"/?route="+route).subscribe((p:any)=>{this.profil = p;},(err)=>{$$("!probleme de récupération des permissions");reject(err);});
+              this.addr_change.next(r.address);
+              resolve(r.address);
+            });
           })
         }
-
-        this.get_collection().then(()=>{
-          this.httpClient.get(this.network.server_nfluent+"/api/perms/"+this.addr+"/?route="+route).subscribe((r:any)=>{
-            this.profil = r;
-            r.address=addr;
-            this.addr_change.next(addr);
-            resolve(r);
-          },(err)=>{
-            $$("!probleme de récupération des permissions")
-            reject(err);
-          });
-        });
       }
     });
   }
@@ -118,13 +114,6 @@ export class UserService {
     let data="SaveKeyValue@"+this.str_to_hex("")
   }
 
-
-  connected(strong:boolean=false) {
-    let rc=(this.addr && this.addr.length>0) || this.email.length>0;
-    if(isLocal(environment.appli))this.strong=true;
-    if(strong)rc=rc && this.strong;
-    return rc;
-  }
 
 
   logout() {

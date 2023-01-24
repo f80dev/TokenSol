@@ -1,9 +1,12 @@
+import base64
 import hashlib
 import pymongo
 from bson import ObjectId
 from pymongo import database
 
 from flaskr.NFT import NFT
+from flaskr.Network import Network
+from flaskr.Storage import Storage
 from flaskr.Tools import log, now
 from flaskr.secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING, MONGO_WEB3_CONNECTION_STRING
 
@@ -19,12 +22,12 @@ DB_SERVERS=dict(
 )
 
 
-class DAO:
+class DAO(Storage,Network):
   db:database=None
   url:str=""
 
   def __init__(self,domain:str="server",dbname="nfluent",ope=None,config=None,network=""):
-    if ope:
+    if ope and "database" in ope:
       self.domain=ope["database"]["connexion"]
       self.dbname=ope["database"]["dbname"]
     else:
@@ -33,14 +36,13 @@ class DAO:
         self.dbname=config["DB_NAME"]
         self.domain=config["DB_SERVER"]
       else:
-        if len(network)>0:
+        if len(network)>0 and len(network.split("-"))>2:
           self.domain=network.split("-")[1]
           self.dbname=network.split("-")[2]
         else:
           if domain and dbname:
             self.dbname=dbname if not "-" in domain else domain.split("-")[2]
             self.domain=domain if not "-" in domain else domain.split("-")[1]
-
 
     #log("Initialisation de la base de données "+self.domain+"/"+self.dbname)
     if not self.connect(self.domain,self.dbname):
@@ -50,6 +52,14 @@ class DAO:
   def isConnected(self) -> bool:
     return not self.db is None
 
+
+  def add(self,content,domain_server:str) -> dict:
+    id=self.add_data(content)
+    id=str(id)+"/db-"+self.domain+"-"+self.dbname
+
+    id="db_"+str(base64.b64encode(bytes(id,"utf8")),"utf8")
+    rc={"Hash":str(id),"url":domain_server+"/api/files/"+str(id)}
+    return rc
 
   def connect(self, domain, name):
     """
@@ -81,7 +91,7 @@ class DAO:
       rc.append(NFT(object=nft))
     return rc
 
-  def lazy_mint(self, nft,ope,server_addr="https://server.f80lab.com",id=""):
+  def lazy_mint(self, nft:NFT,ope:str=""):
     """
     Opere un transfert du NFT dans la base de données
     :param _data:
@@ -91,9 +101,10 @@ class DAO:
     :return:
     """
     _data=nft.__dict__
-    _data["address"]="db_"+now("hex")[2:]     #l'addresse commençant par db_ permet de désigner une base de données
+    _data["address"]="db_"+now("hex")[2:]+"/db-"+self.domain+"-"+self.dbname     #l'addresse commençant par db_ permet de désigner une base de données
     _data["ts"]=int(now()*1000)
     _data["ope"]=ope
+    _data["network"]="db-"+self.domain+"-"+self.dbname
 
     result=self.db["nfts"].replace_one(filter={"address":_data["address"]},replacement=_data,upsert=True)
 
@@ -134,7 +145,8 @@ class DAO:
     return self.db["nfts"].delete_one(filter={"id":id})
 
   def add_data(self, data):
-    if type(data)==str:data={"content":data}
+    if type(data)==str:data=base64.b64decode(data)
+    if type(data)==bytes:data={"content":data}
     rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
 
@@ -148,6 +160,12 @@ class DAO:
     return rc
 
   def get_data(self, id):
+    """
+    recherche d'information dans l'espace de stockage
+    :param id:
+    :return:
+    """
+    if id.startswith("db_"):id=id[3:]
     return self.db["storage"].find_one(filter={"_id":ObjectId(id)})
 
   def add_histo(self, ope,command,account, collection_id,transaction_id,network="",comment="",params=list()):
@@ -164,16 +182,31 @@ class DAO:
         "params":params
       })
 
+  def get_account(self,addr:str):
+    return {
+      "balance":1000e18,
+      "amount":1000,
+      "address":addr,
+      "private_key":addr,
+      "name":addr,
+      "unity":""
+    }
 
 
-  def update(self, _data,field="quantity"):
+  def update_quantity(self, address:str,variation:int):
     """
     Mise a jour de la quantité
     :param _data:
     :param field:
     :return:
     """
-    self.db["nfts"].update_one({"address":_data["address"]},{ "$set": { field: _data[field] } })
+    nft=self.db["nfts"].find_one({"address":address})
+    if nft:
+      nft["marketplace"]["quantity"]=nft["marketplace"]["quantity"]+variation
+      self.db["nfts"].update_one({"address":address},{ "$set": { "marketplace": nft["marketplace"] } })
+      return True
+    else:
+      return False
 
 
   def get_mintpool(self):
@@ -237,6 +270,14 @@ class DAO:
     return str(tx.inserted_id)
 
   def add_email(self,email:str,addr:str,network:str):
+    """
+    sauvegarde de l'adresse du wallet en fonction d'un cryptage de l'adresse email
+    :param email:
+    :param addr:
+    :param network:
+    :return:
+    """
+    network=network.split("-")[0]
     encoded_email=hashlib.sha256(email.encode()).hexdigest()
     self.db["account_by_emails"].insert_one({
       "email":encoded_email,
@@ -245,6 +286,7 @@ class DAO:
     })
 
   def get_address(self,email:str,network:str):
+    network=network.split("-")[0]
     encoded_email=hashlib.sha256(email.encode()).hexdigest()
     rc=self.db["account_by_emails"].find_one({"email":encoded_email,"network":network})
     if rc:return rc["address"]

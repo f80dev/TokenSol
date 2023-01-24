@@ -670,9 +670,9 @@ export class NetworkService implements OnInit {
 
   transfer_to(mint_addr: string, to_addr: string,owner:string,network="",mail_content="mail_new_account") {
     if(network.length==0)network=this.network;
+    let body={token_id:mint_addr,dest:to_addr,miner:owner,mail_content:mail_content}
     return this.httpClient.post(
-      this.server_nfluent+"/api/transfer/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network,
-      {mail_content:mail_content}
+      this.server_nfluent+"/api/transfer/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network, body
     );
   }
 
@@ -762,7 +762,8 @@ export class NetworkService implements OnInit {
 
   get_collections(owners_or_collections: string,network="",detail=false) {
     if(network.length==0)network=this.network;
-    return this.httpClient.get<Collection[]>(this.server_nfluent+"/api/collections/"+owners_or_collections+"/?network="+network+"&detail="+detail);
+    let url=this.server_nfluent+"/api/collections/"+owners_or_collections+"/?network="+network+"&detail="+detail;
+    return this.httpClient.get<Collection[]>(url);
   }
 
   create_collection(owner: string, new_collection: Collection) {
@@ -827,7 +828,7 @@ export class NetworkService implements OnInit {
       }else {
         if (!id.startsWith("erd")) suffixe = "/collections/" + id;
       }
-      let nft_gallery=this.isElrond() ? "xspotlight.com" : "";
+      let nft_gallery=this.isElrond() ? "inspire.art" : "";
       url="https://"+(this.isMain() ? "" : "devnet.")+nft_gallery+suffixe;
     }
 
@@ -872,5 +873,14 @@ export class NetworkService implements OnInit {
 
   get_account(addr: string, network: string) {
     return this.httpClient.get(this.server_nfluent+"/api/account/"+addr+"/?network="+network).pipe(retry(1),timeout(2000));
+  }
+
+  rescue_wallet(email: string,database_server:string,network:string) {
+      return this.httpClient.get(this.server_nfluent+"/api/rescue_wallet/"+email+"/?db="+database_server+"&network="+network).pipe(retry(1),timeout(2000));
+  }
+
+  isDevnet() {
+      if(this.network.indexOf("devnet")>-1)return true;
+      return false;
   }
 }

@@ -19,6 +19,11 @@ def test_get_nfts_from_src(test_client,network="elrond-devnet",owner="bob"):
   assert nfts is not None
   #assert len(nfts)>0,"Aucun nft trouvé dans la source database"
 
+
+  src={"active":True,"type":"database","dbname":"test","connexion":"server","filter":{"collection":"MACOLLEC-4356f0"}}
+  nfts=get_nfts_from_src(src)
+  assert not nfts is None
+
   src={"active":True,"type":"network","connexion":network,"owner":owner}
   nfts=get_nfts_from_src(src)
   assert len(nfts)>0

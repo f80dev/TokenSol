@@ -87,6 +87,8 @@ import { ScreencutterPipe } from './screencutter.pipe';
 import {DragDropModule} from "@angular/cdk/drag-drop";
 import { FileDragNDropDirective } from './file-drag-ndrop.directive';
 import { ImageSelectorComponent } from './image-selector/image-selector.component';
+import { WarningComponent } from './warning/warning.component';
+import { RescuewalletComponent } from './rescuewallet/rescuewallet.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -143,7 +145,9 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         InputComponent,
         ScreencutterPipe,
         FileDragNDropDirective,
-        ImageSelectorComponent
+        ImageSelectorComponent,
+        WarningComponent,
+        RescuewalletComponent
     ],
     imports: [
         BrowserModule,

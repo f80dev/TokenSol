@@ -64,7 +64,7 @@
       <td><span *ngIf="ask.dtWork">{{ask.dtWork*1000 | date:'dd/MM HH:mm'}}</span></td>
       <td style="max-width: 200px;">{{ask.message | slice:0:40}}</td>
       <td>
-        <button type="button" mat-raised-button mat-icon-button mat-button *ngIf="!ask.dtWork"
+        <button type="button" mat-icon-button mat-button *ngIf="!ask.dtWork"
                 title="supprimer le traitement"
                 (click)="cancel(ask)">
           <mat-icon>delete</mat-icon>

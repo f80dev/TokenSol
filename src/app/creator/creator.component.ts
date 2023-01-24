@@ -34,6 +34,7 @@ export class CreatorComponent implements OnInit {
     {label:"NFT storage",value:"nftstorage"},
     {label:"IPFS",value:"ipfs"},
     {label:"Infura (IPFS)",value:"infura"},
+    {label:"MongoDB",value:"mongodb"},
   ]
 
   show_addtext:any;
@@ -240,7 +241,7 @@ export class CreatorComponent implements OnInit {
           if(this.operation!.sel_ope && this.operation!.sel_ope!.nftlive){
             this.sel_config!.data.operation=this.operation.sel_ope?.id;
           }
-          if(this.sel_config.data.creators.length==0)this.sel_config.data.creators=this.user.addr+":100%";
+          if(!this.sel_config.data.creators || this.sel_config.data.creators.length==0)this.sel_config.data.creators=this.user.addr+":100%";
         }
 
         this.network.wait("Fabrication de la collection ...");
@@ -256,7 +257,8 @@ export class CreatorComponent implements OnInit {
             this.sel_config!.seed,
             this.quality,format,
             this.sel_config!.data,
-            this.sel_config!.data.properties,this.sel_webstorage_platform.value).subscribe((r:any)=>{
+            this.sel_config!.data.properties,
+            this.sel_webstorage_platform.value).subscribe((r:any)=>{
 
               showMessage(this,"Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
               this.url_collection=this.network.server_nfluent+"/api/images/"+r.archive;

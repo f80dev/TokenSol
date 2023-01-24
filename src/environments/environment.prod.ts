@@ -2,7 +2,7 @@ export const environment = {
   production: true,
   mail:"contact@nfluent.io",
   forum:"",
-  version: "0.1.56",
+  version: "0.1.57",
   claim:"From design to implementation",
   server:"https://api.nfluent.io:4242",
   appname:"TokenForge",

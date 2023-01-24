@@ -17,6 +17,7 @@ class NFT:
   visual:str=""
   creators:list
   address:str=None
+  miner:str=""
   royalties:int
   owner:str=""
   amount:int=1
@@ -25,7 +26,9 @@ class NFT:
   files:list
   other:dict={}
 
-  def __init__(self, name: str="",
+  def __init__(self,
+               name: str="",
+               miner:str="",
                symbol: str="",
                collection: dict={},
                attributes: list=list(),
@@ -48,6 +51,7 @@ class NFT:
       self.symbol=extract_from_dict(object,"symbol","")
       self.description=extract_from_dict(object,"description","")
       self.visual=extract_from_dict(object,"visual,image,storage","")
+      self.miner=extract_from_dict(object,"miner","")
 
       if "properties" in object and "creators" in object["properties"]:object["creators"]=object["properties"]["creators"]
       self.creators=extract_from_dict(object,"creators",[])
@@ -58,7 +62,7 @@ class NFT:
       self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1,"max_mint":1}
       self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)
       self.address=object["address"] if "address" in object else ("db_"+str(object["_id"]) if "_id" in object else "")     #Données obligatoire
-      self.network=object["network"] if "network" in object else "database"
+      self.network=object["network"] if "network" in object else ""
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
       self.tags=object["tags"] if "tags" in object else ""
@@ -70,7 +74,7 @@ class NFT:
       if type(attributes)==str:attributes={"value":attributes}
       if type(attributes)==dict: attributes=[attributes]
       self.attributes=attributes
-
+      self.miner=miner
       self.symbol=symbol
       self.visual=visual
       self.creators=creators

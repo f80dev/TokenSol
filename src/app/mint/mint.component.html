@@ -28,18 +28,19 @@
     </app-upload-file>
 
 
-
-
     <app-input [options]="platforms" style="max-width: 170px;"
                label="Plateforme de stockage"
                [value]="sel_platform"
                (valueChange)="sel_platform=$event"></app-input>
 
 
-    <app-input label="Collection à utiliser"
-               [value]="sel_collection" style="max-width: 200px;"
-               (valueChange)="sel_collection=$event"
+    <app-input label="Collection utilisée"
+               [value]="sel_collection" style="max-width: 150px;"
+               (valueChange)="sel_collection=$event" value_type="list"
                [options]="user.collections"></app-input>
+    <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"
+                 [if]="network.isElrond() && !sel_collection"></app-warning>
+
 
 
     <button type="button" mat-icon-button
@@ -47,6 +48,15 @@
             (click)="open_collections()">
       <mat-icon>visibility</mat-icon>
     </button>
+
+    <button type="button" mat-icon-button
+            title="Copier l'identifiant de la collection sélectionnée"
+            *ngIf="sel_collection"
+            [cdkCopyToClipboard]="sel_collection.id"
+            (click)="informe_copy_collection()">
+      <mat-icon>content_copy</mat-icon>
+    </button>
+
 
     <app-input label="Cible"
                [value]="sel_target" style="max-width: 130px;"
@@ -160,10 +170,8 @@
           <a [href]="token.visual" target="_blank">
             <img [src]="token.visual"
                  [title]="token.visual"
-                 alt="En cours de chargement ..." style="width: 100%;"
-            >
+                 alt="En cours de chargement ..." style="width: 100%;">
           </a>
-
         </div>
       </td>
       <td style="cursor: pointer;width: 300px;">
@@ -173,7 +181,6 @@
             <td><input matInput type="text" [(ngModel)]="token.name"></td>
           </tr>
           <tr>
-
             <td>Desc.</td>
             <td><textarea rows="2" col="40" matInput  [(ngModel)]="token.description"></textarea></td>
           </tr>
@@ -189,20 +196,14 @@
 
       </td>
 
-      <td style="max-width: 50px;text-align: left;vertical-align: top;" appFileDragNDrop (filesChangeEmiter)="drop($event,token)">
-        <table style="width: 95%;vert-align: middle;">
-          <tr *ngFor="let file of token.files">
-            <td>
-              <app-link [content]="file">
-                <span *ngIf="file.indexOf('f=')>0">"{{file.split('f=')[1].split("h=")[0]}}</span>
-                <span *ngIf="file.indexOf('f=')==-1">"{{file.split("h=")[0]}}</span>
-              </app-link>
-            </td>
-            <td style="text-align: right;width:15px;" *ngIf="file">
-              <mat-icon style="font-size: medium;" (click)="delete_link(token,file)">delete</mat-icon>
-            </td>
-          </tr>
-        </table>
+      <td style="max-width: 250px;text-align: left;overflow: hidden;" appFileDragNDrop (filesChangeEmiter)="drop($event,token)">
+          <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
+            <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
+              <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="delete_link(token,file)">cancel</mat-icon>
+              <div *ngIf="file.indexOf('f=')>0">{{file.split('f=')[1]}}</div>
+              <div *ngIf="file.indexOf('f=')==-1">{{file}}</div>
+            </small>
+          </div>
       </td>
 
       <td style="max-width: 50px;">
@@ -217,9 +218,15 @@
             <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" [(ngModel)]="token.marketplace!.quantity" ></td>
           </tr>
           <tr>
-            <td>Royalties</td>
+            <td>
+              Royalties
+            </td>
             <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" max="100" [(ngModel)]="token.royalties" ></td>
-            <td>%</td>
+            <td>
+              %
+              <app-warning help="En l'état les créateurs ne reçoivent aucune royalties"
+                           [if]="token.creators.length>0 && token.royalties==0"></app-warning>
+            </td>
           </tr>
         </table>
 

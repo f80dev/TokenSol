@@ -3,6 +3,7 @@ import hashlib
 import json
 from io import BytesIO
 from os.path import exists
+from urllib import parse
 
 from PIL import Image
 
@@ -51,26 +52,33 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",d
       else:
         b=bytes(data["content"],"utf8")
 
+
   if platform=="ipfs":
     ipfs=IPFS(IPFS_SERVER)
     cid=ipfs.add(data,removeFile=True)
-    rc={"cid":cid["Hash"],"url":ipfs.get_link(cid["Hash"])+("?"+cid["Name"] if "Name" in cid else "")}
+    rc={"cid":cid["Hash"],"url":ipfs.get_link(cid["Hash"])+("?f="+parse.quote(cid["filename"]) if "filename" in cid else "")}
+
 
   if platform=="infura":
     infura=Infura()
     cid=infura.add(data)
     rc={"cid":cid["Hash"],"url":cid["url"]}
+    if "filename" in cid: rc["filename"]=cid["filename"]
+
 
   if platform.startswith("db-"):
-    cid=DAO(network=platform).add_data(data)
-    rc={"cid":cid,"url":domain_appli+"/api/json/"+cid,"hash":hash}
+    cid=DAO(network=platform).add(data,domain_server=domain_server)
+    rc={"cid":cid["Hash"],"url":cid["url"]}
+
+
 
   if platform=="server" or platform.startswith("nfluent"):
     if b:
+      #Encodage du nom du fichier
+      filename_encoded=str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "filename" in data and not "image" in data["type"] else ""
       filename=get_filename_from_content(data["content"],"store",data["type"])
-      with open(TEMP_DIR+filename,"wb") as file:
-        file.write(b)
-      return {"cid":filename,"url":domain_server+"/api/images/"+filename}
+      with open(TEMP_DIR+filename,"wb") as file: file.write(b)
+      return {"cid":filename,"url":domain_server+"/api/images/"+filename+"?f="+filename_encoded}
       # else:
       #   img=Image.open(BytesIO(b))
       #   filename=extract_from_dict(data,"filename","")

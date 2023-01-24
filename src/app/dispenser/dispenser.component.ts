@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import {$$, getParams, setParams, showMessage} from "../../tools";
+import {$$, canTransfer, getParams, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {MatDialog} from "@angular/material/dialog";
@@ -20,7 +20,7 @@ export class DispenserComponent implements OnInit {
   nfts: NFT[]=[];
   message="";
   operation: Operation | undefined;
-  dest="";
+  dest="";          //Destinataire
   miner="";
 
 
@@ -47,7 +47,7 @@ export class DispenserComponent implements OnInit {
           this.nfts=[];
           this.message="";
           for(let nft of nfts){
-            if(nft.marketplace.quantity>0 && (nft.owner=='' || nft.owner==this.miner)){
+            if(canTransfer(nft,this.miner)){
               nft.style={opacity:1};
             } else {
               nft.style={opacity:0.3,cursor:"not-allowed",pointerEvents:"none"};

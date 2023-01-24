@@ -364,6 +364,7 @@ class Elrond(Network):
       return False
 
     if _from.address.bech32()==_to.address.bech32(): return False
+    if type(nonce)==int: nonce=hex(nonce).replace("0x","")
 
     log("Transfert de "+collection_id+"-"+str(nonce)+" de "+_from.address.bech32()+" a "+_to.address.bech32())
     data = "ESDTNFTTransfer" \
@@ -765,6 +766,7 @@ class Elrond(Network):
           if not "royalties" in nft or nft["royalties"]=="": nft["royalties"]=0
 
           _nft=NFT(
+            miner=nft["miner"] if "miner" in nft else "",
             name=nft["name"],
             symbol=nft["identifier"].split("-")[1],
             collection=collection,
@@ -932,7 +934,7 @@ class Elrond(Network):
 
     if "logs" in t:
       nonce = t["logs"]["events"][0]
-      nonce = int_to_hex(base64.b64decode(nonce["topics"][1])[0],2)
+      nonce = base64.b64decode(nonce["topics"][1]).hex()
       return nonce,t
 
     return None,t

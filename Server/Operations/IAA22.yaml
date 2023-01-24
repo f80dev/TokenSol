@@ -11,7 +11,7 @@ wallet: "$nfluent_appli$/wallet"
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "VENTEIAA-7d39a9"          #Id de la collection. A priori cet id doit se trouver dans les sources
+  - id: "TESTCOLF-024191"          #Id de la collection. A priori cet id doit se trouver dans les sources
     name: "Ventes aux enchere"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
     visual:  https://nfluent.io/assets/logo-nfluent-purple.svg
     description: Une collection de NFTs
@@ -57,7 +57,8 @@ data:
         limit: 200
       owner:                   #Tous les NGFt de l'owner
       collections:             #Tous les NFT des collections ci-dessous
-        - "VENTEIAA-7d39a9"
+        - "TESTCOLF-024191"
+
 
 
 #Section utilisée pour personnalisé les messages envoyés aux clients

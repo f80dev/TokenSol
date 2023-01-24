@@ -27,6 +27,7 @@ import {CollectionsComponent} from "./collections/collections.component";
 import {AutovalidateComponent} from "./autovalidate/autovalidate.component";
 import {ValidatorsComponent} from "./validators/validators.component";
 import {AnalyticsComponent} from "./analytics/analytics.component";
+import {RescuewalletComponent} from "./rescuewallet/rescuewallet.component";
 
 
 const routes: Routes = [
@@ -53,6 +54,8 @@ const routes: Routes = [
   { path: 'pool', component: MinerpoolComponent },
   { path: 'dispenser', component: DispenserComponent,pathMatch:"prefix" },
   { path: 'creator', component: CreatorComponent },
+  { path: 'rescue', component: RescuewalletComponent },
+  { path: 'rescue_wallet', component: RescuewalletComponent },
   { path: 'store', component: StoreComponent },
   { path: 'manage', component: ManageComponent },
   { path: 'build', component:BuildOpeComponent },
