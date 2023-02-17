@@ -45,6 +45,25 @@ content:
       ici description de la procédure de validation
       "
 
+  - index: checkpoint
+    title: Qu'est-ce qu'un point de contrôle d'accès ?
+    order: 0
+    format: html
+    content: "
+      On entend par point de contrôle d'accès, une personne ou un dispositif en charge de vérifié que le visiteur d'un lieu (physique ou virtuel) dispose bien
+      des NFT requis
+      "
+
+
+  - index: validators
+    title: Qu'est-ce que la liste des validateurs ?
+    order: 0
+    format: html
+    content: "
+      La liste des validateurs recense l'ensemble des points de controles d'accès en cours d'activité.
+      Depuis cette liste on peut regénérer une validation
+      "
+
   - index: svg
     title: Comment utiliser des fichiers vectoriels ?
     order: 0

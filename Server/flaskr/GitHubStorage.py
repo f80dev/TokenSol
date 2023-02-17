@@ -1,6 +1,7 @@
 from json import dumps, dump
 from github import Github
 from flaskr.Tools import log, get_filename_from_content
+from flaskr.secret import GITHUB_TOKEN
 
 
 class GithubStorage:
@@ -8,11 +9,17 @@ class GithubStorage:
   Stockage sur Github
   https://pygithub.readthedocs.io/en/latest/examples/Repository.html#create-a-new-file-in-the-repository
   """
-  def __init__(self,repo, branch, login,token):
-    self.token=token
-    self.repo=repo
-    self.branch=branch
-    self.login=login
+  def __init__(self,repo="", branch="", login="",token="",platform=""):
+    self.token=token if len(token)>0 else GITHUB_TOKEN
+    if len(platform)>0:
+      login=platform.split("-")[1]
+      repo=platform.split("-")[2]
+      branch=platform.split("-")[3]
+    else:
+      self.repo=repo
+      self.branch=branch
+      self.login=login
+
     try:
       r = Github(self.token).get_user(self.login).get_repo(self.repo)
     except:

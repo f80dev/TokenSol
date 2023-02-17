@@ -32,6 +32,10 @@ lazy_mining:
       miner: 0xa617546acC33A600f128051455e6aD2a628f4a79
 
 
+keys:
+  john: Z0FBQUFBQmo1U2dGNFp3RGVGclYwSm9kckw5d1NwNzY1QXVIZDhFOVhncTNzdVhhY1JHeE9DV3RlX1N2WFUtRmpuejZKQkpHbEpGRXFXd0ZrX0xxSGtBTXBoczE0ZEt5NEE9PQ==
+  dan: Z0FBQUFBQmo1U2hEVW9ZX1ZXVkFINnRDQ2lHSC05aG1vTm5JVFU2VThyVWY1ckNtZnRySXNjWUVpQlcxY3JkOVIxVklZQzNubzBLVnJuTTlYNVB1V2JxSENDRUg0YjdzRWc9PQ==
+
 #section détaillant l'événement associé à cette opération. Cette section peut être utilisé dans les écrans de distribution automatiques
 event:
   title: Ventes de NFT aux enchères
@@ -51,8 +55,10 @@ collections:
     description: Collection de NFTs dédiés au brainstorm avec la philarmonie
 
 
-
-database:                 #base de données générale de l'outil pour les historiques et la gestion des rappels de wallet
+#base de données générale de l'outil pour les historiques et la gestion des rappels de wallet
+#il est conseillé de ne pas modifier cette base sauf si vous pouvez mettre en place
+#un système de récupération du wallet sur vos système utilisant la même base de données que celle inscrite ci-dessous
+database:
   connexion: server
   dbname: nfluent
 
@@ -110,47 +116,25 @@ transfer:
 #"mongodb://admin:<password>@server.f80lab.com:27017"
 data:
   sources:
-#    - type: network
-#      active: False
-#      connexion: elrond-devnet
-#      filter:
-#        limit: 200
-#      owner:                   #Tous les NGFt de l'owner
-#      collections:             #Tous les NFT des collections ci-dessous
-#        - "PHILHARM-f25fc0"
-
-
-    - type: database
-      active: True
-      connexion: server          #localisation (cloud:server Atlas, server: f80lab web3 (Akash network))
-      dbname: nfluent           #Nom de la base de données contenant les NFTS
+    #La syntaxe du champs connexion est :
+    # - nom_du_reseau-type (elrond-devnet) pour une source type blockchain
+    # - db-<server>-<nom_de_la_base> -> localisation (cloud:server Atlas, server: f80lab web3 (Akash network)) pour une source type base de donnée
+    # - https:... pour une source contenant les NFT au format json dans un fichier en ligne
+    - connexion: db-server-nfluent
+      active: True                        #Indique si la source doit être prise en compte
+      limit: 200                          #Au plus 200 NFTs seront extraits
       filter:
-        limit: 200                        #Au plus 200 NFTs seront extraits
+        #owner:                           #Tous les NGFt de l'owner
         collection: MACOLLEC-4356f0       #Seul les NFT de cette collection seront extrait
 
 
-#    - type: json              #Les NFTs sont contenus dans un fichier json
+#    - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
 #      active: False
-#      connexion: "out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
-
-
-#    - type: web              #Les NFTs sont contenus dans un fichier json
-#      active: False
-      #connexion: "https://raw.githubusercontent.com/nfluentdev/Operations/main/out.json"   #localisation du fichier, si aucun chemin, le systeme cherche sur le serveur
-
-
-    - type: file            #permet d'aller chercher les NFT dans un fichier
-      active: False
-      connexion: ""         #designe la localisation du fichier contenant les NFT
-      nfts: []
-
-    - type: config           #L'objectif de cette rubrique est de se reposer sur la config du générateur de collection
-      active: False
-      connexion: "Exemple.yaml"
-      seed: 10                          #Permet de générer toujours la même séquence
-      limit: 5                          #Nombre de nft à générer
-      creators:                         #Compte à utiliser comme créateurs
-        - "paul"
+#      connexion: "Exemple.yaml"
+#      seed: 10                          #Permet de générer toujours la même séquence
+#      limit: 5                          #Nombre de nft à générer
+#      creators:                         #Compte à utiliser comme créateurs
+#        - "paul"
 
 
 #Section utilisée pour personnalisé les messages envoyés aux clients
@@ -237,9 +221,11 @@ validate:
       api: ""
       redirect: ""                  #Permet la redirection du visiteur sur une page données
 
+    #Section utilisé pour les actions / message lorsque l'utilisateur n'a pas le token autorisé
     fault:
       message: "Passage interdit. Autorisation manquante"   #Message affiché sur l'écran de validation en cas d'échec
-      redirect: ""                                          #Permet la redirection du visiteur sur une page données
+      redirect: ""                                          #Permet la redirection du validateur sur une page
+      redirect_user: ""                                     #Permet la redirection de l'utilisateur sur son wallet
       api: ""
 
     #Cette section dédiée à la sécurité regroupe certains points permettant de renforcer la sécurité des APIs
@@ -402,7 +388,7 @@ candymachine:
 #Section destinée la distribution de NFT gratuitement
 lottery:
   visible: True     #Rends la section visible ou pas en production
-  miner: paul
+  miner: john
 
   messages:
     title: "Flasher ce QRCode pour récupérer gratuitement le NFT"
@@ -478,7 +464,7 @@ nftlive:
       value: "votre message"
 
   nft_target:                               #désigne les caractéristiques du NFT qui sera miné
-    miner: paul
+    miner: john
     collection: "TESTCOLF-367682"           #collection auquel appartiendra le NFT (Vérifier que le miner à les droits sur cette collection)
     royalties: 20                           #royalties pour le mineur
     configuration: "philharmonie_nftlive"   #nom de la configuration à utiliser

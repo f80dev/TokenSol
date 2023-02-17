@@ -39,10 +39,11 @@
         <div style="padding: 1%;color: black;" class="mat-body-1">
           <br>
           <table>
-            <tr [cdkCopyToClipboard]="nft.address!" style="cursor: copy;">
+            <tr *ngIf="user.advance_mode" [cdkCopyToClipboard]="nft.address!"  style="cursor: copy;">
               <td>Adresse</td>
               <td>{{nft.address!.split("/")[0]}}</td>
             </tr>
+
             <tr *ngIf="nft.collection">
               <td>Collection</td><td><span [title]="nft.collection!.description">{{nft.collection!.name}}</span></td>
             </tr>
@@ -50,7 +51,18 @@
               <td>Quantité<br>Price</td>
               <td>{{nft.marketplace!.quantity}}<br>{{nft.marketplace!.price}}</td>
             </tr>
-            <tr>
+            <tr></tr>
+            <tr *ngIf="user.advance_mode">
+              <td>Mineur</td>
+              <td>{{nft.miner | alias}}</td>
+            </tr>
+
+            <tr *ngIf="user.advance_mode">
+              <td>Network</td>
+              <td>{{nft.network}}</td>
+            </tr>
+
+            <tr *ngIf="nft.attributes.length>0">
               <td>
                 Propriétés
               </td>
@@ -59,15 +71,14 @@
               </td>
             </tr>
             <br>
-            <tr>
+            <tr *ngIf="nft.creators.length>0" style="width: 100%;">
               <td>
-                Créateurs
-              </td>
-              <td>
-                <div *ngFor="let creator of nft.creators">
-                  {{creator.address}}: {{creator.share}}%
-                </div>
-              </td>
+                Créateurs<br>
+                <table style="width: 100%;">
+                  <tr  *ngFor="let creator of nft.creators">
+                    <td>{{creator.address | alias}}</td><td style="text-align: right;">:{{creator.share}}%</td>
+                  </tr>
+                </table>
             </tr>
           </table>
         </div>

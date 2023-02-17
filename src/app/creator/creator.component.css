@@ -1,6 +1,8 @@
-mat-expansion-panel {
-  margin:10px;
-  padding: 5px;
+
+
+button {
+  width: 150px;
+  margin: 5px;
 }
 
 textarea {
@@ -42,12 +44,8 @@ textarea {
 }
 
 .input-number {
-  max-width: 100px;
+  max-width: 120px;
   min-width: 60px;
-}
-
-mat-expansion-panel-header {
-  font-size: large;
 }
 
 

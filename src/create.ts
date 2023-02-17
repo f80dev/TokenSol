@@ -20,8 +20,12 @@ export interface Layer {
 
 //Décrit la structure d'une configuration pour la création des NFTs
 export interface Configuration {
-  name: string
+  label: string
+  version: number,
+  message:string,
+  help:string,
   location: string  //peut être sur le serveur ou directement sur internet
+  id: string
   platform: {
     label: string
     value: string

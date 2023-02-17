@@ -1,23 +1,41 @@
 <div class="mainform">
-  <div class="mat-headline-2 color-primary">Gestion des clés hébergées</div>
+  <div class="titleform">Gestion des clés hébergées</div>
+  <div class="subtitleform">
+    Pour le minage ou la distribution, TokenForge peut utiliser différents comptes.
+    Ces comptes peuvent être public pour les tests et totalement privés et sécurisé pour la production
+  </div>
+
+  <mat-expansion-panel [expanded]="false">
+    <mat-expansion-panel-header>Ouvrir un compte</mat-expansion-panel-header>
+    <div style="display: flex;align-items: center;justify-content: center;flex-wrap: wrap;">
+      <app-input label="Coller ici votre clé privée"
+                 [value]="privateKey" (valueChange)="privateKey=$event"
+                 help="Plusieurs formats sont acceptés" maxlength="200"></app-input>
+      <app-input label="Affecter un alias a votre clé"
+                 [value]="name" (valueChange)="name=$event"
+                 help="Nom court" maxlength="200"></app-input>
+
+      <button
+              type="button" aria-label="Ajouter" mat-raised-button
+              [disabled]="name=='' || privateKey==''"
+              (click)="new_key()">
+        <div class="bloc-bouton">Ajouter à<br>mes clés</div>
+      </button>
+
+      <button
+              type="button" aria-label="Ajouter" mat-raised-button
+              [disabled]="name=='' || privateKey==''"
+              title="Encripter une clé pour intégration dans un fichier d'opération"
+              (click)="encrypt({name:name,key:privateKey})">
+        Encrypter
+      </button>
+    </div>
+
+
+  </mat-expansion-panel>
 
   <div style="display: flex;align-items: center;justify-content: center;flex-wrap: wrap;">
-    <app-input label="Coller ici votre clé privée" [value]="privateKey" help="Plusieurs formats sont acceptés" maxlength="200"></app-input>
-    <app-input label="Donner un nom" [value]="name" help="Nom court" maxlength="200"></app-input>
 
-    <button
-            type="button" aria-label="Ajouter" mat-raised-button
-            [disabled]="name=='' || privateKey==''"
-            (click)="add_key()">
-      Ajouter
-    </button>
-
-    <button
-            type="button" aria-label="Ajouter" mat-raised-button
-            [disabled]="name==''"
-            (click)="new_key()">
-      Nouveau wallet
-    </button>
 
     <button
             type="button" aria-label="Ajouter" mat-raised-button
@@ -40,25 +58,28 @@
   </h2>
 
 
-  <table>
-    <tr style="font-style: italic;font-size: large">
-      <th>Alias</th>
-      <th>Public Key</th>
-      <th>QRCode</th>
-      <th>Commandes</th>
+  <table class="table-elevation" style="text-align: left;">
+    <tr style="font-style: italic;font-size: large;width:100%;">
+      <th style="width:15%">Alias</th>
+      <th *ngIf="user.advance_mode">Public Key</th>
+      <th *ngIf="user.advance_mode">QRCode</th>
+      <th style="width: 50%;">Commandes</th>
       <th></th>
-      <th>Solde</th>
+      <th style="width: 50px;">Solde</th>
     </tr>
     <tr *ngFor="let key of network.keys">
       <td>
         <a [href]="key.explorer" target="_blank"><strong>{{key.name}}</strong></a>
       </td>
-      <td style="font-size: small;">
+      <td style="font-size: small;" *ngIf="user.advance_mode">
         <a [href]="key.explorer">{{key.address.substring(0,5)+' ... '+key.address.substring(key.address.length-5)}}</a>
         &nbsp;<mat-icon [cdkCopyToClipboard]="key.address" style="cursor: copy;font-size: small;display: inline;">content_copy</mat-icon>
       </td>
-      <td>
-        <img *ngIf="key.qrcode!.length>0" [src]="key.qrcode" style="width: 100px;cursor: pointer;" title="cliquer pour copier l'adresse" [cdkCopyToClipboard]="key.address">
+      <td *ngIf="user.advance_mode">
+        <img *ngIf="key.qrcode && key.qrcode!.length>0"
+             [src]="key.qrcode" style="width: 100px;cursor: pointer;"
+             title="cliquer pour copier l'adresse"
+             [cdkCopyToClipboard]="key.address">
       </td>
       <td style="display: flex;flex-wrap: wrap;justify-content: center;">
         <button mat-icon-button (click)="del_key(key.name)" title="supprimer">

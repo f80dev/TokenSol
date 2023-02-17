@@ -1,24 +1,19 @@
-<div class="mainform" style="text-align: center;">
-    <div class="titleform">Récupération de votre wallet</div>
-    <div *ngIf="message.length==0">
-        <div class="mat-headline-6">Indiquer votre adresse email pour recevoir un lien vers votre wallet</div><br>
-        <div style="width: 350px;display: inline-block;text-align: center;">
-            <app-input label="votre adresse mail"
-                       value_type="email"
-                       [value]="email" (valueChange)="email=$event" (validate)="ask_rescue()"
-                       label_button="Envoyer"
-                       help="Si votre email est connu de notre système, vous recevrez un lien vers votre wallet directement dans votre mail"
-            ></app-input>
-        </div>
+<div *ngIf="message.length==0" style="width: 100%;">
+    <div class="mat-headline-6">{{intro}}</div><br>
+    <div style="width: 350px;display: inline-block;text-align: center;">
+        <app-input label="votre adresse mail"
+                   value_type="email"
+                   [value]="email" (valueChange)="email=$event" (validate)="ask_rescue()"
+                   label_button="Envoyer"
+                   help="Si votre email est connu de notre système, vous recevrez un lien vers votre wallet directement dans votre mail"
+        ></app-input>
     </div>
-
-    <div class="mat-headline-6 color-warm" *ngIf="message.length>0">
-        {{message}}
-    </div>
-
-    <button mat-raised-button (click)="retry()" *ngIf="message.length>0">
-        Recommencer
-    </button>
-
-
 </div>
+
+<div class="mat-headline-6 color-warm" *ngIf="message.length>0">
+    {{message}}
+</div>
+
+<button mat-raised-button (click)="retry()" *ngIf="message.length>0">
+    Recommencer
+</button>

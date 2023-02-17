@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input,  OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {getExplorer, showError, showMessage} from "../../tools";
+import {showError, showMessage} from "../../tools";
 import {PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -135,7 +135,7 @@ export class NftsComponent implements OnInit {
   }
 
   getSolanaExplorer(id:string | undefined) {
-    return getExplorer(id,this.network.network);
+    return this.network.getExplorer(id);
   }
 
   use_token(nft:any){

@@ -4,7 +4,7 @@ import {NetworkService} from "../network.service";
 
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
-import {detect_network, detect_type_network, getExplorer, getParams, showError, showMessage} from "../../tools";
+import {detect_network, detect_type_network,  getParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Operation} from "../../operation";
 import {NFT} from "../../nft";
@@ -166,7 +166,7 @@ export class ValidateComponent implements OnInit {
       let body={
         operation:this.operation!.id,
         n_passes:this.last_action.action.n_pass,
-        nft_url:getExplorer(this.last_action.token.mint,this.network.network),
+        nft_url:this.network.getExplorer(this.last_action.token.mint),
         nft_title:this.last_action.token.metadataOnchain.data.name
       }
       this.network.send_transaction_confirmation(this.email,body).subscribe(()=>{

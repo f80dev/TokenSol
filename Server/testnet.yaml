@@ -1,0 +1,35 @@
+accounts:
+- address: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  amount: 100
+  balance: 1.0e+20
+  name: paul.dudule
+  secret_key: myprivatekey_file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  unity: DBC
+- address: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  amount: 100
+  balance: 1.0e+20
+  name: sophie.dudule
+  secret_key: myprivatekey_file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  unity: DBC
+nfts:
+- address: file_0xf3f9fa72acc
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: ''
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1676593588.910086
+  files:
+  - https://nfluent.io
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  name: testName
+  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+version: '1.0'

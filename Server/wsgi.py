@@ -6,15 +6,22 @@ import sys
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
 
-from flaskr import create_app, async_mint, activity_report_sender
-from flaskr.Tools import log
+from flaskr import create_app, async_mint, activity_report_sender, DAO
+from flaskr.Tools import log, send
+
+def receive(app):
+  send(app,"refresh")
+  log("Réception de disconnect")
 
 
 if __name__=="__main__":
   app,scheduler=create_app(sys.argv[1] if len(sys.argv)>1 else "localConfig")
   log("Version du serveur : "+app.config["VERSION"])
 
-  socketio = SocketIO(app,cors_allowed_origins="*")
+  socketio = SocketIO(app,cors_allowed_origins="*",logger=True,engineio_logger=True,manage_session=True)
+  app.config["socket"]=socketio
+  socketio.on_event("disconnect",receive(app))
+
   log("Initialisation de la websocket")
 
   jwt = JWTManager(app)
@@ -43,14 +50,13 @@ if __name__=="__main__":
       context.load_cert_chain("/certs/fullchain.pem", "/certs/privkey.pem")
       log("Démarage du serveur en mode sécurisé")
 
-      socketio.run(app,debug=debug_mode,port=_port,ssl_context=context,host="0.0.0.0",allow_unsafe_werkzeug=True,use_reloader=debug_mode)
+      socketio.run(app,debug=debug_mode,port=_port,ssl_context=context,host="0.0.0.0",allow_unsafe_werkzeug=True)
     except:
       log("Le répertoire /root/certs doit contenir les certificats sous forme de fichier fullchain.pem et privkey.pem")
-    log("Fonctionnement en mode SSL activé")
+    log("Fonctionnement en mode SSL activé.")
   else:
-    #app.run(port=_port,host="0.0.0.0")
     host=domain_server.split("//")[1].split(":")[0]
-    socketio.run(app,port=_port,host=host,debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=debug_mode)
+    socketio.run(app,port=_port,host=host,debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=False)
 
   if not "127.0.0.1" in domain_server:
     activity_report_sender(app.config,"Arret du server en mode "+("debug" if debug_mode else "prod"))

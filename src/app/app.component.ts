@@ -1,19 +1,15 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import {AfterContentInit, Component, HostListener, OnInit, ViewChild} from '@angular/core';
-import {BreakpointObserver, Breakpoints} from '@angular/cdk/layout';
-import {Observable} from 'rxjs';
-import {map,shareReplay } from 'rxjs/operators';
-import {UserService} from "./user.service";
+import {AfterContentInit, AfterViewInit, Component, HostListener, OnInit, ViewChild} from '@angular/core';
+import {UserProfil, UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
-import {NETWORKS} from "../definitions";
 import {Location} from "@angular/common";
-import {$$, CryptoKey, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
+import {find, getBrowserName, getParams, setParams, showMessage} from "../tools";
 import {OperationService} from "./operation.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "./device.service";
-import {Operation} from "../operation";
 import {MatSidenav} from "@angular/material/sidenav";
+import {menu_items} from "./menu/menu.component";
 
 @Component({
   selector: 'app-root',
@@ -21,29 +17,38 @@ import {MatSidenav} from "@angular/material/sidenav";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements AfterContentInit {
-  title = environment.appname;
-  version=environment.version;
   showSplash=true;
   @ViewChild('drawer', {static: false}) drawer: MatSidenav | undefined;
 
-  isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset+Breakpoints.HandsetPortrait)
-    .pipe(
-      map(result => result.matches),
-      shareReplay()
-    );
-
-  networks=NETWORKS.map((x)=>{return {label:x,value:x}});
+  networks:any[]=[];
   toolbar_visible: string="true";
   appname:string=environment.appname;
   claim:string="";
-  visual:string="./assets/forge.jpg";
+  visual:string="";
   operations: any;
-  selected_operation:Operation | undefined;
+  //selected_operation:Operation | undefined;
   sel_network:{label:string,value:string} | undefined;
   sel_addr: string="nfluent";
+  items:menu_items={
+    creator:{label:"Visuels NFT",title:"",actif:true,icon:"photo",queryParam:{}},
+    collections:{label:"Collections",title:"",actif:true,icon:"collections",queryParam:{}},
+    keys:{label:"Clés",title:"",actif:true,icon:"key",queryParam:{}},
+    mint:{label:"Miner",title:"",actif:true,icon:"build",queryParam:{}},
+    build:{label:"Opérations",title:"",actif:true,icon:"edit",queryParam:{}},
+    analytics:{label:"Analytics",title:"",actif:true,icon:"analytics",queryParam:{}},
+    pool:{label:"Pool de minage",title:"",actif:true,icon:"list",queryParam:{}},
+    rescue:{label:"Restauration",title:"",actif:false,icon:"build_circle",queryParam:{}}, // & {'ope':operation!.sel_ope!.id,'network':network_service!.network}
+    _logout:{label:"Déconnexion",title:"",actif:false,icon:"logout",queryParam:{}},
+    login:{label:"Se connecter",title:"",actif:true,icon:"login",queryParam:{}},
+    settings:{label:"Préférences",title:"Gérer ses préférences",actif:true,icon:"lock",queryParam:{}},
+    admin:{label:"Administration",title:"",actif:true,icon:"lock",queryParam:{}},
+    faqs:{label:"Questions",title:"",actif:true,icon:"quiz",queryParam:{}},
+    about:{label:"A propos",title:"",actif:true,icon:"person",queryParam:{}},
+  }
+  status="disconnect";
+  full_menu: boolean = true;
 
   constructor(
-    private breakpointObserver: BreakpointObserver,
     public user:UserService,
     public network_service:NetworkService,
     public routes:ActivatedRoute,
@@ -53,7 +58,14 @@ export class AppComponent implements AfterContentInit {
     public operation:OperationService,
     public device:DeviceService
   ) {
-    this.operation.sel_ope_change.subscribe((ope:Operation)=>{this.selected_operation=ope;})
+
+    // this.operation.sel_ope_change.subscribe((ope:Operation)=>{
+    //   this.selected_operation=ope;
+    //   this.items["rescue"].actif=(operation!=null && operation.sel_ope!=null && operation.sel_ope.id.length>0);
+    // })
+
+    this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.toolbar_visible=="true")this.drawer.toggle();})
+    this.device.smallScreen.subscribe((r:boolean)=>{this.full_menu=!r;})
 
     this.network_service.network_change.subscribe((network_name:string)=>{
       //Resynchronize le réseau
@@ -61,15 +73,49 @@ export class AppComponent implements AfterContentInit {
       if(index>-1)this.sel_network=this.networks[index];
     });
 
-    this.user.addr_change.subscribe((r:string)=>{
-      this.sel_addr=r;
+    this.user.addr_change.subscribe((r:string)=>{this.sel_addr=r;})
+
+    this.network_service.config_loaded.subscribe((r:any)=>{
+      this.user.setProfil(localStorage.getItem("access_code")).finally(()=>{
+        this.init_form()
+        this.filter_menu();
+      });
+      this.networks=this.network_service.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
+    },(err)=>{
+      this.showSplash=false;
+      this.router.navigate(["pagenotfound"]);
+    })
+
+    this.user.profil_change.subscribe((p:UserProfil)=>{
+      this.update_menu()
     })
   }
+
+
+  update_menu(){
+    let connected=this.user.isConnected(true);
+    this.items["settings"].actif=connected;
+    this.items["keys"].actif=connected;
+    this.items["build"].actif=connected;
+    this.items["login"].actif=!connected;
+    this.items["pool"].actif=connected;
+    this.items["_logout"].actif=connected;
+    this.items["admin"].actif=connected && this.user.hasPerm("admin");
+    this.status=connected ? "connected" : "disconnected";
+  }
+
 
   @HostListener('window:resize', ['$event'])
   onResize(event:any) {
     this.device.resize(event.target.innerWidth);
   }
+
+  filter_menu(){
+      for(let k of Object.keys(this.items)){
+        this.items[k].actif=this.items[k].actif && (this.network_service.config.Menu.split(",").indexOf(k.toLowerCase())>-1);
+      }
+  }
+
 
 
   informe_copy() {
@@ -87,16 +133,20 @@ export class AppComponent implements AfterContentInit {
 
 
   set_key($event: string) {
-    this.user.init($event).then(()=>{
+    this.user.init($event,this.network_service.network).then(()=>{
       localStorage.setItem("addr",this.user.key?.address!);
     })
   }
 
 
-
   init_form(){
-
     getParams(this.routes).then((params:any)=>{
+
+      this.visual=params["visual"] || environment.splash_visual;
+      this.appname=params["appname"] || environment.appname;
+      this.claim=params["claim"] || environment.claim;
+
+      this.load_mode();
 
       if(params.hasOwnProperty("server")){
         this.network_service.server_nfluent=params["server"];
@@ -107,42 +157,37 @@ export class AppComponent implements AfterContentInit {
       this.network_service.network=network_name;
       this.sel_network=this.networks[index];
 
-      this.visual=params["visual"] || environment.splash_visual;
-      this.appname=params["appname"] || environment.appname;
-      this.claim=params["claim"] || environment.claim;
-
-      this.network_service.init_keys(this.network_service.network);
-
       if(getBrowserName()=="firefox"){
         showMessage(this,"Le fonctionnement de TokenForge est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement",8000,()=>{},"Ok");
       }
+
       if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
-        this.user.init(params["addr"] || params["miner"]).then(()=>{});
+        this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{
+          this.network_service.init_keys(this.network_service.network);
+        });
       } else {
-        let key=localStorage.getItem("addr") || "";
-        if(key.length>0){
-          $$("Récupération de la clé "+key+" depuis les cookies")
-          this.user.init(key);
-        }
+        // let key=localStorage.getItem("addr") || "";
+        // if(key.length>0){
+        //   $$("Récupération de la clé "+key+" depuis les cookies")
+        //   this.user.init(key);
+        // }
       }
 
       setTimeout(()=>{this.showSplash=false;},1000);
 
       this.network_service.version=params["version"] || "main";
-      if(params.hasOwnProperty("toolbar")){
-        this.toolbar_visible=params["toolbar"];
-      }
-      else {
-        this.toolbar_visible="true";
-      }
+      this.toolbar_visible=params.hasOwnProperty("toolbar") ? params["toolbar"] : "true";
+      this.update_menu();
+
     }).catch(
         ()=>{}
     );
   }
 
   logout(){
-    this.user.disconnect();
-    this.router.navigate(["about"]);
+    this.user.logout();
+    this.update_menu();
+    this.router.navigate(["/"]);
   }
 
 
@@ -165,14 +210,26 @@ export class AppComponent implements AfterContentInit {
   }
 
 
-  ngAfterContentInit(): void {
-      this.init_form();
-  }
+
 
   close_menu() {
-    this.isHandset$.subscribe((r:boolean)=>{
-      if(r && this.drawer)this.drawer.toggle();
-    })
+
+  }
+
+  save_mode($event:any) {
+    localStorage.setItem("advance_mode",$event ? "true" : "false");
+  }
+
+  load_mode(){
+    this.user.advance_mode=localStorage.getItem("advance_mode")=="true" ? true : false;
+  }
+
+  menuSelect($event: any) {
+    if($event.link=="_logout"){this.logout();}
+  }
+
+  ngAfterContentInit(): void {
+
   }
 }
 

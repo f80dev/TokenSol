@@ -19,6 +19,9 @@ MONGO_CLUSTER_CONNECTION_STRING= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.m
 MONGO_WEB3_CONNECTION_STRING="mongodb://root:rootpassword@provider.bdl.computer:32754/"
 MONGO_SERVER_CONNECTION_STRING="mongodb://root:rootpassword@109.205.183.200:27017/"
 
+GITHUB_TOKEN=""
+
+
 USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"
 SECRET_JWT_KEY="hh4271"
@@ -26,7 +29,9 @@ SECRET_JWT_KEY="hh4271"
 #voir https://polygonscan.com/myapikey
 POLYGON_SCAN_API_KEY="9DJA8NCHRQGYTM39UEP51DNM12JVF6XIRA"
 
-SECRET_ACCESS_CODE="42714271"
+SECRET_ACCESS_CODE="040271"
+ADMIN_EMAIL="hhoareau@gmail.com"
+ADMIN_PERMS=["admin"]
 
 SECRETS_FILE="./secrets_access.pkl"
 
@@ -76,3 +81,6 @@ PERMS={
 }
 
 ELROND_PASSWORD="hh4271!!"
+
+UNSPLASH_SETTINGS={"key":"916605164fceffa92953a549dfe86da9b29fe6c882200c92d342dc1b3cdbc630","endpoint":"https://api.unsplash.com/"}
+PIXABAY_SETTINGS={"key": "5489947-2039fe3621c0de1cbb91d08c6","endpoint":"https://pixabay.com/api/"}

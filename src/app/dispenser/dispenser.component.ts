@@ -10,6 +10,7 @@ import {Operation} from "../../operation";
 import {NFT} from "../../nft";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {environment} from "../../environments/environment";
+import {UserService} from "../user.service";
 
 @Component({
   selector: 'app-dispenser',
@@ -29,10 +30,11 @@ export class DispenserComponent implements OnInit {
     public routes:ActivatedRoute,
     public dialog:MatDialog,
     public router:Router,
+    public user:UserService,
     public toast:MatSnackBar,
     public alias:AliasPipe,
     public clipboardService:Clipboard
-  ) { }
+  ) {}
 
   //test: http://127.0.0.1:4200/dispenser?ope=calvi22_devnet&toolbar=false/dispenser?ope=calvi22_devnet
   ngOnInit(): void {
@@ -57,7 +59,7 @@ export class DispenserComponent implements OnInit {
             if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
 
             $$("Evaluation de la possibilité d'ajouté le NFT");
-            let canAdd=nft.address.startsWith("db_");
+            let canAdd=nft.address.startsWith("db_") || nft.address.startsWith("file_");
             if(operation.dispenser){
               if(!canAdd)canAdd=(nft.marketplace.price==0 && nft.owner==nft.creators[0]);
               if(canAdd)canAdd=(!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1)
@@ -84,6 +86,8 @@ export class DispenserComponent implements OnInit {
   }
 
   send(nft: any) {
+    //Envoi du NFT
+
     if(nft.quantity==0){
       showMessage(this,"Ce NFT ne peut plus être miné");
       return;

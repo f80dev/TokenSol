@@ -15,11 +15,16 @@ from io import BytesIO
 from os.path import exists
 from xml.dom import minidom
 
+import PIL
+import base58
+import flask
 import imageio
 import numpy
+import numpy as np
 import pyqrcode
 import requests
 import unicodedata
+import xml
 import yaml
 
 from PIL import Image,ImageSequence
@@ -27,12 +32,11 @@ from cryptography.fernet import Fernet
 from fontTools import ttLib
 from pandas import read_excel
 
-from flaskr.secret import USERNAME, PASSWORD, SALT
-from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR, TEMP_DIR, STATIC_FOLDER
+from flaskr.secret import USERNAME, PASSWORD, SALT, UNSPLASH_SETTINGS, PIXABAY_SETTINGS
+from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR
 
 
-def get_filename_from_content(content,prefix_name="",ext="webp") -> str:
-  if "/" in ext: ext=ext.split("/")[1].split("+")[0]
+def get_hash_from_content(content):
   if type(content)==dict:
     content=json.dumps(content)
 
@@ -40,7 +44,17 @@ def get_filename_from_content(content,prefix_name="",ext="webp") -> str:
     if "<svg" in content: ext="svg"
     content=bytes(content,"utf8")
 
-  return prefix_name+"_"+hashlib.sha256(content).hexdigest()+"."+ext
+  return hashlib.sha256(content).hexdigest()
+
+
+
+
+def get_filename_from_content(content,prefix_name="",ext="webp") -> str:
+  if "/" in ext: ext=ext.split("/")[1].split("+")[0]
+
+  hash=get_hash_from_content(content)
+
+  return prefix_name+"_"+hash+"."+ext
 
 
 def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
@@ -64,7 +78,7 @@ def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
 
   return filename,svg_code
 
-
+from itertools import product
 def generate_svg_from_fields(svg_code) -> list:
   """
   génére plusieurs SVG en fonction des champs contenu dans le SVG si ces derniers contiennent des listes (format element_1|element_2|...|element_n)
@@ -75,17 +89,26 @@ def generate_svg_from_fields(svg_code) -> list:
   rc=[]
 
   #voir https://docs.python.org/fr/3/library/xml.dom.html#dom-element-objects
-  doc=minidom.parseString(svg_code)
+  doc:xml.dom.Document=minidom.parseString(svg_code)
 
-  for elt in doc.getElementsByTagName("desc")+doc.getElementsByTagName("title"):
-    for node in elt.childNodes:
-      if len(node.data.split("|"))>1:
+  master_list=list()
+  elts=doc.getElementsByTagName("desc")+doc.getElementsByTagName("title")
+  for elt in elts:
+    if len(elt.childNodes)>0:
+      content=elt.childNodes[0].data
+      if content and "|" in content:
+        id=elt.parentNode.getElementsByTagName("tspan")[0].attributes["id"].nodeValue
+        l=[{"id":id,"value":x} for x in content.split("|")]
+        master_list.append(l)
 
-        for text in node.data.split("|"):
-          pere=node.parentNode.parentNode
-          pere.getElementsByTagName("tspan")[0].childNodes[0].data=text
+  for tuples in product(*master_list):
+    new_code=svg_code
+    for val in tuples:
+      for elt in doc.getElementsByTagName("tspan"):
+        if elt.attributes["id"].nodeValue==val["id"]:
+          new_code=new_code.replace(elt.firstChild.nodeValue+"</tspan>",val["value"]+"</tspan>")
 
-          rc.append(doc.toxml())
+    rc.append(minidom.parseString(new_code).toxml())
 
   if len(rc)==0: rc.append(svg_code)
 
@@ -148,9 +171,22 @@ def setParams(_d:dict,prefix="param="):
 
 
 
-def send(socketio,event_name: str, message=dict()):
-  rc = socketio.emit(event_name,message, broadcast=True)
-  log("WebSocket.send de " + event_name)
+def send(app,event_name: str, message=None):
+  try:
+    if type(app)==flask.config.Config:
+      socketio=app["socket"]
+    else:
+      socketio=app.config["socket"]
+  except:
+    log("WebSocket non disponible")
+    return False
+
+  if message:
+    log("WebSocket.send "+str(message)+" a "+event_name)
+    rc = socketio.emit(event_name,message, broadcast=True)
+  else:
+    log("WebSocket.send de " + event_name)
+    rc = socketio.emit(event_name, broadcast=True)
   return rc
 
 def returnError(msg:str="",_d=dict(),status=500):
@@ -161,7 +197,28 @@ def returnError(msg:str="",_d=dict(),status=500):
   return "Ooops ! Petit problème technique. "+msg,status
 
 
-def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_FOLDER):
+def random_from(elements="ABCDEFGHIJKLOMNOPQRST",n_elements=1):
+  rc = []
+  if len(elements)>0:
+    while len(rc) < n_elements:
+      rc.append(elements[random.randint(0, len(elements) - 1)])
+
+  if n_elements==1:
+    if len(rc)==0:
+      return None
+    else:
+      return rc[0]
+  else:
+    return rc
+
+
+def get_key_by_name(keys:[],name:str):
+  for k in keys:
+    if k.name==name: return k
+  return None
+
+
+def open_html_file(name:str,replace=dict(),domain_appli="",directory="./flaskr/static/"):
   """
   ouvre un fichier html et remplace le code avec le dictionnaire de remplacement
   :param name:
@@ -216,6 +273,10 @@ def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_FOLD
   return body
 
 
+def is_encrypt(content:str):
+  s=decrypt(bytes(content,"utf8"))
+  if s==content: return True
+  return False
 
 def decrypt(content:bytes,secret_key_filename="./secret_key") -> str:
   """
@@ -223,21 +284,39 @@ def decrypt(content:bytes,secret_key_filename="./secret_key") -> str:
   :param text:
   :return:
   """
-  if type(content)==str:content=base64.b64decode(content)
+  if type(content)==str:content=base64.b64decode(bytes(content,"utf8"))
 
-  with open(secret_key_filename,"rb") as file:
-    key=file.read(10000)
-  f=Fernet(key)
-  return str(f.decrypt(content),"utf8")
+  try:
+    with open(secret_key_filename,"rb") as file:
+      key=file.read(10000)
+    f=Fernet(key)
+    return str(f.decrypt(content),"utf8")
+  except:
+    return content
 
 
 
-def encrypt(text:str,secret_key_filename="./secret_key"):
+def convert_to_ascii(s:str):
+  s=s.upper()
+  return "".join([char for char in s if char.isalpha()])
+
+def simplify_email(email):
+  email_encoded=convert_to_ascii(email)
+  email_encoded=email_encoded[:len(email_encoded)-6] #On enleve la fin de l'email que l'on considère comme non utile
+  return email_encoded
+
+def encrypt(text:str,secret_key_filename="./secret_key",format="str",short_code=0):
   """
   fonction d'encryptage utilisant le fichier secret_key du repertoire principale
   :param text:
   :return:
   """
+  if short_code>0:
+    encoder=hashlib.blake2s(digest_size=int(short_code/2))
+    encoder.update(bytes(text,"utf8"))
+    rc=encoder.hexdigest()
+    return rc
+
   if exists(secret_key_filename):
     with open(secret_key_filename,"rb") as file:
       key=file.read()
@@ -247,7 +326,9 @@ def encrypt(text:str,secret_key_filename="./secret_key"):
       file.write(key)
 
   f=Fernet(key)
-  return f.encrypt(text.encode())
+  rc=f.encrypt(text.encode())
+  if format=="str" or format=="txt":return str(base64.b64encode(rc),"utf8")
+  return rc
 
 
 def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename=""):
@@ -365,16 +446,20 @@ def str_to_hex(letters,zerox=True):
     return rc
 
 
-def get_operation(name:str):
-  if name is None or len(name)==0: return None
-  if name.startswith("b64:"):
-    url=str(base64.b64decode(name[4:]),"utf8")
-    rc=requests.get(url).text
-    rc=yaml.load(rc,Loader=yaml.FullLoader)
-    rc["id"]=name
-  else:
-    name=name.replace(".yaml","")
-    rc=yaml.load(open(OPERATIONS_DIR+name+".yaml","r"),Loader=yaml.FullLoader)
+def get_operation(name:str,with_comment=False):
+  if name is None: return None
+  if type(name)==str:
+    if len(name)==0: return None
+    if name.startswith("b64:") or name.startswith("http"):
+      url=name
+      if name.startswith("b64:"): url=str(base64.b64decode(name[4:]),"utf8")
+      text=requests.get(url).text
+      rc=yaml.load(text,Loader=yaml.FullLoader)
+      rc["id"]=name if name.startswith("b64:") else "b64:"+str(base64.b64encode(bytes(name,"utf8")),"utf8")
+    else:
+      name=name.replace(".yaml","")
+      text=open(OPERATIONS_DIR+name+".yaml","r").read()
+      rc=yaml.load(text,Loader=yaml.FullLoader)
 
   #Complément pour les parties manquantes
   if not "transfer" in rc:rc["transfer"]={"mail":""}
@@ -383,11 +468,13 @@ def get_operation(name:str):
   #Complement des operations
   if "validate" in rc:
     if not "collections" in rc["validate"]["filters"] or len(rc["validate"]["filters"]["collections"])==0:
-      if "lazy_mining" in rc:
+      if "lazy_mining" in rc and len(rc["lazy_mining"]["networks"])>0 and "collection" in rc["lazy_mining"]["networks"][0]:
         rc["validate"]["filters"]["collections"]=[rc["lazy_mining"]["networks"][0]["collection"]]
       else:
-        for src in rc["sources"]:
-          if "collections" in src: rc["validate"]["filter"]["collections"]=src["collections"]
+        rc["validate"]["filters"]["collections"]=[]
+        for src in rc["data"]["sources"]:
+          if "collections" in src:
+            rc["validate"]["filters"]["collections"].append(src["collections"])
 
     if "users" in rc["validate"]:
       rc["validate"]["access_codes"]=[]
@@ -395,6 +482,7 @@ def get_operation(name:str):
         for user in rc["validate"]["users"]:
           rc["validate"]["access_codes"].append(get_access_code_from_email(user))
 
+  if with_comment: return rc,text
   return rc
 
 
@@ -404,6 +492,47 @@ def strip_accents(text):
     .decode("utf-8")
 
   return str(text)
+
+
+
+def queryPixabay(query:str,limit:int=10,quality:bool=False,square=False):
+  """
+  Interrogation de pixabay pour obtenir les images demandées via query
+  voir https://pixabay.com/api/docs/#api_search_images
+  :param query: contient le mot clé à utiliser pour rechercher les images
+  :param limit: nombre d'images retournées
+  :param quality: permet de restreindre la recherche aux photos de l'éditeur
+  :return: liste au format json des urls des photos correspondantes à la requête
+  """
+  url=PIXABAY_SETTINGS["endpoint"]+"?per_page="+str(limit)+"&image_type=photo&key=" + PIXABAY_SETTINGS["key"] + "&q=" + query
+  if quality:url=url+"&editors_choice=true"
+
+  rc=[]
+  for image in requests.get(url).json()["hits"]:
+    rc.append(image["largeImageURL"])
+
+  return rc
+
+
+def isLocal(url:str):
+  return "localhost" in url or "127.0.0.1" in url
+
+def queryUnsplash(query,limit=10,square=False):
+  """
+  Interrogation de pixabay pour obtenir les images demandées via query
+  voir https://unsplash.com/documentation#search-photos
+  :param query:  contient le mot clé à utiliser pour rechercher les images
+  :return: liste au format json des urls des photos correspondant à la requête
+  """
+  url = UNSPLASH_SETTINGS["endpoint"] \
+        + "search/photos?query="+query+"&per_page=" \
+        +str(limit)+"&client_id=" + UNSPLASH_SETTINGS["key"]+("&orientation=squarish" if square else "")
+
+  rc=list()
+  for image in requests.get(url).json()["results"]:
+    rc.append(image["urls"]["raw"])
+
+  return rc
 
 
 #Retourne la date du jour en secondes
@@ -447,7 +576,7 @@ def log(text:str,sep='\n',raise_exception=False):
   except:
     print("Problème d'affichage d'une ligne")
   store_log = line+sep+store_log[0:10000]
-  if raise_exception:raise RuntimeError(text)
+  if raise_exception or text.startswith("!"):raise RuntimeError(text)
   return text
 
 
@@ -478,6 +607,11 @@ def normalize(s:str) -> str:
 
 
 def check_access_code(code:str) -> str:
+  """
+  Vérification d'un code d'accès obtenu sur base d'un email
+  :param code: 
+  :return: 
+  """""
   try:
     s=decrypt(bytes(code,"utf8"))
   except:
@@ -493,7 +627,7 @@ def check_access_code(code:str) -> str:
 
 def convertImageFormat(imgObj, outputFormat=None):
   """
-  Convertion
+  Convertion vers le outputFormat
   Pour l'instant ne fonctionne qu'avec le GIF
   :param imgObj:
   :param outputFormat:
@@ -513,7 +647,8 @@ def convertImageFormat(imgObj, outputFormat=None):
 
 def extract_image_from_string(content:str) -> Image:
   if type(content)==bytes:
-    return Image.open(io.BytesIO(content))
+    rc=Image.open(io.BytesIO(content),formats=["GIF"])
+    return rc
 
   if "base64" in content:
     content=content.split("base64,")[1]
@@ -555,36 +690,76 @@ def convert_to(content:str,storage_platform=None,filename=None,format="GIF",qual
 
 
 
-def convert_image_to_animated(base:Image,n_frames:int,prefix_for_temp_file="temp_convert",format_to_use="gif"):
-  filename=TEMP_DIR+prefix_for_temp_file+"_"+now("hex")+"."+format_to_use
-  log("Convertion de "+str(base)+" en image animé de "+str(n_frames)+" frames -> "+filename)
+def convert_image_to_animated(base:Image,n_frames:int,prefix_for_temp_file="temp_convert",format_to_use="gif",temp_dir="./temp/"):
+  """
+  Converti une image fixe en image animée
+  voir https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#image-sequences
+  :param base:
+  :param n_frames:
+  :param prefix_for_temp_file:
+  :param format_to_use:
+  :param temp_dir:
+  :return:
+  """
 
-  base=convertImageFormat(base,format_to_use)
-  images=[base]*(n_frames)
+  filename=temp_dir+prefix_for_temp_file+"_"+now("hex")+"."+format_to_use
+  #log("Convertion de "+str(base)+" en image animé de "+str(n_frames)+" frames -> "+filename)
+
+  #base=convertImageFormat(base,format_to_use).copy()
+  base=base.convert("RGB")
+  base=Image.new("RGB",(100,100),(100,100,100))
+
+  filenames=[]
+  for i in range(n_frames):
+    filename_seq=temp_dir+"_iter"+str(i)+"."+format_to_use
+    base.save(filename_seq)
+    filenames.append(filename_seq)
+
+  images=[Image.open(file_name) for file_name in filenames]
+
+  # random_pixels = np.random.rand(100, 100, 3) * 255
+  # images = [Image.fromarray(random_pixels.astype("uint8")) for i in range(10)]
+
+  #images=[base]*(n_frames)
 
   #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
-  images[0].save(filename, format=format_to_use,save_all=True,append_images=images[1:],loop=0,optimize=True,disposal=2)
-  base.close()
+  gif=images[0]
+  gif.save(filename, format=format_to_use,save_all=True, append_images=images[1:])
 
-  for image in images:
-    image.close()
+  #Fermeture des images
+  base.close()
+  for image in images: image.close()
 
   rc= Image.open(filename,mode="r",formats=[format_to_use])
   return rc
 
 
-def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge"):
-  filename=TEMP_DIR+prefix_for_temp_file+"_"+now("hex")+".gif"
+def transfer_sequence_to_disk(img:Image,dir="./temp/"):
+  i=0
+  for f in ImageSequence.Iterator(img):
+    i=i+1
+    f.save(dir+img.name+"_seq_"+str(i)+".gif")
+  return True
+
+
+def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge",temp_dir="./temp"):
+  filename=temp_dir+prefix_for_temp_file+"_"+now("hex")+".gif"
   wr=imageio.get_writer(filename,mode="I")
 
-  frames_to_paste = [f.resize(base.size).convert("RGBA") for f in ImageSequence.Iterator(to_paste)]
-  frame_base=[f.convert("RGBA") for f in ImageSequence.Iterator(base)]
-  for i,frame in enumerate(frames_to_paste):
-    if i<len(frame_base):
-      frame_base[i].alpha_composite(frame)
+  frames_to_paste = [f.resize(base.size).convert("RGBA").copy() for f in ImageSequence.Iterator(to_paste)]
+  frame_base=[f.convert("RGBA").copy() for f in ImageSequence.Iterator(base)]
+
+  #Equilibre le nombre d'image de chaque sur la base et le a coller
+  n_frame_base=len(frame_base)
+  n_frame_to_paste=len(frames_to_paste)
+  for i in range(abs(n_frame_to_paste-n_frame_base)):
+    if n_frame_to_paste>n_frame_base:
+      frame_base.append(frame_base[n_frame_base-1].copy())
     else:
-      #Il y a plus assez d'image dans la base donc on ajoute les images a coller
-      frame_base.append(frame)
+      frames_to_paste.append(frames_to_paste[n_frame_to_paste-1].copy())
+
+  for i in range(max(n_frame_base,n_frame_to_paste)):
+    frame_base[i].alpha_composite(frames_to_paste[i])
 
     ndarray=numpy.asarray(frame_base[i])
     wr.append_data(ndarray)

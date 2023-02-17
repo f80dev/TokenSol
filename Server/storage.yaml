@@ -1,0 +1,9 @@
+accounts:
+- address: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  amount: 100
+  balance: 1.0e+20
+  name: paul.dudule
+  secret_key: myprivatekey_file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  unity: DBC
+nfts: []
+version: '1.0'

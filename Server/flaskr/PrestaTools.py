@@ -5,7 +5,6 @@ import requests
 import unidecode
 import xmltodict
 
-from flaskr.settings import TEMP_DIR
 from flaskr.NFT import NFT
 from flaskr.Tools import log
 
@@ -42,7 +41,7 @@ class PrestaTools:
       return rc
 
 
-  def add_image(self, product_id, url="", filename=TEMP_DIR+"image.gif"):
+  def add_image(self, product_id, url="", filename="image.gif",work_dir=""):
     """"
       voir https://www.h-hennes.fr/blog/2021/03/12/prestashop-gerer-les-images-produits-via-lapi/
       https://devdocs.prestashop.com/1.7/webservice/resources/image_types/

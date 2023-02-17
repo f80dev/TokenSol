@@ -1,13 +1,13 @@
 <div class="mainform">
 
-  <div class="mat-headline-2 color-primary">Minage des NFTs</div>
-  <div class="mat-headline-5 color-accent" style="margin-top: -50px">
+  <div class="titleform">Minage des NFTs</div>
+  <div class="subtitleform">
     Minage sur {{network.network}} prévu pour {{tokens.length}} NFTs assuré par {{user.key?.name}}
   </div>
 
 
-
-  <mat-expansion-panel style="max-width: 500px;">
+<div *ngIf="user.advance_mode" style="display: flex;justify-content: stretch;align-content: stretch;">
+  <mat-expansion-panel style="margin:10px;" >
     <mat-expansion-panel-header>Traitement en masse</mat-expansion-panel-header>
     <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
 
@@ -17,27 +17,50 @@
       Importer
     </app-upload-file>
 
+    <button type="button" mat-button mat-raised-button
+            [cdkCopyToClipboard]="nfts_to_clipboard()"
+            title="Copier la liste des NFT à miner dans le presse-papier"
+            (click)="confirm_clipboard()">
+      Exporter pour Opération
+    </button>
   </mat-expansion-panel>
+
+  <mat-expansion-panel style="margin:10px;" *ngIf="user.advance_mode">
+    <mat-expansion-panel-header>Propriétés avancée</mat-expansion-panel-header>
+    <div id="command_panel" style="display: inline-block;margin:10px;" *ngIf="tokens.length>0">
+      <!--    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>-->
+
+      <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
+        {{create_option.label}}
+      </mat-checkbox>
+
+    </div>
+
+  </mat-expansion-panel>
+
+  <mat-expansion-panel style="margin:10px;" *ngIf="sel_target.value=='file'">
+    <mat-expansion-panel-header>Confidentialité</mat-expansion-panel-header>
+    <mat-slide-toggle [(ngModel)]="encrypt_nft">Crypter les NFTs pour le fichier d'operations</mat-slide-toggle>
+  </mat-expansion-panel>
+
+</div>
+
 
   <div style="display: flex;flex-wrap: wrap;align-items: center;">
 
 
     <app-upload-file (uploaded)="onFileSelected($event)"
-                     width="180px"
+                     width="180px" [maxsize]="10000000"
                      extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels
     </app-upload-file>
 
 
-    <app-input [options]="platforms" style="max-width: 170px;"
+    <app-input [options]="network.config['PLATFORMS']"
+               style="max-width: 170px;" *ngIf="user.advance_mode"
                label="Plateforme de stockage"
                [value]="sel_platform"
                (valueChange)="sel_platform=$event"></app-input>
 
-
-    <app-input label="Collection utilisée"
-               [value]="sel_collection" style="max-width: 150px;"
-               (valueChange)="sel_collection=$event" value_type="list"
-               [options]="user.collections"></app-input>
     <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"
                  [if]="network.isElrond() && !sel_collection"></app-warning>
 
@@ -59,9 +82,34 @@
 
 
     <app-input label="Cible"
-               [value]="sel_target" style="max-width: 130px;"
+               [value]="sel_target" style="max-width: 150px;"
                (valueChange)="sel_target=$event"
                [options]="targets"></app-input>
+
+    <div *ngIf="sel_target.value=='blockchain'" style="margin-left: 20px;display: flex;align-items: center;">
+      <app-input [value]="sel_network"
+                 label="Sélectionnez une blockchain"
+                 [options]="networks"
+                 value_type="list" color="white"
+                 (valueChange)="network.network=$event.value;network.init_keys($event.value);"></app-input>
+
+      <app-input value_type="list" color="white"
+                 *ngIf="network.keys.length>0"
+                 label="Sélectionnez un compte"
+                 [options]="network.keys" value_field="address"
+                 [value]="sel_addr"
+                 (valueChange)="sel_addr=$event;user.init(sel_addr,network.network);">
+      </app-input>
+
+      <app-input label="Collection utilisée" *ngIf="sel_addr.length>0"
+                 [value]="sel_collection" style="max-width: 150px;"
+                 (valueChange)="sel_collection=$event" value_type="list"
+                 [options]="user.collections">
+      </app-input>
+
+    </div>
+
+
 
 
     <div *ngIf="tokens.length>0" style="display: flex;">
@@ -79,44 +127,44 @@
 
       <button type="button"
               mat-raised-button mat-button
-              (click)="add_creator()">
-        <mat-icon>add_circle</mat-icon>&nbsp;Créateur
-      </button>
-
-
-      <button type="button"
-              mat-raised-button mat-button
-              (click)="download_all()">
-        Enregistrer
-      </button>
-
-      <button type="button"
-              mat-raised-button mat-button
               (click)="clear()">
         Effacer
       </button>
 
-      <button type="button" mat-raised-button mat-button
-              title="Synchronize les paramètres sur l'operation sélectionnée"
-              (click)="sync_on_ope()">
-        Depuis l'opération
-      </button>
+
+      <div *ngIf="user.advance_mode">
+        <button type="button"
+                mat-raised-button mat-button
+                (click)="add_creator()">
+          <mat-icon>add_circle</mat-icon>&nbsp;Créateur
+        </button>
+
+        <button type="button"
+                mat-raised-button mat-button
+                (click)="download_all()">
+          Enregistrer
+        </button>
+
+
+        <button type="button" mat-raised-button mat-button
+                title="Synchronize les paramètres sur l'operation sélectionnée"
+                (click)="sync_on_ope()">
+          Depuis l'opération
+        </button>
+
+      </div>
 
     </div>
 
 
   </div>
 
-  <div id="command_panel" style="display: inline-block;margin:10px;" *ngIf="tokens.length>0">
-    <!--    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>-->
 
-    <div style="width: fit-content;display: inline-block;">
-      <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
-        {{create_option.label}}
-      </mat-checkbox>
-    </div>
-
-
+  <div *ngIf="content_for_clipboard.length>0">
+    <h5>Copier ce texte pour l'insérer dans une opération</h5>
+    <textarea style="margin-left: 10%;width: 90%;height: 400px;border: none;" class="mat-elevation-z2"
+              (keydown)="clear_content_for_clipboard($event)">{{content_for_clipboard}}
+    </textarea>
   </div>
 
 
@@ -267,9 +315,7 @@
 
       <td style="width: 50px;" *ngIf="token.message">
         <app-hourglass *ngIf="token.message.startsWith('hourglass')" [message]="token.message.substring(10) || ''"></app-hourglass>
-        <span *ngIf="!token.message.startsWith('hourglass')">{{token.message}}</span>
-        <!--        <mat-icon *ngIf="isValide(token)==''">checkmark</mat-icon>-->
-        <!--        <mat-icon [title]="isValide(token)" *ngIf="isValide(token)!=''">cancel</mat-icon>-->
+        <span *ngIf="!token.message.startsWith('hourglass')">{{token.message.substring(20)}}</span>
       </td>
 
     </tr>

@@ -1,5 +1,5 @@
-<div class="mainform">
-  <h3 *ngIf="faqs.length>1">Questions fréquentes</h3>
+
+  <div class="mat-headline-5 color-primary" *ngIf="faqs.length>0">{{title}}</div>
   <mat-expansion-panel [expanded]="faq.visible" togglePosition="before"
                        class="app-panel" style="margin:5px"
                        *ngFor="let faq of faqs"
@@ -34,5 +34,5 @@
 
   </mat-expansion-panel>
 
-</div>
+
 

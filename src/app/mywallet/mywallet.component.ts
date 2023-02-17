@@ -11,7 +11,7 @@ import {NFT} from "../../nft";
 import {Collection, Operation} from "../../operation";
 import {UserService} from "../user.service";
 import {Clipboard} from "@angular/cdk/clipboard";
-import {DEFAULT_DATABASE} from "../../definitions";
+import {Socket} from "ngx-socket-io";
 
 //Test : http://localhost:4200/wallet?addr=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr&toolbar=false
 @Component({
@@ -72,12 +72,12 @@ export class MywalletComponent implements OnInit,OnDestroy {
   secret: string="";
   strong: boolean=false;
 
-
   constructor(public routes:ActivatedRoute,
               public toast:MatSnackBar,
               public clipboard:Clipboard,
               public router:Router,
               public user:UserService,
+              public socket:Socket,
               public _location:Location,
               public network:NetworkService) {
     this.version=environment.version;
@@ -100,16 +100,15 @@ export class MywalletComponent implements OnInit,OnDestroy {
       this.network.network=network;
 
       this.addr=params["addr"];
-      if(!this.addr){
-        let params={network:network,db:DEFAULT_DATABASE};
-        this.router.navigate(["rescue"],{queryParams:{params:setParams(params)}})
-      }
-
       this.showDetail=params["show_detail"] || false;
-
 
       this.generate_qrcode();
       this.hAccessCode=setInterval(()=>{this.generate_qrcode()},30000);
+
+      this.socket.on("nfwallet_"+this.addr,(message:any)=>{
+        if(message.action=="refresh")this.refresh(0);
+        if(message.action.startsWith("http"))open(message.action+"?address="+this.addr);
+      });
       this.refresh();
     },()=>{
       this.router.navigate(["pagenotfound"],{queryParams:{toolbar:false,message:"cette page ne correspond pas à un wallet connu"}});
@@ -390,5 +389,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
         }
      })
     }
+  }
+
+  on_rescue($event: any) {
+    showMessage(this,$event);
   }
 }

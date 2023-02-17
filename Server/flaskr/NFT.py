@@ -3,7 +3,7 @@ import json
 import yaml
 from PIL import Image
 
-from flaskr.Tools import extract_from_dict
+from flaskr.Tools import extract_from_dict, decrypt
 
 
 class NFT:
@@ -29,6 +29,7 @@ class NFT:
   def __init__(self,
                name: str="",
                miner:str="",
+               owner:str="",
                symbol: str="",
                collection: dict={},
                attributes: list=list(),
@@ -45,8 +46,10 @@ class NFT:
                image=None) -> object:
 
     if not object is None:
-      self.name=extract_from_dict(object,["name","title"],"NFT")
+      if "encrypt" in object:
+        object=yaml.load(decrypt(object["encrypt"]),yaml.FullLoader)
 
+      self.name=extract_from_dict(object,["name","title"],"NFT")
       self.dtCreate=object["dtCreate"] if "dtCreate" in object else 0
       self.symbol=extract_from_dict(object,"symbol","")
       self.description=extract_from_dict(object,"description","")
@@ -70,11 +73,11 @@ class NFT:
       self.name=name
       self.description=description
       self.collection=collection
-
       if type(attributes)==str:attributes={"value":attributes}
       if type(attributes)==dict: attributes=[attributes]
       self.attributes=attributes
       self.miner=miner
+      self.owner=owner
       self.symbol=symbol
       self.visual=visual
       self.creators=creators
@@ -82,7 +85,10 @@ class NFT:
       self.tags=tags
       self.royalties=royalties
       self.marketplace=marketplace
-      self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
+      try:
+        self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
+      except:
+        self.files=files
       self.dtCreate=dtCreate
 
       if image:

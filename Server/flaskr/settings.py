@@ -9,10 +9,9 @@ GITHUB={
 }
 
 #Le repertoire de travail est fixé sur Server, du coup les répertoires suivant commence par "." (vs "..")
-TEMP_DIR="./temp/"
 OPERATIONS_DIR="./Operations/"
 CONFIG_DIR="./Configs/"
-STATIC_FOLDER="./flaskr/static/"
+ENCODING_LENGTH_FOR_EMAIL=40
 
 IPFS_PORT=5001
 #IPFS_SERVER="/ip4/75.119.159.46/tcp/"+str(IPFS_PORT)+"/http"   #

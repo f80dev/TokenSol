@@ -61,8 +61,19 @@
       </mat-select>
     </mat-form-field>
 
+  <div *ngIf="_type=='images' && data.options.length>0" style="display: flex;width:500px;flex-direction: row;flex-wrap: wrap;">
 
-  <div *ngIf="data && data.options && _type!='list'" style="width:100%;text-align: center;">
+    <div *ngFor="let img of data.options">
+      <img [src]="img" class="mat-elevation-z2"
+           style="width: 60px;height:60px;margin:3px;cursor: pointer;"
+           [style.opacity]="data.result.indexOf(img)==-1 ? 0.8 : 1"
+           (dblclick)="select_option([img])" (click)="select_image(img)">
+    </div>
+  </div>
+
+
+  <div *ngIf="data && data.options && _type!='list' && _type!='images'" style="width:100%;text-align: center;">
+
     <div *ngFor="let option of data?.options" style="margin:5px;">
       <button
         class="app-button"
@@ -77,6 +88,7 @@
   </div>
 
   <div mat-dialog-actions style="text-align: right;">
+    <button class="app-button" id="cmdAll" *ngIf="_type=='images'" mat-button mat-raised-button (click)="select_all()">Tout</button>
     <button class="app-button" id="cmdNo" *ngIf="data?.lbl_cancel" mat-button mat-raised-button [mat-dialog-close]="null">{{data?.lbl_cancel}}</button>
     <button class="app-button" id="cmdYes" *ngIf="data?.lbl_ok" mat-button mat-raised-button [mat-dialog-close]="data?.result">{{data?.lbl_ok}}</button>
     <button class="app-button" id="cmdSup" *ngIf="data?.lbl_sup" mat-button mat-raised-button [mat-dialog-close]="'lbl_sup'">{{data?.lbl_sup}}</button>

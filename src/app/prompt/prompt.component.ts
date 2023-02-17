@@ -9,6 +9,7 @@ export function _prompt(vm:any,title:string,_default:string="",description="",_t
         {
           title: title,
           type: _type,
+          question:description,
           options:options,
           result:_default,
           onlyConfirm:onlyConfirm,
@@ -29,7 +30,7 @@ export function _prompt(vm:any,title:string,_default:string="",description="",_t
 
 export interface DialogData {
   title: string;
-  result: string;
+  result: any;
   question:string;
   placeholder:string;
   onlyConfirm:boolean;
@@ -53,7 +54,7 @@ export interface DialogData {
   styleUrls: ['./prompt.component.css']
 })
 
-export class PromptComponent implements OnInit {
+export class PromptComponent  {
 
   showEmoji=false;
   _type="text";
@@ -66,6 +67,8 @@ export class PromptComponent implements OnInit {
     public dialogRef_prompt: MatDialogRef<PromptComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData)
   {
+    if(this._type=="oui/non")data.onlyConfirm=true;
+    if(this._type=="images")data.result=[];
     if(data.onlyConfirm)data.result="yes";
     if(data.min){
       this._min=data.min;
@@ -100,6 +103,18 @@ export class PromptComponent implements OnInit {
     this.dialogRef_prompt.close(value);
   }
 
-  ngOnInit(): void {
+
+  select_image(img:any) {
+    if(this.data.result=="")this.data.result=[];
+    let index=this.data.result.indexOf(img);
+    if(index>-1){
+      this.data.result.splice(index,1);
+    } else {
+      this.data.result.push(img);
+    }
   }
+
+    select_all() {
+      this.dialogRef_prompt.close(this.data.options)
+    }
 }

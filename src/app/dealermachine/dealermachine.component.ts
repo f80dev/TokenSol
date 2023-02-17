@@ -1,7 +1,7 @@
 import {Component,  OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
-import {$$, getParams, hasWebcam, isEmail, showError, showMessage} from "../../tools";
+import {$$, detect_network, getParams, hasWebcam, isEmail, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
@@ -124,9 +124,24 @@ export class DealermachineComponent implements OnInit {
           $$("Section lazy_mining manquante")
           return;
         }
-        //TODO: pour l'instant on ne prend en compte que le premier network de lazy_mint. Il va falloir implémenter un choix plus pertinent
-        let miner=this.ope.lazy_mining.networks[0].miner;
-        let network=this.ope.lazy_mining.networks[0].network;
+        
+
+        let miner:string=this.nft.miner;
+        let network:string=detect_network(miner)+(this.ope.network.indexOf("devnet") ? "-devnet" : "-mainnet");
+        if(isEmail(this.address)){
+            if(miner.length==0)miner=this.ope.lazy_mining.networks[0].miner;
+            if(network?.length==0)network=this.ope.lazy_mining.networks[0].network;
+        } else {
+          //TODO: faire le test en mettant comme destinataire une adresse polygon et elrond
+          for(let n of this.ope.lazy_mining.networks){
+            if(n.network.split("-")[0]==detect_network(this.address) && network.length==0 && miner.length==0){
+                network=n.network;
+                miner=n.miner;                
+            }
+          }
+        }
+
+        
         this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
 
         this.network.mint(this.nft,miner,this.address,this.ope.id,true,"",network).then((r:any)=>{

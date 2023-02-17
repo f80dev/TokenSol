@@ -1,0 +1,44 @@
+<div class="mainform">
+    <div class="titleform">Gérer vos préférences</div>
+    <table class="table-elevation" style="text-align: left;">
+        <tr><th>Email</th><td>{{user.profil.email}}</td></tr>
+        <tr><th>Permissions</th><td>{{user.profil.perms.join(' - ')}}</td></tr>
+    </table>
+
+    <br>
+    <mat-expansion-panel [expanded]="true" style="width:94%;margin:3%;">
+        <mat-expansion-panel-header>Accès rapide</mat-expansion-panel-header>
+        <table style="width:90%;text-align: left;">
+            <tr>
+                <td>Fabriquer des NFT en faisant simplement glisser des images animées ou non</td>
+                <td style="width: 50px;"><a [routerLink]="'/creator'"><mat-icon>build</mat-icon></a></td>
+            </tr>
+            <tr *ngIf="user.hasPerm('mint')">
+                <td>Transformer les visuels en NFT</td>
+                <td style="width: 50px;"><a [routerLink]="'/mint'"><mat-icon>build</mat-icon></a></td>
+            </tr>
+            <tr *ngIf="user.hasPerm('build')">
+                <td>Donner de l'utilité</td>
+                <td style="width: 50px;"><a [routerLink]="'/build'"><mat-icon>build</mat-icon></a></td>
+            </tr>
+
+        </table>
+    </mat-expansion-panel>
+    <br>
+
+    <button type="button" mat-button mat-raised-button
+            (click)="logout()">
+        Se déconnecter
+    </button>
+
+    <button type="button" mat-button mat-raised-button
+            (click)="change_password()">
+        Modifier le code d'accès
+    </button>
+
+    <button type="button" mat-button mat-raised-button
+            (click)="delete_account()">
+        Supprimer le compte
+    </button>
+</div>
+

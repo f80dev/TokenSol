@@ -1,0 +1,99 @@
+attributes: {}
+data:
+  creators: :100%
+  description: ""
+  files: ""
+  operation: ""
+  properties: ""
+  sequence:
+    - Texte ici
+  symbol: token__idx__
+  tags: ""
+  title: ""
+height: 800
+message: "Exemple de fabrication d'une collection sur 3 couches avec un motif transparent en seconde couche venant compléter le fond"
+help: ""
+layers:
+  - elements:
+      - image: https://bafkreiaroo26uw6yhfb5bh7zj4ystkr64k3i4zyvf3epfmdodebltrwlve.ipfs.nftstorage.link
+        name: plan_de_travail_(1)
+      - image: https://bafkreibot7aqpseyvq44cboxhxdbvqfg3y424eadrgrush4ilb3n27ueki.ipfs.nftstorage.link
+        name: plan_de_travail_(21)
+      - image: https://bafkreigukhehrv23wumpmeqwabpfhtn5fzytvorqo77elxx5oc2pkkqnhq.ipfs.nftstorage.link
+        name: plan_de_travail_(20)
+      - image: https://bafkreiduyt5athc46uwtb6k3am7ynhesftacjwydefp5whpzbrwuhnvgtu.ipfs.nftstorage.link
+        name: plan_de_travail_(22)
+    height: 800
+    indexed: true
+    name: fond
+    params: {}
+    position: 0
+    scale:
+      x: 1
+      y: 1
+    text: ""
+    translation:
+      x: 0
+      y: 0
+    unique: false
+    width: 800
+  - params: {}
+    name: motif
+    elements:
+      - image: https://bafybeif3jpqitqpld6gqc44rzi5qm3bqljjxve3dt5zdnkxslimwrojlwu.ipfs.nftstorage.link
+        name: graphisme((9)
+      - image: https://bafybeiexvz3bgz5ggftmbz7kvfen2i5bxjvd5rz6ecdunnkbfiax2b3k6i.ipfs.nftstorage.link
+        name: graphisme((8)
+      - image: https://bafkreiadtiafq3cmjwpundihd3kxc7xpil6na6mvackapt2mzgm6w43hty.ipfs.nftstorage.link
+        name: graphisme((10)
+      - image: https://bafybeihyv6sycdkc4uo2ahhxxfwsxp3mt7u2qedcpo3s3uewphjoqwvcui.ipfs.nftstorage.link
+        name: graphisme((11)
+    text: ""
+    unique: false
+    width: 800
+    height: 800
+    indexed: true
+    position: 1
+    translation:
+      x: 0
+      y: 0
+    scale:
+      x: 1
+      y: 1
+  - elements:
+      - image: https://bafybeigpydpub6izkzglaugs24gog7e7eqah46ro3mcn2gp5boi5tgv2ye.ipfs.nftstorage.link
+        name: dog
+    height: 800
+    indexed: true
+    name: texte
+    params: {}
+    position: 3
+    scale:
+      x: 1
+      y: 1
+    text: ""
+    translation:
+      x: 0
+      y: 0
+    unique: false
+    width: 800
+limit: 5
+location: LeChien.yaml
+max_items: 11
+label: LeChien
+platform:
+  label: ""
+  value: ""
+quality: 98
+seed: 0
+text:
+  color: "#FFFFFF"
+  font:
+    file: corbel.ttf
+    name: Corbel
+  fontsize: 12
+  position_text:
+    x: 10
+    y: 10
+  text_to_add: Texte ici
+width: 800

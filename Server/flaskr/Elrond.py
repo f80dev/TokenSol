@@ -1,7 +1,8 @@
 import base64
 import io
 
-from flaskr import infura
+from flaskr.Keys import Key
+from flaskr.NFluentAccount import NfluentAccount
 from flaskr.dao import DAO
 import json
 import sys
@@ -11,12 +12,11 @@ from os.path import exists
 from time import sleep
 import pyqrcode
 from flaskr.Tools import get_qrcode, hex_to_str, now, get_access_code_from_email, int_to_hex, str_to_hex, log, api, \
-  send_mail, open_html_file, strip_accents, returnError
+  send_mail, open_html_file, strip_accents, returnError, decrypt, is_encrypt
 from flaskr.NFT import NFT
 import textwrap
 
 
-from flaskr.ipfs import IPFS
 from erdpy import config
 from erdpy.wallet.core import generate_mnemonic
 from erdpy.proxy import ElrondProxy
@@ -70,10 +70,10 @@ NETWORKS={
 
 
 class Elrond(Network):
+
   def __init__(self,network="elrond-devnet"):
     super().__init__(network)
-    self.network_name="devnet" if "devnet" in network else "mainnet"
-    self._proxy=ElrondProxy(NETWORKS[self.network_name]["proxy"])
+    self._proxy=ElrondProxy(NETWORKS[self.network_type]["proxy"])
     self.transactions=[]
 
 
@@ -209,13 +209,13 @@ class Elrond(Network):
 
 
   def getExplorer(self, tx="", type="transactions") -> str:
-    url = NETWORKS[self.network_name]["explorer"] + "/" + type + "/"
+    url = NETWORKS[self.network_type]["explorer"] + "/" + type + "/"
     if len(tx)>0:url=url+tx
     url=url.replace("api","explorer")
     return url
 
   def getWallet(self,addr=""):
-    return NETWORKS[self.network_name]["wallet"] + "/" + addr
+    return NETWORKS[self.network_type]["wallet"] + "/" + addr
 
 
 
@@ -234,6 +234,8 @@ class Elrond(Network):
     :return:
     """
     _sender=self.toAccount(_sender)
+    _sign=self.toAccount(_sign)
+
     _sender.sync_nonce(self._proxy)
     t = Transaction()
     t.nonce = _sender.nonce
@@ -262,25 +264,25 @@ class Elrond(Network):
 
 
 
-  def get_collections(self,creator_or_collection:str,detail:bool=True,filter_type=""):
+  def get_collections(self,addr:str,detail:bool=True,filter_type=""):
     """
     récupération des collections voir :
     :param creator:
     :param fields:
     :return:
     """
-    if type(creator_or_collection)==Account: creator_or_collection=creator_or_collection.address.bech32()
-    if creator_or_collection.startswith("erd"):
-      creator=self.toAccount(creator_or_collection)
+    if type(addr)==Account: addr=addr.address.bech32()
+    if addr.startswith("erd"):
+      creator=self.toAccount(addr)
       url=self._proxy.url+"/accounts/"+creator.address.bech32()+"/roles/collections"
       result=api(url,"gateway=api")
       if not result is None:
         cols=result
       else:
-        log("Bug: Impossible de récupérer les NFTs de "+creator_or_collection)
+        log("Bug: Impossible de récupérer les NFTs de "+addr)
         return []
     else:
-      cols=[{"collection":creator_or_collection}]
+      cols=[{"collection":addr}]
     rc=[]
     for _col in cols:
       _col["id"]=_col["collection"]
@@ -337,7 +339,7 @@ class Elrond(Network):
 
 
 
-  def transfer(self,collection_id,nonce,_from:Account,_to:Account):
+  def transfer(self,nft_addr:str,miner:Key,to_addr:str):
     """
     Transfert d'un NFT
     voir
@@ -347,26 +349,20 @@ class Elrond(Network):
     :param _to:
     :return:
     """
-    _from=self.toAccount(_from)
-    if _from is None:
-      nft=self.get_nft(collection_id+"-"+nonce,True)
-      _from=self.toAccount(nft.owner)
-
-    if _from is None:
-      returnError("!Propriétaire du NFT inconnu")
+    _from=self.toAccount(miner)
 
     if not self.find_key(_from):
       returnError("!Impossible de transférer sans la clé secret du propriétaire")
 
-    _to=self.toAccount(_to)
+    _to=self.toAccount(to_addr)
     if _to is None:
       log("Destinataire inconnu")
       return False
 
     if _from.address.bech32()==_to.address.bech32(): return False
-    if type(nonce)==int: nonce=hex(nonce).replace("0x","")
 
-    log("Transfert de "+collection_id+"-"+str(nonce)+" de "+_from.address.bech32()+" a "+_to.address.bech32())
+    log("Transfert de "+nft_addr+" de "+_from.address.bech32()+" a "+_to.address.bech32())
+    collection_id,nonce=self.extract_from_tokenid(nft_addr)
     data = "ESDTNFTTransfer" \
            + "@" + str_to_hex(collection_id,False) \
            + "@" + nonce \
@@ -398,14 +394,14 @@ class Elrond(Network):
     #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
 
     t = self.send_transaction(owner,
-                              Account(address=NETWORKS[self.network_name]["nft"]),
+                              Account(address=NETWORKS[self.network_type]["nft"]),
                               owner, 0, data)
     sleep(5)
     return t
 
 
 
-  def add_collection(self, owner:Account, collection_name:str,options:dict,type="SemiFungible") -> (str,bool):
+  def add_collection(self, owner:Key, collection_name:str,options:dict,type="SemiFungible") -> (str,bool):
     """
     gestion des collections sur Elrond
     voir https://docs.elrond.com/tokens/nft-tokens/
@@ -417,16 +413,15 @@ class Elrond(Network):
 
     TODO: ajouter l'enregistrement de la collection chez Elrond via https://github.com/ElrondNetwork/assets
     """
-    owner=self.toAccount(owner)
     collection:str=collection_name.replace(" ","").replace("'","")[:20]
     if collection.lower().startswith("elrond"):
       log("La collection en doit pas commencer par Elrond")
       return None
 
     collection_id=None
-    log("On recherche la collection de nom "+collection_name+" appartenant à "+owner.address.bech32())
-    for col in self.get_collections(owner,True):
-      if col["name"]==collection_name and owner.address.bech32()==col["owner"]:
+    log("On recherche la collection de nom "+collection_name+" appartenant à "+owner.address)
+    for col in self.get_collections(owner.address,True):
+      if col["name"]==collection_name and owner.address==col["owner"]:
         log("La collection existe deja, on retourne sont identifiant")
         return col["collection"],False
 
@@ -448,7 +443,7 @@ class Elrond(Network):
           data=data + "@" + str_to_hex(key, False)+"@"+str_to_hex("true",False)
 
       t = self.send_transaction(owner,
-                                Account(address=NETWORKS[self.network_name]["nft"]),
+                                Account(address=NETWORKS[self.network_type]["nft"]),
                                 owner,
                                 PRICE_FOR_STANDARD_NFT,
                                 data)
@@ -481,15 +476,16 @@ class Elrond(Network):
     """
     rc=[]
     for col_id in collections:
-      result=api(self._proxy.url+"/collections/"+col_id+"/nfts","gateway=api")
+      result=api(self._proxy.url+"/collections/"+col_id+"/nfts?withOwner=true&withSupply=true","gateway=api")
       result=sorted(list(result),key=lambda x:x["nonce"])
-      owners=self.get_owners_of_collections([col_id])
       for i in range(len(result)):
         item=result[i]
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
         attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
         nft=NFT(
           name=item["name"],symbol="",
+          miner=item["creator"],
+          owner=item["owner"],
           tags=tags,
           collection={"id":col_id},
           attributes=attributes,
@@ -501,7 +497,6 @@ class Elrond(Network):
         )
         nft.network=self.network
         nft.address=item["identifier"]
-        nft.owner=owners[0]["address"]    #TODO: voir comment se comporte cette ligne avec un semifongible
         nft.marketplace={"quantity":1,"price":0}
         if format=="class":
           rc.append(nft)
@@ -511,21 +506,14 @@ class Elrond(Network):
 
 
 
-  def get_account(self,addr):
-    rc=self.get_keys(with_balance=True,address=addr)
-    if len(rc)==0:
-      _user=self.toAccount(addr)
-      rc=self._proxy.get_account(_user.address)
-      rc["amount"]=int(rc["balance"])/1e18
-      rc["private_key"]=_user.secret_key
-    else:
-      rc=rc[0]
+  def get_account(self,address:str) -> NfluentAccount:
+    rc=self._proxy.get_account(self.toAccount(address).address)
+    return NfluentAccount(address,network=self.network,balance=int(rc["balance"]),nonce=rc["nonce"])
 
-    return rc
 
-  def get_balance(self,addr):
-    _user=self.get_account(addr)
-    return _user["amount"]
+  # def get_balance(self,addr):
+  #   _user=self.get_account(addr)
+  #   return _user["amount"]
 
 
 
@@ -554,16 +542,13 @@ class Elrond(Network):
                      subject="Votre compte Elrond est disponible",
                      mail_new_wallet="",mail_existing_wallet="",
                      send_qrcode_with_mail=True,
-                     histo:DAO=None,send_real_email=True):
+                     histo:DAO=None,send_real_email=True) -> Key:
     """
     :param fund:
     :param name:
     :param seed_phrase:
     :return: Account, PEM,words,qrcode
     """
-    if mail_new_wallet is None or mail_new_wallet=="":mail_new_wallet=MAIL_NEW_ACCOUNT
-    if mail_existing_wallet is None or mail_existing_wallet=="":mail_existing_wallet=MAIL_EXISTING_ACCOUNT
-
     if histo:
       pubkey=histo.get_address(email,self.network)
       if pubkey:
@@ -576,7 +561,7 @@ class Elrond(Network):
             "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
             "url_explorer":url_explorer
           },domain_appli=domain_appli),email,subject=subject)
-          return _u,None,None,None
+          return Key(address=_u.address.bech32(),name=email.split("@")[0],network="elrond")
 
     log("Création d'un nouveau compte")
     if len(seed) == 0:
@@ -595,8 +580,6 @@ class Elrond(Network):
       secret_key, pubkey = derive_keys(seed)
       words=seed
       address = Address(pubkey).bech32()
-      _u = Account(address=address)
-      _u.secret_key=secret_key.hex()
 
     log("Création du compte "+self.getExplorer(Address(pubkey).bech32(),"address"))
 
@@ -617,7 +600,7 @@ class Elrond(Network):
         },domain_appli=domain_appli),email,subject=subject,attach=qrcode,filename="qrcode.png" if not qrcode is None else ""):
           if histo: histo.add_email(email,address,self.network)
 
-    return _u, self.get_pem(secret_key,pubkey),words,qrcode
+    return Key(secret_key.hex(),name=email.split("@")[0],address=address,seed=words)
 
 
   def analyse_attributes(self,body,with_ipfs=True,timeout=2000) -> (list,str,str):
@@ -676,14 +659,20 @@ class Elrond(Network):
     if item:
       royalties=int(item["royalties"]*100) if "royalties" in item else 0
       attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=attr)
-      nft=NFT(item["name"],item["nonce"],
-              {"id":item["collection"]},
-              attributes,description,tags,
-              item["url"],[item["creator"]],
-              item["identifier"],royalties=royalties,
-              files=item["uris"],dtCreate=item["timestamp"]
+      nft=NFT(name=item["name"],
+              miner=item["creator"],
+              owner=item["owner"],
+              collection={"id":item["collection"]},
+              attributes=attributes,
+              description=description,
+              tags=tags,
+              visual=item["url"],
+              creators=[item["creator"]],
+              address=item["identifier"],
+              royalties=royalties,
+              files=item["uris"],
+              dtCreate=item["timestamp"]
               )
-      nft.owner=item["owner"]
       nft.marketplace={"price":0,"quantity":int(item["supply"] if "supply" in item else 1)}
       nft.network=self.network
 
@@ -728,9 +717,9 @@ class Elrond(Network):
     return rc
 
 
-  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=False):
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=False,type_token="NonFungibleESDT"):
     """
-    https://docs.elrond.com/developers/nft-tokens/
+    https://docs.multiversx.com/tokens/nft-tokens
     voir
     :param _user:
     :param limit:
@@ -739,11 +728,12 @@ class Elrond(Network):
     """
     _user=self.toAccount(_user)
     rc=list()
+    owner=_user.address.bech32()
 
     #nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
-    nfts:dict=api(self._proxy.url.replace("gateway","api")+"/accounts/"+_user.address.bech32()+"/nfts?size="+str(limit))
+    nfts:dict=api(self._proxy.url+"/accounts/"+owner+"/nfts?withSupply=true&type="+type_token+"&size="+str(limit))
     if nfts is None:
-      log("Le compte "+_user.address.bech32()+" n'existe pas")
+      log("Le compte "+owner+" n'existe pas")
       return []
 
     #nfts=list(nfts["data"]["esdts"].values())
@@ -766,7 +756,8 @@ class Elrond(Network):
           if not "royalties" in nft or nft["royalties"]=="": nft["royalties"]=0
 
           _nft=NFT(
-            miner=nft["miner"] if "miner" in nft else "",
+            miner=nft["creator"],
+            owner=owner,
             name=nft["name"],
             symbol=nft["identifier"].split("-")[1],
             collection=collection,
@@ -803,7 +794,7 @@ class Elrond(Network):
     data = "freezeSingleNFT@" + str_to_hex(collection_id) \
            + "@" + int_to_hex(nonce,4) \
            + "@" + str_to_hex(_user.address.hex(), False)
-    t = self.send_transaction(_user, Account(address=NETWORKS[self.network_name]["nft"]), _user, 0, data)
+    t = self.send_transaction(_user, Account(address=NETWORKS[self.network_type]["nft"]), _user, 0, data)
     return t
 
 
@@ -844,18 +835,22 @@ class Elrond(Network):
 
 
 
-  def mint(self, miner, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",creators=[]):
+  def mint(self, miner:Key, title, description, collection, properties: list,
+           storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
+           domain_server="",price=0,symbol="NFluentToken"):
     """
     Fabriquer un NFT au standard elrond
     https://docs.elrond.com/tokens/nft-tokens/#nftsft-fields
-    :type ipfs: object
+
+    l'ajout du domain_server est nécessaire pour respecter l'interface
+
+    :type storage: object
     :param contract:
     :param user_from:
     :param arguments:
     :return:
     """
 
-    if collection is None:return None,None
     miner=self.toAccount(miner)
 
     if len(properties)>0 or len(tags)>0:
@@ -864,18 +859,19 @@ class Elrond(Network):
         "id":now("hex"),
         "description":description,
         "attributes":properties,
-        "creators":creators
+        "creators":creators,
+        "price":str(price),
+        "symbol":symbol
       }
 
       try:
-        cid=ipfs.add(_metadata)
+        cid=storage.add(_metadata)
       except:
-        log("Impossible de mettre les metadata en ligne sur le noeud IPFS propriétaire")
-        cid=infura.Infura().add(_metadata)
+        return returnError("!Impossible de mettre les metadata en ligne sur le noeud IPFS propriétaire")
 
       log("Address des metadata: "+cid["url"])
       url_metadata=cid["url"]
-      s="metadata:"+cid["Hash"]
+      s="metadata:"+cid["cid"]
       if len(tags)>0: s=s+"tags:"+tags
       _h=hex(hash(s) & sys.maxsize).replace("0x","")
     else:
@@ -924,25 +920,36 @@ class Elrond(Network):
       # data = data + "@" + str_to_hex(visual, False)
 
     t = self.send_transaction(miner, miner, miner, 0, data)
-    if t is None: return None,None
+    if t is None:
+      return {"error":"transaction annulée","hash":""}
 
     if t["status"]!="success":
-      return None,{
+      return {
                "error":hex_to_str(str(base64.b64decode(t["logs"]["events"][0]["data"])).split("@")[1]),
                "hash":t["hash"]
              }
 
-    if "logs" in t:
-      nonce = t["logs"]["events"][0]
-      nonce = base64.b64decode(nonce["topics"][1]).hex()
-      return nonce,t
 
-    return None,t
+    nonce = t["logs"]["events"][0]
+    nonce = base64.b64decode(nonce["topics"][1]).hex()
+    rc={
+      "error":"",
+      "tx":str(t["hash"]),
+      "result":{"transaction":str(t["hash"]),"mint":collection+"-"+nonce},
+      "balance":0,
+      "link_mint":self.getExplorer(collection+"-"+nonce,"token"),
+      "link_transaction":self.getExplorer(t["hash"]),
+      "out":"",
+      "cost":0,
+      "unity":"EGLD",
+      "command":"insert"
+    }
+    return rc
 
 
   def getRoleForToken(self,collection):
     payload={
-      "scAddress":NETWORKS[self.network_name]["nft"],
+      "scAddress":NETWORKS[self.network_type]["nft"],
       "funcName":"getSpecialRoles",
       "args":[str_to_hex(collection,False)]
     }
@@ -960,6 +967,11 @@ class Elrond(Network):
 
 
   def toAccount(self, user):
+    if type(user)==Key:
+      _user=Account(address=user.address)
+      _user.secret_key=user.secret_key
+      return _user
+
     if type(user)==dict:
       if "address" in user:
         user=user["address"]
@@ -971,7 +983,12 @@ class Elrond(Network):
 
       if user.startswith("erd"):
         key=self.find_key(user)
-        if key: user=key["name"]
+        if key: user=key.name
+      else:
+        if len(user)>30 and is_encrypt(user):
+          _user=Account(address=decrypt(user))
+          return _user
+
 
       if len(user.split(" "))>10:
         secret_key, pubkey = derive_keys(user.strip())
@@ -1026,7 +1043,7 @@ class Elrond(Network):
 
 
 
-  def get_keys(self,qrcode_scale=0,with_balance=False,address=""):
+  def get_keys(self,qrcode_scale=0,with_balance=False,address="") -> [Key]:
     """
     retourne l'ensemble des clé ou une seul filtré par l'adresse ou le nom
     :param qrcode_scale:
@@ -1036,32 +1053,42 @@ class Elrond(Network):
     """
     rc=[]
     log("Lecture des clés "+str(listdir(ELROND_KEY_DIR)))
-    for f in listdir(ELROND_KEY_DIR):
+    for f in listdir(ELROND_KEY_DIR)+self.keys:
 
-      if f.endswith(".pem"): #or f.endswith(".json"):
-        pubkey=open(ELROND_KEY_DIR+f).read().split("BEGIN PRIVATE KEY for ")[1].split("---")[0]
+      if type(f)==str and f.endswith(".pem"): #or f.endswith(".json"):
+        acc=Account(pem_file=ELROND_KEY_DIR+f)
+        pubkey=acc.address.bech32()
+        secret_key=acc.secret_key
         name=f.replace(".pem","").replace(".json","")
-        if len(address)==0 or (address==pubkey and address.startswith("erd")) or (not address.startswith("erd") and address==name):
-          balance=self.balance(Account(address=pubkey)) if with_balance else 0
-          rc.append({
-            "name":name,
-            "address":pubkey,
-            "qrcode": get_qrcode(pubkey,qrcode_scale) if qrcode_scale>0 else "",
-            "explorer":self.getExplorer(pubkey,"address"),
-            "amount":balance,
-            "balance":balance*1e18,
-            "unity":"egld"
-          })
+
+      if type(f)==dict:
+        name=f["name"]
+        address=f["address"]
+
+      if len(address)==0 or (address==pubkey and address.startswith("erd")) or (not address.startswith("erd") and address==name):
+        balance=self.balance(Account(address=pubkey)) if with_balance else 0
+
+        rc.append(Key(name=name,address=pubkey,secret_key=secret_key,network="elrond"))
+
+        # rc.append({
+        #   "name":name,
+        #   "address":pubkey,
+        #   "qrcode": get_qrcode(pubkey,qrcode_scale) if qrcode_scale>0 else "",
+        #   "explorer":self.getExplorer(pubkey,"address"),
+        #   "amount":balance,
+        #   "balance":balance*1e18,
+        #   "unity":"egld"
+        # })
 
     return rc
 
 
-  def find_key(self,address_or_name):
+  def find_key(self,address_or_name) -> Key:
     if type(address_or_name)==Account:
       address_or_name=address_or_name.address.bech32()
 
     for k in self.get_keys():
-      if k["address"]==address_or_name or k["name"]==address_or_name:
+      if k.address==address_or_name or k.name==address_or_name:
         return k
 
     return None

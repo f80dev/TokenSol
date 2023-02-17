@@ -1,25 +1,22 @@
 import base64
-import hashlib
 import json
-from io import BytesIO
 from os.path import exists
 from urllib import parse
-
-from PIL import Image
-
+import PIL.Image
 from flaskr.GitHubStorage import GithubStorage
+from flaskr.StoreFile import StoreFile
 from flaskr.dao import DAO
 
 from flaskr.GoogleCloudStorageTools import GoogleCloudStorageTools
-from flaskr.Tools import normalize, log, extract_from_dict, get_filename_from_content
+from flaskr.Tools import log, extract_from_dict, get_filename_from_content
 from flaskr.infura import Infura
 from flaskr.ipfs import IPFS
 from flaskr.nftstorage import NFTStorage
 from flaskr.secret import GITHUB_TOKEN
-from flaskr.settings import IPFS_SERVER, TEMP_DIR
+from flaskr.settings import IPFS_SERVER
 
 
-def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",domain_server="",github_token=GITHUB_TOKEN):
+def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",domain_server="",github_token=GITHUB_TOKEN) -> dict:
   """
   Charge une image sur une platforme
   :param data:
@@ -43,14 +40,17 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",d
 
   b=None
   if type(data)==str:
-    b=base64.b64decode(data.split("base64,")[1])
-    data={"content":data,"type":"webp"}
-  else:
-    if "content" in data:
-      if data["content"].startswith("data:"):
-        b=base64.b64decode(data["content"].split("base64,")[1])
-      else:
-        b=bytes(data["content"],"utf8")
+    if "base64" in data:
+      b=base64.b64decode(data.split("base64,")[1])
+      data={"content":data,"type":"webp"}
+    else:
+      b=bytes(data,"utf8")
+
+  if type(data)==dict and "content" in data:
+    if data["content"].startswith("data:"):
+      b=base64.b64decode(data["content"].split("base64,")[1])
+    else:
+      b=bytes(data["content"],"utf8")
 
 
   if platform=="ipfs":
@@ -60,25 +60,25 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",d
 
 
   if platform=="infura":
-    infura=Infura()
+    infura=Infura(upload_dir=upload_dir)
     cid=infura.add(data)
     rc={"cid":cid["Hash"],"url":cid["url"]}
     if "filename" in cid: rc["filename"]=cid["filename"]
 
 
   if platform.startswith("db-"):
-    cid=DAO(network=platform).add(data,domain_server=domain_server)
-    rc={"cid":cid["Hash"],"url":cid["url"]}
+    cid=DAO(network=platform,domain_server=domain_server).add(data)
+    rc={"cid":cid["cid"],"url":cid["url"] if "url" in cid else ""}
 
 
-
-  if platform=="server" or platform.startswith("nfluent"):
-    if b:
+  if platform=="server" or platform.startswith("nfluent") or platform=="file":
+    if b and type(data)==dict and "content" in data:
       #Encodage du nom du fichier
       filename_encoded=str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "filename" in data and not "image" in data["type"] else ""
       filename=get_filename_from_content(data["content"],"store",data["type"])
-      with open(TEMP_DIR+filename,"wb") as file: file.write(b)
-      return {"cid":filename,"url":domain_server+"/api/images/"+filename+"?f="+filename_encoded}
+      with open(upload_dir+filename,"wb") as file: file.write(b)
+      return {"cid":filename,"url":domain_server+"/api/images/"+filename+("?f="+filename_encoded if len(filename_encoded)>0 else "")}
+
       # else:
       #   img=Image.open(BytesIO(b))
       #   filename=extract_from_dict(data,"filename","")
@@ -88,14 +88,8 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},domain_appli="",d
       #     img.save(TEMP_DIR+filename,save_all=True)
 
     else:
+      return StoreFile(domain_server=domain_server).add(data)
 
-      if "_id" in data: del data["_id"]
-      filename=get_filename_from_content(json.dumps(data),"store","json")
-      if not exists(TEMP_DIR+filename):
-        with open(TEMP_DIR+filename,"w") as file:
-          json.dump(data,file)
-
-    return {"cid":filename,"url":domain_server+"/api/images/"+filename}
 
 
   if platform=="nftstorage":

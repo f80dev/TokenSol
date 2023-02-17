@@ -372,7 +372,7 @@ class Solana:
         #"private_key_in_list":str([int(x) for x in _account.secret_key])
       },domain_appli=domain_appli),email,subject=subject)
 
-    return mnemonic,pubkey,privkey,str(integers_private_key)
+    return pubkey,privkey,mnemonic,""
 
   def getExplorer(self, addr="",type="account") -> str:
     return "https://solscan.io/"+type+"/"+addr+"?cluster="+self.network
@@ -380,11 +380,21 @@ class Solana:
   def get_keypair(self,addr):
     addr=self.find_address_from_json(addr)
 
-  def transfer(self, nft_addr, to,owner):
+  def get_nft(self,nft_addr:str):
+    """
+    TODO: a rediger
+    :param nft_addr:
+    :return:
+    """
+    return NFT(object={})
+
+  def transfer(self, nft_addr, to_addr):
+    nft=self.get_nft(nft_addr)
+    owner=nft.owner
     log("Demande de transfert de "+self.getExplorer(nft_addr,"token"))
     recent_blockhash=self.client.get_recent_blockhash(Confirmed)["result"]["value"]["blockhash"]
 
-    to=self.find_address_from_json(to)
+    to=self.find_address_from_json(to_addr)
 
     addr=self.find_address_from_json(owner)
     jsonfile=self.find_json_from_address(addr)

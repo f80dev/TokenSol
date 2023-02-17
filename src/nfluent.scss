@@ -33,6 +33,8 @@ $nfluent-typography: mat.define-typography-config(
         $headline-4: mat.define-typography-level(2rem, 2rem, 500,mediasans-regular),
         $headline-5:  mat.define-typography-level(1.1rem, 1.1rem, 300, $font-family: mediasans-regular),
         $headline-6:  mat.define-typography-level(0.9rem, 0.9rem, 300, $font-family: GilroyRegular),
+        $subtitle-1: mat.define-typography-level(18px, 18px, 500, GilroyRegular),
+        $subtitle-2: mat.define-typography-level(16px, 16px, 400, GilroyRegular),
         $body-2: mat.define-typography-level(14px, 14px, 500, $font-family: GilroyRegular,$letter-spacing: -0.03em),
         $body-1: mat.define-typography-level(13px, 13px, 400, $font-family: GilroyRegular,$letter-spacing: -0.03em),
         $button: mat.define-typography-level(16px, 16px, 500, GilroyRegular, $letter-spacing: -0.03em),
@@ -187,8 +189,6 @@ body,html {
   background-color: mat.get-color-from-palette($nfluent-primary-color, 400);
   color: mat.get-color-from-palette($nfluent-primary-color, A400);
 }
-
-
 
 .colorize-primary {
         filter: url('#purple-sepioa');

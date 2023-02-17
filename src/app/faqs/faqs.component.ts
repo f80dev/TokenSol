@@ -14,6 +14,7 @@ export class FaqsComponent implements AfterContentInit {
 
   faqs:any[]=[];
   @Input() filter="";
+  @Input() title="Questions fréquentes";
 
   constructor(public network:NetworkService,
               public _location:Location,

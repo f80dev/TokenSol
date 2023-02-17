@@ -58,10 +58,9 @@ export class CollectionsComponent implements OnInit {
   ) {}
 
 
-
   ngOnInit(): void {
     this.routes.queryParams.subscribe((params:any)=>{
-      if(params.hasOwnProperty("owner"))this.user.init(params["owner"]);
+      if(params.hasOwnProperty("owner"))this.user.init(params["owner"],this.network.network);
     })
 
     this.user.addr_change.subscribe((addr)=>{

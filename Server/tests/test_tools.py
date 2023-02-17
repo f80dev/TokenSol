@@ -1,33 +1,45 @@
 import pytest
 
-from flaskr.Tools import generate_svg_from_fields
-from flaskr.apptools import get_network_instance
-from flaskr.secret import SECRET_JWT_KEY
-from flaskr import create_app, log
-from flaskr.settings import TEMP_DIR, STATIC_FOLDER
+from flaskr.Keys import Key
+from flaskr.StoreFile import StoreFile
+from flaskr.Tools import generate_svg_from_fields, encrypt, decrypt, random_from
+from flaskr.apptools import get_network_instance, create_account, transfer
+from flaskr import create_app, log, DAO, Elrond
 from flaskr.NFT import NFT
 
 MAIN_POLYGON_ACCOUNT="0xa617546acC33A600f128051455e6aD2a628f4a79"
 MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  # bob
 MAIN_NETWORK = "elrond-devnet"
-NETWORKS=["polygon-devnet","polygon-mainnet","elrond-devnet","elrond-mainnet"]
-PLATFORMS=["db-server-nfluent","nftstorage","nfluent","ipfs"]
+MAIN_MINER="bob"
+
+NETWORKS=["polygon-devnet","elrond-devnet","file-testnet","db-server-nfluent_test"]
+PLATFORMS=["nftstorage","file","infura","db-server-nfluent_test"] #ipfs
+MAIN_STORAGE_PLATFORM=PLATFORMS[0]
+
 MAIN_EMAIL = "paul.dudule@gmail.com"
 MAIN_COLLECTION = "NFLUENTA-af9ddf"
-DB_NETWORK = "db-cloud-test"
+DB_NETWORK = "db-server-nfluent_test"
 MAIN_ACCOUNTS={
   "elrond":MAIN_ACCOUNT,
-  "polygon":MAIN_POLYGON_ACCOUNT
+  "polygon":MAIN_POLYGON_ACCOUNT,
+  "db":DAO(network=DB_NETWORK).create_account(MAIN_EMAIL,1000).address,
+  "file":StoreFile(network="file-testnet").create_account(MAIN_EMAIL,1000).address
 }
-
+DEFAULT_DOMAIN_APPLI="http://127.0.0.1:4200/"
+DEFAULT_DOMAIN_SERVER="http://127.0.0.1:4242/"
 TEMP_TEST_DIR="./tests/temp/"
 RESSOURCE_TEST_DIR="./tests/ressources/"
 
 
-def get_nft(name: str, collection: str,visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg"):
-  return NFT(name, symbol="",
+
+
+def create_nft(name: str= "testName", collection=MAIN_COLLECTION,
+               visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg"):
+  return NFT(name,
+             symbol="",
              collection={"id": collection},
              attributes={"birthday": "04/02/1971"},
+             files=["https://nfluent.io"],
              description="le NFR de mon anniversaire",
              visual=visual
              )
@@ -42,7 +54,7 @@ def test_explorer(networks=NETWORKS):
 def test_generate_svg_from_field():
   with open(RESSOURCE_TEST_DIR+"/voeux2023.svg","r") as file:
     rc=generate_svg_from_fields(file.read())
-    assert len(rc)==5
+    assert len(rc)==15
     assert ">Herv" in rc[0]
 
   with open(RESSOURCE_TEST_DIR+"/svg1.svg","r") as file:
@@ -50,21 +62,39 @@ def test_generate_svg_from_field():
     assert len(rc)==1
 
 
+def test_keys_from_network(test_client, networks=NETWORKS):
+  for network in networks:
+    _network=get_network_instance(network)
+    rc=_network.get_keys()
+    assert len(rc)>0
 
 
-def get_account(test_client, network=MAIN_NETWORK, seuil=1, filter="bob,carol,dan,eve,frank,grace"):
-  """Retourne un compte avec au moins x egld"""
-  if network.startswith("db-"):network="elrond-devnet"
-  with_balance = "false" if seuil == 0 else "true"
-  accounts = call_api(test_client, "keys/", "with_balance=" + with_balance + "&network=" + network)
-  rc=None
-  for account in accounts:
-    if account["amount"] >= seuil and (len(filter) == 0 or account["name"] in filter):
-      rc=account
-      break
+def test_transfer_extra_network(networks=NETWORKS):
+  for from_network in networks:
+    for target_network in networks:
+      _from_network=get_network_instance(from_network)
+      from_network_miner:Key=random_from(_from_network.get_keys())
+      nft:NFT=random_from(_from_network.get_nfts(from_network_miner.address))
+      if nft is None:
+        test_mint
 
-  log("Pas de compte disponible disposant d'un solde supérieur au solde")
-  return rc
+      old_owner=nft.owner
+
+      assert not nft is None
+
+      _target_network=get_network_instance(target_network)
+      target_network_owner=random_from(_target_network.get_keys())
+      rc=transfer(nft.address,from_network_miner=from_network_miner,target_network_miner=target_network_owner,from_network=from_network,target_network=target_network)
+
+      assert not rc is None
+      if target_network!=from_network:
+        assert not nft.address in [x.address for x in _from_network.get_nfts()]
+        assert nft.address in [x.address for x in _target_network.get_nfts()]
+      else:
+        assert _target_network.get_nft(nft.address).owner!=old_owner
+
+
+
 
 
 def call_api(test_client,url, params="", body=None, method=None, status_must_be=200,message=""):
@@ -87,25 +117,26 @@ def call_api(test_client,url, params="", body=None, method=None, status_must_be=
   else:
     return response.data
 
-
+import config
 
 @pytest.fixture
 def test_app():
-  config = {
-    "DEBUG": True,  # some Flask specific configs
-    "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
-    "CACHE_DEFAULT_TIMEOUT": 300,
-    "APPLICATION_ROOT": "http://127.0.0.1:4242",
-    "DOMAIN_APPLI": "http://127.0.0.1:4200",
-    "DOMAIN_SERVER": "http://127.0.0.1:4242",
-    "STATIC_FOLDER": STATIC_FOLDER,
-    "ACTIVITY_REPORT": "paul.dudule@gmail.com",
-    "DB_SERVER": "cloud",
-    "DB_NAME": "nfluent_test",
-    "UPLOAD_FOLDER": TEMP_DIR,
-    "JWT_SECRET_KEY": SECRET_JWT_KEY
-  }
-  test_app, scheduler = create_app(config)
+  # config = {
+  #   "DEBUG": True,  # some Flask specific configs
+  #   "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
+  #   "CACHE_DEFAULT_TIMEOUT": 300,
+  #   "APPLICATION_ROOT": "http://127.0.0.1:4242",
+  #   "DOMAIN_APPLI": "http://127.0.0.1:4200",
+  #   "DOMAIN_SERVER": "http://127.0.0.1:4242",
+  #   "STATIC_FOLDER": RESSOURCE_TEST_DIR,
+  #   "ACTIVITY_REPORT": "paul.dudule@gmail.com",
+  #   "DB_SERVER": "cloud",
+  #   "DB_NAME": "nfluent_test",
+  #   "UPLOAD_FOLDER": TEMP_TEST_DIR,
+  #   "JWT_SECRET_KEY": SECRET_JWT_KEY
+  # }
+  new_config=config.testConfig()
+  test_app, scheduler = create_app(new_config)
   test_app.config.update({"TESTING": True, })
 
   yield test_app
@@ -121,4 +152,20 @@ def test_client(test_app):
 @pytest.fixture()
 def runner(test_app):
   return test_app.test_cli_runner()
+
+
+def get_main_account_for_network(network:str):
+  rc=MAIN_ACCOUNTS[network.split("-")[0]]
+  _net=get_network_instance(network)
+  if _net.get_account(rc) is None: rc=create_account(MAIN_EMAIL,network)
+  return rc
+
+def test_encrypt(message="coucou les amis, voici mon message"):
+  assert decrypt(encrypt(message))==message
+  assert decrypt(decrypt(encrypt(encrypt(message))))==message
+
+  assert encrypt(message)!=encrypt(message)
+  assert encrypt(message,short_code=6)==encrypt(message,short_code=6)
+  assert len(encrypt(message,short_code=6))==6
+
 

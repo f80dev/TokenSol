@@ -43,6 +43,7 @@ export class CandymachineComponent implements OnInit {
         if(this.operation?.branding)this._style=this.operation.branding.style;
         if(this.operation?.candymachine.messages.title)this.title=this.operation.candymachine.messages.title;
         this.miner=(params.hasOwnProperty('miner') ? params["miner"] : operation.lazy_mining.miner)
+
         $$("Le miner de la transaction est "+this.miner);
         if(operation.collections){
           for(let col of operation.collections){

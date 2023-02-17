@@ -9,8 +9,11 @@ import {Subject} from "rxjs";
 export class OperationService implements OnInit {
 
   opes:Operation[]=[];
+  opes_txt:string[]=[];
+  user:string="";
   sel_ope:Operation | null=null;
   sel_ope_change=new Subject<Operation>();
+  sel_text: string="" //Version avec commentaire de l'opération
 
   constructor(
     public network: NetworkService,
@@ -19,7 +22,7 @@ export class OperationService implements OnInit {
   }
 
   get_operation_from_web(url:string){
-    this.network.get_operations(url).subscribe((ope:Operation)=>{
+    this.network.get_operations(url,this.user).subscribe((ope:Operation)=>{
       this.opes.push(ope);
       this.sel_ope=this.opes[this.opes.length-1]
     })
@@ -41,9 +44,16 @@ export class OperationService implements OnInit {
   refresh(){
     if(this.opes.length==0){
       this.network.get_operations().subscribe((r:any)=>{
-        this.opes=r;
+        this.opes=[];
+        this.opes_txt=[];
+        for(let item of r){
+          this.opes.push(item.value)
+          this.opes_txt.push(item.text)
+        }
+
         if(!this.sel_ope && this.opes.length>0){
-          this.sel_ope=r[r.length-1];
+          this.sel_ope=this.opes[this.opes.length-1];
+          this.sel_text=this.opes_txt[this.opes.length-1];
           if(this.sel_ope)this.sel_ope_change.next(this.sel_ope);
         }
       })

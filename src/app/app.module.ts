@@ -89,6 +89,10 @@ import { FileDragNDropDirective } from './file-drag-ndrop.directive';
 import { ImageSelectorComponent } from './image-selector/image-selector.component';
 import { WarningComponent } from './warning/warning.component';
 import { RescuewalletComponent } from './rescuewallet/rescuewallet.component';
+import {MatCardModule} from "@angular/material/card";
+import {MatSlideToggleModule} from "@angular/material/slide-toggle";
+import { MenuComponent } from './menu/menu.component';
+import { SettingsComponent } from './settings/settings.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -147,7 +151,9 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         FileDragNDropDirective,
         ImageSelectorComponent,
         WarningComponent,
-        RescuewalletComponent
+        RescuewalletComponent,
+        MenuComponent,
+        SettingsComponent
     ],
     imports: [
         BrowserModule,
@@ -190,7 +196,9 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         WebcamModule,
         MatTableModule,
         GooglePayButtonModule,
-        NgxDatatableModule
+        NgxDatatableModule,
+        MatCardModule,
+        MatSlideToggleModule
     ],
   providers: [
 

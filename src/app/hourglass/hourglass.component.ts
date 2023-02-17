@@ -9,6 +9,7 @@ import {Router} from '@angular/router';
 export class HourglassComponent implements OnInit, OnDestroy, OnChanges {
   @Input("diameter") diameter = 18;
   @Input("message") message: string = "";
+  @Input() modal:boolean=false;
   @Input("long_message") long_message = "";
   @Input("anim") src = "";
   @Input("br") _br = false;

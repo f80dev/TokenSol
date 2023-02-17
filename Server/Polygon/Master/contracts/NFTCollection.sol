@@ -12,11 +12,11 @@ contract NFTCollection is ERC721Enumerable, Ownable {
 
     Counters.Counter private _tokenIds;
     // The max number of NFTs in the collection
-    uint public constant MAX_SUPPLY = 500;
+    uint public constant MAX_SUPPLY = 1;
     // The mint price for the collection
     uint public constant PRICE = 0 ether;
     // The max number of mints per wallet
-    uint public constant MAX_PER_MINT = 100;
+    uint public constant MAX_PER_MINT = 1;
 
     string public baseTokenURI;
 

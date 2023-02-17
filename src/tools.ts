@@ -1,6 +1,7 @@
 import {environment} from "./environments/environment";
 import {ActivatedRoute} from "@angular/router";
 import {NFT} from "./nft";
+import {Clipboard} from "@angular/cdk/clipboard";
 
 export interface CryptoKey {
   name: string
@@ -55,6 +56,7 @@ export function encodeUnicode(str:string) {
 
 
 export function encrypt(s:string) : string {
+  //TODO fonction a terminer
   return btoa(s);
 }
 
@@ -114,8 +116,9 @@ function analyse_params(params:string):any {
   return rc;
 }
 
-export function now(){
+export function now(format="number") : number | string {
   let rc=new Date().getTime();
+  if(format=="hex")return rc.toString(16);
   return rc
 }
 
@@ -153,9 +156,7 @@ export function getParams(routes:ActivatedRoute,local_setting_params="") {
 }
 
 export function decrypt(s:string | any) : string {
-  if(s)
-    return atob(s);
-
+  if(s)return atob(s);
   return "";
 }
 
@@ -166,10 +167,6 @@ export function toStringify(obj:any) {
       ? value.toString()
       : value // return everything else unchanged
   );
-}
-
-export function getExplorer(addr: string | undefined,network="solana-devnet") {
-  return "https://solscan.io/account/"+addr+"?cluster="+network.replace("solana-","");
 }
 
 export function syntaxHighlight(json:any) {
@@ -308,11 +305,29 @@ export function $$(s: string, obj: any= null) {
 }
 
 
+export function copyAchievements(clp:Clipboard,to_copy:string) {
+  return new Promise((resolve, reject) => {
+    const pending = clp.beginCopy(to_copy);
+    let remainingAttempts = 3;
+    const attempt = () => {
+      const result = pending.copy();
+      if (!result && --remainingAttempts) {
+        setTimeout(()=>{
+          resolve(true);
+        });
+      } else {
+        // Remember to destroy when you're done!
+        pending.destroy();
+      }
+    };
+  });
+
+}
 
 export function canTransfer(nft:NFT,by_addr:string) : boolean {
   //canMint
   //Détermine si un NFT peut être transférer d'une blockchain à une autre
-  if(nft.network && nft.network.startsWith("db-")){
+  if(nft.address && (nft.address.startsWith("db_") || nft.address.startsWith("file_"))){
     if(nft.marketplace?.quantity==0)return false;
     if(nft.miner!="" && nft.miner!=by_addr)return false;
     return true;
@@ -337,8 +352,9 @@ export function find(liste:any[],elt_to_search:any,index_name:any=0){
   return -1;
 }
 
-export function detect_network(addr:string) {
-  if(addr.length<20 || addr.indexOf("@")>-1)return null;
+//Alias find_network et get_network
+export function detect_network(addr:string) : string {
+  if(addr.length<20 || addr.indexOf("@")>-1)return "";
   if(addr.startsWith("erd"))return "elrond";
   if(addr.length>50 && addr.endsWith("="))return "access_code";
   return "solana";

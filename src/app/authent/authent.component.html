@@ -31,16 +31,14 @@
 
   <div style="display: flex;flex-wrap: wrap;width:100%;justify-content: center;align-items: center;">
 
-      <asl-google-signin-button  *ngIf="showGoogle"  type="standard" size="medium"
-                                 style="display: inline-block;"
+<!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
+      <asl-google-signin-button  *ngIf="showGoogle"
+                                 [type]="(device.isHandset$ | async) ? 'standard' : 'icon'" size="medium"
                                  title="Authentification simplifiée pour les utisateurs de gmail">
       </asl-google-signin-button>
 
-
-
       <app-input *ngIf="showAddress || showEmail"
-                 style="display: inline-block;min-width: 320px;width:90%;max-width: 600px;text-align: center;"
-                 width="350px"
+                 maxwidth="450px"
                  [label]="intro_message"
                  label_button="Valider"
                  [placeholder]="prompt"
@@ -48,25 +46,19 @@
                  (validate)="validate($event)"
                  [help]="explain_message">
       </app-input>
-
-
   </div>
 
 
 
+  <button type="button" color="primary" *ngIf="showWebcam"
+          mat-raised-button mat-button
+          (click)="enabled_webcam=true" >
+    Utiliser mon QRCode
+  </button>
 
-  <div style="display: inline-block;" >
-
-  </div>
-
-<!--  <button type="button"  mat-raised-button mat-button (click)="connect('google')"-->
-<!--          title="Authentification simplifiée pour les utisateurs de gmail"-->
-<!--          *ngIf="showGoogle">-->
-<!--    Via Google-->
-<!--  </button>-->
 
   <br>
-  <app-scanner *ngIf="showWebcam"
+  <app-scanner *ngIf="enabled_webcam"
                [size]="size"
                title="Montrer le QRcode de votre wallet à cette caméra"
                (flash)="on_flash($event)"
@@ -94,9 +86,8 @@
         Utiliser le Wallet Nfluent
       </button>
 
-      <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && directShowQRCode">
+      <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && directShowQRCode" [style.opacity]="qrcode_enabled ? 1 : 0.5" >
         <img
-
           title="Flasher avec votre wallet nfluent"
           [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
           [src]="nfluent_wallet_connect_qrcode"

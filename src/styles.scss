@@ -11,11 +11,32 @@ body { margin: 0;}
 }
 
 .titleform {
-  @extend .mat-headline-4, .color-primary;
+  @extend .mat-headline-5, .color-primary;
+  margin: 20px;
+}
+
+.table-elevation {
+  @extend .mat-elevation-z4;
+  text-align: center;
+  width: 94%;
+  padding: 10px;
+  margin: 2%;
+}
+
+
+bloc-bouton {
+  font-size: small;
+}
+
+.subtitleform {
+  @extend .mat-subtitle-2;
+  margin-top: -5px;
+  margin-bottom: 30px;
 }
 
 .item-menu {
   @extend .mat-caption;
+  height: 20px;
 }
 
 .item-menu:hover {
@@ -23,11 +44,37 @@ body { margin: 0;}
 }
 
 .mainform {
-  padding: 1%;
-  min-height: 100vh;
-  height: fit-content;
+  padding: 0.2%;
   text-align: center;
 }
+
+mat-card {
+  padding: 7px;
+  margin: 10px;
+  text-align: left;
+}
+
+mat-card-title {
+  @extend .mat-body-2, .color-primary;
+  padding: 10px;
+}
+
+mat-card-content {
+  padding: 7px;
+}
+
+mat-expansion-panel {
+  width: 96% !important;
+  margin: 2% !important;
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+mat-expansion-panel-header {
+  @extend .mat-body-2, .color-primary;
+  font-weight: bold !important;
+}
+
 
 .faq-content {
   text-align: left;

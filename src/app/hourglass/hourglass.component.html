@@ -1,4 +1,19 @@
-<div *ngIf="message && message.length>0" [ngStyle]="{maxwidth:maxwidth,marginTop:marginTop,display:'inline-block',marginBottom:'5px'}">
+<div *ngIf="modal && message && message.length>0"
+     style="width:100vw;height: 100vh;position: fixed;top:0;left:0;z-index: 10000;display: block;background-color: darkgray;text-align: center;opacity: 0.9;pointer-events: none;">
+
+      <div style="display:inline-block;position:absolute;left: 40%;top: 30%;z-index:10001;text-align: center;background-color: white;padding:50px;">
+        <mat-spinner *ngIf="diameter>0" [diameter]="diameter*6"></mat-spinner><br><br>
+        <span [style.font-size]="fontsize">
+           {{message}}
+        </span>
+      </div>
+
+
+
+
+</div>
+
+<div *ngIf="message && message.length>0 && !modal" [ngStyle]="{maxwidth:maxwidth,marginTop:marginTop,display:'inline-block',marginBottom:'5px'}">
   <table style="width:100%;display: inline-block;height: min-content;">
     <tr>
       <td *ngIf="diameter>0">

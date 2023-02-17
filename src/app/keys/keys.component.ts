@@ -5,10 +5,11 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Location} from "@angular/common";
-import {PromptComponent} from "../prompt/prompt.component";
+import {_prompt, PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {ActivatedRoute, Router} from "@angular/router";
 import {NFLUENT_WALLET} from "../../definitions";
+import {OperationService} from "../operation.service";
 
 @Component({
   selector: 'app-keys',
@@ -26,9 +27,13 @@ export class KeysComponent implements OnInit {
     public network:NetworkService,
     public toast:MatSnackBar,
     public user:UserService,
+    public operation:OperationService,
     public _location:Location,
     public routes:ActivatedRoute
-  ) { }
+  ) {
+    this.network.network_change.subscribe(()=>{this.refresh();})
+    this.operation.sel_ope_change.subscribe(()=>{this.refresh()});
+  }
 
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
@@ -43,33 +48,26 @@ export class KeysComponent implements OnInit {
 
   refresh(){
     this.user.connect().then((profil)=> {
-      this.network.init_keys(this.network.network,true).then(()=>{this.network.wait();});
+      this.network.init_keys(
+          this.network.network,
+          true,
+          this.user.profil.access_code,
+          this.operation.sel_ope!.id
+      ).then(()=>{this.network.wait();});
     });
   }
-
-  add_key() {
-    this.network.add_key({name:this.name, key:this.privateKey}).subscribe(()=>{
-      this.refresh();
-      this.name="";
-    })
-  }
-
-  sel_key(name:string) {
-    // this.network.sel_key(name);
-    showMessage(this,name+" sélectionnée");
-  }
-
-
 
 
   del_key(name: string) {
-    this.network.del_key(name).subscribe(()=>{
-      setTimeout(()=>{this.refresh();},1000);
-    });
+    _prompt(this,"Supprimer une clé","","Etes vous sur de vouloir détruire la clé "+name,"","Je suis sûr","Annuler",true).then(()=>{
+      this.network.del_key(name).subscribe(()=>{
+        setTimeout(()=>{this.refresh();},1000);
+      });
+    })
   }
 
   encrypt(key: any) {
-    this.network.encrypte_key(key.name).subscribe((r:any)=>{
+    this.network.encrypte_key(key.name,this.network.network,this.privateKey).subscribe((r:any)=>{
       this.clipboard.copy(key.name+": "+r.encrypt);
       showMessage(this,"La clé est disponible dans le presse papier")
     });
@@ -85,23 +83,14 @@ export class KeysComponent implements OnInit {
     }
 
   new_key() {
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Recevoir les informations de votre compte via mail",
-          placeholder: "Saisissez votre adresse mail",
-          type: "text",
-          onlyConfirm:false,
-          lbl_ok:"Recevoir par mail",
-          lbl_cancel:"Ne pas recevoir"
-        }
-    }).afterClosed().subscribe(resp => {
+    _prompt(this,"Recevoir les informations de votre compte via mail",).then(resp=>{
       if(!resp)resp="";
-      this.network.add_key({name:this.name},this.network.network,resp).subscribe((key:any)=>{
+      let obj={name:this.name, key:this.privateKey,access_code:this.user.profil.access_code,email:resp}
+      this.network.add_key(obj).subscribe(()=>{
         this.refresh();
+        this.name="";
       })
-    });
-
+    })
   }
 
   open_wallet(key: CryptoKey) {
@@ -136,10 +125,16 @@ export class KeysComponent implements OnInit {
   open_faucet(key: CryptoKey) {
     showMessage(this,"L'adresse du compte est dans le presse-papier")
     if(this.network.isElrond()){
+      debugger
       //TODO ici ajouter l'ouverture du rechargement
     }
     if(this.network.isPolygon()){
       open("https://faucet.polygon.technology/","faucet")
     }
   }
+
+    encrypt_key() {
+
+
+    }
 }

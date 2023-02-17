@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {Source} from "../../operation";
-import {_prompt} from "../prompt/prompt.component";
-import {environment} from "../../environments/environment";
+import {Socket} from "ngx-socket-io";
+import {UserService} from "../user.service";
 
 interface Ask {
   id:string
@@ -29,8 +29,15 @@ export class MinerpoolComponent implements OnInit {
   showAll: boolean=false;
 
   constructor(
-    public network:NetworkService
-  ) { }
+    public network:NetworkService,
+    public socket:Socket,
+    public user:UserService
+
+  ) {
+    this.socket.on("mintpool_refresh",()=>{
+      this.refresh();
+    })
+  }
 
   ngOnInit(): void {
     this.refresh();
@@ -85,5 +92,9 @@ export class MinerpoolComponent implements OnInit {
 
   export_pool() {
     open(this.network.server_nfluent+"/api/minerpool?format=csv","export");
+  }
+
+  open_transaction(ask: Ask) {
+    this.network.open_explorer(ask.message.split("Transaction=")[1],"transactions")
   }
 }

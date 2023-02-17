@@ -14,6 +14,7 @@ import {NFT} from "../../nft";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {get_in, Operation} from "../../operation";
+import {parse, stringify} from "yaml";
 
 @Component({
   selector: 'app-build-ope',
@@ -35,6 +36,7 @@ export class BuildOpeComponent implements OnInit {
   mails: { transfer: any; new_account: any }={transfer:"",new_account:""};
   showPrestashop: boolean=true;
   warning="";
+  ope_model: Operation | any;
 
 
   constructor(
@@ -70,6 +72,18 @@ export class BuildOpeComponent implements OnInit {
 
   refresh () {
     if(this.operation.sel_ope) this.refresh_ope(this.operation.sel_ope);
+  }
+
+  save_operation(){
+    localStorage.setItem("operation",this.operation.sel_text);
+  }
+
+  load_operation(){
+    let text=localStorage.getItem("operation");
+    if(text){
+      this.operation.sel_ope=parse(text);
+      this.operation.sel_text=text;
+    }
   }
 
 
@@ -179,8 +193,18 @@ export class BuildOpeComponent implements OnInit {
   }
 
   download_ope() {
+    let body={
+      "filename":"config.yaml",
+      "content":this.operation.sel_text,
+      "type":"application/yaml"
+    }
+    this.network.upload(body,"server").subscribe((r:any)=>{
+      //this.network.server_nfluent + "/api/configs/" + this.sel_config!.id + "/?format=file"
+      open(r.url, "download");
+    })
+
     if(this.operation.sel_ope)
-      open(this.network.server_nfluent+"/api/operations/"+this.operation.sel_ope.id,"download");
+      open(this.network.server_nfluent+"/api/operations/"+this.operation.sel_ope.id,"");
   }
 
 
@@ -285,5 +309,16 @@ export class BuildOpeComponent implements OnInit {
 
   showMessages(section: string):string {
     return jsonToList(get_in(this.operation.sel_ope,section+".messages",{}));
+  }
+
+  async update_ope($event: any) {
+    let r=await _prompt(this,"Effacer l'opération courrante ?","","","vrai/faux","Remplacer","Annuler",true).catch(()=>{
+      this.ope_model=this.ope_model ? null : {};
+    });
+    if(r=="yes"){
+      this.ope_model=$event;
+      this.operation.sel_ope=$event;
+      this.refresh_ope($event);
+    }
   }
 }

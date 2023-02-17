@@ -1,18 +1,20 @@
-<table style="font-size: small;display:inline-block;margin-top: 50px;" [style.color]="color">
-  <tr>
-    <td>
-      {{appname}} - v{{version}}
-    </td>
-    <td> - </td>
-    <td>
-      <a style="text-decoration: none;color: white;" href="https://nfluent.io" target="_blank">NFluent</a> (c) 2022
-    </td>
-    <td> - </td>
+<div style="position: fixed;display:block;bottom: 0;opacity: 0.3;right: 0">
+  <table style="font-size: small;display:inline-block;margin-top: 50px;" [style.color]="color">
+    <tr>
+      <td>
+        {{appname}} - v{{version}}
+      </td>
+      <td> - </td>
+      <td>
+        <a style="text-decoration: none;color: white;" href="https://nfluent.io" target="_blank">NFluent</a> (c) 2022
+      </td>
+      <td> - </td>
 
-    <td style="font-size: small;">
-      <mat-icon style="cursor: pointer;" title="Contacter le support" (click)="open_mail()">mail</mat-icon>&nbsp;
-      <mat-icon style="cursor: pointer;" title="Forum utilisteur" (click)="open_forum()">send</mat-icon>&nbsp;
-      <mat-icon style="cursor: pointer;" title="Contacter le support" (click)="open_faq()">help</mat-icon>
-    </td>
-  </tr>
-</table>
+      <td style="font-size: small;">
+        <mat-icon style="cursor: pointer;" title="Contacter le support" (click)="open_mail()">mail</mat-icon>&nbsp;
+        <mat-icon style="cursor: pointer;" title="Forum utilisteur" (click)="open_forum()">send</mat-icon>&nbsp;
+        <mat-icon style="cursor: pointer;" title="Questions fréquentes" (click)="open_faq()">help</mat-icon>
+      </td>
+    </tr>
+  </table>
+</div>

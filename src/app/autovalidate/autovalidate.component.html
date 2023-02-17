@@ -18,11 +18,9 @@
   </app-authent>
 
 <!--  authentification sans operation -->
-  <app-authent (authent)="on_authent($event)"
-               size="300px"
+  <app-authent (authent)="on_authent($event)" size="300px" *ngIf="!operation && collections && authentification"
                [directShowQRCode]="true"
                [validator_name]="validator_name"
-               *ngIf="!operation && collections"
                [showWalletConnect]="authentification!.wallet_connect"
                [showAddress]="authentification!.address"
                [showWebcam]="authentification!.webcam"

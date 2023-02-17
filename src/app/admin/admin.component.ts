@@ -35,6 +35,15 @@ export class AdminComponent implements OnInit {
   debug_mode: boolean=false;
   first_install:  boolean=true;
   server_config: ConfigServer | undefined;
+  creator_title: string = "Générateur de visuels NFTs";
+  code_creator: string = "";
+  code_miner: string = "";
+  intro_visual: string = "https://cdn.pixabay.com/photo/2018/02/06/22/43/painting-3135875_960_720.jpg";
+  intro_claim: string = "Fabriquer vos séries NFT en quelques minutes";
+  intro_appname:string="TokenForge Design";
+  networks: any;
+  sel_networks: any[]=[];
+
 
   constructor(
     public user:UserService,
@@ -44,13 +53,17 @@ export class AdminComponent implements OnInit {
   }
 
   ngOnInit(): void {
+
     this.user.login("Se connecter pour accèder aux commandes d'administration");
     this.load_values();
+    this.update_code_creator();
     this.network.info_server().subscribe((infos:any)=>{
       this.server_config=infos;
+      this.networks=this.network.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
     },(err)=>{
       showMessage(this,"Problème de connexion serveur")
       showError(this,err);
+
     })
   }
 
@@ -71,7 +84,7 @@ export class AdminComponent implements OnInit {
       localStorage.setItem("db_login",this.db_login);
       localStorage.setItem("db_password",this.db_password);
     }
-
+    this.update_code_creator()
     let port=this.server_addr.indexOf(":")>1 ? this.server_addr.split(":")[2] : "80";
     let s="firewall-cmd --permanent --zone=public --add-port="+port+"/tcp<br><br>";
 
@@ -100,6 +113,7 @@ export class AdminComponent implements OnInit {
     this.setup_server=s;
 
     this.setup_client=this.appli_addr+"/?param="+setParams({server:this.server_addr});
+    this.update_code_creator();
   }
 
   reset() {
@@ -117,5 +131,25 @@ export class AdminComponent implements OnInit {
 
   open_appli() {
     open(this.appli_addr,"Test application")
+  }
+
+  update_code_creator() {
+    this.code_creator=this.appli_addr+"/creator?param="+setParams({
+      toolbar:false,
+      title_form:this.creator_title,
+      claim:this.intro_claim,
+      visual:this.intro_visual,
+      appname:this.intro_appname
+    })
+
+    let network_list=this.sel_networks.map((x:any)=>{return(x.value)}).join(",");
+    this.code_miner=this.appli_addr+"/mint?param="+setParams({
+      toolbar:false,
+      title_form:this.creator_title,
+      claim:this.intro_claim,
+      visual:this.intro_visual,
+      appname:this.intro_appname,
+      networks:network_list
+    })
   }
 }

@@ -36,6 +36,7 @@ class IPFS(Storage):
     client=None
 
     def __init__(self, addr:str):
+        Storage.__init__(self,domain_server="https://ipfs.io/ipfs/")
         self.client=Client(Multiaddr(addr))
 
 
@@ -43,7 +44,7 @@ class IPFS(Storage):
         cid=self.client.add(file)
         rc=dict(cid)
         rc["filename"]=rc["Name"]
-        rc["url"]="https://ipfs.io/ipfs/"+rc["Hash"]
+        rc["url"]=self.domain_server+rc["Hash"]
         return rc
 
 
@@ -52,10 +53,10 @@ class IPFS(Storage):
         return file
 
 
-    def add(self,body,removeFile=False,temp_dir="./Solana/Temp/"):
+    def add(self,body,removeFile=False,temp_dir="./Temp/"):
         f=None
         if type(body)==dict or type(body)==list:
-          if "content" in body:
+          if "content" in body and "base64" in body["content"]:
             body=base64.b64decode(body["content"].split(";base64,")[1])
           else:
             cid={"Hash":self.client.add_json(body)}
@@ -67,7 +68,7 @@ class IPFS(Storage):
           cid={"Hash":self.client.add_str(body)}
 
         if removeFile and f: del f
-        cid["url"]="https://ipfs.io/ipfs/"+cid["Hash"]
+        cid["url"]=self.domain_server+cid["Hash"]
         if type(body)==dict and "filename" in body: cid["filename"]=body["filename"]
 
         return cid
@@ -76,7 +77,7 @@ class IPFS(Storage):
 
     def get_dict(self,token):
         if len(token)!=46: return token
-        url="https://ipfs.io/ipfs/"+token
+        url=self.domain_server+token
         r=requests.get(url)
         try:
             return json.loads(r.text.replace("'","\""))
@@ -84,4 +85,4 @@ class IPFS(Storage):
             return r
 
     def get_link(self, cid):
-        return "https://ipfs.io/ipfs/"+cid
+        return self.domain_server+cid

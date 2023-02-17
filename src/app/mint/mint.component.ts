@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {
   $$, b64DecodeUnicode,
-  base64ToArrayBuffer, find,
+  base64ToArrayBuffer, copyAchievements, find,
   getParams, now,
   showError,
   showMessage
@@ -9,7 +9,7 @@ import {
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {_prompt, PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
-import {PLATFORMS} from "../../definitions";
+import {MAX_FILE_SIZE} from "../../definitions";
 import {NetworkService} from "../network.service";
 
 import ExifReader from 'exifreader';
@@ -36,20 +36,21 @@ export class MintComponent implements OnInit {
   formData: FormData=new FormData();
   sign: boolean=false;
   tokens: NFT[]=[];
-  platforms=PLATFORMS;
-  sel_platform: any=this.platforms[1];
+  sel_platform: any;
   price: any=0;
   quantity: any=1;
   sel_collection:Collection | undefined;
   mintfile: string="sf_"+now()+".yaml";
+  sel_network:{label:string,value:string} | undefined;
+  networks:any[]=[];
 
   constructor(
     public toast:MatSnackBar,
     public network:NetworkService,
     public dialog:MatDialog,
     public user:UserService,
-    public _location:Location,
     public operation:OperationService,
+    public _location:Location,
     public router:Router,
     public clipboard:Clipboard,
     public routes:ActivatedRoute,
@@ -57,12 +58,17 @@ export class MintComponent implements OnInit {
     this.user.addr_change.subscribe((addr)=>{
       this.init_form();
     })
+    this.sel_platform=this.network.config["PLATFORMS"][1];
+
   }
 
 
   ngOnInit(): void {
+
     getParams(this.routes).then((params:any)=>{
       if(params.import){this.batch_import_from_url(params.import);}
+      let l_nets=params.networks ? params.networks.split(",") : this.network.config["NETWORKS"];
+      this.networks=l_nets.map((x:any)=>{return {label:x,value:x}});
     })
     this.init_form();
   }
@@ -70,7 +76,7 @@ export class MintComponent implements OnInit {
 
 
   init_form(){
-    if(this.user.isConnected(true)){
+
       let tmp=localStorage.getItem("tokenstoimport");
       if(tmp)this.tokens=JSON.parse(tmp);
 
@@ -95,12 +101,7 @@ export class MintComponent implements OnInit {
           }
           this.onFileSelected(files);
         }
-
       })
-  }
-
-
-
   }
 
 
@@ -143,6 +144,9 @@ export class MintComponent implements OnInit {
 
     if(!_infos.hasOwnProperty("files"))_infos["files"]="";
 
+    let marketplace={price:this.price,quantity:this.quantity};
+    if(_infos.hasOwnProperty("marketplace"))marketplace=_infos.marketplace;
+
     let rc:NFT={
       collection: null,
       address: undefined,
@@ -152,13 +156,13 @@ export class MintComponent implements OnInit {
       creators: creators,
       description: _infos.description,
       symbol: _infos.symbol,
-      files: _infos.files.split("\n"),
-      marketplace: {price:this.price,quantity:this.quantity},
+      files: typeof(_infos.files)=="string" ? _infos.files.split("\n") : _infos,
+      marketplace: marketplace,
       name: _infos.title,
       network: this.network.network,
       miner:"",
       owner: this.user.addr,
-      royalties: 0,
+      royalties: !_infos.royalties ? 0 : _infos.royalties,
       visual: url,
       solana:null,
       style:{}
@@ -178,6 +182,7 @@ export class MintComponent implements OnInit {
 
 
   onFileSelected(files: any) {
+    //tag: upload_file
     //Import/Upload des NFT: chargement depuis un fichier ou la fenetre
     if(files.hasOwnProperty("filename"))files=[files]
     let index=0;
@@ -237,43 +242,46 @@ export class MintComponent implements OnInit {
           showMessage(this,"Lancement du processus de minage");
           this.mintfile="sf_"+now()+".yaml";
           this.network.wait("Production du fichier");
+          this.content_for_clipboard="";
           this.mint(0);
-          // setTimeout(()=>{
-          //   this.network.wait();
-          //   open(this.network.server_nfluent+"/api/images/"+this.mintfile,"mintfile")
-          // },5000);
-
         }
     });
   }
 
 
   //Fonction récurente appeler pour le minage en masse
-  complement: string="";
+  content_for_clipboard: string="";
 
   mint(index=0){
-    this.set_collection();
-    let _t:NFT=this.tokens[index];
-    _t.marketplace={price:this.price,quantity:this.quantity}
-    _t.message="hourglass:Minage";
-    showMessage(this,"Minage de "+_t.name);
+    if(index>=this.tokens.length){
+      showMessage(this,"Traitement terminé");
+    } else {
+      this.set_collection();
+      let _t:NFT=this.tokens[index];
+      _t.marketplace={price:this.price,quantity:this.quantity}
+      _t.message="hourglass:Minage";
 
-    this.miner(_t).then((nft:any)=>{
-      _t.message=nft.message;
-      this.local_save();
-      if(this.tokens.length>index){
+      this.miner(_t).then((nft:any)=>{
+        this.content_for_clipboard=this.content_for_clipboard+"\t\t\t\t- "+nft.message+"\n"
+        if(this.sel_target.value=="file"){
+          nft.message="miné";
+          nft.address="";
+        }
+        this.local_save();
         this.mint(index+1);
-      }
-    }).catch((result:any)=>{
-      _t.message="Anomalie de minage: "+result.message;
-    });
+      }).catch((result:any)=>{
+        _t.message="Anomalie de minage: "+result.message;
+      });
+    }
   }
 
 
   clear() {
-    $$("Effactement des tokens")
-    this.tokens=[];
-    this.local_save();
+    _prompt(this,"Effacer les NFT a miner","","Etes-vous sûr de vouloir tout effacer ?","","Effacer tout","Annuler",true).then(()=>{
+      $$("Effactement des tokens")
+      this.tokens=[];
+      this.local_save();
+    })
   }
 
 
@@ -328,6 +336,8 @@ export class MintComponent implements OnInit {
   }
 
 
+
+
   //Opére le minage.
   //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
   create_options: any=[
@@ -340,13 +350,15 @@ export class MintComponent implements OnInit {
   //sel_target: {value:string,label:string}={value:"",label:""};
   targets=[
     "blockchain",
-    "db-cloud-nfluent",
     "db-server-nfluent",
     "db-web3-nfluent",
+    "file",
     "prestashop",
-    "file"
+    "db-cloud-nfluent"
   ].map((x:string)=>{return {value:x,label:x}})
   sel_target: { value:string,label:string }=this.targets[0];
+  encrypt_nft: boolean = true;
+  sel_addr: string="";
 
 
   miner(token: NFT) : Promise<any> {
@@ -384,14 +396,15 @@ export class MintComponent implements OnInit {
             target_network=this.network.network;
             token.network=target_network
           }
-          this.network.mint(token,this.user.key.address,token.owner || "",id_operation,this.sign, this.sel_platform.value,target_network,this.mintfile).then((result:any)=>{
+          this.network.mint(token,this.user.key.address,token.owner || "",id_operation,this.sign, this.sel_platform.value,target_network,this.mintfile,this.encrypt_nft).then((result:any)=>{
             if(!result.error || result.error==""){
               token.address=result.result.mint;
-              if(this.network.network=="file"){
-                this.clipboard.copy(result.out);
-                token.message="Le code est dans votre presse-papier"
+              if(target_network=="file"){
+                if(this.encrypt_nft)result.out="encrypt: \""+result.out+"\"";
+                this.clipboard.beginCopy(result.out).copy();
+                token.message=result.out;
               } else {
-                token.message="NFT id="+token.address+", minted for "+result.cost+" "+result.unity;
+                token.message="NFT id="+token.address+", minted for 0"
               }
               resolve(token);
             } else {
@@ -646,19 +659,25 @@ export class MintComponent implements OnInit {
   drop(files: File[],token:NFT) {
     //Intégration des fichiers attachés
     if(this.sel_platform.value!="nftstorage"){
+      this.network.wait("Décodage des fichiers");
       for(let file of files){
-        let reader = new FileReader();
-        reader.onload=()=>{
-          let body={filename:file.name,content:reader.result,type:file.type};
-          this.network.wait("Mise en ligne du document");
-          this.network.upload(body,this.sel_platform.value,file.type).subscribe((r:any)=>{
-            this.network.wait();
-            token.files.push(r.url+"?f="+encodeURIComponent(file.name));
-            this.local_save();
-          });
+        if(file.size>MAX_FILE_SIZE*1024){
+          this.network.wait("");
+          showMessage(this,"La taille de "+file.name+" excéde la limite de "+MAX_FILE_SIZE+" ko. Vous pouvez le mettre en ligne et coller le lien dans cette zone",10000)
+        } else {
+          let reader = new FileReader();
+          reader.onload=()=>{
+            let body={filename:file.name,content:reader.result,type:file.type};
+            this.network.wait("Mise en ligne du document");
+            this.network.upload(body,this.sel_platform.value,file.type).subscribe((r:any)=>{
+              this.network.wait();
+              token.files.push(r.url+"?f="+encodeURIComponent(file.name));
+              this.local_save();
+            });
 
+          }
+          reader.readAsDataURL(file)
         }
-        reader.readAsDataURL(file)
       }
     } else {
       showMessage(this,"Impossible de mettre en ligne des documents attachés sur la plateforme "+this.sel_platform.label);
@@ -680,7 +699,7 @@ export class MintComponent implements OnInit {
           let _n: any = ope.lazy_mining?.networks[0];
           if (_n) {
             this.network.network_change.subscribe(() => {
-                this.user.init(_n.miner).then(()=>{
+                this.user.init(_n.miner,this.network.network).then(()=>{
                     let index=find(this.user.collections,_n.collection,"id");
                     if(index>-1)this.sel_collection = this.user.collections[index];
                 })
@@ -708,5 +727,26 @@ export class MintComponent implements OnInit {
 
   informe_copy_collection() {
     showMessage(this,"La collection est copié. Vous pouvez l'insérer dans le fichier d'opération")
+  }
+
+  confirm_clipboard() {
+    showMessage(this,"Opération effectuée. Vous pouvez insérer les NFT dans un fichier d'opération");
+  }
+
+  nfts_to_clipboard() : string {
+    let rc="nfts:\n";
+    for(let nft of this.tokens) {
+      rc = rc + "\t- " + nft.visual + "\n"
+    }
+    return rc;
+  }
+
+  clear_content_for_clipboard($event: KeyboardEvent) {
+    if($event.ctrlKey && ($event.key=="c" || $event.key=='C' || $event.key=="x" || $event.key=='X')){
+      showMessage(this,"Les NFT sont disponibles dans le presse papier. Vous pouvez les ajouter dans un fichier d'opération")
+      setTimeout(()=>{
+        this.content_for_clipboard="";
+      },1000);
+    }
   }
 }

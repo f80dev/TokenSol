@@ -9,7 +9,6 @@ from flaskr.apptools import async_mint, activity_report_sender
 
 from flaskr.dao import DAO
 from flaskr.secret import SECRET_JWT_KEY
-from flaskr.settings import DBSERVER_SYSTEM, DBNAME_SYSTEM, TEMP_DIR
 
 #voir pour le choix entre flask run ou app.run() https://www.twilio.com/blog/executer-application-flask
 
@@ -29,9 +28,12 @@ def create_app(config=None) -> (Flask,BackgroundScheduler):
     _app.config.from_mapping(config)
   else:
     if config is None: config="config.devConfig"
-    if not config.endswith("onfig"):config=config+"Config"
-    if not config in ["localConfig","devConfig","prodConfig"]: config="localConfig"
-    _app.config.from_object("config."+config)
+    if type(config)==str:
+      if not config.endswith("onfig"):config=config+"Config"
+      if not config in ["localConfig","testConfig","devConfig","prodConfig","demoConfig"]: config="localConfig"
+      _app.config.from_object("config."+config)
+    else:
+      _app.config.from_object(config)
 
   from . import api
   _app.register_blueprint(api.bp)

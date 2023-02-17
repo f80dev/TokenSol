@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {Connexion, Operation} from "../../operation";
-import {setParams, showMessage} from "../../tools";
+import {$$, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Validator} from "../../nft";
 import {Router} from "@angular/router";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {OperationService} from "../operation.service";
+import {Socket} from "ngx-socket-io";
+import {map} from "rxjs/operators";
 
 
 @Component({
@@ -24,7 +26,8 @@ export class ValidatorsComponent implements OnInit {
     public operation:OperationService,
     public toast:MatSnackBar,
     public router:Router,
-    public dialog:MatDialog
+    public dialog:MatDialog,
+    public socket:Socket
   ) { }
 
 
@@ -33,9 +36,17 @@ export class ValidatorsComponent implements OnInit {
       this.operations=operations;
       this.refresh();
     })
+    this.socket.on("refresh",()=>{
+      this.refresh();
+    })
+    // this.socket.fromEvent("refresh").pipe(map((data:any)=>{
+    //   $$("Réception du message de refresh");
+    //   this.refresh();
+    // }));
   }
 
   refresh(){
+    $$("Refresh des validateurs");
     this.network.get_validators().subscribe((validators:Validator[])=>{
       this.validators=[];
       for(let validator of validators){
@@ -47,7 +58,10 @@ export class ValidatorsComponent implements OnInit {
   }
 
 
-  desactivate() {
+  desactivate(validator:Validator) {
+    this.network.send_message_to_validator(validator.id,"stop").subscribe(()=>{
+      showMessage(this,"Message envoyé");
+    })
   }
 
 
@@ -59,9 +73,7 @@ export class ValidatorsComponent implements OnInit {
   }
 
   delete(validator: Validator) {
-    this.network.remove_validator(validator.id).subscribe(()=>{
-      this.refresh();
-    })
+    this.network.remove_validator(validator.id).subscribe(()=>{this.refresh();})
   }
 
 
@@ -96,7 +108,7 @@ export class ValidatorsComponent implements OnInit {
       _prompt(this,"Nom du validateur","fictif").then((rep)=>{
         if(this.operation.sel_ope){
           open("./autovalidate?validator_name="+rep+"&ope="+this.operation.sel_ope.id,"_blank");
-          setTimeout(()=>{this.refresh();},3000);
+          // setTimeout(()=>{this.refresh();},3000);
         }
       })
 

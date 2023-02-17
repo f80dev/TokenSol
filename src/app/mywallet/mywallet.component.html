@@ -1,9 +1,9 @@
 <div style="position: fixed;right:0px;top:0px;display: block;height:20px;color: lightgray;" *ngIf="network.network.indexOf('devnet')>-1">DevNet</div>
-<mat-tab-group [selectedIndex]="indexTab" (selectedIndexChange)="refresh($event)"
+<mat-tab-group [selectedIndex]="indexTab"
+               (selectedIndexChange)="refresh($event)"
                style="padding: 10px;width:100%;  text-align: center;">
   <mat-tab [label]="tab_title">
     <div style="display: flex;margin-top: 10px;flex-wrap: wrap;justify-content: center;align-items: center;">
-
 
         <button mat-icon-button (click)="show_elrond_addr()"
                 title="Recevoir directement d'autres NFT"
@@ -82,7 +82,7 @@
   </mat-tab>
 
 
-  <mat-tab label="Accès">
+  <mat-tab label="Accès" *ngIf="addr && addr.length>0">
     <div *ngIf="!showScanner">
       <br>
       <h3>Utiliser ce QRCode pour accèder à vos événements</h3>
@@ -105,7 +105,8 @@
         <br>
 
 
-        <app-input label="Saisissez le code"
+      <div style="width: 400px;display: inline-block;margin-top: 30px;">
+        <app-input label="Saisissez le code du QRCode à flasher" width="200px"
                    *ngIf="!isProd()"
                    label_button="Valider" cancel_button="Annuler"
                    (cancel)="showScanner=false"
@@ -113,6 +114,7 @@
                    [value]="accescode_scan" (valueChange)="accescode_scan=$event"
                    value_type="text">
         </app-input>
+      </div>
 
 
     </div>
@@ -121,7 +123,7 @@
   </mat-tab>
 
 
-  <mat-tab label="NFTlive" *ngIf="opes.length>0">
+  <mat-tab label="NFTlive" *ngIf="opes.length>0 && addr && addr.length>0">
     <a [routerLink]="'faqs'" [queryParams]="{faq:'nftlive'}">En savoir plus</a> sur NFTLive
 
     <mat-form-field style="min-width: 100px;width: 60%;max-width:500px;font-size: medium;" *ngIf="opes.length>0">
@@ -237,7 +239,7 @@
     </div>
   </mat-tab>
 
-  <mat-tab label="Préférences">
+  <mat-tab label="Préférences" *ngIf="addr && addr.length>0">
     <app-authent *ngIf="!strong"
                  message="La mise a jour de vos préférences nécéssite une authentification"
                  [address]="addr"
@@ -293,12 +295,17 @@
   </mat-tab>
 
   <mat-tab label="Aide">
-    <div *ngIf="network.isDevnet()">
+    <div *ngIf="network.isDevnet() && addr && addr.length>0" style="text-align: left;">
       Réseau: {{network.network}}<br>
-      Addresse: {{addr | alias}}
+      Addresse: {{addr | alias}}<br><br>
     </div>
-    <br>
-    <app-faqs filter="nfluent_wallet"></app-faqs>
+
+    <div style="text-align: center;width: 80%;margin:10%;display: inline-block;"  *ngIf="!addr">
+      <app-rescuewallet [network_name]="network.network.split('-')[0]"
+                        (validate)="on_rescue($event)"></app-rescuewallet>
+    </div>
+
+    <app-faqs filter="nfluent_wallet" title="Questions fréquentes"></app-faqs>
   </mat-tab>
 
 

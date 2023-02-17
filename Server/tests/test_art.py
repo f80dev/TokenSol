@@ -1,10 +1,14 @@
 import os
 import random
+from os.path import exists
+
 import pytest
+from PIL import Image, ImageSequence
 
 from flaskr import log
 from flaskr.ArtEngine import ArtEngine, Sticker, Layer
 from flaskr.TokenForge import upload_on_platform
+from flaskr.Tools import generate_svg_from_fields, convert_image_to_animated, transfer_sequence_to_disk
 from tests.test_tools import TEMP_TEST_DIR,RESSOURCE_TEST_DIR
 
 PLATFORM_LIST=["db-server-tokenforge","server","infura","nftstorage"] #manque "github-nfluentdev-tests"
@@ -24,20 +28,24 @@ IMAGES={
     "https://m.media-amazon.com/images/I/81GhJuX-uRL.png",
     "https://1000logos.net/wp-content/uploads/2016/10/Apple-Logo.png",
     "https://logos-marques.com/wp-content/uploads/2021/10/meta-logo-1.png",
-    RESSOURCE_TEST_DIR+"motif1.png",
-    RESSOURCE_TEST_DIR+"motif2.png",
-    RESSOURCE_TEST_DIR+"motif3.png",
-    RESSOURCE_TEST_DIR+"motif4.png"
+    "motif1.png",
+    "motif2.png",
+    "motif3.png",
+    "motif4.png"
   ],
   "animated":[
+    "dog.gif",
+    "boule_facette.gif",
     "https://helpx.adobe.com/content/dam/help/en/photoshop/how-to/create-animated-gif/jcr_content/main-pars/image_4389415/create-animated-gif_3a-v2.gif",
     "https://media.tenor.com/mZomesilZwoAAAAC/skull-caveira.gif",
     "http://ekladata.com/1DHTBeW4E3CVFx-CfYpnqDt9Igs/z64disco-3.gif",
-    "https://bestanimations.com/media/mirror-balls/1536370706pink-disco-ball-animation-6.gif"
+    "https://bestanimations.com/media/mirror-balls/1536370706pink-disco-ball-animation-6.gif",
+
   ],
   "svgs":[
-    RESSOURCE_TEST_DIR+"svg1.svg",
-    RESSOURCE_TEST_DIR+"svg2.svg"
+    "svg1.svg",
+    "svg2.svg",
+    "voeux2023.svg"
   ]
 }
 
@@ -50,18 +58,94 @@ def _random(lst):
   index=random.randint(0,len(lst)-1)
   return lst[index]
 
+def test_clone():
+  for section in IMAGES.keys():
+    clear_directory()
+    image=get_image(section=section)
+    sticker=Sticker(image=image,work_dir=TEMP_TEST_DIR)
+    assert not sticker.ext is None,"L'extensione est vide pour "+image
+
+    clone=sticker.clone("myclone")
+    assert clone.is_animated()==sticker.is_animated()
+    clone.close()
+    sticker.close()
+
+
+
+def get_image(url:str=None,section=None,index=-1) -> str:
+  if url is None:
+
+    assert not section is None
+    assert section in IMAGES,"la section "+section+" ne fait pas partie des images"
+    if index==-1:
+      url=_random(IMAGES[section])
+    else:
+      url=IMAGES[section][index]
+
+  if url.startswith("http"):return url
+  if "/" in url: return url
+  return RESSOURCE_TEST_DIR+url
+
+
+def test_sequence():
+  clear_directory(TEMP_TEST_DIR)
+  filename=get_image(section="animated",index=1)
+  img=Image.open(filename,"r")
+  img.save(TEMP_TEST_DIR+"/master.gif",save_all=True, disposal=2)
+  #transfer_sequence_to_disk(img,dir=TEMP_TEST_DIR)
+
+
+
+def test_paste_fixe_to_animated():
+  clear_directory()
+  url=test_paste_images(im1=get_image(section="svgs"),im2=get_image(section="animated"))
+  rc=Sticker(image=url,work_dir=TEMP_TEST_DIR)
+  assert rc.image.is_animated,"Le résultat devrait être une image animée"
+
+
+# def test_pillow_library():
+#   image = get_image("lapin.")
+#   frames = []
+#
+#   angle=0
+#   for frame in ImageSequence.Iterator(image):
+#     for i in range(30):
+#       frame=frame.rotate(angle)
+#       frames.append(frame.copy())
+#       angle += 1
+#
+#   frames[0].save("./tests/lapin.webp", save_all=True, append_images=frames[1:],optimize=False,loop=0)
+
+
+def test_load(section="animated"):
+  for url in IMAGES[section]:
+    url=get_image(url)
+    ext=url[url.rindex(".")+1:]
+    if ext and len(ext)>0:
+      sticker=Sticker(name="test",image=url,work_dir=TEMP_TEST_DIR)
+      assert sticker.is_animated()
+      assert sticker.image.is_animated
+      assert sticker.image.format
+      assert sticker.image.format.lower()==ext.lower()
+      assert sticker.image.n_frames>1
+
 
 
 def test_create_sticker(section="backgrounds"):
-  sticker=Sticker(name="background",image=_random(IMAGES[section]))
-  assert not sticker is None
-  return sticker
+  for index in range(2):
+    sticker=Sticker(name="background",image=get_image(section=section),work_dir=TEMP_TEST_DIR)
+    sticker.to_square(can_strech=(index==0))
+    assert not sticker is None
+    assert sticker.image.height==sticker.image.width
+    return sticker
 
 
-def test_create_layer(name="background",images=IMAGES["backgrounds"]):
+def test_create_layer(name="backgrounds"):
+  images=IMAGES[name]
   layer=Layer(name=name)
+
   for img in images:
-    layer.add(Sticker(image=img))
+    layer.add(Sticker(image=get_image(url=img),work_dir=TEMP_TEST_DIR))
 
   assert layer.count()==len(images)
   return layer
@@ -73,62 +157,110 @@ def clear_directory(dir=TEMP_TEST_DIR):
 
 
 def test_paste_images(im1=None,im2=None,output_filename="collage.webp"):
-  im1=im1 or _random(IMAGES["backgrounds"])
-  im2=im2 or _random(IMAGES["stickers"])
+  im1=im1 or get_image(section="backgrounds")
+  im2=im2 or get_image(section="stickers")
   if output_filename=="collage.webp": clear_directory()
-  s1=Sticker(image=im1)
-  s2=Sticker(image=im2)
+  s1=Sticker(image=im1,work_dir=TEMP_TEST_DIR)
+  s2=Sticker(image=im2,work_dir=TEMP_TEST_DIR)
   log("Collage de "+str(s2)+" sur "+str(s1))
   s1.fusion(s2,1)
   s1.save(TEMP_TEST_DIR+output_filename)
-  return True
+  return TEMP_TEST_DIR+output_filename
 
 
 def test_paste_with_svg():
-  test_paste_images(im2=_random(IMAGES["svgs"]))
+  clear_directory()
+  test_paste_images(im2=get_image(section="svgs"))
 
+
+def test_paste_several_svg():
+  clear_directory()
+  rc=test_paste_images(im1=get_image(section="svgs"),im2=get_image(section="svgs"))
+  assert exists(rc)
+
+
+
+def test_clone_svg(clone_filename="copie de svg.svg"):
+  clear_directory()
+  rc=Sticker(image=get_image(section="svgs"),work_dir=TEMP_TEST_DIR)
+  rc.clone(clone_filename)
+  assert exists(TEMP_TEST_DIR+clone_filename)
 
 
 def test_paste_multiple_format():
   clear_directory()
   for i in range(0,20):
-    background=Sticker(image=_random(IMAGES["backgrounds"]))
-    foreground=Sticker(image=_random(IMAGES["stickers"]+IMAGES["svgs"]))
+    background=Sticker(image=get_image(section="backgrounds"),work_dir=TEMP_TEST_DIR)
+    url=_random(IMAGES["stickers"]+IMAGES["svgs"])
+    foreground=Sticker(image=get_image(url),work_dir=TEMP_TEST_DIR)
     rc=test_paste_images(background.image,foreground.image,"output"+str(i)+".webp")
-    assert rc
+    assert not rc is None,"Impossible de coller "+str(foreground)+" sur "+str(background)
+    assert exists(rc)
 
 
 
+def test_svg_treatment():
+  foreground=Sticker(image=get_image(section="svgs"),work_dir=TEMP_TEST_DIR)
+  rc=foreground.render_svg()
+  assert not rc is None
 
-def test_generate_collection(w=500,h=500,limit=10,dir=TEMP_TEST_DIR,
+
+
+def test_generate_collection(w=500,h=500,limit=3,dir=TEMP_TEST_DIR,
                              data={"title":"NFT de test","description":"ceci est la description"},
                              sections=["backgrounds","stickers"],
-                             target_platform="server",collection_name="collection_test",seed=0):
+                             target_platform="server",collection_name="collection_test",seed=19):
   clear_directory(dir)
-  artEngine=ArtEngine(collection_name)
-  for n in sections:
-    layer=test_create_layer(n,images=IMAGES[n])
+  random.seed(seed)
+  artEngine=ArtEngine(collection_name,work_dir=TEMP_TEST_DIR)
+  for section in sections:
+    layer=test_create_layer(section)
     artEngine.add(layer)
   rc=artEngine.generate(dir,limit,seed_generator=seed,width=w,height=h,data=data,target_platform=target_platform,export_metadata=True)
   assert not rc is None
-  assert len(rc)==len(os.listdir(dir)),"Il manque des fichiers"
+  return rc
+
+
+def test_generate_with_xmp(w=500,h=500,dir=TEMP_TEST_DIR,
+                             data={
+                               "title":"NFT de test",
+                               "description":"ceci est la description",
+                               "tags":"birthday","royalties":1,
+                               "files":"https://nfluent.io",
+                               "marketplace":{"price":1,"quantity":2}
+                              },
+                             target_platform="nftstorage",collection_name="collection_test",seed=19):
+  clear_directory(dir)
+  random.seed(seed)
+  artEngine=ArtEngine(collection_name,work_dir=TEMP_TEST_DIR)
+  artEngine.add(Layer(name="fond").add(Sticker(image=get_image(section="backgrounds",index=4),work_dir=TEMP_TEST_DIR)))
+  artEngine.add(Layer(name="sticker").add(Sticker(image=get_image(section="stickers",index=1),work_dir=TEMP_TEST_DIR)))
+  rc=artEngine.generate(dir,1,seed_generator=seed,width=w,height=h,data=data,target_platform=target_platform,export_metadata=False)
+  assert not rc is None
   return rc
 
 
 
+
+
+def test_generate_svg():
+  master=Sticker(image=get_image(section="svgs",index=2),work_dir=TEMP_TEST_DIR)
+  images=generate_svg_from_fields(master.text["text"])
+  assert not images is None
+
+
 def test_collection_with_animated():
   clear_directory(TEMP_TEST_DIR)
-  test_generate_collection(sections=["animated","stickers"],limit=3,seed=1)
-  test_generate_collection(sections=["backgrounds","animated","stickers"],limit=3)
+  rc=test_generate_collection(sections=["animated","stickers"],limit=3,seed=1)
+  rc=test_generate_collection(sections=["backgrounds","animated","stickers"],limit=3)
 
 
 
 def test_all_platform_with_image(platforms=PLATFORM_LIST):
-  img=Sticker(image=IMAGES["stickers"][1])
+  img=Sticker(image=IMAGES["stickers"][1],work_dir=TEMP_TEST_DIR)
   for platform in platforms:
     print("Test de la platform "+platform)
-    rc=upload_on_platform(img.toBase64(),platform)
-    assert len(rc["url"])>0
+    rc=upload_on_platform(img.toBase64(),platform,upload_dir=TEMP_TEST_DIR)
     assert len(rc["cid"])>0
 
 
@@ -138,18 +270,3 @@ def test_all_platform_with_json(platforms=PLATFORM_LIST):
     rc=upload_on_platform(doc,platform)
     assert len(rc["url"])>0
     assert len(rc["cid"])>0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

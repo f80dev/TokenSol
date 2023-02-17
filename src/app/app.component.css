@@ -5,7 +5,7 @@
 }
 
 .sidenav {
-  width: 200px;
+  width: fit-content;
 }
 
 mat-toolbar  {
@@ -16,6 +16,8 @@ mat-toolbar  {
   z-index: 10;
   overflow: hidden;
 }
+
+
 
 app-input {
   width: 30%;

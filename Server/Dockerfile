@@ -95,6 +95,8 @@ RUN pip3 -v install eth-account
 RUN pip3 -v install py-solc-x
 RUN pip3 -v install web3
 RUN pip3 -v install pandas
+RUN pip3 -v install rembg
+
 
 
 WORKDIR /

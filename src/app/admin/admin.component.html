@@ -1,6 +1,6 @@
 <div class="mainform" style="text-align: left;">
   <mat-expansion-panel>
-    <mat-expansion-panel-header class="color-primary">Tables</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Tables</mat-expansion-panel-header>
 
     <p>
       Adresse de la base: {{server_config!.Database_Server}}<br>
@@ -22,7 +22,7 @@
 
 
   <mat-expansion-panel *ngIf="server_config" [expanded]="true">
-    <mat-expansion-panel-header>Configuration</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Configuration actuelle</mat-expansion-panel-header>
     <table>
       <tr>
         <td>Adresse du serveur: </td>
@@ -52,7 +52,7 @@
 
 
   <mat-expansion-panel [expanded]="false">
-    <mat-expansion-panel-header>Déploiement</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Déploiement du serveur</mat-expansion-panel-header>
     <mat-checkbox [(ngModel)]="first_install" (change)="refresh()">Première installation</mat-checkbox><br>
 
     <app-input [(value)]="server_addr" label="Adresse du serveur" width="250px" (valueChange)="refresh()"></app-input>
@@ -115,6 +115,35 @@
 
   </mat-expansion-panel>
 
+
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Déploiement de l'outil de création</mat-expansion-panel-header>
+    <table>
+      <tr>
+        <td style="width: 400px;">
+          <app-input label="Titre de l'application" [value]="creator_title" (valueChange)="creator_title=$event;refresh();"></app-input>
+          <app-input [value]="appli_addr" label="Adresse de l'application" (valueChange)="appli_addr=$event;refresh();"></app-input>
+          <app-input [value]="intro_visual" label="Visuel d'introduction" (valueChange)="intro_visual=$event;refresh();"></app-input>
+          <app-input [value]="intro_claim" label="Phrase d'introduction" (valueChange)="intro_claim=$event;refresh();"></app-input>
+          <app-input [value]="intro_appname" label="Nom de l'application" (valueChange)="intro_appname=$event;refresh();"></app-input>
+          <app-input [value]="sel_networks" [multiselect]="true" [options]="networks"
+                     label="Blockchains disponibles"
+                     (valueChange)="sel_networks=$event;refresh();"></app-input>
+        </td>
+        <td>
+          <app-input [rows]="15" [value]="code_creator" width="400px" label="Appli de création des NFTs"></app-input>
+          <app-input [rows]="15" [value]="code_miner" width="400px" label="Appli de création des NFTs"></app-input>
+        </td>
+        <td>
+          <a [href]="code_creator" target="_blank" style="margin: 10px;">Tester la création de NFT</a><br>
+          <a [href]="code_miner" target="_blank" style="margin: 10px;">Tester le minage</a>
+        </td>
+      </tr>
+    </table>
+
+
+
+  </mat-expansion-panel>
 
 
 

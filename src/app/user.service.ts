@@ -8,34 +8,45 @@ import {Collection} from "../operation";
 import {Subject} from "rxjs";
 import {environment} from "../environments/environment";
 
+export interface UserProfil {
+  routes:string[]
+  perms:string[]
+  email:string
+  alias:string
+  access_code:string
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
   addr: string="";
+
   addr_change=new Subject<string>();
+  profil_change=new Subject<UserProfil>();
+
   key:CryptoKey | undefined;
   provider: WalletConnectProvider | undefined;
   collections:Collection[]=[];
 
-  profil={
+  profil:UserProfil={
     routes:["/help","/about","/"],
     perms:["reload"],
     email:"",
-    alias:"anonymous"
+    alias:"anonymous",
+    access_code:""
   };
 
   // private _wallet: Wallet | undefined;
   amount: number=0;
   strong:boolean=false;
-  email: string="";
   name:string="";
   balance: number=0;
   nfts_to_mint: any[]=[]
+  advance_mode:boolean=false;
 
   constructor(
-    private httpClient : HttpClient,
+    private httpClient: HttpClient,
     public router:Router,
     public network:NetworkService
   ) {
@@ -43,11 +54,11 @@ export class UserService {
   }
 
   isConnected(strong:boolean=false) {
-    let rc=(this.addr && this.addr.length>0) || this.email.length>0;
-    if(isLocal(environment.appli)){
-      this.strong=true;
-      rc=true;
-    }
+    let rc=this.profil.email.length>0;
+    // if(isLocal(environment.appli)){
+    //   this.strong=true;
+    //   rc=true;
+    // }
     return rc;
   }
 
@@ -59,45 +70,54 @@ export class UserService {
     }
   }
 
-  get_collection(){
+  get_collection(addr:string,network:string){
     //Retourne l'ensemble des collections disponibles
     return new Promise((resolve, reject) => {
-      this.network.get_collections(this.addr, this.network.network, false).subscribe((cols: any) => {
+      this.network.get_collections(addr, network, false).subscribe((cols: any) => {
         this.collections = cols;
         resolve(cols);
       },(err:any)=>{reject(err);});
     });
   }
 
-
-  init(addr:string,route=""){
+  setProfil(access_code:string | null){
     return new Promise((resolve, reject) => {
-      if(addr.length>0 && addr!="undefined"){
-        if(addr.indexOf("@")>-1){
-          this.email=addr;
-        }else{
-          this.network.get_account(addr,this.network.network).subscribe((r:any)=>{
-            this.balance=r.amount;
-            this.key={
-              balance: r.balance,
-              encrypt: "",
-              explorer: "",
-              name: r.name,
-              privatekey: r.private_key,
-              address: r.address,
-              qrcode: "",
-              unity: r.unity
-            }
-            this.addr=r.address;
-            this.get_collection().then(()=>{
-              this.httpClient.get(this.network.server_nfluent+"/api/perms/"+this.addr+"/?route="+route).subscribe((p:any)=>{this.profil = p;},(err)=>{$$("!probleme de récupération des permissions");reject(err);});
-              this.addr_change.next(r.address);
-              resolve(r.address);
-            });
-          })
-        }
+      if(!access_code){
+        reject();
+      } else {
+        this.httpClient.get<UserProfil>(this.network.server_nfluent + "/api/login/" + access_code + "/").subscribe((p: UserProfil) => {
+          this.profil = p;
+          this.profil_change.next(p);
+          resolve(p);
+        }, (err) => {
+          $$("!probleme de récupération des permissions");
+          reject(err);
+        });
       }
     });
+  }
+
+  init(addr:string,network:string){
+    return new Promise((resolve, reject) => {
+      this.network.get_account(addr,network).subscribe((r:any)=>{
+        this.balance=r.amount;
+        this.key={
+          balance: r.balance,
+          encrypt: "",
+          explorer: "",
+          name: r.name,
+          privatekey: r.private_key,
+          address: r.address,
+          qrcode: "",
+          unity: r.unity
+        }
+        this.addr=r.address;
+        this.get_collection(this.addr,network).then(()=>{
+          this.addr_change.next(r.address);
+          resolve(r.address);
+        });
+      })
+    })
   }
 
 
@@ -118,9 +138,14 @@ export class UserService {
 
   logout() {
     this.addr="";
+    this.profil={
+      alias: "", email: "", perms: [], routes: [],access_code:""
+    }
+    localStorage.removeItem("access_code");
   }
 
   hasPerm(perm: string) {
+    if(this.profil.perms.indexOf("admin"))return true;
     return this.profil.perms.indexOf(perm.toLowerCase())>-1;
   }
 
@@ -147,11 +172,6 @@ export class UserService {
   }
 
 
-  disconnect(){
-    // this.solWalletS.disconnect().then(()=>{
-    //   this.logout();
-    // });
-  }
 
   signMessage(){
     // this.solWalletS.signMessage("HELLO WORLD!").then( (signature:any) => {
@@ -192,5 +212,19 @@ export class UserService {
     return this.network.getBalance(this.addr).subscribe((balance:any)=>{
       this.balance=balance
     });
+  }
+
+  delete_account() {
+    return new Promise((resolve, reject) => {
+      this.network.delete_account(this.profil.access_code).subscribe(()=>{
+        this.logout();
+        resolve(true);
+      })
+    });
+
+  }
+
+  change_access_code(new_password:string){
+    this.network.update_access_code(this.profil.access_code,new_password).subscribe(()=>{})
   }
 }

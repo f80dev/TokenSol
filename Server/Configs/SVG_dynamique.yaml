@@ -1,0 +1,119 @@
+attributes: {}
+data:
+  creators: :100%
+  description: ""
+  files: ""
+  operation: ""
+  properties: ""
+  sequence:
+    - Texte ici
+  symbol: token__idx__
+  tags: ""
+  title: ""
+height: 800
+help: /faqs?open=svg_dynamique
+layers:
+  - elements:
+      - image: https://bafkreiaroo26uw6yhfb5bh7zj4ystkr64k3i4zyvf3epfmdodebltrwlve.ipfs.nftstorage.link
+        name: plan_de_travail_(1)
+      - image: https://bafkreibot7aqpseyvq44cboxhxdbvqfg3y424eadrgrush4ilb3n27ueki.ipfs.nftstorage.link
+        name: plan_de_travail_(21)
+      - image: https://bafkreigukhehrv23wumpmeqwabpfhtn5fzytvorqo77elxx5oc2pkkqnhq.ipfs.nftstorage.link
+        name: plan_de_travail_(20)
+      - image: https://bafkreiduyt5athc46uwtb6k3am7ynhesftacjwydefp5whpzbrwuhnvgtu.ipfs.nftstorage.link
+        name: plan_de_travail_(22)
+    height: 800
+    indexed: true
+    name: fond
+    params: {}
+    position: 0
+    scale:
+      x: 1
+      y: 1
+    text: ""
+    translation:
+      x: 0
+      y: 0
+    unique: false
+    width: 800
+  - elements:
+      - image: https://bafybeif3jpqitqpld6gqc44rzi5qm3bqljjxve3dt5zdnkxslimwrojlwu.ipfs.nftstorage.link
+        name: graphisme((9)
+      - image: https://bafybeiexvz3bgz5ggftmbz7kvfen2i5bxjvd5rz6ecdunnkbfiax2b3k6i.ipfs.nftstorage.link
+        name: graphisme((8)
+      - image: https://bafkreiadtiafq3cmjwpundihd3kxc7xpil6na6mvackapt2mzgm6w43hty.ipfs.nftstorage.link
+        name: graphisme((10)
+      - image: https://bafybeihyv6sycdkc4uo2ahhxxfwsxp3mt7u2qedcpo3s3uewphjoqwvcui.ipfs.nftstorage.link
+        name: graphisme((11)
+    height: 800
+    indexed: true
+    name: motif
+    params: {}
+    position: 1
+    scale:
+      x: 1
+      y: 1
+    text: ""
+    translation:
+      x: 0
+      y: 0
+    unique: false
+    width: 800
+  - elements:
+      - image: https://bafkreigp5gcul7gbnyj5k3y36kmopn5rqfd76ur46yhflgxw5r2a5msu74.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreihbkzl3ioux7jwjfgxbzkgquo7g52sxvlanaydorzv4eaa3fb7uwy.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreibwj5nii5q62aw7zo7idtlrrfcpkryfj4dpy37r7wej7pjl2ydjte.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreifp36rxbn73ocgn6vbqzxi2rxpn2jmb4j47tayjyiooavyunxwjrm.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreidpdgliwv5tarkzl5kmg2rbrzawnfmrq6actain2iel62rdvlq72a.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreietiv7e2ea7kbb66ccusmrpyzuiqvuvamqx6coani6uus6szb5hry.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreihbuoo4ggrupls275k727a2rc2v3smip7vqpyqn5qfapakorlxyaq.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreiar4kbrrvlyxcyjw5qxyjdqawfdo6gbxkd75i3qizg4j2rbseipiq.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreifx4rn3gdnrnrjo6sndhjos4zokhw5wdnmpzhpjxa2riyplkqmbi4.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreicxmdcajszrhftxsvbkht7pyqad6mf3z22bseey55oc2eo3fd2rzu.ipfs.nftstorage.link
+        type: image/svg
+      - image: https://bafkreihwfkw62zuymfavdyimpmye4rprutjc2wqhvafbx6gokr6qli4ism.ipfs.nftstorage.link
+        type: image/svg
+    height: 800
+    indexed: true
+    name: texte
+    params: {}
+    position: 3
+    scale:
+      x: 1
+      y: 1
+    text: ""
+    translation:
+      x: 0
+      y: 0
+    unique: false
+    width: 800
+limit: 5
+location: LeChien.yaml
+max_items: 11
+message: Exemple d'utilisation d'un fichier SVG dynamique
+label: SVG dynamique
+platform:
+  label: ""
+  value: ""
+quality: 98
+seed: 0
+text:
+  color: "#FFFFFF"
+  font:
+    file: corbel.ttf
+    name: Corbel
+  fontsize: 12
+  position_text:
+    x: 10
+    y: 10
+  text_to_add: Texte ici
+width: 800

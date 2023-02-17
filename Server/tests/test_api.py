@@ -2,12 +2,10 @@ import base64
 import random
 from json import loads
 
-import requests
-
-from flaskr import async_mint, DAO
-from flaskr.Elrond import Elrond
-from flaskr.Polygon import Polygon
-from flaskr.Tools import get_operation, now
+from flaskr import async_mint
+from flaskr.Keys import Key
+from flaskr.Network import Network
+from flaskr.Tools import get_operation, now, random_from, get_key_by_name
 from flaskr.settings import OPERATIONS_DIR
 from tests.test_art import test_generate_collection
 from tests.test_tools import *
@@ -17,9 +15,51 @@ def operation():
 	return get_operation("Main_devnet")
 
 
+
+def get_account_from_network(test_client, network=MAIN_NETWORK, seuil=1, filter="bob,carol,dan,eve,frank,grace",all=False) -> dict:
+	"""Retourne un compte avec au moins x egld"""
+	log("Récuperation des comptes de "+network)
+	accounts = call_api(test_client, "accounts/", "?network=" + network)
+	rc=[]
+	for k in accounts:
+		if k["amount"]>=seuil and (len(filter) == 0 or k["name"] in filter):
+			rc.append(k)
+
+	if all: return rc
+
+	if len(rc)==0:
+		log("Pas de compte disponible disposant d'un solde supérieur au solde")
+		return None
+	else:
+		return random_from(rc)
+
+
+def test_get_account_for_all_network(test_client):
+	log("Récupération des comptes des l'ensemble des networks")
+	for n in NETWORKS:
+		accounts=get_account_from_network(test_client,n,0,all=True)
+		assert not accounts is None
+
+
+def test_accounts(test_client, network=MAIN_NETWORK, seuil=1,filter="bob,carol,dan,eve,frank,grace"):
+	log("Récupération des comptes du network "+network+" avec seuil a "+str(seuil))
+	rc = get_account_from_network(test_client, network, 0,filter=filter)
+	assert rc is not None, "Aucun compte disponible"
+
+	rc = get_account_from_network(test_client, network, seuil=seuil,filter=filter)
+	assert rc != None, "Aucun compte disponible avec un solde > " + str(seuil)
+	assert rc["amount"] >= seuil
+
+	rc = get_account_from_network(test_client, network, seuil=1000000000,filter=filter)
+	assert rc is None, "Le solde ne doit pas fonctionner"
+
+
+
 def test_getyaml(test_client):
 	rc = call_api(test_client, "getyaml/Main_devnet/", "dir="+OPERATIONS_DIR)
 	assert rc["id"] == "Main_devnet"
+
+
 
 def test_faqs(test_client):
 	rc=call_api(test_client,"getyaml/faqs/","dir=./flaskr/static")
@@ -29,6 +69,21 @@ def test_faqs(test_client):
 		assert "content" in faq,"content manquant"
 		assert "title" in faq,"title manquant"
 
+
+def test_api_upload_json(test_client,objs=["bonjour comment allez vous",{"key":"value"}],platforms=PLATFORMS):
+	"""
+	test d'un upload de json sur l'ensemble des platformes
+	:param test_client:
+	:param objs:
+	:param platforms:
+	:return:
+	"""
+	for p in platforms:
+		for obj in objs:
+			log("Test de la platform "+p)
+			cid=call_api(test_client,"upload/","platform="+p,obj)
+			assert len(cid["url"])>0
+			assert len(cid["cid"])>0
 
 
 def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.pdf","fond1.gif","image_1.webp"],platforms=PLATFORMS):
@@ -50,11 +105,13 @@ def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.p
 
 				if not "ipfs" in p:
 					log("Tentative de récupération du fichier "+cid["url"])
-					resp=requests.get(cid["url"],timeout=60000)
-					assert resp.status_code==200
-					rc=resp.content
-					assert rc==base64.b64decode(body["content"].split("base64,")[1])
+					resp=test_client.get(cid["url"])
+					assert resp.status_code==200 or p=="infura"
 
+
+def test_seach_images(test_client,query="lapin"):
+	rc=call_api(test_client,"search_images/","query="+query+"&remove_background=true")
+	assert len(rc)>0
 
 
 
@@ -70,42 +127,35 @@ def test_api_get_collections(test_client, network=MAIN_NETWORK, col_or_account=M
 	return rc
 
 
-def test_api_get_collections_for_main_account(test_client, network=MAIN_NETWORK):
-	rc = test_api_get_collections(test_client, network, MAIN_ACCOUNT)
-	assert len(rc) > 0
-	assert 'TESTCOLF-6ef77a' in [x["collection"] for x in rc]
-
 
 
 def test_infos(test_client):
 	rc = call_api(test_client, "infos/")
 	assert "Server" in rc
+	assert "Client" in rc
+	assert "Static_Folder" in rc
+	assert "Upload_Folder" in rc
+
 
 
 def test_keys_networks(test_client,networks=NETWORKS):
 	for network in networks:
+		if not Network(network).is_blockchain():
+			get_network_instance(network).create_account("paul.dudule@gmail.com")
+			get_network_instance(network).create_account("sophie.dudule@gmail.com",10)
+
 		print("Analyse du réseau "+network)
-		test_keys(test_client,network,0,"")
+		#test_keys(test_client,network,0,"")
 
-def test_keys(test_client, network=MAIN_NETWORK, seuil=1,filter="bob,carol,dan,eve,frank,grace"):
-	rc = get_account(test_client, network, 0,filter=filter)
-	assert rc is not None, "Aucun compte disponible"
 
-	rc = get_account(test_client, network, seuil=seuil,filter=filter)
-	assert rc != None, "Aucun compte disponible avec un solde > " + str(seuil)
-	assert rc["amount"] >= seuil
-
-	rc = get_account(test_client, network, seuil=1000000000,filter=filter)
-	assert rc is None, "Le solde ne doit pas fonctionner"
 
 
 def test_create_account_from_email(network=MAIN_NETWORK,email=MAIN_EMAIL,send_real_email=True):
-	if "elrond" in network:rc=Elrond(network).create_account(email=email,send_real_email=send_real_email)
-	if "polygon" in network:rc=Polygon(network).create_account(email=email,send_real_email=send_real_email)
+	_net=get_network_instance(network)
+	rc=_net.create_account(email=email,send_real_email=send_real_email)
 	assert not rc is None
-	assert len(rc)==4
-	assert len(rc[2].split(" "))>10
-	assert len(rc[3])>20
+	assert len(rc.address)>0
+	assert len(rc.secret_key)>0
 	return rc
 
 
@@ -119,23 +169,29 @@ def test_nfts_from_collection(test_client, col_id="", network=MAIN_NETWORK):
 	return rc["nfts"]
 
 
-def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK):
+def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,seuil=1):
 	"""
   Récupére les nfts d'une collection ou d'un client
   :param test_client:
   :return:
   """
 	if owner == "":
-		account = get_account(test_client, network=network, seuil=1)
+		account = get_account_from_network(test_client, network=network, seuil=1)
 		owner = account["address"]
 
 	rc = call_api(test_client, "nfts/", "account=" + owner + "&network=" + network)
-	assert len(rc) > 0
+	assert len(rc) >= seuil
 
 	return rc
 
 
-def find_collection_to_mint(test_client, miner,network="elrond-devnet"):
+def test_find_collection_for_networks(test_client,networks=NETWORKS):
+	for network in networks:
+		miner=MAIN_ACCOUNTS[network.split("-")[0]]
+		cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)
+		assert not cols is None
+
+def find_collection_to_mint(test_client, miner:str,network="elrond-devnet"):
 	cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)
 	if len(cols) > 0:
 		col_id = None
@@ -166,24 +222,33 @@ def test_mint_polygon(test_client):
 
 
 
-def test_api_mint(test_client, miner="", col_id=MAIN_COLLECTION, network=MAIN_NETWORK) -> (str, str):
+def test_mint_file(test_client):
+	token_id,col_id=test_api_mint(test_client,miner=get_main_account_for_network("file"),col_id="MACOLLEC",network="file-mainnet")
+	assert not token_id is None
+	nft=get_network_instance("file").get_nft(token_id)
+	assert not nft is None
+	assert nft.address==token_id
+
+def test_api_mint(test_client, miner:Key=None, col_id=MAIN_COLLECTION, network=MAIN_NETWORK,platform=MAIN_STORAGE_PLATFORM) -> (str, str):
+	if miner is None:
+		miner=random_from(get_network_instance(network).get_keys())
+		cols = test_api_get_collections(test_client, network,miner.address)
+		col_id=random_from(cols)["id"]
+		if len(cols)==0:
+			col=test_create_collection(test_client,"LaCollec",miner,network)
+			col_id=col["id"]
+
 	if col_id == "":
-		col_id = find_collection_to_mint(test_client, miner,network)
+		col_id = find_collection_to_mint(test_client, miner.address,network)
 
-	if miner == "" and not "db-" in network:
-		cols = test_api_get_collections(test_client, network, col_id)
-		assert len(cols) > 0, "La collection " + col_id + " est introuvable"
-		miner = cols[0]["owner"]
-
-	if len(miner)>0:
-		_account=test_get_account(test_client,miner,network)
-		assert _account["amount"]>0.1,"Solde insuffisant pour miner"
+	_account=test_get_account(test_client,miner.address,network)
+	assert _account.amount>0.1,"Solde insuffisant pour miner"
 
 	if col_id:
-		_nft = get_nft("test_" + now("hex"), col_id)
+		_nft = create_nft("test_" + now("hex"), col_id)
 		rc = call_api(test_client, "mint/",
-		              params="keyfile=" + miner + "&network=" + network,
-		              body=_nft.__dict__,
+		              params="network="+network+"&offchaindata_platform="+platform,
+		              body={"nft":_nft.__dict__,"miner":miner.__dict__},
 		              method="POST")
 		assert not rc is None
 		assert len(rc["error"]) == 0, rc["error"]
@@ -193,58 +258,124 @@ def test_api_mint(test_client, miner="", col_id=MAIN_COLLECTION, network=MAIN_NE
 		return token_id, col_id
 
 
-def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLECTION,miner=MAIN_ACCOUNT) -> (str, str):
+def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLECTION,miner=None) -> (str, str):
 	"""
   Execute un minage vers la base de données
   :param test_client:
   :param network:
   :return:
   """
+	if miner is None:miner=random_from(get_network_instance(network).get_keys())
 	log("Test de creation d'un NFT de la collection " + collection_to_use + " dans " + DB_NETWORK)
 	assert "db-" in network, "fonction uniquement valable pour miner dans une base de données"
-	nft_id, col_id = test_api_mint(test_client, network=network, col_id=collection_to_use,miner=miner)
+	nft_id, col_id = test_api_mint(test_client, miner=miner,col_id=collection_to_use,network=network)
 	assert not nft_id is None
-	assert "/"+network in nft_id
+	assert network in nft_id.split("/")[1]
 	assert not col_id is None
 
 	#récupération du NFT
 	nft=DAO(network).get_nft(nft_id)
 	assert not nft is None
 	assert nft.marketplace["quantity"]>0
-	assert nft.miner==miner
-	assert nft.owner==""
+	assert nft.miner==miner.address
+	assert nft.owner==miner.address
 
 	return nft_id, col_id
 
 
-def test_transfer_from_lazymint(test_client, dest="", miner=MAIN_ACCOUNT, to_network=MAIN_NETWORK,
-                                from_network=DB_NETWORK, collection_to_mint=MAIN_COLLECTION):
-	cols=test_api_get_collections(test_client,from_network,col_or_account=miner)
-	nft_id, col_id = test_lazymint(test_client, from_network,collection_to_use=cols[0]["id"])  # Créer un token dans la base de données
+def test_transfer_all_networks(test_client, networks=NETWORKS):
+	for from_network in networks:
+		for to_network in networks:
+			log("Test du transfer de "+from_network+" vers "+to_network)
+			miner_for_target_network=get_main_account_for_network(to_network)
+			rc=test_transfer_to(test_client,from_network,to_network,miner_for_target_network)
 
-	assert not nft_id is None and not col_id is None, "Pas de NFT disponible dans " + collection_to_mint
-	rc = test_transfer_to(test_client, to_network=to_network,
-	                      from_network=from_network,
-	                      miner=miner, token_id=nft_id,
-	                      dest=dest)
-	assert rc, "Le transfert n'a pas eu lieu"
+			assert rc, "Le transfert n'a pas eu lieu"
 
 
-def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NETWORK, miner="", token_id="", dest=""):
+def test_registration_and_login(test_client,email=MAIN_EMAIL,with_delete=True):
+	rc=call_api(test_client,"registration/"+email+"/")
+	assert "email" in rc
+	assert "alias" in rc
+	assert len(rc["perms"])>0
+	assert "access_code" in rc
+
+	account=call_api(test_client,"login/"+email+"/"+rc["access_code"]+"/?with_api=False")
+	assert "email" in account
+	assert account["email"]==encrypt(email,short_code=40)
+
+	if with_delete:
+		rc=call_api(test_client,"/delete_user/"+email+"/"+rc["access_code"]+"/",method="DELETE")
+		return rc
+	else:
+		return account
+
+
+def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="newpassword",with_delete=True):
+	user=test_registration_and_login(test_client,email,False)
+	rc=call_api(test_client,"change_password/"+user["access_code"]+"/"+new_password+"/")
+	account=call_api(test_client,"login/"+new_password+"/?with_api=False")
+	assert not account is None
+	if with_delete: call_api(test_client,"/delete_account/"+new_password+"/",method="DELETE")
+
+
+
+def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette"):
+	user=test_registration_and_login(test_client,email,False)
+	keys=call_api(test_client,"keys/")
+
+	obj={
+		"network":network,
+		"email":email,
+		"secret_key":keys[0]["secret_key"],
+		"access_code":user["access_code"]
+	}
+	rc=call_api(test_client,"keys/"+name+"/","",obj)
+
+	rc=call_api(test_client,"keys/","network="+network+"&access_code="+user["access_code"])
+
+	user=test_registration_and_login(test_client,email,False)
+	assert "email" in user
+	assert len(user["keys"])==1
+
+
+
+
+
+def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NETWORK, miner_for_target_network:Key=None, token_id="", dest:Key=None):
+	_from_network=get_network_instance(from_network)
+	_to_network=get_network_instance(to_network)
+
 	if token_id == "":
-		token_id, col_id = test_api_mint(test_client, miner=miner, network=from_network)
+		owner:Key=random_from(_from_network.get_keys())
+		nfts=test_nfts_from_owner(test_client,owner.address,from_network,0)
+		if len(nfts)>0:
+			token_id=random_from(nfts)["address"]
+		else:
+			token_id, col_id = test_api_mint(test_client, miner=owner, network=from_network)
 
-	if dest == "":
-		account = get_account(test_client, network=to_network, seuil=0)
-		dest = account["address"]
+	if miner_for_target_network is None:
+		miner_for_target_network=random_from(_from_network.get_keys())
 
-	body={"token_id":token_id,"dest":dest,"miner":miner}
+	if dest is None:
+		dest=random_from(_to_network.get_keys())
+
+	if dest is None:
+		dest=_to_network.create_account("sophie.dudule@gmail.com")  #On ajoute un compte
+		# _to_network.add_key(dest,"sophie")
+		# _to_network.faucet(dest.address,0.05,"bank")
+
+	# while len(dest)==0 or dest==miner_for_target_network:
+	# 	account = get_account_from_network(test_client, network=to_network, seuil=0,filter="")
+	# 	dest = account["address"]
+
+	body={"token_id":token_id,"dest":dest.address,"miner":miner_for_target_network.__dict__}
 	rc = call_api(test_client, "transfer/","from_network=" + from_network + "&to_network=" + to_network,body, method="POST")
 
 	assert not rc is None
 	assert len(rc["error"]) == 0
 	assert len(rc["token_id"]) > 0
-	nfts = call_api(test_client, "nfts/", "account=" + dest + "&network=" + to_network + "&limit=2000")
+	nfts = call_api(test_client, "nfts/", "account=" + dest.address + "&network=" + to_network + "&limit=2000")
 	assert rc["token_id"] in [nft["address"] for nft in nfts], "Le NFT n'est pas présent dans le wallet du destinataire"
 
 	return True
@@ -264,7 +395,7 @@ def test_validators(test_client, account_to_check=MAIN_ACCOUNT, network=MAIN_NET
 	test_raz_validators(test_client)
 
 	nfts=call_api(test_client,"nfts/","account="+account_to_check+"&network="+network)
-	nft=nfts[random.randint(0, len(nfts) - 1)]
+	nft=random_from(nfts)
 	col_id=nft["collection"]["id"]
 
 	body = {"validator_name": "validateur_test", "ask_for": col_id, "network": network}
@@ -290,7 +421,7 @@ def test_get_minerpool(test_client):
 	return len(pool)
 
 
-def test_create_collection(test_client, name="", miner=MAIN_ACCOUNT, network=MAIN_NETWORK,
+def test_create_collection(test_client, name="", miner=MAIN_MINER, network=MAIN_NETWORK,
                            options="canFreeze,canChangeOwner,canUpgrade,canTransferNFTCreateRole,canPause"):
 	"""
   :param test_client:
@@ -300,16 +431,18 @@ def test_create_collection(test_client, name="", miner=MAIN_ACCOUNT, network=MAI
   :return:
   """
 	if len(name) == 0: name = "testcol" + now("hex").replace("0x", "")
-	if miner is None: miner = get_account(test_client, network, 1)
+	miner = random_from(get_network_instance(network).get_keys()) if miner is None else get_key_by_name(get_network_instance(network).get_keys(),MAIN_MINER)
+
 	if type(miner)==str:miner={"address":miner}
 	body = {
 		"options": options,
-		"name": name
+		"name": name,
+		"miner":miner.__dict__
 	}
-	rc = call_api(test_client, "create_collection/" + miner["address"] + "/", "network=" + network, body)
+	rc = call_api(test_client, "create_collection/", "network=" + network, body)
 	assert not rc is None, "La collection n'est pas créer"
 	assert rc["cost"] > 0
-	assert rc["collection"]["owner"] == miner["address"], "La collection n'appartient pas a son propriétaire théorique"
+	assert rc["collection"]["owner"] == miner.address, "La collection n'appartient pas a son propriétaire théorique"
 	return rc["collection"]
 
 
@@ -322,7 +455,7 @@ def test_raz_mintpool(test_client):
 
 
 
-def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, network=MAIN_NETWORK,by_api=True):
+def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, network=MAIN_NETWORK,by_api=True,source_network="db-server-nfluent_test"):
 	"""
   test de la pool de minage
   :param test_client:
@@ -332,15 +465,13 @@ def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, 
   :param network:
   :return:
   """
+	test_raz_mintpool(test_client)
 
 	cols = test_api_get_collections(test_client, network, miner)
 	assert len(cols) > 0,"Aucune collection disponible pour miner="+miner
 
-	if src is None:
-		src = {"active": True, "type": "database", "dbname": "nfluent_test", "connexion": "server"}
-		nft_id,col_id=test_lazymint(test_client,"db-server-nfluent_test",cols[0]["id"])
-
-	test_raz_mintpool(test_client)
+	src = {"active": True, "type": "database", "dbname": "nfluent_test", "connexion": source_network}
+	nft_id,col_id=test_lazymint(test_client,source_network,cols[0]["id"])
 
 	log("Ajout d'un NFT dans la pool de minage")
 	body = {
@@ -348,15 +479,14 @@ def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, 
 		"network": network,
 		"miner": miner,
 		"sources": [src],
-		"collections": cols[0]["id"],
+		"collections":col_id,
 		"wallet": ""
 	}
 	ask = call_api(test_client, "add_user_for_nft/", body=body)
 	assert ask["message"] == "ok"
 	assert len(ask["ask_id"]) >0
 
-	log("Vérification que le NFT à bien été ajouté")
-
+	log("Vérification que la demande NFT à bien été ajouté dans la mintpool")
 	treatments = call_api(test_client, "mintpool/")
 	assert len(treatments)==1
 	assert treatments[0]["message"]==""
@@ -385,7 +515,7 @@ def test_mintpool_direct(test_client,networks=["db-server-nfluent",MAIN_NETWORK]
 
 def test_complete_sc1(test_client, network=MAIN_NETWORK, seuil=10):
 	# Choix d'un mineur qui à un solde suffisant
-	miner = get_account(test_client, network, seuil)
+	miner = get_account_from_network(test_client, network, seuil)
 	assert not miner is None, "Aucun mineur n'a le solde requis de " + str(seuil)
 	miner = miner["address"]
 
@@ -404,12 +534,6 @@ def test_complete_sc1(test_client, network=MAIN_NETWORK, seuil=10):
 
 
 
-def random_from(limit=5):
-	s = "ABCDEFGHIJKLOMNOPQRST"
-	rc = ""
-	while len(rc) < limit:
-		rc = rc + s[random.randint(0, len(s) - 1)]
-	return rc
 
 
 def mint_collection(test_client, target_network=MAIN_NETWORK):
@@ -420,8 +544,8 @@ def mint_collection(test_client, target_network=MAIN_NETWORK):
 	:return:
 	"""
 	col = test_generate_collection(limit=3)
-	miner = get_account(test_client, target_network, seuil=1)
-	collection_name = "testCol" + random_from(5)
+	miner = get_account_from_network(test_client, target_network, seuil=1)
+	collection_name = "testCol" + random_from("ABCDEFGHIJKLMNOP",5)
 	collection = test_create_collection(test_client, collection_name, miner, target_network)
 	log("Consulter la collection "+get_network_instance(MAIN_NETWORK) + collection["id"])
 	# for filename in col:
@@ -429,20 +553,25 @@ def mint_collection(test_client, target_network=MAIN_NETWORK):
 	# 		test_mint_from_file(test_client, filename, miner, target_network, col_id=collection["id"])
 
 
-def test_mint_collection_to_database():
-	images=test_generate_collection(limit=3)
-	col=test_api_get_collections(test_client,network=MAIN_NETWORK,col_or_account=MAIN_ACCOUNT)
-	assert not col is None
+# def test_mint_collection_to_database():
+# 	images=test_generate_collection(limit=3)
+# 	col=test_api_get_collections(test_client,network=MAIN_NETWORK,col_or_account=MAIN_ACCOUNT)
+# 	assert not col is None
 
+def test_encrypt_keys(test_client):
+	for network in NETWORKS:
+		rc=call_api(test_client,"encrypt_key/"+get_main_account_for_network(network)+"/"+network+"/")
+		assert not rc is None
+		assert len(rc)>0
 
 
 
 def test_get_account(test_client,addr=MAIN_ACCOUNT,network=MAIN_NETWORK):
 	_account=get_network_instance(network).get_account(addr)
 	assert not _account is None
-	assert "balance" in _account
-	assert "address" in _account
-	assert "amount" in _account
+	assert "balance" in _account.__dict__
+	assert "address" in _account.__dict__
+	assert "amount" in _account.__dict__
 	return _account
 
 

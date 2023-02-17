@@ -6,6 +6,12 @@
         <td>
           Créer une nouvelle opération<br>
           <a href="./assets/new_operation.yaml" download>Télécharger le modèle</a>
+          <br>
+          <app-input [value]="ope_model" color="white"
+                     style="margin: 5px;max-width: 200px;" label="Créer depuis un modèle"
+                     [options]="operation.opes" value_type="list"
+                     (valueChange)="update_ope($event)"></app-input>
+
 
         </td>
         <td>
@@ -32,9 +38,9 @@
         </td>
 
         <td>
-          <button type="button" mat-raised-button mat-button (click)="delete_ope()">
-            Supprimer
-          </button>
+<!--          <button type="button" mat-raised-button mat-button (click)="delete_ope()">-->
+<!--            Supprimer-->
+<!--          </button>-->
           <button type="button" mat-raised-button mat-button (click)="download_ope()">
             Télécharger
           </button>
@@ -46,6 +52,12 @@
       </tr></table>
 
   </mat-expansion-panel>
+
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Edition</mat-expansion-panel-header>
+  </mat-expansion-panel>
+
+
 
   <div *ngIf="operation.sel_ope">
     <div class="mat-headline-4" style="margin: 0px;">
@@ -87,17 +99,10 @@
             Les NFTs disponibles pour cette opérations sont extraits <br><br>
             <ul>
               <li *ngFor="let src of sources">
-                  <span *ngIf="src.type=='file'">
-                    <span *ngIf="src.connexion!.length>0" class="color-accent">du fichier {{src.connexion}}</span>
-                    <span *ngIf="src.connexion==''">du fichier d'opération</span>
-                  </span>
-
-                <span *ngIf="src.type=='network'">
                     <span class="color-accent">{{src.connexion}}</span>
-                    <span *ngIf="src.owner"> et possédés par <{{src.owner | alias}}</span>
-                    <span *ngIf="src.collections.length>0"> des collections {{src.collections.join(' - ')}}</span>
-                  </span>
-                <span *ngIf="src.type=='database'"> contenu dans la base <span class="color-accent">{{src.connexion}} / {{src.dbname}}</span></span>
+                    <span *ngIf="src.filter.owner"> possédés par <{{src.filter.owner | alias}}</span>
+                    <span *ngIf="src.filter.collections.length>0"> des collections {{src.filter.collections.join(' - ')}}</span>
+
                 ({{src.ntokens}})
               </li>
             </ul>
@@ -121,7 +126,7 @@
 
 
     <mat-expansion-panel *ngIf="operation.sel_ope.event">
-      <mat-expansion-panel-header class="color-primary">Evénement associé & NFT live</mat-expansion-panel-header>
+      <mat-expansion-panel-header>Evénement associé & NFT live</mat-expansion-panel-header>
       <table>
         <tr>
           <th>Evénement</th>
@@ -203,7 +208,7 @@
 
     <!-- Section lié au dispenser / a la distribution -->
     <mat-expansion-panel *ngIf="operation.sel_ope.dispenser?.visible" [expanded]="false">
-      <mat-expansion-panel-header class="color-primary">Distribution par {{user.addr | alias}}</mat-expansion-panel-header>
+      <mat-expansion-panel-header>Distribution par {{user.addr | alias}}</mat-expansion-panel-header>
       <table>
         <tr>
           <th>Propriétés</th>
@@ -254,7 +259,7 @@
 
 
     <mat-expansion-panel *ngIf="operation.sel_ope && operation.sel_ope.airdrop && operation.sel_ope.airdrop.visible"  [expanded]="false">
-      <mat-expansion-panel-header class="color-primary">Airdrop</mat-expansion-panel-header>
+      <mat-expansion-panel-header>Airdrop</mat-expansion-panel-header>
       <table>
         <tr>
           <th>Collections impliquées</th>
@@ -297,7 +302,7 @@
 
 
     <mat-expansion-panel *ngIf="operation.sel_ope.candymachine.visible && nfts.length>0"  [expanded]="false">
-      <mat-expansion-panel-header class="color-primary">Distributeur automatique</mat-expansion-panel-header>
+      <mat-expansion-panel-header>Distributeur automatique</mat-expansion-panel-header>
       <table>
         <tr>
           <th>Collections impliquées</th>
@@ -397,7 +402,7 @@
 
 
     <mat-expansion-panel *ngIf="nfts.length>0 && (operation.sel_ope.validate?.visible || url_ope!.length>0)">
-      <mat-expansion-panel-header class="color-primary">
+      <mat-expansion-panel-header>
         Validation
       </mat-expansion-panel-header>
 
@@ -467,7 +472,7 @@
 
 
     <mat-expansion-panel *ngIf="operation.sel_ope!.store && (operation.sel_ope!.store?.visible || url_ope.length>0)">
-      <mat-expansion-panel-header class="color-primary">
+      <mat-expansion-panel-header>
         Store
       </mat-expansion-panel-header>
       <table >

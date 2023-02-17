@@ -1,7 +1,30 @@
 <div class="mainform">
-  <h3>{{title}}</h3>
-  <app-authent [showAccesCode]="true" style="width: 300px;display: inline-block;"
-               [showNfluentWalletConnect]="true"
-               [autoconnect_for_localhost]="true"
-               (authent)="authent($event)"></app-authent>
+  <div class="titleform">{{title}}</div>
+  <div *ngIf="!show_registration">
+    <p>Déjà inscrit ?</p>
+    <app-input label="Votre code d'accès"
+               help="Ce code vous as été envoyé sur votre mail à l'inscription"
+               style="font-size: xx-large;width:60%;text-align: center;"
+               maxlength="6" label_button="Se connecter"
+               [value]="access_code" (valueChange)="access_code=$event"
+               (validate)="authent($event)"></app-input>
+
+
+    <p style="margin-top: 50px;">Pas encore inscrit ?</p>
+
+    <button type="button" mat-button mat-raised-button color="primary"
+            (click)="show_registration=true">
+      S'inscrire
+    </button>
+
+  </div>
+
+  <app-authent [showEmail]="true" style="max-width: 700px;width: 80%;display: inline-block;"
+               intro_message="Indiquer votre mail pour recevoir votre code d'accès"
+               *ngIf="show_registration"
+               [showGoogle]="true" [showCancel]="true"
+               (cancel)="show_registration=false"
+               (authent)="registration($event)"></app-authent>
+
+
 </div>

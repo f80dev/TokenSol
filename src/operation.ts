@@ -330,6 +330,11 @@ export interface Operation {
     }
   } | null
 
+  nfts : [{
+    storage: string
+    data: string
+  }]
+
 }
 
 export function find_collection(ope:Operation,name:string) : Collection | null {
@@ -340,10 +345,10 @@ export function find_collection(ope:Operation,name:string) : Collection | null {
 }
 
 //Permet d'extraire des informations d'une operation de facçon simple (moins de code)
-export function get_in(ope:Operation | null,fields:string,_default:any=null) : any {
-  if(!ope)return _default;
+export function get_in(obj:any | null,fields:string,_default:any=null) : any {
+  if(!obj)return _default;
 
-  let rc={...ope};
+  let rc={...obj};
   for(let field of fields.split(".")){
     if(rc.hasOwnProperty(field)){
       // @ts-ignore

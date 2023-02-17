@@ -4,79 +4,66 @@
             [description]="claim"></app-splash>
 
 <mat-toolbar class="mat-body-2" color="primary" *ngIf="toolbar_visible=='true' && !showSplash">
+  <mat-icon (click)="drawer!.toggle()" *ngIf="device.isHandset$ | async">menu</mat-icon>
 
-  <mat-icon (click)="drawer!.toggle()" *ngIf="isHandset$ | async">menu</mat-icon>
-
-  <div *ngIf="!(isHandset$ | async)">
-      {{title}}<br>
-      <small>v{{version}}</small>
+  <div *ngIf="!(device.isHandset$ | async)" style="margin-left: 10px;">
+      {{network_service.config.title | async}}<br>
+      <small>v{{network_service.config.version | async}}</small>
   </div>
 
-  <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-headline-5">
+  <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-headline-6">
     <mat-spinner *ngIf="!network_service.waiting.startsWith('!')" style="display: inline-block;" color="warn" diameter="20"></mat-spinner>
     <mat-icon *ngIf="network_service.waiting.startsWith('!')">danger</mat-icon>
-    &nbsp;{{network_service.waiting}}
+    {{network_service.waiting}}
   </div>
 
   <span class="spacer"></span>
 
-  <div style="width: 90%;max-width:600px;display: flex;justify-content:flex-end;align-content: center;">
+  <div style="width: 60%;max-width:600px;display: flex;justify-content:flex-end;align-content: center;">
 
-    <app-input [value]="selected_operation" color="white"
-               [options]="operation.opes" value_type="list"
-               (valueChange)="refresh_ope($event)"></app-input>
-
-    <app-input [value]="sel_network"
+    <app-input [value]="sel_network" style="margin: 5px;"
                [options]="networks"
                value_type="list" color="white"
                (valueChange)="update_network($event)"></app-input>
 
-    <app-input value_type="list" color="white"
+    <app-input value_type="list" color="white" style="margin: 5px;"
                [options]="network_service.keys" value_field="address"
                [value]="sel_addr"
                (valueChange)="set_key($event)">
     </app-input>
 
-    <button mat-icon-button
-            *ngIf="!(isHandset$ | async)"
-            title="Copier l'adresse publique"
-            [cdkCopyToClipboard]="user.addr"
-            (click)="informe_copy()">
-      <mat-icon style="font-size: x-large;">content_copy</mat-icon>
-    </button>
-
-    <button mat-icon-button (click)="open_wallet()" *ngIf="!(isHandset$ | async)">
-      <mat-icon style="font-size: x-large;">local_atm</mat-icon>
-    </button>
+    <div style="display: inline-block;padding: 5px;">
+      <mat-icon *ngIf="!(device.isHandset$ | async)" [cdkCopyToClipboard]="user.addr"
+                title="Copier l'adresse publique"
+                (click)="informe_copy()" style="font-size: x-large;">content_copy</mat-icon>
+      <br>
+      <mat-icon  *ngIf="!(device.isHandset$ | async)" style="font-size: x-large;" (click)="open_wallet()">local_atm</mat-icon>
+    </div>
 
   </div>
-
 </mat-toolbar>
+
 
 <mat-sidenav-container class="sidenav-container" *ngIf="!showSplash">
   <mat-sidenav #drawer class="sidenav sidemenu"
-               [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
-               [mode]="(isHandset$ | async) ? 'over' : 'side'"
-               [opened]="(isHandset$ | async) === false && toolbar_visible=='true'">
+               [attr.role]="(device.isHandset$ | async) ? 'dialog' : 'navigation'"
+               [mode]="(device.isHandset$ | async) ? 'over' : 'side'"
+               [opened]="(device.isHandset$ | async) === false && toolbar_visible=='true'">
 
-    <mat-nav-list (mouseup)="close_menu()" >
-      <a mat-list-item [routerLink]="'creator'"><span class="item-menu">Générateur de NFTs</span></a>
-      <a mat-list-item [routerLink]="'collections'"><span class="item-menu">Gestion des collections</span></a>
-      <a mat-list-item [routerLink]="'keys'"><span class="item-menu">Gestion des clés</span></a>
-      <a mat-list-item [routerLink]="'mint'"><span class="item-menu">Miner</span></a>
-      <a mat-list-item [routerLink]="'build'"><span class="item-menu">Gestion des opérations</span></a>
-      <a mat-list-item [routerLink]="'analytics'"><span class="item-menu">Analyse</span></a>
-      <a mat-list-item [routerLink]="'manage'"><span class="item-menu">Gestion des NFTs</span></a>
-      <a mat-list-item [routerLink]="'pool'"><span class="item-menu">Pool de minage</span></a>
-      <a mat-list-item [routerLink]="'validators'"><span class="item-menu">Validateurs</span></a>
-      <a mat-list-item [routerLink]="'wallet'"><span class="item-menu">Mes NFTs</span></a>
-      <a mat-list-item [routerLink]="'rescue'" [queryParams]="{'ope':operation.sel_ope!.id,'network':network_service.network}"><span class="item-menu">Restauration de Wallet</span></a>
-      <a mat-list-item (click)="logout()" *ngIf="user.isConnected()"><span class="item-menu">Se déconnecter</span></a>
-      <a mat-list-item [routerLink]="'admin'"><span class="item-menu">Administrateur</span></a>
-      <a mat-list-item [routerLink]="'help'"><span class="item-menu">Aide</span></a>
-      <a mat-list-item [routerLink]="'faqs'"><span class="item-menu">Questions Fréquentes</span></a>
-      <a mat-list-item [routerLink]="'about'"><span class="item-menu">A propros</span></a>
-    </mat-nav-list>
+    <app-menu [items]="items" [status]="status"
+              [with_label]="full_menu"
+              (mouseup)="close_menu()"
+              (select)="menuSelect($event)"></app-menu>
+    <br><br>
+
+    <div style="width:100%;text-align: center;">
+      <mat-slide-toggle color="primary" (ngModelChange)="save_mode($event)" style="display: inline;"
+                        [(ngModel)]="user.advance_mode">
+        <small style="color: white;" *ngIf="full_menu">Avancé</small>
+      </mat-slide-toggle>
+
+    </div>
+
   </mat-sidenav>
 
 
