@@ -147,12 +147,18 @@ class Sticker(Element):
       if image.startswith("http"):
         svg_code=str(requests.get(image).content,"utf8")
       else:
-        svg_code=image
+        if image.startswith("./"):
+          svg_code=open(image,"r").read()
+        else:
+          if exists(self.work_dir+image):
+            svg_code=open(self.work_dir+image,"r").read()
+          else:
+            svg_code=image
 
-      self.text={"text":image}
+      self.text={"text":svg_code}
 
-    if image.startswith("data:"):
-      self.text={"text":str(base64.b64decode(image.split("base64,")[1]),"utf8")}
+      if image.startswith("data:"):
+        self.text={"text":str(base64.b64decode(image.split("base64,")[1]),"utf8")}
 
     if self.text is None:
       if not "/" in image:image=self.work_dir+image

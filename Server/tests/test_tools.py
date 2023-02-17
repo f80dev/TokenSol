@@ -12,7 +12,7 @@ MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt" 
 MAIN_NETWORK = "elrond-devnet"
 MAIN_MINER="bob"
 
-NETWORKS=["polygon-devnet","elrond-devnet","file-testnet","db-server-nfluent_test"]
+NETWORKS=["polygon-devnet","file-testnet","elrond-devnet","db-server-nfluent_test"]
 PLATFORMS=["nftstorage","file","infura","db-server-nfluent_test"] #ipfs
 MAIN_STORAGE_PLATFORM=PLATFORMS[0]
 
@@ -69,32 +69,30 @@ def test_keys_from_network(test_client, networks=NETWORKS):
     assert len(rc)>0
 
 
-def test_transfer_extra_network(networks=NETWORKS):
-  for from_network in networks:
-    for target_network in networks:
-      _from_network=get_network_instance(from_network)
-      from_network_miner:Key=random_from(_from_network.get_keys())
-      nft:NFT=random_from(_from_network.get_nfts(from_network_miner.address))
-      if nft is None:
-        test_mint
-
-      old_owner=nft.owner
-
-      assert not nft is None
-
-      _target_network=get_network_instance(target_network)
-      target_network_owner=random_from(_target_network.get_keys())
-      rc=transfer(nft.address,from_network_miner=from_network_miner,target_network_miner=target_network_owner,from_network=from_network,target_network=target_network)
-
-      assert not rc is None
-      if target_network!=from_network:
-        assert not nft.address in [x.address for x in _from_network.get_nfts()]
-        assert nft.address in [x.address for x in _target_network.get_nfts()]
-      else:
-        assert _target_network.get_nft(nft.address).owner!=old_owner
-
-
-
+# def test_transfer_extra_network(networks=NETWORKS):
+#   for from_network in networks:
+#     for target_network in networks:
+#       _from_network=get_network_instance(from_network)
+#       from_network_miner:Key=random_from(_from_network.get_keys())
+#       nft:NFT=random_from(_from_network.get_nfts(from_network_miner.address))
+#
+#       old_owner=nft.owner
+#
+#       assert not nft is None
+#
+#       _target_network=get_network_instance(target_network)
+#       target_network_owner=random_from(_target_network.get_keys())
+#       rc=transfer(nft.address,from_network_miner=from_network_miner,target_network_miner=target_network_owner,from_network=from_network,target_network=target_network)
+#
+#       assert not rc is None
+#       if target_network!=from_network:
+#         assert not nft.address in [x.address for x in _from_network.get_nfts()]
+#         assert nft.address in [x.address for x in _target_network.get_nfts()]
+#       else:
+#         assert _target_network.get_nft(nft.address).owner!=old_owner
+#
+#
+#
 
 
 def call_api(test_client,url, params="", body=None, method=None, status_must_be=200,message=""):

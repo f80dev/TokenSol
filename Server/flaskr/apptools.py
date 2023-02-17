@@ -1,13 +1,12 @@
 import base64
 import json
 from os import listdir
-from random import random
 
 from flaskr import GitHubStorage
 from flaskr.Keys import Key
 from flaskr.Network import Network
 from flaskr.Polygon import Polygon
-from flaskr.StoreFile import StoreFile, FILE_PREFIX_ID
+from flaskr.StoreFile import StoreFile
 
 import requests
 import yaml
@@ -17,10 +16,9 @@ from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
 from flaskr.Solana import Solana
 
-from flaskr.Tools import log, now, is_email, send_mail, open_html_file, get_operation, returnError, send, encrypt, \
-  decrypt
+from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt
 
-from flaskr.dao import DAO, DB_PREFIX_ID
+from flaskr.dao import DAO
 from flaskr.infura import Infura
 from flaskr.ipfs import IPFS
 from flaskr.nftstorage import NFTStorage
@@ -83,7 +81,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
   """
   if type(collections)==str:collections=[collections]
   nfts=[]
-  if srcs.__class__!=list: srcs=[srcs]
+
   for src in srcs:
     if src["active"]:
       log("Récupération des nfts depuis "+str(src))
@@ -91,95 +89,15 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
       if not "filter" in src:src["filter"]={"owner":None,"collections":[]}
       if not "collections" in src["filter"]:src["filter"]["collections"]=[];
       if not "limit" in src: src["limit"]=10000
+      owner=src["owner"] if "owner" in src else None
 
-      tmp=[]
-      if src["connexion"].startswith("db-"):
-        try:
-          if src["connexion"].startswith("db-") and not "dbname" in src:src["dbname"]=src["connexion"].split("-")[2]
-          if not "connexion" in src or not "dbname" in src:
-            returnError("!Champs dbname ou connexion manquant dans la source")
+      _network=get_network_instance(src["network"])
+      if "collection" in src:
+        nfts=nfts+_network.get_nfts_from_collections(src["collection"])
+      else:
+        nfts=nfts+_network.get_nfts(owner)
 
-          _dao_temp=DAO(src["connexion"],src["dbname"])
-          if not _dao_temp.isConnected():
-            log("Impossible de se connecter a la base de donnée pour récupérer les NFT")
-          else:
-            if collections and len(collections)>0:
-              for collection in collections:
-                tmp=list(_dao_temp.nfts_from_collection(collection))
-            else:
-              #Si le filtre sur les collections n'a pas été précisé ou si vide, on prend tous les NFTs des sources
-              tmp=list(_dao_temp.nfts_from_collection(None))
-
-            nfts=[]
-            #Application du filtre de limit et de collection par source
-            for n in tmp[:src["limit"]]:
-              if not "collection" in src["filter"] or n.collection.id==src["filter"]["collection"]:
-                nfts.append(n)
-
-          src["ntokens"]=len(nfts)
-
-        except Exception as inst:
-          log("Probleme de lecture de "+src["connexion"]+" "+str(inst.args))
-
-      if src["connexion"].startswith("http") or src["connexion"].startswith("file-"):
-        l_nfts=[]
-        if "-self" in src["connexion"]:
-          for nft in src["nfts"]:
-            l_nfts.append(NFT(object=nft))
-        else:
-          if src["connexion"].startswith("http"):
-            r=requests.get(src["connexion"])
-            if src["connexion"].endswith(".json"):l_nfts=l_nfts+json.loads(r.text)
-            if src["connexion"].endswith(".yaml"):l_nfts=l_nfts+yaml.load(r.text,Loader=yaml.FullLoader)
-
-        #On retrouve l'intégralité des collections en utilisant une technique de cache
-        collections=dict()
-        for nft in l_nfts:
-          if not nft.collection["id"] in collections:
-            collections[nft.collection["id"]]=Elrond(nft.network).get_collection(nft.collection["id"]) if "elrond" in nft.network else nft.collection
-          nft.collection=collections[nft.collection["id"]]
-        nfts=nfts+l_nfts
-
-      if "elrond" in src["connexion"] or "polygon" in src["connexion"] or "solana" in src["connexion"]:
-        _network=get_network_instance(src["connexion"])
-        if src["filter"]["owner"]:
-          l_nfts=_network.get_nfts(src["filter"]["owner"],limit=src["filter"]["limit"])
-        else:
-          l_nfts=_network.get_nfts_from_collections(src["collections"],with_attr=with_attributes)
-          if "elrond" in src["connexion"]: l_nfts=_network.complete_collection(l_nfts)
-
-        nfts=nfts+l_nfts
-        src["ntokens"]=len(l_nfts)
-
-
-
-      #TODO a retravailler pour permettre de refrabriquer la collection à partir du fichier de config
-      # if src["type"]=="config":
-      #   config=configs(src["connexion"],format="dict")
-      #   for layer in config["layers"]: layers(layer)
-      #
-      #   files=get_collection(
-      #     size=(config["width"],config["height"]),
-      #     format="list",
-      #     seed=src["seed"] if "seed" in src else 1,
-      #     limit=src["limit"] if "limit" in src else 10,
-      #     data={
-      #       "title":"MonTitre",
-      #       "symbol":"token__idx__",
-      #       "description":"madescription",
-      #       "collection":"macollection",
-      #       "properties":"propriete=valeur",
-      #       files:"http://monfichier"
-      #     }
-      #   )
-      #   for file in files:
-      #     id=file[file.rindex("/")+1:]
-      #     nfts.append({
-      #       "uri":file,
-      #       "image":domain_server+"/api/images/"+id,
-      #       "id":id,
-      #       "creators":[{"address":x} for x in src["creators"]]
-      #     })
+      src["ntokens"]=len(nfts)
 
   return nfts
 
@@ -206,79 +124,6 @@ def get_network_instance(network:str):
 
 
 
-def async_mint(config:dict,nbr_items=3,filter="") -> int:
-  n_treatment=0
-  message=""
-  dao=DAO(config=config)
-  if not dao.isConnected():
-    message="Impossible de se connecter à la base"
-    return n_treatment
-
-  if message=="":
-    for ask in dao.get_nfts_to_mint(int(nbr_items),filter):
-      log("Traitement de la demande "+str(ask["_id"]))
-      if dao.edit_pool(ask["_id"],now(),"traitement en cours"):
-        nfts=get_nfts_from_src(ask["sources"],ask["filter"],False)
-        _ope=get_operation(ask["operation"])
-
-        nft_to_mint=None
-        if "elrond" in ask["network"]:
-          elrond=Elrond(ask["network"])
-          _miner=elrond.toAccount(ask["miner"])
-
-          if len(nfts)>0:
-            log("Tirage au sort d'un NFT parmis la liste de "+str(len(nfts)))
-            for i in range(200):
-              nft_to_mint=nfts[int(random()*len(nfts))]
-
-              if nft_to_mint.owner=="":
-                if nft_to_mint.collection is None:
-                  nft_to_mint.collection=get_network_instance(ask["network"]).get_collection(ask["collection_to_mint"])
-
-                if elrond.canMint(nft_to_mint,ask["dest"]): break
-              else:
-                if not _miner is None and nft_to_mint.owner==_miner.address.bech32(): break
-          else:
-            log("Aucun NFT à miner depuis la source "+str(ask["sources"]))
-            dao.edit_pool(ask["_id"],now(),"Aucun NFT dans la source "+str(ask["sources"]))
-
-        if not nft_to_mint is None:
-          log("Minage de "+nft_to_mint.name+" en cours")
-          if _miner is None:
-            log("Le miner est fixé sur le propriétaire de la collection "+nft_to_mint.collection["id"])
-            if "elrond" in ask["network"]:
-              _miner=elrond.toAccount(nft_to_mint.collection["owner"])
-              if _miner.secret_key is None:
-                message="On ne dispose pas de la clé privée du propriétaire de la collection "+nft_to_mint.collection["id"]+", donc pas de minage possible"
-                #activity_report_sender(message)
-
-          if message=="":
-            log("Ajout de l'attribut lazymint pour ne pas risquer de re-minté")
-            nft_to_mint.attributes.append({"trait_type":"lazymint","value":nft_to_mint.address})
-            rc=mint(nft_to_mint,
-                    miner=_miner.address.bech32(),
-                    owner=ask["dest"],
-                    network=ask["network"],
-                    upload_dir=config["UPLOAD_FOLDER"],
-                    mail_new_wallet=_ope["new_account"]["mail"] if not _ope is None else "",
-                    mail_existing_wallet=_ope["transfer"]["mail"] if not _ope is None else "",
-                    operation_id=_ope["id"] if _ope else ""
-                    )
-            if not rc or rc["error"]!="":
-              log("Problème de minage voir "+rc["hash"])
-              message="Error"+rc["error"]+" voir "+elrond.getExplorer(rc["hash"])
-            else:
-              message="Ok. Transaction="+rc["hash"]
-              n_treatment=n_treatment+1
-
-          log("Mise a jour des données de la pool de minage avec message:"+message)
-          if dao.edit_pool(ask["_id"],now(),message): send(config,"mintpool_refresh",{"id":ask["_id"]})
-      else:
-        message="Aucun NFT disponible pour le minage"
-        log(message)
-        if dao.edit_pool(ask["_id"],now(),message): send(config,"mintpool_refresh",{"id":ask["_id"]})
-
-  return n_treatment
 
 def get_network_from_address(addr:str):
   """
@@ -321,7 +166,7 @@ def transfer(addr:str,
              target_network_miner:Key,
              from_network:str,
              target_network_owner:str=None,
-             target_network:str=None,
+             target_network:str=None,collection:str=None,
              metadata_storage_platform="nftstorage"):
   """
   Transfer un NFT d'un réseau à un autre
@@ -349,14 +194,18 @@ def transfer(addr:str,
 
   if from_network!=target_network:
     _storage=get_storage_instance(metadata_storage_platform)
-    rc=_target_network.mint(target_network_miner,nft.name,nft.description,nft.collection["id"],nft.attributes,_storage,nft.files,
+    if "elrond" in target_network and collection=="": collection=nft.collection["id"]
+
+    rc=_target_network.mint(target_network_miner,nft.name,nft.description,collection,nft.attributes,_storage,nft.files,
                     nft.marketplace["quantity"],nft.royalties,nft.visual,nft.tags,nft.creators)
     nft.address=rc["result"]["mint"]
     get_network_instance(from_network).burn(addr,from_network_miner,1)
+    return rc
   else:
     rc=_target_network.transfer(addr,from_network_miner,target_network_owner)
+    return {"error":"probleme technique au transfert" if not rc else "","result":{"mint":nft.address}}
 
-  return {"address":nft.address}
+
 
 
 

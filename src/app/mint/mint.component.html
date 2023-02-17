@@ -57,9 +57,15 @@
 
     <app-input [options]="network.config['PLATFORMS']"
                style="max-width: 170px;" *ngIf="user.advance_mode"
-               label="Plateforme de stockage"
+               label="Plateforme de stockage des visuel"
                [value]="sel_platform"
                (valueChange)="sel_platform=$event"></app-input>
+
+    <app-input [options]="network.config['PLATFORMS']"
+               style="max-width: 170px;" *ngIf="user.advance_mode"
+               label="Plateforme de stockage des visuel"
+               [value]="sel_platform_document"
+               (valueChange)="sel_platform_document=$event"></app-input>
 
     <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"
                  [if]="network.isElrond() && !sel_collection"></app-warning>
@@ -248,8 +254,11 @@
           <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
             <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
               <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="delete_link(token,file)">cancel</mat-icon>
-              <div *ngIf="file.indexOf('f=')>0">{{file.split('f=')[1]}}</div>
-              <div *ngIf="file.indexOf('f=')==-1">{{file}}</div>
+              <div (dblclick)="open_document(file)">
+                <div *ngIf="file.indexOf('filename=')>0">{{file.split('filename=')[1]}}</div>
+                <div *ngIf="file.indexOf('filename=')==-1">{{file}}</div>
+              </div>
+
             </small>
           </div>
       </td>

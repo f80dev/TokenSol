@@ -1,11 +1,9 @@
 import base64
-import random
 from json import loads
 
-from flaskr import async_mint
-from flaskr.Keys import Key
+from flaskr.Mintpool import Mintpool
 from flaskr.Network import Network
-from flaskr.Tools import get_operation, now, random_from, get_key_by_name
+from flaskr.Tools import get_operation, now, get_key_by_name
 from flaskr.settings import OPERATIONS_DIR
 from tests.test_art import test_generate_collection
 from tests.test_tools import *
@@ -217,15 +215,17 @@ def mint_from_file(test_client, filename: str = RESSOURCE_TEST_DIR+"image_1.webp
 	return rc
 
 
-def test_mint_polygon(test_client):
-	test_api_mint(test_client,miner=MAIN_POLYGON_ACCOUNT,col_id="",network="polygon-devnet")
+def test_mint_polygon(test_client,network="polygon-devnet"):
+	miner=random_from(get_network_instance(network).get_keys())
+	test_api_mint(test_client,miner=miner,col_id="",network=network)
 
 
 
-def test_mint_file(test_client):
-	token_id,col_id=test_api_mint(test_client,miner=get_main_account_for_network("file"),col_id="MACOLLEC",network="file-mainnet")
+def test_mint_file(test_client,network="file-testnet"):
+	miner=random_from(get_network_instance(network).get_keys())
+	token_id,col_id=test_api_mint(test_client,miner=miner,col_id="MACOLLEC",network=network)
 	assert not token_id is None
-	nft=get_network_instance("file").get_nft(token_id)
+	nft=get_network_instance(network).get_nft(token_id)
 	assert not nft is None
 	assert nft.address==token_id
 
@@ -242,7 +242,7 @@ def test_api_mint(test_client, miner:Key=None, col_id=MAIN_COLLECTION, network=M
 		col_id = find_collection_to_mint(test_client, miner.address,network)
 
 	_account=test_get_account(test_client,miner.address,network)
-	assert _account.amount>0.1,"Solde insuffisant pour miner"
+	assert _account.amount>0.1,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
 
 	if col_id:
 		_nft = create_nft("test_" + now("hex"), col_id)
@@ -311,12 +311,15 @@ def test_registration_and_login(test_client,email=MAIN_EMAIL,with_delete=True):
 		return account
 
 
-def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="newpassword",with_delete=True):
+
+def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="",with_delete=True):
+	if len(new_password)==0:new_password=now("hex")[2:].upper()
 	user=test_registration_and_login(test_client,email,False)
-	rc=call_api(test_client,"change_password/"+user["access_code"]+"/"+new_password+"/")
-	account=call_api(test_client,"login/"+new_password+"/?with_api=False")
+	rc=call_api(test_client,"change_password/"+email+"/"+user["access_code"]+"/"+new_password+"/")
+	assert len(rc["error"])==0
+	account=call_api(test_client,"login/"+email+"/"+new_password+"/?with_api=False")
 	assert not account is None
-	if with_delete: call_api(test_client,"/delete_account/"+new_password+"/",method="DELETE")
+	if with_delete: call_api(test_client,"/delete_user/"+email+"/"+new_password+"/",method="DELETE")
 
 
 
@@ -455,7 +458,7 @@ def test_raz_mintpool(test_client):
 
 
 
-def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, network=MAIN_NETWORK,by_api=True,source_network="db-server-nfluent_test"):
+def test_mintpool(test_client, dest=MAIN_ACCOUNT,  target_network=MAIN_NETWORK,source_network="db-server-nfluent_test"):
 	"""
   test de la pool de minage
   :param test_client:
@@ -467,22 +470,18 @@ def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, 
   """
 	test_raz_mintpool(test_client)
 
-	cols = test_api_get_collections(test_client, network, miner)
-	assert len(cols) > 0,"Aucune collection disponible pour miner="+miner
+	miner:Key=random_from(get_network_instance(target_network).get_keys())
+	col = random_from(test_api_get_collections(test_client, target_network, miner.address))
 
-	src = {"active": True, "type": "database", "dbname": "nfluent_test", "connexion": source_network}
-	nft_id,col_id=test_lazymint(test_client,source_network,cols[0]["id"])
+	#nft_id,col_id=test_lazymint(test_client,source_network,cols[0]["id"])
 
 	log("Ajout d'un NFT dans la pool de minage")
 	body = {
-		"owner": dest,
-		"network": network,
-		"miner": miner,
-		"sources": [src],
-		"collections":col_id,
+		"sources": [Mintpool.create_source(miner=random_from(get_network_instance(source_network).get_keys()),network=source_network)],
+		"target":Mintpool.create_target(miner=miner,network=target_network,owner=dest,collection=col["id"]),
 		"wallet": ""
 	}
-	ask = call_api(test_client, "add_user_for_nft/", body=body)
+	ask = call_api(test_client, "add_task_to_mintpool/", body=body)
 	assert ask["message"] == "ok"
 	assert len(ask["ask_id"]) >0
 
@@ -491,12 +490,10 @@ def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, 
 	assert len(treatments)==1
 	assert treatments[0]["message"]==""
 
-	if by_api:
-		rc = call_api(test_client, "async_mint/1/")
-		assert rc["message"]=="ok"
-		rc=rc["n_treated_ask"]
-	else:
-		rc = async_mint(test_client.application.config,1)
+	rc = call_api(test_client, "async_mint/1/")
+	assert rc["message"]=="ok"
+	rc=rc["n_treated_ask"]
+
 	assert rc == 1
 
 	asks = call_api(test_client, "mintpool/")
@@ -505,10 +502,7 @@ def test_mintpool(test_client, src=None, miner=MAIN_ACCOUNT, dest=MAIN_ACCOUNT, 
 	return asks[0]
 
 
-def test_mintpool_direct(test_client,networks=["db-server-nfluent",MAIN_NETWORK]):
-	for network in networks:
-		rc=test_mintpool(test_client,by_api=False,network=network)
-	assert not rc is None
+
 
 
 
@@ -560,9 +554,11 @@ def mint_collection(test_client, target_network=MAIN_NETWORK):
 
 def test_encrypt_keys(test_client):
 	for network in NETWORKS:
-		rc=call_api(test_client,"encrypt_key/"+get_main_account_for_network(network)+"/"+network+"/")
+		log("Encryptage de clé sur le réseau "+network)
+		key:Key=random_from(get_network_instance(network).get_keys())
+		rc=call_api(test_client,"encrypt_key/"+key.name+"/"+key.secret_key+"/"+key.network+"/")
 		assert not rc is None
-		assert len(rc)>0
+		assert len(rc["encrypt"])>0
 
 
 

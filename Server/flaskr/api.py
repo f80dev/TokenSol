@@ -30,6 +30,7 @@ from flaskr.ArtEngine import Layer, Sticker, ArtEngine
 from flaskr.Elrond import Elrond, ELROND_KEY_DIR
 from flaskr.GitHubStorage import GithubStorage
 from flaskr.Keys import Key
+from flaskr.Mintpool import Mintpool
 from flaskr.NFT import NFT
 from flaskr.Network import Network
 from flaskr.Polygon import POLYGON_KEY_DIR
@@ -41,8 +42,7 @@ from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, sen
   get_access_code, check_access_code, get_fonts, log, now, send_mail, open_html_file, encrypt, importer_file, \
   idx, generate_svg_from_fields, get_filename_from_content, queryPixabay, queryUnsplash, isLocal, is_email
 from flaskr.TransactionsGraph import TransactionsGraph
-from flaskr.apptools import async_mint, get_network_instance, get_nfts_from_src, mint, get_storage_instance, \
-  create_account, transfer, extract_keys_from_operation
+from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation
 from flaskr.dao import DAO
 from flaskr.ipfs import IPFS
 from flaskr.secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRETS_FILE, SECRET_ACCESS_CODE, ADMIN_EMAIL, \
@@ -763,11 +763,11 @@ def get_operations() -> [dict]:
 @bp.route('/change_password/<email>/<access_code>/<new_access_code>/',methods=["GET"])
 def api_update_access_code(email:str,access_code:str,new_access_code:str):
   rc=DAO(config=current_app.config).set_access_code(email,access_code,new_access_code)
-  send_mail(open_html_file("mail_registration",{
-    "tokenforge_url":current_app.config["DOMAIN_APPLI"],
-    "access_code":new_access_code
-  }),_to=rc["email"],subject="Inscription à tokenforge")
-  return jsonify(rc)
+  if rc:
+    send_mail(open_html_file("mail_registration",{"tokenforge_url":current_app.config["DOMAIN_APPLI"],"access_code":new_access_code}),_to=email,subject="Inscription à tokenforge")
+    return jsonify({"message":"Mot de passe modifié","error":""})
+  else:
+    return jsonify({"message":"Mot de passe non modifié","error":"ko"})
 
 
 
@@ -1105,13 +1105,12 @@ def api_minerpool(id=""):
   :param id:
   :return:
   """
-  dao=DAO(config=current_app.config)
-  if not dao.isConnected(): return returnError("Base de données non disponible")
-  asks=dao.get_mintpool()
+  mintpool=Mintpool(config=current_app.config)
+  asks=mintpool.get_mintpool()
 
   rc=[]
   if request.method=="POST":
-    rc={"updated":dao.edit_pool(ObjectId(id),None,"")}
+    rc={"updated":mintpool.edit_pool(ObjectId(id),None,"")}
 
   if request.method=="GET":
     for ask in list(asks):
@@ -1121,10 +1120,9 @@ def api_minerpool(id=""):
 
   if request.method=="DELETE":
     if len(id)>0:
-      tx=dao.db["mintpool"].delete_one({"_id":ObjectId(id)})
-      rc={"deleted":tx.deleted_count}
+      if mintpool.delete(id): rc={"message":"ok"}
     else:
-      dao.reset_mintpool()
+      mintpool.reset_mintpool()
       rc={"deleted":"all"}
 
   return jsonify(rc)
@@ -1134,42 +1132,35 @@ def api_minerpool(id=""):
 # http://127.0.0.1:4242/api/async_mint/3/
 @bp.route('/async_mint/<nbr_items>/',methods=["GET"])
 def api_async_mint(nbr_items:str="3"):
-  rc=async_mint(current_app.config,nbr_items=int(nbr_items),filter=request.args.get("filter",""))
+  mintpool=Mintpool(config=current_app.config)
+  rc=mintpool.async_mint(nbr_items=int(nbr_items),filter=request.args.get("filter",""))
   return jsonify({"message":"ok","n_treated_ask":rc})
 
 
-@bp.route('/add_user_for_nft/',methods=["POST"])
+@bp.route('/add_task_to_mintpool/',methods=["POST"])
 def add_user_for_nft():
   """
   Insere une demande de minage ou transfert d'un NFT d'une collection
   :return:
   """
-  dao=DAO(config=current_app.config)
+  mintpool=Mintpool(config=current_app.config)
 
-  network=request.json["network"]
-  target_collection=None
 
   _ope:dict=request.json["operation"] if "operation" in request.json else None
   sources=_ope["data"]["sources"] if _ope is not None else request.json["sources"]
 
-  if _ope and "lazy_mining" in _ope:
-    #On determine le miner en fonction du réseau sélectionné
-    for n in _ope["lazy_mining"]["networks"]:
-      if n["network"]==network:
-        target_collection=n["collection"] if "collection" in n else None
-        miner=n["miner"] if "miner" in n else None
-  else:
-    miner=request.json["miner"] if "miner" in request.json else None
+  # if _ope and "lazy_mining" in _ope:
+  #   #On determine le miner en fonction du réseau sélectionné
+  #   for n in _ope["lazy_mining"]["networks"]:
+  #     if n["network"]==network:
+  #       target_collection=n["collection"] if "collection" in n else None
+  #       miner=n["miner"] if "miner" in n else None
 
-  id=dao.add_nft_to_mint(
-                      miner=miner,
-                      operation="" if _ope is None else _ope["id"],
-                      sources=sources,
-                      network=network,
-                      collections=request.json["collections"],
-                      destinataires=request.json["owner"],
+  id=mintpool.add_ask(
+                      sources=request.json["sources"],
+                      target=request.json["target"],
                       wallet=request.json["wallet"],
-                      collection_to_mint=target_collection
+                      operation="" if _ope is None else _ope["id"]
   )
   if not id is None: send(current_app,"mintpool_refresh")
 
@@ -1856,14 +1847,11 @@ def api_rescue_wallet(email:str):
 
   
 
-@bp.route('/encrypt_key/<name>/<network>/',methods=["POST"])
+@bp.route('/encrypt_key/<name>/<secret_key>/<network>/',methods=["GET"])
 #http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
-def encrypt_key(name:str,network:str):
-  _net=get_network_instance(network)
-  account=_net.toAccount(name)
-  secretKey=account.secret_key if not "secret_key" in request.json else request.json["secret_key"]
-
-  return jsonify({"encrypt":encrypt(secretKey)})
+def encrypt_key(name:str,secret_key:str,network:str):
+  key=Key(name=name,secret_key=secret_key,network=network)
+  return jsonify({"encrypt":key.encrypt()})
 
 
 
@@ -2526,7 +2514,8 @@ def api_login(email:str,access_code:str):
     user={"email":ADMIN_EMAIL,"perms":ADMIN_PERMS,"routes":[],"access_code":access_code}
   else:
     user=DAO(config=current_app.config).get_user(email=email,access_code=access_code)
-    if user is None: return returnError("Code d'accès inconnu")
+    if user is None:
+      return returnError("Code d'accès inconnu")
 
   if request.args.get("with_api","False").lower()=="true":
     user["access_token"] = create_access_token(identity=user["email"])

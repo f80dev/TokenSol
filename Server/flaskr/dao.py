@@ -8,7 +8,7 @@ from flaskr.NFT import NFT
 from flaskr.NFluentAccount import NfluentAccount
 from flaskr.Network import Network
 from flaskr.Storage import Storage
-from flaskr.Tools import log, now, get_hash_from_content, encrypt, convert_to_ascii, simplify_email
+from flaskr.Tools import log, now, get_hash_from_content, encrypt, simplify_email
 from flaskr.secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING, MONGO_WEB3_CONNECTION_STRING
 
 #Voir les infos de connections du cloud sur
@@ -131,9 +131,11 @@ class DAO(Storage,Network):
     return rc
 
 
-  def get_nfts(self,addr:str,limit=2000,with_attr=False,offset=0,with_collection=False):
+  def get_nfts(self,addr:str=None,limit=2000,with_attr=False,offset=0,with_collection=False):
     rc=[]
-    nfts=list(self.db["nfts"].find({"owner":addr}))
+
+    nfts=list(self.db["nfts"].find({"owner":addr}) if not addr is None else self.db["nfts"].find())
+
     if len(nfts)<offset: return []
     for nft in nfts[offset:offset+limit]:
       rc.append(NFT(object=nft))
@@ -259,39 +261,7 @@ class DAO(Storage,Network):
       return False
 
 
-  def get_mintpool(self):
-    return list(self.db["mintpool"].find())
 
-  def reset_mintpool(self):
-    try:
-      self.db["mintpool"].drop()
-    except:
-      pass
-
-  def get_nfts_to_mint(self,limit=100,filter_id=""):
-    """
-    retourne la file d'attente de minage
-    :param limit:
-    :return:
-    """
-    asks=[]
-    for transaction in self.db["mintpool"].find({"dtWork":None}):
-      if transaction["dtStart"]<now() and (len(filter_id)==0 or str(transaction["_id"])==filter_id):
-        asks.append(transaction)
-
-    return asks[:limit]
-
-
-
-  def edit_pool(self,id,dtWork,message):
-    """
-    Confirme la réalisation d'un travail
-    :param id:
-    :param dtWork:
-    :return:
-    """
-    rc=self.db["mintpool"].update_one({"_id":id},{"$set":{"dtWork":dtWork,"message":message}})
-    return rc.modified_count>0
 
 
   def transfer(self,nft_addr:str,from_addr:str,to_addr:str):
@@ -329,37 +299,21 @@ class DAO(Storage,Network):
     return Key(obj=obj)
 
 
-  def burn(self,nft_addr:str,miner:Key):
+  def burn(self,nft_addr:str,miner:Key,occ=1):
     nft=self.get_nft(nft_addr)
-    if nft.miner==miner.address:
-      rc=self.db["nfts"].delete_one({"address":nft_addr})
-      return rc.deleted_count==1
+    if nft.miner==miner.address and nft.marketplace["quantity"]>0:
+      nft.marketplace["quantity"]=nft.marketplace["quantity"]-1
+      if nft.marketplace["quantity"]==0:
+        rc=self.db["nfts"].delete_one({"address":nft_addr})
+        return rc.deleted_count==1
+      else:
+        rc=self.db["nfts"].update_one({"address":nft_addr},{"$set":{"marketplace":nft.marketplace}})
+        return rc.modified_count==1
+
     return False
 
 
-  def add_nft_to_mint(self,miner:str,sources:dict,network,collections,destinataires,wallet,operation,dtStart=now(),collection_to_mint=None):
-    if type(destinataires)==str:destinataires=[destinataires]
 
-    for d in destinataires:
-      if len(d)>3:
-        obj={
-          "dtCreate":now(),
-          "dtStart":dtStart,
-          "dtWork":None,
-          "operation":operation,
-          "network":network,
-          "message":"",
-          "miner":miner,
-          "dest":d,
-          "filter":collections,
-          "collection_to_mint":collection_to_mint,
-          "sources":sources,
-          "wallet":wallet
-        }
-        log("Ajout dans le mintpool de "+str(obj))
-        tx=self.db["mintpool"].insert_one(obj)
-
-    return str(tx.inserted_id)
 
 
 
@@ -488,9 +442,9 @@ class DAO(Storage,Network):
   def set_access_code(self, email,access_code, new_access_code):
     user=self.get_user(email,access_code)
     if user:
-      rc=self.db["users"].update_one({"email":user["email"]},{"$set":{"access_code":encrypt(new_access_code,short_code=20)}})
-      if rc.modified_count==1: return user
-    return None
+      rc=self.db["users"].update_one({"email":user["email"]},{"$set":{"access_code":new_access_code}})
+      if rc.modified_count==1: return True
+    return False
 
   def get_docs(self, user,type_doc="operation") -> list:
     if user is None: return []

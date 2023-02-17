@@ -724,7 +724,7 @@ export class NetworkService implements OnInit {
   }
 
   add_user_for_nft(body:any) {
-    return this.httpClient.post(this.server_nfluent+"/api/add_user_for_nft/",body);
+    return this.httpClient.post(this.server_nfluent+"/api/add_task_to_mintpool/",body);
   }
 
   is_beta() {

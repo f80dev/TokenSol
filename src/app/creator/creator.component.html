@@ -255,16 +255,6 @@
       </table>
       <br>
 
-
-
-
-<!--      <button type="button" mat-raised-button mat-button-->
-<!--              (click)="choose_sample()">-->
-<!--        Un exemple-->
-<!--      </button>-->
-
-
-
     </mat-expansion-panel>
 
 
@@ -353,7 +343,7 @@
       </div>
     </mat-expansion-panel>
 
-    <mat-expansion-panel [expanded]="show_preview" *ngIf="previews && previews.length>0">
+    <mat-expansion-panel [expanded]="previews && previews.length>0">
       <mat-expansion-panel-header>Résultats / Prévisualisation</mat-expansion-panel-header>
       <a [href]="url_collection" mat-button mat-raised-button
          *ngIf="url_collection.length>0"

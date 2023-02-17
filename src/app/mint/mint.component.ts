@@ -37,6 +37,7 @@ export class MintComponent implements OnInit {
   sign: boolean=false;
   tokens: NFT[]=[];
   sel_platform: any;
+  sel_platform_document: any;
   price: any=0;
   quantity: any=1;
   sel_collection:Collection | undefined;
@@ -67,12 +68,11 @@ export class MintComponent implements OnInit {
 
     getParams(this.routes).then((params:any)=>{
       if(params.import){this.batch_import_from_url(params.import);}
-      let l_nets=params.networks ? params.networks.split(",") : this.network.config["NETWORKS"];
+      let l_nets=params.networks ? params.networks.split(",") : this.network.config["NETWORKS"]; //Chargement des réseaux autorisé en priorité via les parametres
       this.networks=l_nets.map((x:any)=>{return {label:x,value:x}});
     })
     this.init_form();
   }
-
 
 
   init_form(){
@@ -81,6 +81,7 @@ export class MintComponent implements OnInit {
       if(tmp)this.tokens=JSON.parse(tmp);
 
       if (this.user.nfts_to_mint.length > 0) {
+        $$("Chargement des NFT depuis la fenetre de création");
         this.onFileSelected(this.user.nfts_to_mint);
         this.user.nfts_to_mint=[];
       }
@@ -142,7 +143,7 @@ export class MintComponent implements OnInit {
       }
     }
 
-    if(!_infos.hasOwnProperty("files"))_infos["files"]="";
+    if(!_infos.hasOwnProperty("files") || _infos.files=="")_infos["files"]=[];
 
     let marketplace={price:this.price,quantity:this.quantity};
     if(_infos.hasOwnProperty("marketplace"))marketplace=_infos.marketplace;
@@ -156,7 +157,7 @@ export class MintComponent implements OnInit {
       creators: creators,
       description: _infos.description,
       symbol: _infos.symbol,
-      files: typeof(_infos.files)=="string" ? _infos.files.split("\n") : _infos,
+      files: _infos.files,
       marketplace: marketplace,
       name: _infos.title,
       network: this.network.network,
@@ -658,7 +659,7 @@ export class MintComponent implements OnInit {
 
   drop(files: File[],token:NFT) {
     //Intégration des fichiers attachés
-    if(this.sel_platform.value!="nftstorage"){
+    if(this.sel_platform_document.value!="nftstorage"){
       this.network.wait("Décodage des fichiers");
       for(let file of files){
         if(file.size>MAX_FILE_SIZE*1024){
@@ -669,9 +670,9 @@ export class MintComponent implements OnInit {
           reader.onload=()=>{
             let body={filename:file.name,content:reader.result,type:file.type};
             this.network.wait("Mise en ligne du document");
-            this.network.upload(body,this.sel_platform.value,file.type).subscribe((r:any)=>{
+            this.network.upload(body,this.sel_platform_document.value,file.type).subscribe((r:any)=>{
               this.network.wait();
-              token.files.push(r.url+"?f="+encodeURIComponent(file.name));
+              token.files.push(r.url+"?filename="+encodeURIComponent(file.name));
               this.local_save();
             });
 
@@ -748,5 +749,9 @@ export class MintComponent implements OnInit {
         this.content_for_clipboard="";
       },1000);
     }
+  }
+
+  open_document(file: any) {
+    open(file.split("filename=")[0],"_blank");
   }
 }

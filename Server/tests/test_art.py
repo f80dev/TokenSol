@@ -62,6 +62,8 @@ def test_clone():
   for section in IMAGES.keys():
     clear_directory()
     image=get_image(section=section)
+
+    log("Clonage de "+image)
     sticker=Sticker(image=image,work_dir=TEMP_TEST_DIR)
     assert not sticker.ext is None,"L'extensione est vide pour "+image
 

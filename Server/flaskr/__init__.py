@@ -5,7 +5,6 @@ from flask import Flask
 from flask_cors import CORS
 
 from flaskr.Tools import log
-from flaskr.apptools import async_mint, activity_report_sender
 
 from flaskr.dao import DAO
 from flaskr.secret import SECRET_JWT_KEY

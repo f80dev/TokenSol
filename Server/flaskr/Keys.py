@@ -1,5 +1,7 @@
 import json
 
+from flaskr.Tools import encrypt, decrypt
+
 
 class Key(object):
 	address:str=""
@@ -8,7 +10,11 @@ class Key(object):
 	name:str=""
 	seed:str=""
 
-	def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None):
+	def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None, encrypted=""):
+		if len(encrypted)>0:
+			decrypted=decrypt(encrypted)
+			if decrypted.startswith("{"): obj=json.loads(decrypted)
+
 		if not obj is None:
 			if "name" in obj: name=obj["name"]
 			if "secret_key" in obj:secret_key=obj["secret_key"]
@@ -23,6 +29,10 @@ class Key(object):
 			if secret_key.startswith("0x"):network="polygon"
 		self.network=network
 		self.address=address
+
+
+	def encrypt(self):
+		return encrypt(self.toJson())
 
 
 	def __str__(self):

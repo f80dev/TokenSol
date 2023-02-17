@@ -163,6 +163,7 @@ class StoreFile(Network,Storage):
     if addr not in [x["address"] for x in self.content["accounts"]]:
       obj={"address":addr,
            "amount":solde,
+           "network":"file",
            "balance":solde*1e18,
            "unity":"DBC",              #DBCoin
            "secret_key":"myprivatekey_"+addr,

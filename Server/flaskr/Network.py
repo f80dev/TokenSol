@@ -32,7 +32,10 @@ class Network():
     return True
 
   def get_account(self,addr:str,solde:int=10) -> NfluentAccount:
-    return NfluentAccount(address=addr,network=self.network)
+    return NfluentAccount(address=addr,network=self.network,balance=100e18,nonce=0,unity="",explorer="")
+
+  def can_mint(self,nft_to_mint,dest:str):
+    return True
 
   def is_blockchain(self):
     return not self.network is None and not self.network.startswith("file-") and not self.network.startswith("db-")

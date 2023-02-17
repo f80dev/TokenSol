@@ -6,8 +6,11 @@ import sys
 from flask_jwt_extended import JWTManager
 from flask_socketio import SocketIO
 
-from flaskr import create_app, async_mint, activity_report_sender, DAO
+from flaskr import create_app
+from flaskr.Mintpool import Mintpool
 from flaskr.Tools import log, send
+from flaskr.apptools import activity_report_sender
+
 
 def receive(app):
   send(app,"refresh")
@@ -16,6 +19,7 @@ def receive(app):
 
 if __name__=="__main__":
   app,scheduler=create_app(sys.argv[1] if len(sys.argv)>1 else "localConfig")
+  mintpool=Mintpool(app.config)
   log("Version du serveur : "+app.config["VERSION"])
 
   socketio = SocketIO(app,cors_allowed_origins="*",logger=True,engineio_logger=True,manage_session=True)
@@ -26,7 +30,7 @@ if __name__=="__main__":
 
   jwt = JWTManager(app)
 
-  scheduler.add_job(func=async_mint, trigger="interval", seconds=30,max_instances=1,args=(app.config,3,""))
+  scheduler.add_job(func=mintpool.async_mint, trigger="interval", seconds=30,max_instances=1,args=(3,""))
   scheduler.add_job(func=activity_report_sender, trigger="interval", seconds=3600*24,max_instances=1,args=(app.config,"CR nfluent"))
   scheduler.start()
   atexit.register(lambda: scheduler.shutdown())

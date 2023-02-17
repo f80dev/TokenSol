@@ -276,7 +276,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
   fill_layer(i:number,w:number,h:number,preview:number,func:Function){
     if(this.sel_config){
-      this.network.wait("Composition de " + i + " calques sur " + this.sel_config!.layers.length);
+      this.message="Composition de " + i + " calques sur " + this.sel_config!.layers.length;
       this.network.add_layer(this.sel_config!.layers[i],w,h,preview).subscribe(()=> {
         i = i + 1;
         if(this.sel_config && i<this.sel_config!.layers.length){
@@ -347,15 +347,16 @@ export class CreatorComponent implements OnInit,OnDestroy {
               $$("Lien de téléchargement " + this.url_collection);
 
               this.message = "";
-              this.previews = r.preview;
-              this.show_generate = false;
-              this.show_preview = true;
-              this.show_conception = false;
 
               if (direct_mint) {
                 showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
                 this.user.nfts_to_mint = this.previews;
                 this.router.navigate(["mint"]);
+              } else {
+                this.previews = r.preview;
+                this.show_generate = false;
+                this.show_preview = true;
+                this.show_conception = false;
               }
             }
         , (err) => {

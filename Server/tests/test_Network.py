@@ -19,7 +19,7 @@ def test_get_nfts(networks=NETWORKS):
 		nfts=bl.get_nfts(owner.address)
 
 		assert not nfts is None
-		assert random_from(nfts).owner==owner.address
+		assert random_from(nfts).owner==owner.address,"Probleme d'attribution du propriétaire pour "+network
 
 
 def test_get_nft(networks=NETWORKS):

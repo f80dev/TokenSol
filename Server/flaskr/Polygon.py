@@ -220,7 +220,7 @@ class Polygon (Network):
           if with_attr:
             rc.append(self.get_nft(nft_addr))
           else:
-            rc.append(NFT(address=nft_addr,marketplace={"quantity":balance}))
+            rc.append(NFT(address=nft_addr,marketplace={"quantity":balance},owner=addr))
           if len(rc)==limit: break
       except:
         pass
@@ -366,7 +366,8 @@ class Polygon (Network):
     contract=self.w3.eth.contract(address=self.w3.toChecksumAddress(nft_addr),abi=self.abi)
 
     owner=contract.functions.ownerOf(0).call()
-    if owner!=miner.address: raise RuntimeError("Probleme de propriétaire pour le transfert")
+    if owner!=miner.address:
+      raise RuntimeError("Probleme de propriétaire pour le transfert")
     rc= self.send_transaction(contract.functions.transferFrom(miner.address,new_owner,0),miner)
     return rc
 
