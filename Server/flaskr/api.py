@@ -782,7 +782,7 @@ def transfer_to():
   to_network=request.args.get("to_network","elrond-devnet")
   _ope=get_operation(request.args.get("operation",""))
 
-  rc=transfer(nft_addr,owner,to,from_network,to_network)
+  rc=transfer(addr=nft_addr,from_network_miner=owner,target_network_owner=to,from_network=from_network,target_network=to_network)
 
   #Création des comptes
   # if "solana" in to_network:
@@ -821,7 +821,7 @@ def transfer_to():
 
   if rc:
     nfluent_wallet=current_app.config["DOMAIN_WALLET"]
-    token_id=rc["address"]
+    token_id=rc["result"]["mint"]
     return jsonify({"error":"","message":"NFT transféré","nfluent_wallet":nfluent_wallet,"token_id":token_id})
   else:
     return returnError("Probleme de transfert")

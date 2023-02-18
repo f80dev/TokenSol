@@ -163,8 +163,8 @@ def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_
 
 def transfer(addr:str,
              from_network_miner:Key,
-             target_network_miner:Key,
              from_network:str,
+             target_network_miner:Key=None,
              target_network_owner:str=None,
              target_network:str=None,collection:str=None,
              metadata_storage_platform="nftstorage"):
@@ -181,6 +181,11 @@ def transfer(addr:str,
   _target_network=get_network_instance(target_network)
 
   if target_network_owner is None:target_network_owner=target_network_miner.address
+  if target_network_miner is None:
+    if from_network==target_network:
+      target_network_miner=from_network_miner
+    else:
+      raise RuntimeError("Il manque le miner du réseau cible")
 
   if get_network_from_address(addr) not in from_network: return returnError("!Le NFT ne fait pas partie de la blockchain d'origine")
   if get_network_from_address(target_network_owner) not in target_network: return returnError("!Le nouveau propriétaire ne fait pas partie de la blockchain finale")
