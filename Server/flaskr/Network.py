@@ -29,7 +29,7 @@ class Network():
     return self.network
 
   def reset(self,item:str="all"):
-    return True
+    raise NotImplementedError()
 
   def get_account(self,addr:str,solde:int=10) -> NfluentAccount:
     return NfluentAccount(address=addr,network=self.network,balance=100e18,nonce=0,unity="",explorer="")

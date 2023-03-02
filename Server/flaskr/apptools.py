@@ -150,13 +150,13 @@ def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4
   return NFTStorage()
 
 
-def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,nft_name="") -> Key:
+def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,nft_name="",send_real_email=True) -> Key:
   _network=get_network_instance(network)
   key=_network.create_account(email=email,histo=dao,
                                                           subject="Votre NFT '"+nft_name+"' est disponible",
                                                           domain_appli=domain_appli,
                                                           mail_new_wallet=mail_new_wallet,
-                                                          mail_existing_wallet=mail_existing_wallet)
+                                                          mail_existing_wallet=mail_existing_wallet,send_real_email=send_real_email)
   return key
 
 
@@ -199,7 +199,7 @@ def transfer(addr:str,
 
   if from_network!=target_network:
     _storage=get_storage_instance(metadata_storage_platform)
-    if "elrond" in target_network and collection=="": collection=nft.collection["id"]
+    if "elrond" in target_network and collection=="": collection={"id":nft.collection["id"]}
 
     rc=_target_network.mint(target_network_miner,nft.name,nft.description,collection,nft.attributes,_storage,nft.files,
                     nft.marketplace["quantity"],nft.royalties,nft.visual,nft.tags,nft.creators)
@@ -234,10 +234,13 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
   if not nft.address is None and len(nft.address)>0: return returnError("!Ce NFT est déjà miner")
 
   #if len(miner.address)==0: return returnError("!L'address du mineur est indispensable")
+  if len(miner.secret_key)==0:
+    for k in network.get_keys():
+      if k.address==miner.address: miner=k
   if len(miner.secret_key)==0: return returnError("!La clé privée du mineur est indispensable")
   if not get_network_from_address(miner.address) in network.network_name: return returnError("!L'address du mineur ne correspond pas au réseau cible")
 
-  collection_id=nft.collection["id"] if nft.collection else ""
+  collection=nft.collection if nft.collection else {}
   #if collection_id=="": returnError("!La collection est indispensable")
 
   nft.miner=miner.address
@@ -248,7 +251,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
                      title=nft.name,
                      description=nft.description,
                      tags=nft.tags,
-                     collection=collection_id,
+                     collection=collection,
                      properties=nft.attributes,
                      files=nft.files,
                      storage=storage,
@@ -308,7 +311,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
   #   }
 
   if ("result" in rc) and ("transaction" in rc["result"]) and (network.network!="file") and not dao is None:
-    dao.add_histo(request.args.get("ope",""),"mint",miner.address,collection_id,rc["result"]["transaction"],network.network,"Minage")
+    dao.add_histo(request.args.get("ope",""),"mint",miner.address,collection["id"],rc["result"]["transaction"],network.network,"Minage")
 
   return rc
 

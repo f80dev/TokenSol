@@ -1,9 +1,10 @@
 import base64
 from json import loads
 
+from flaskr.Keys import Key
 from flaskr.Mintpool import Mintpool
 from flaskr.Network import Network
-from flaskr.Tools import get_operation, now, get_key_by_name
+from flaskr.Tools import get_operation, now, get_key_by_name, random_from
 from flaskr.settings import OPERATIONS_DIR
 from tests.test_art import test_generate_collection
 from tests.test_tools import *
@@ -140,7 +141,7 @@ def test_keys_networks(test_client,networks=NETWORKS):
 	for network in networks:
 		if not Network(network).is_blockchain():
 			get_network_instance(network).create_account("paul.dudule@gmail.com")
-			get_network_instance(network).create_account("sophie.dudule@gmail.com",10)
+			get_network_instance(network).create_account("sophie.dudule@gmail.com")
 
 		print("Analyse du réseau "+network)
 		#test_keys(test_client,network,0,"")
@@ -167,7 +168,7 @@ def test_nfts_from_collection(test_client, col_id="", network=MAIN_NETWORK):
 	return rc["nfts"]
 
 
-def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,seuil=1):
+def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,seuil=1,limit=2000):
 	"""
   Récupére les nfts d'une collection ou d'un client
   :param test_client:
@@ -177,7 +178,7 @@ def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,s
 		account = get_account_from_network(test_client, network=network, seuil=1)
 		owner = account["address"]
 
-	rc = call_api(test_client, "nfts/", "account=" + owner + "&network=" + network)
+	rc = call_api(test_client, "nfts/", "account=" + owner + "&network=" + network+"&limit="+str(limit))
 	assert len(rc) >= seuil
 
 	return rc
@@ -191,7 +192,8 @@ def test_find_collection_for_networks(test_client,networks=NETWORKS):
 
 def find_collection_to_mint(test_client, miner:str,network="elrond-devnet"):
 	cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)
-	if len(cols) > 0:
+	if len(cols)==0: return None
+	if "elrond" in network:
 		col_id = None
 		for col in cols:
 			if not col_id:
@@ -199,6 +201,9 @@ def find_collection_to_mint(test_client, miner:str,network="elrond-devnet"):
 					if role["canCreate"] and miner == role["address"]:
 						col_id = col["collection"]
 						return col_id
+	else:
+		return random_from(cols)
+
 	return None
 
 
@@ -238,7 +243,7 @@ def test_api_mint(test_client, miner:Key=None, col_id=MAIN_COLLECTION, network=M
 			col=test_create_collection(test_client,"LaCollec",miner,network)
 			col_id=col["id"]
 
-	if col_id == "":
+	if col_id == "": # and not "elrond" in network:
 		col_id = find_collection_to_mint(test_client, miner.address,network)
 
 	_account=test_get_account(test_client,miner.address,network)
@@ -287,8 +292,12 @@ def test_transfer_all_networks(test_client, networks=NETWORKS):
 	for from_network in networks:
 		for to_network in networks:
 			log("Test du transfer de "+from_network+" vers "+to_network)
-			miner_for_target_network=get_main_account_for_network(to_network)
-			rc=test_transfer_to(test_client,from_network,to_network,miner_for_target_network)
+			miner_for_target_network=random_from(get_network_instance(network=to_network).get_keys())
+			owner=random_from(get_network_instance(network=from_network).get_keys())
+			rc=test_transfer_to(test_client,
+			                    from_network=from_network,to_network=to_network,
+			                    miner_for_target_network=miner_for_target_network,
+			                    owner=owner)
 
 			assert rc, "Le transfert n'a pas eu lieu"
 
@@ -345,20 +354,28 @@ def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette
 
 
 
-def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NETWORK, miner_for_target_network:Key=None, token_id="", dest:Key=None):
+def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NETWORK, miner_for_target_network:Key=None, token_id="", dest:Key=None,owner:Key=None):
 	_from_network=get_network_instance(from_network)
 	_to_network=get_network_instance(to_network)
 
+	if owner is None: owner:Key=random_from(_from_network.get_keys())
+
 	if token_id == "":
-		owner:Key=random_from(_from_network.get_keys())
 		nfts=test_nfts_from_owner(test_client,owner.address,from_network,0)
 		if len(nfts)>0:
-			token_id=random_from(nfts)["address"]
+			for iter in range(50):
+				nft=random_from(nfts)
+				if nft["miner"]==owner.address:break
+			token_id=nft["address"]
+			col_id=nft["collection"]["id"] if "id" in nft["collection"] else ""
 		else:
 			token_id, col_id = test_api_mint(test_client, miner=owner, network=from_network)
 
 	if miner_for_target_network is None:
-		miner_for_target_network=random_from(_from_network.get_keys())
+		if from_network==to_network:
+			miner_for_target_network=owner
+		else:
+			miner_for_target_network=random_from(_from_network.get_keys())
 
 	if dest is None:
 		dest=random_from(_to_network.get_keys())
@@ -372,7 +389,7 @@ def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NET
 	# 	account = get_account_from_network(test_client, network=to_network, seuil=0,filter="")
 	# 	dest = account["address"]
 
-	body={"token_id":token_id,"dest":dest.address,"miner":miner_for_target_network.__dict__}
+	body={"token_id":token_id,"dest":dest.address,"target_miner":miner_for_target_network.__dict__,"from_miner":owner.__dict__}
 	rc = call_api(test_client, "transfer/","from_network=" + from_network + "&to_network=" + to_network,body, method="POST")
 
 	assert not rc is None
@@ -472,6 +489,7 @@ def test_mintpool(test_client, dest=MAIN_ACCOUNT,  target_network=MAIN_NETWORK,s
 
 	miner:Key=random_from(get_network_instance(target_network).get_keys())
 	col = random_from(test_api_get_collections(test_client, target_network, miner.address))
+	assert not col is None,"Pas de collection disponible pour "+str(miner)
 
 	#nft_id,col_id=test_lazymint(test_client,source_network,cols[0]["id"])
 

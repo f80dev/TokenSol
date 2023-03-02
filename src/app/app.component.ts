@@ -76,7 +76,9 @@ export class AppComponent implements AfterContentInit {
     this.user.addr_change.subscribe((r:string)=>{this.sel_addr=r;})
 
     this.network_service.config_loaded.subscribe((r:any)=>{
-      this.user.setProfil(localStorage.getItem("access_code")).finally(()=>{
+      let access_code=localStorage.getItem("access_code") || "";
+      let email=localStorage.getItem("email") || "";
+      this.user.setProfil(email,access_code).finally(()=>{
         this.init_form()
         this.filter_menu();
       });
@@ -97,6 +99,7 @@ export class AppComponent implements AfterContentInit {
     this.items["settings"].actif=connected;
     this.items["keys"].actif=connected;
     this.items["build"].actif=connected;
+    this.items["analytics"].actif=connected;
     this.items["login"].actif=!connected;
     this.items["pool"].actif=connected;
     this.items["_logout"].actif=connected;

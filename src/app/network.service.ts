@@ -146,9 +146,8 @@ export class NetworkService implements OnInit {
   }
 
   encrypte_key(name:string,network:string,privateKey="") {
-    let body={}
-    if(privateKey!="")body={secret_key:privateKey}
-    return this.httpClient.post(this.server_nfluent+"/api/encrypt_key/"+name+"/"+network+"/",body)
+    let body={secret_key:privateKey,alias:name}
+    return this._post("encrypt_key/"+network+"/","",body)
   }
 
 
@@ -367,6 +366,15 @@ export class NetworkService implements OnInit {
       url=this.server_nfluent+url.replace("//","/").replace("/api/api/","/api/")
     }
     return this.httpClient.get<any>(url+"?"+param).pipe(retry(1),timeout(_timeout),catchError(this.handleError))
+  }
+
+
+  _post(url: string, param: string="",body={},_timeout=2000) {
+    if(!url.startsWith("http")){
+      url="/api/"+url;
+      url=this.server_nfluent+url.replace("//","/").replace("/api/api/","/api/")
+    }
+    return this.httpClient.post<any>(url+"?"+param,body).pipe(retry(1),timeout(_timeout),catchError(this.handleError))
   }
 
 
@@ -749,12 +757,12 @@ export class NetworkService implements OnInit {
   }
 
 
-  mint(token:NFT, miner:string, owner:string,operation:string,sign=false, platform:string="nftstorage", network="",storage_file="",encrypt_nft=false){
+  mint(token:NFT, miner:CryptoKey, owner:string,operation:string,sign=false, platform:string="nftstorage", network="",storage_file="",encrypt_nft=false){
     return new Promise((resolve, reject) => {
       this.wait("Minage en cours sur "+network);
       let param="storage_file="+storage_file+"&keyfile="+miner+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network+"&operation="+operation
       param=param+"&encrypt_nft="+encrypt_nft;
-      this.httpClient.post(this.server_nfluent+"/api/mint/?"+param,token).subscribe((r)=>{
+      this.httpClient.post(this.server_nfluent+"/api/mint/?"+param,{nft:token,miner:miner}).subscribe((r)=>{
         this.wait();
         resolve(r);
       },(err)=>{
@@ -904,7 +912,7 @@ export class NetworkService implements OnInit {
   }
 
   get_account(addr: string, network: string) {
-    return this._get("account/"+addr,"network="+network);
+    return this._get("accounts/"+addr,"network="+network);
   }
 
   rescue_wallet(email: string,database_server:string,network:string) {

@@ -62,7 +62,7 @@
   </mat-form-field>
 
   <!--  Slider -->
-  <div *ngIf="max>0 || value_type=='number' || value_type=='slider'">
+  <div *ngIf="value_type=='slider'">
     <table *ngIf="label.length>0" style="width: 100%;"><tr>
       <td></td>
       <td style="text-align: left;"><span class="mat-caption">{{label}}</span></td>

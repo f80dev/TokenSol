@@ -2,15 +2,22 @@
   <div class="titleform">{{title}}</div>
   <div *ngIf="!show_registration">
     <p>Déjà inscrit ?</p>
+    <app-input label="Votre email" width="300px"
+               [value]="email" (valueChange)="email=$event"></app-input>
+    <br>
+
     <app-input label="Votre code d'accès"
                help="Ce code vous as été envoyé sur votre mail à l'inscription"
-               style="font-size: xx-large;width:60%;text-align: center;"
-               maxlength="6" label_button="Se connecter"
-               [value]="access_code" (valueChange)="access_code=$event"
-               (validate)="authent($event)"></app-input>
+               width="300px"
+               maxlength="6"
+               [value]="access_code" (valueChange)="access_code=$event"></app-input>
 
+    <br>
+    <button type="button" mat-button mat-raised-button color="primary"
+            (click)="authent()">
+      Se connecter
+    </button>
 
-    <p style="margin-top: 50px;">Pas encore inscrit ?</p>
 
     <button type="button" mat-button mat-raised-button color="primary"
             (click)="show_registration=true">

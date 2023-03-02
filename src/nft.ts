@@ -1,4 +1,5 @@
 import {Collection} from "./operation";
+import {CryptoKey} from "./tools";
 
 export interface Creator {
   address:string
@@ -81,7 +82,7 @@ export interface NFT {
   address:string | undefined
   royalties:number
   owner:string | undefined
-  miner:string
+  miner:CryptoKey
   marketplace: {
     price: number
     quantity: number

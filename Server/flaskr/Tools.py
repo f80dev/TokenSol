@@ -33,7 +33,7 @@ from fontTools import ttLib
 from pandas import read_excel
 
 from flaskr.secret import USERNAME, PASSWORD, SALT, UNSPLASH_SETTINGS, PIXABAY_SETTINGS
-from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR
+from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR, STATIC_RESSOURCES_DIR
 
 
 def get_hash_from_content(content):
@@ -71,7 +71,7 @@ def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
     for k in dictionnary.keys():
       svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
 
-  filename=get_filename_from_content(svg_code,prefix_name)
+  filename=get_filename_from_content(svg_code,prefix_name,ext="svg")
   with open(dir+filename,"w",encoding="utf8") as file:
     file.writelines(svg_code)
   file.close()
@@ -218,7 +218,7 @@ def get_key_by_name(keys:[],name:str):
   return None
 
 
-def open_html_file(name:str,replace=dict(),domain_appli="",directory="./flaskr/static/"):
+def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_RESSOURCES_DIR):
   """
   ouvre un fichier html et remplace le code avec le dictionnaire de remplacement
   :param name:

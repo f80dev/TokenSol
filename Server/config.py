@@ -2,6 +2,7 @@
 import sys
 from os import environ, path
 from flaskr.secret import MONGO_WEB3_CONNECTION_STRING, MONGO_SERVER_CONNECTION_STRING, MONGO_INITDB_ROOT_PASSWORD
+from flaskr.settings import STATIC_RESSOURCES_DIR
 
 basedir = path.abspath(path.dirname(__file__))
 
@@ -14,7 +15,7 @@ class Config:
   SECRET_KEY = environ.get('SECRET_KEY')
   MENU="creator,collection,keys,mint,build,analytics,pool,rescue,logout,admin,faqs,about,help"
   SESSION_COOKIE_NAME = environ.get('SESSION_COOKIE_NAME')
-  STATIC_FOLDER = "./flaskr/static/"
+  STATIC_FOLDER = STATIC_RESSOURCES_DIR
   CACHE_TYPE="SimpleCache"
   UPLOAD_FOLDER="./temp/"
   APP_NAME="TokenForge"
@@ -41,7 +42,7 @@ class Config:
     "elrond-mainnet",
     "polygon-mainnet",
     "polygon-devnet",
-    "solana-devenet",
+    "solana-devnet",
     "solana-mainnet"
   ]
 

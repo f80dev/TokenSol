@@ -36,3 +36,5 @@ DBNAME_SYSTEM="tokenforge"
 
 MAIL_NEW_ACCOUNT="mail_new_account"
 MAIL_EXISTING_ACCOUNT="mail_existing_account"
+
+STATIC_RESSOURCES_DIR="./flaskr/static/"

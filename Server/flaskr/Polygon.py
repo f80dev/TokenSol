@@ -90,9 +90,13 @@ class Polygon (Network):
 
     rc=[]
     if result.status_code==200:
-      for t in result.json()["result"]:
-        t["explorer"]=self.getExplorer(t["hash"],"tx")
-        rc.append(t)
+      message=result.json()["message"]
+      if message=="NOTOK":
+        raise RuntimeError(result.json()["result"])
+      else:
+        for t in result.json()["result"]:
+          t["explorer"]=self.getExplorer(t["hash"],"tx")
+          rc.append(t)
     return rc
 
 
@@ -134,7 +138,7 @@ class Polygon (Network):
 
 
 
-  def get_nft(self,addr,metadata_timeout=5,attr=True):
+  def get_nft(self,addr,metadata_timeout=2,attr=True):
     contract_addr=addr.split("-")[0]
     log("Récupération du contract "+self.getExplorer(contract_addr))
 
@@ -156,7 +160,8 @@ class Polygon (Network):
              address=addr,
              creators=metadata["creators"] if metadata and "creators" in metadata else [],
              marketplace=metadata["marketplace"] if metadata and "marketplace" in metadata else {"price":0,"quantity":quantity},
-             royalties=100
+             royalties=100,
+             collection=metadata["collection"] if metadata else None
              )
     return _nft
 
@@ -202,6 +207,7 @@ class Polygon (Network):
 
 
   def find_all_contract_for(self,addr):
+    addr=self.toAccount(addr).address
     transactions=self.polygon_scan(addr,action="tokennfttx")
     rc=[]
     for t in transactions:
@@ -210,8 +216,10 @@ class Polygon (Network):
 
   def get_nfts(self,addr,limit=2000,with_attr=False,offset=0,with_collection=False,metadata_timeout=5):
     rc=[]
+    addr=self.toAccount(addr).address
     abi=self.init_contract_interface()["abi"]
-    for contract_addr in self.find_all_contract_for(addr):
+    l_contracts=self.find_all_contract_for(addr)
+    for contract_addr in l_contracts:
       try:
         nft_addr=self.w3.toChecksumAddress(contract_addr)
         contrat=self.w3.eth.contract(address=nft_addr, abi=abi)
@@ -223,7 +231,7 @@ class Polygon (Network):
             rc.append(NFT(address=nft_addr,marketplace={"quantity":balance},owner=addr))
           if len(rc)==limit: break
       except:
-        pass
+        log("Probleme technique de lecture des NFTs")
     return rc
 
 
@@ -269,7 +277,7 @@ class Polygon (Network):
 
 
   def opensea_metadata(self,title="",description="",visual="",
-                       properties=[],animation_url="",collection="",
+                       properties=[],animation_url="",collection:dict={},
                        price=0,quantity=1,creators=[],tags="",
                        from_nft:NFT=None):
     """
@@ -291,7 +299,7 @@ class Polygon (Network):
       tags=from_nft.tags
       price=from_nft.marketplace["price"]
       quantity=from_nft.marketplace["quantity"]
-      collection=from_nft.collection["id"]
+      collection=from_nft.collection
       creators=from_nft.creators
 
     rc={
@@ -302,7 +310,7 @@ class Polygon (Network):
       "name": title,
       "tags":tags,
       "attributes": attributes,
-      "collection":{"name":collection},
+      "collection":collection,
       "marketplace":{"price":price,"quantity":quantity},
       "creators":creators
     }
@@ -315,15 +323,16 @@ class Polygon (Network):
            domain_server="",_metadata=None,price=0,symbol="NFluenToken"):
     #properties["tag"]=tags
     #properties["royalties"]=royalties
-    if _metadata is None: _metadata=self.opensea_metadata(title,description,visual,properties,collection=collection,creators=creators,tags=tags)
+    if _metadata is None:
+      _metadata=self.opensea_metadata(title,description,visual,properties,collection=collection["id"],creators=creators,tags=tags)
 
     cid=storage.add(_metadata)
     contract=self.compile(miner,title,symbol,cid["url"],price)
     tx=self.send_transaction(contract.functions.mintNFTs(quantity),miner)
-    self.approve(contract.address,miner)
+    self.approve(contract.address,miner.address,miner)
 
     if tx is None: return returnError("Erreur de minage")
-    log("NFT disponible à l'adresse : "+contract.address)
+    log("NFT disponible à l'adresse : "+self.getExplorer(contract.address,"token"))
     rc={
       "error":"",
       "tx":tx,
@@ -344,12 +353,15 @@ class Polygon (Network):
     voir https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721-setApprovalForAll-address-bool-
     :param nft_addr:
     :param miner:
+    :param operator: address recevant la possibilité de transfert
     :return:
     """
     addr=self.w3.toChecksumAddress(nft_addr)
     if not self.abi: self.abi=self.init_contract_interface()["abi"]
     _contract=self.w3.eth.contract(address=addr,abi=self.abi)
-    tx=self.send_transaction(_contract.functions.approve(operator,0),miner)
+    #voir https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721-approve-address-uint256-
+    if operator!=miner.address:
+      tx=self.send_transaction(_contract.functions.approve(operator,0),miner)
     return True
 
 
@@ -367,7 +379,8 @@ class Polygon (Network):
 
     owner=contract.functions.ownerOf(0).call()
     if owner!=miner.address:
-      raise RuntimeError("Probleme de propriétaire pour le transfert")
+      #raise RuntimeError("Probleme de propriétaire pour le transfert")
+      log("Le propriétaire n'est pas le mineur")
     rc= self.send_transaction(contract.functions.transferFrom(miner.address,new_owner,0),miner)
     return rc
 
@@ -496,13 +509,23 @@ class Polygon (Network):
 
 
   def get_collections(self, addr="",detail=False,filter_type="NFT"):
-    nfts=self.get_nfts(addr,with_attr=True,with_collection=True,metadata_timeout=1)
+    nfts=self.get_nfts(addr,with_attr=True,with_collection=False,metadata_timeout=1)
     rc=[]
     for nft in nfts:
-      if nft.collection!={}:
-        rc.append(nft["collection"])
+      if nft.collection and nft.collection!={} and not nft.collection in rc:
+        rc.append(nft.collection)
     return rc
 
+
+  def get_balance(self,address):
+    return self.get_account(address).balance
+
+
+  def get_key_with_name(self,name="sophie"):
+    for k in self.get_keys():
+      if k.name==name:
+        return k
+    return None
 
 
   def toAccount(self, addr):
@@ -511,6 +534,10 @@ class Polygon (Network):
     :param addr:
     :return:
     """
-    return self.w3.eth.account(addr)
+    if not addr.startswith("0x"):
+      k=self.get_key_with_name(addr)
+      if k is None: return None
+      addr=k.address
+    return self.w3.eth.contract(address=addr)
 
 

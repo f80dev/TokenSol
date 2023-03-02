@@ -197,7 +197,8 @@ class Mintpool:
 							            target_network_miner=_target_miner,
 							            from_network=src["network"],
 							            target_network=ask["target"]["network"],
-							            target_network_owner=dest,collection=ask["target"]["collection"])
+							            target_network_owner=dest,
+							            collection={"id":ask["target"]["collection"]})
 
 							if not rc or rc["error"]!="":
 								log("Problème de minage voir "+rc["hash"])

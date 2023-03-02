@@ -1,0 +1,17 @@
+<div *ngIf="network && network.length>0">
+    <app-input value_type="list" color="white"
+               *ngIf="network_service.keys.length>0 && network.indexOf('devnet')>-1"
+               label="Clés disponibles"
+               [options]="network_service.keys" value_field="address"
+               [value]="sel_addr"
+               (valueChange)="onChangeKey($event)">
+    </app-input>
+
+    <app-input
+                value_type="text" label="Clé privée"
+                [value]="sel_addr"
+                (valueChange)="onChangeKey($event)">
+    </app-input>
+
+</div>
+

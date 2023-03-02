@@ -263,9 +263,9 @@
     <mat-expansion-panel [expanded]="show_generate">
       <mat-expansion-panel-header>Génération</mat-expansion-panel-header>
 
-      <app-input class="input-number" label="Nombre de NFT a générer"
+      <app-input class="input-number" label="Nombre de NFT à générer"
                  *ngIf="max_nft>0"
-                 [min]="1" [max]="max_nft" maxwidth="500px"
+                 [min]="1" [max]="max_nft" maxwidth="600px"
                  help="Cette quantité est limitée par le nombre de combinaison unique possible"
                  value_type="slider"
                  [value]="sel_config.limit" (valueChange)="sel_config.limit=$event"></app-input>
@@ -348,11 +348,11 @@
       <a [href]="url_collection" mat-button mat-raised-button
          *ngIf="url_collection.length>0"
          target="_blank"
-         title="Télécharger la collection"
-         style="display:inline-block;height: 30px;margin: 10px;"
+         title="Télécharger l'ensemble des visuels dans un fichier zip"
+         style="display:inline-block;height:60px;margin: 10px;"
          download="collection.7z">
-        <div style="display:flex;align-items: center;justify-items:center;">
-          <mat-icon>download</mat-icon>&nbsp;Télécharger
+        <div style="display:flex;align-items: center;justify-items:center;padding: 15px;">
+          <mat-icon>download</mat-icon>&nbsp;Télécharger la collection
         </div>
       </a>
       <br>

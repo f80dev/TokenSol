@@ -70,7 +70,7 @@ class Sticker(Element):
                ext=None,data="",work_dir="./temp/"):
 
     self.work_dir=work_dir
-    if not exists(work_dir): raise RuntimeError("Répertoire de travail innexistant")
+    if not exists(work_dir): raise RuntimeError("Répertoire de travail inexistant")
 
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
     super().__init__(name,ext)
@@ -80,6 +80,7 @@ class Sticker(Element):
 
     if not image is None:
       if type(image)==str:
+        image=image.replace(self.work_dir,"")
         # if image.startswith("./") and not image.startswith(self.work_dir):
         #   raise RuntimeError("Le repertoire de travail doit macher avec les fichiers contenant un chemin")
         self.file=image
@@ -172,6 +173,10 @@ class Sticker(Element):
 
   def is_animated(self):
     if self.image is None or self.image.format is None: return False
+    try:
+      if self.image.is_animated: return True
+    except:
+      return False
     return (self.image.format=="WEBP" or self.image.format=="GIF") and self.image.is_animated
 
 
@@ -231,7 +236,7 @@ class Sticker(Element):
       return (500,500)
 
 
-  def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,prefix_name="svg"):
+  def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,prefix_name="svg") -> Image:
 
     filename,svg_code=save_svg(svg_code=self.text["text"],dir=self.work_dir,dictionnary=dictionnary)
 
@@ -251,13 +256,13 @@ class Sticker(Element):
 
       image.putdata(newImage)
       self.image=image.convert("RGBA")
+      self.image.format="GIF"
       self.text["dimension"]=(self.image.width,self.image.height)
     else:
       self.text["dimension"]=self.extract_dimension_from_svg(svg_code)
-
       self.image=filename
 
-    return self.image
+    return self.image.copy()
 
 
   def clear(self):
@@ -417,6 +422,9 @@ class Sticker(Element):
 
           log("Collage d'une image animé "+str(to_concat)+" sur la base "+str(self))
           self.image=merge_animated_image(self.image,to_concat.image,prefix,temp_dir=self.work_dir)
+          if self.ext=="svg":
+            self.text=""                      #Maintenant l'image n'est plus un SVG
+            self.ext=self.image.format
           to_concat.image.close()
 
         else:
@@ -806,8 +814,12 @@ class ArtEngine:
           elt.open()
 
           #elt.transform(layer.scale,layer.translation)
-          log("Collage de "+str(elt)+" sur "+str(collage))
-          collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)
+          try:
+            log("Collage de "+str(elt)+" sur "+str(collage))
+            collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)
+          except:
+            log("Probleme de génération")
+
           if layer.unique: layer.remove(elt)
 
         elt.close()

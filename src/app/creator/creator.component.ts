@@ -182,7 +182,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
             this.eval_max_nft();
           }else{
             $$("Initialisation d'une nouvelle configuration")
-            this.new_conf("localConfig");
+            this.new_conf("localConfig",true);
           }
         }
       },(err)=>{showError(this,err)});
@@ -339,7 +339,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
             this.sel_config!.data,
             this.sel_config!.data.properties,
             this.sel_webstorage_platform.value);
-        this.url_collection=url;
+        this.url_collection=url.replace("format=preview","format=zip");
 
         this.network._get(url,"",200000).subscribe((r: any) => {
               showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
@@ -573,8 +573,10 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
-  async update_config(sel_config:Configuration | null) {
-    let rep=await _prompt(this,"Charger une nouvelle configuration","","Remplacer votre configuration actuelle ?","","Remplacer","Annuler",true);
+  async update_config(sel_config:Configuration | null,no_prompt=false) {
+    let rep=await _prompt(this,"Charger une nouvelle configuration","",
+        "Remplacer votre configuration actuelle ?","",
+        "Remplacer","Annuler",true, [],no_prompt);
     if(rep=="yes"){
       this.sel_config=sel_config;
       if(this.sel_config){
@@ -732,7 +734,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
 
-  new_conf(new_name:string){
+  new_conf(new_name:string,no_prompt=false){
     this.update_config({
       quality: 98,
       version: 1,
@@ -755,7 +757,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       seed: 0,
       text: {color: "#FFFFFF", fontsize: 12, position_text: {x: 10, y: 10}, text_to_add: "Texte ici",font:{name:"Corbel",file:"corbel.ttf"}},
       location: this.create_location_from_name(new_name)
-    })
+    },no_prompt)
 
     this.add_layer("fond",true);
     this.add_layer("text_logo",true);

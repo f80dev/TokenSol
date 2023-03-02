@@ -8,12 +8,19 @@
   <mat-expansion-panel [expanded]="false">
     <mat-expansion-panel-header>Ouvrir un compte</mat-expansion-panel-header>
     <div style="display: flex;align-items: center;justify-content: center;flex-wrap: wrap;">
-      <app-input label="Coller ici votre clé privée"
+      <app-input label="Coller ici votre clé privée" width="300px"
                  [value]="privateKey" (valueChange)="privateKey=$event"
                  help="Plusieurs formats sont acceptés" maxlength="200"></app-input>
-      <app-input label="Affecter un alias a votre clé"
+      <app-input label="Alias de la clé" width="150px"
                  [value]="name" (valueChange)="name=$event"
-                 help="Nom court" maxlength="200"></app-input>
+                 help="Nom court" maxlength="20"></app-input>
+      <button
+              type="button" aria-label="Ajouter" mat-raised-button color="primary"
+              [disabled]="name=='' || privateKey==''"
+              title="Encripter une clé pour intégration dans un fichier d'opération"
+              (click)="encrypt({name:name,key:privateKey})">
+        <div class="bloc-bouton">Crypter<br>et copier</div>
+      </button>
 
       <button
               type="button" aria-label="Ajouter" mat-raised-button
@@ -22,13 +29,7 @@
         <div class="bloc-bouton">Ajouter à<br>mes clés</div>
       </button>
 
-      <button
-              type="button" aria-label="Ajouter" mat-raised-button
-              [disabled]="name=='' || privateKey==''"
-              title="Encripter une clé pour intégration dans un fichier d'opération"
-              (click)="encrypt({name:name,key:privateKey})">
-        Encrypter
-      </button>
+
     </div>
 
 

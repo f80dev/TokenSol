@@ -14,6 +14,18 @@ export interface CryptoKey {
   unity:string | null
 }
 
+export function newCryptoKey(address="",name="",privateKey="") : CryptoKey {
+  let rc:CryptoKey= {
+    explorer:null, qrcode: "", unity: "",
+    name:name,
+    address:address,
+    privatekey:privateKey,
+    encrypt:null,
+    balance:null
+  }
+  return rc
+}
+
 export function url_wallet(network:string) : string {
   if(network.indexOf("elrond")>-1){
     return network.indexOf("devnet")==-1 ? "https://wallet.elrond.com" : "https://devnet-wallet.elrond.com";
@@ -329,7 +341,7 @@ export function canTransfer(nft:NFT,by_addr:string) : boolean {
   //Détermine si un NFT peut être transférer d'une blockchain à une autre
   if(nft.address && (nft.address.startsWith("db_") || nft.address.startsWith("file_"))){
     if(nft.marketplace?.quantity==0)return false;
-    if(nft.miner!="" && nft.miner!=by_addr)return false;
+    if(nft.miner.address!="" && nft.miner.address!=by_addr)return false;
     return true;
   } else {
     if(by_addr==nft.owner)return true;

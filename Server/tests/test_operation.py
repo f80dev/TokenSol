@@ -1,4 +1,4 @@
-from flaskr.apptools import get_nfts_from_src, async_mint
+from flaskr.apptools import get_nfts_from_src
 from tests.test_tools import *
 
 def test_nfts_from_operation(test_client,operation="Main_devnet"):

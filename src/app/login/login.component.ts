@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {Location} from "@angular/common";
 import {UserProfil, UserService} from "../user.service";
-import {ADDR_ADMIN} from "../../definitions";
 import {decrypt, encrypt, getParams, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
-import {_prompt} from "../prompt/prompt.component";
 import {NetworkService} from "../network.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 
@@ -18,6 +16,7 @@ export class LoginComponent implements OnInit {
   title="";
   show_registration: boolean=false;
   access_code: string="";
+  email: any="";
 
 
   constructor(
@@ -32,16 +31,18 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
       if(params.hasOwnProperty("message") || params.hasOwnProperty("title"))this.title=params["title"] || params["message"];
-      if(localStorage.getItem("access_code")){
-        this.authent(decrypt(localStorage.getItem("access_code")));
-      }
+      this.access_code=decrypt(localStorage.getItem("access_code"));
+      this.email=decrypt(localStorage.getItem("email"));
+      this.authent();
     })
   }
 
-  authent(access_code:string | null) {
-    if(access_code){
-      this.user.setProfil(access_code).then(()=>{
-        localStorage.setItem("access_code",encrypt(access_code));
+  authent() {
+
+    if(this.access_code && this.email){
+      this.user.setProfil(this.email,this.access_code).then(()=>{
+        localStorage.setItem("access_code",encrypt(this.access_code));
+        localStorage.setItem("email",encrypt(this.email));
         //if(this.title.length>0){
           this._location.back()
         // }else{

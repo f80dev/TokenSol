@@ -12,6 +12,7 @@ from io import BytesIO, StringIO
 from os import listdir
 from os.path import exists
 from random import random
+from shutil import copyfile
 from zipfile import ZipFile
 
 import py7zr
@@ -103,7 +104,7 @@ def api_upload_batch():
 @bp.route('/getyaml/<name>/<format>/')
 #http://127.0.0.1:4242/api/getyaml/calvi22/txt/?dir=Operations
 def getyaml(name:str,format=None):
-  dir=request.args.get("dir","./flaskr/static")
+  dir=request.args.get("dir",current_app.config["STATIC_FOLDER"])
   dir=dir+("" if dir.endswith("/") else "/")
   if format is None: format=request.args.get("format","json")
 
@@ -378,10 +379,16 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
 
 
   if format=="zip":
-    archive_file="Collection_"+now("hex")+".7z"
-    with py7zr.SevenZipFile(work_dir+archive_file, 'w') as archive:
+    copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection","./README")
+    files.append("./README")
+    archive_file=BytesIO()
+    with py7zr.SevenZipFile(archive_file, 'w') as archive:
       for f in files:
         archive.write(f)
+
+    archive_file.seek(0)
+    return send_file(archive_file,as_attachment=True,download_name="collection.7z")
+
   else:
     archive_file=""
 
@@ -776,13 +783,14 @@ def transfer_to():
 
   nft_addr=request.json["token_id"]
   to=request.json["dest"]
-  owner=Key(obj=request.json["miner"])
+  owner=Key(obj=request.json["from_miner"])
+  target_miner=Key(obj=request.json["target_miner"])
 
   from_network=request.args.get("from_network","elrond-devnet")
   to_network=request.args.get("to_network","elrond-devnet")
   _ope=get_operation(request.args.get("operation",""))
 
-  rc=transfer(addr=nft_addr,from_network_miner=owner,target_network_owner=to,from_network=from_network,target_network=to_network)
+  rc=transfer(addr=nft_addr,from_network_miner=owner,target_network_owner=to,from_network=from_network,target_network=to_network,target_network_miner=target_miner)
 
   #Création des comptes
   # if "solana" in to_network:
@@ -1666,9 +1674,12 @@ def get_image(cid:str=""):
 
       if cid.startswith("db_"):
         r=DAO(cid=cid).get(cid)
-        data=r["content"]
-        format=data.split("base64,")[0].replace("data:","")
-        f=BytesIO(base64.b64decode(data.split("base64,")[1]))
+        if "content" in r and "base64," in r["content"]:
+          data=r["content"]
+          format=data.split("base64,")[0].replace("data:","")
+          f=BytesIO(base64.b64decode(data.split("base64,")[1]))
+        else:
+          return jsonify(r)
       else:
         #Analyse du cid
         ext=cid.split(".")[1] if "." in cid else "webp"
@@ -1847,9 +1858,11 @@ def api_rescue_wallet(email:str):
 
   
 
-@bp.route('/encrypt_key/<name>/<secret_key>/<network>/',methods=["GET"])
+@bp.route('/encrypt_key/<network>/',methods=["POST"])
 #http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
-def encrypt_key(name:str,secret_key:str,network:str):
+def encrypt_key(network:str):
+  secret_key=request.json["secret_key"]
+  name=request.json["alias"]
   key=Key(name=name,secret_key=secret_key,network=network)
   return jsonify({"encrypt":key.encrypt()})
 

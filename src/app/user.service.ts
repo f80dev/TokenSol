@@ -80,12 +80,12 @@ export class UserService {
     });
   }
 
-  setProfil(access_code:string | null){
+  setProfil(email:string,access_code:string){
     return new Promise((resolve, reject) => {
       if(!access_code){
         reject();
       } else {
-        this.httpClient.get<UserProfil>(this.network.server_nfluent + "/api/login/" + access_code + "/").subscribe((p: UserProfil) => {
+        this.httpClient.get<UserProfil>(this.network.server_nfluent + "/api/login/" + email+"/"+access_code + "/").subscribe((p: UserProfil) => {
           this.profil = p;
           this.profil_change.next(p);
           resolve(p);
@@ -97,7 +97,7 @@ export class UserService {
     });
   }
 
-  init(addr:string,network:string){
+  init(addr:string,network:string,with_collections=true){
     return new Promise((resolve, reject) => {
       this.network.get_account(addr,network).subscribe((r:any)=>{
         this.balance=r.amount;
@@ -112,10 +112,17 @@ export class UserService {
           unity: r.unity
         }
         this.addr=r.address;
-        this.get_collection(this.addr,network).then(()=>{
-          this.addr_change.next(r.address);
-          resolve(r.address);
-        });
+        if(with_collections){
+          this.get_collection(this.addr,network).then(()=>{
+            this.addr_change.next(r.address);
+            resolve(r.address);
+          });
+        } else {
+          this.collections=[];
+        }
+
+      },()=>{
+
       })
     })
   }

@@ -835,7 +835,7 @@ class Elrond(Network):
 
 
 
-  def mint(self, miner:Key, title, description, collection, properties: list,
+  def mint(self, miner:Key, title, description, collection:dict, properties: list,
            storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
            domain_server="",price=0,symbol="NFluentToken"):
     """
@@ -891,7 +891,7 @@ class Elrond(Network):
     #ESDTNFTCreate@4d41434f4c4c4543542d323565666366@01@4d6f6e546f6b656e@09c4@516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252@746167733a3b6d657461646174613a516d5947397a6e724c7a735252594d436d6e52444a7931436f7478676e4a384b6a5668746870485a553775436d59@68747470733a2f2f697066732e696f2f697066732f516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252
 
     data = "ESDTNFTCreate" \
-           + "@" + str_to_hex(collection,False) \
+           + "@" + str_to_hex(collection["id"],False) \
            + "@" + int_to_hex(quantity,2) \
            + "@" + str_to_hex(title, False) \
            + "@" + int_to_hex(royalties*100,4) \
@@ -923,7 +923,7 @@ class Elrond(Network):
     if t is None:
       return {"error":"transaction annulée","hash":""}
 
-    if t["status"]!="success":
+    if t["status"]!="success" or not "logs" in t:
       return {
                "error":hex_to_str(str(base64.b64decode(t["logs"]["events"][0]["data"])).split("@")[1]),
                "hash":t["hash"]
@@ -935,9 +935,9 @@ class Elrond(Network):
     rc={
       "error":"",
       "tx":str(t["hash"]),
-      "result":{"transaction":str(t["hash"]),"mint":collection+"-"+nonce},
+      "result":{"transaction":str(t["hash"]),"mint":collection["id"]+"-"+nonce},
       "balance":0,
-      "link_mint":self.getExplorer(collection+"-"+nonce,"token"),
+      "link_mint":self.getExplorer(collection["id"]+"-"+nonce,"token"),
       "link_transaction":self.getExplorer(t["hash"]),
       "out":"",
       "cost":0,
@@ -985,8 +985,13 @@ class Elrond(Network):
         key=self.find_key(user)
         if key: user=key.name
       else:
-        if len(user)>30 and is_encrypt(user):
-          _user=Account(address=decrypt(user))
+        if len(user)>130:
+          data=decrypt(user)
+          if data.startswith("erd"):
+            _user=Account(address=data)
+          else:
+            _user=Account(address=data[:16])
+            _user.secret_key=data
           return _user
 
 

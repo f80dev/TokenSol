@@ -1,3 +1,5 @@
+<app-hourglass [message]="message" [modal]="true" fontsize="xx-large"></app-hourglass>
+
 <div class="mainform">
 
   <div class="titleform">Minage des NFTs</div>
@@ -6,70 +8,103 @@
   </div>
 
 
-<div *ngIf="user.advance_mode" style="display: flex;justify-content: stretch;align-content: stretch;">
-  <mat-expansion-panel style="margin:10px;" >
-    <mat-expansion-panel-header>Traitement en masse</mat-expansion-panel-header>
-    <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
+  <div *ngIf="user.advance_mode">
+    <mat-expansion-panel style="margin:10px;" >
+      <mat-expansion-panel-header>Traitement en masse</mat-expansion-panel-header>
+      <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
 
-    <app-upload-file (uploaded)="batch_import($event)"
-                     width="100px"
-                     extensions=".xlsx,.xls,.csv">
-      Importer
-    </app-upload-file>
+      <app-upload-file (uploaded)="batch_import($event)"
+                       width="100px"
+                       extensions=".xlsx,.xls,.csv">
+        Importer
+      </app-upload-file>
 
-    <button type="button" mat-button mat-raised-button
-            [cdkCopyToClipboard]="nfts_to_clipboard()"
-            title="Copier la liste des NFT à miner dans le presse-papier"
-            (click)="confirm_clipboard()">
-      Exporter pour Opération
-    </button>
-  </mat-expansion-panel>
+      <button type="button" mat-button mat-raised-button
+              [cdkCopyToClipboard]="nfts_to_clipboard()"
+              title="Copier la liste des NFT à miner dans le presse-papier"
+              (click)="confirm_clipboard()">
+        Exporter pour Opération
+      </button>
+    </mat-expansion-panel>
 
-  <mat-expansion-panel style="margin:10px;" *ngIf="user.advance_mode">
-    <mat-expansion-panel-header>Propriétés avancée</mat-expansion-panel-header>
-    <div id="command_panel" style="display: inline-block;margin:10px;" *ngIf="tokens.length>0">
-      <!--    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>-->
+    <mat-expansion-panel style="margin:10px;" *ngIf="user.advance_mode">
+      <mat-expansion-panel-header>Propriétés avancée</mat-expansion-panel-header>
+      <div id="command_panel" style="display: inline-block;margin:10px;" *ngIf="tokens.length>0">
+        <!--    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>-->
 
-      <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
-        {{create_option.label}}
-      </mat-checkbox>
+        <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
+          {{create_option.label}}
+        </mat-checkbox>
 
-    </div>
+      </div>
 
-  </mat-expansion-panel>
-
-  <mat-expansion-panel style="margin:10px;" *ngIf="sel_target.value=='file'">
-    <mat-expansion-panel-header>Confidentialité</mat-expansion-panel-header>
-    <mat-slide-toggle [(ngModel)]="encrypt_nft">Crypter les NFTs pour le fichier d'operations</mat-slide-toggle>
-  </mat-expansion-panel>
-
-</div>
+      <app-input [options]="network.config['PLATFORMS']" width="320px"
+                 *ngIf="user.advance_mode"
+                 label="Hébergement des documents liés"
+                 [value]="sel_platform_document"
+                 (valueChange)="sel_platform_document=$event"></app-input>
 
 
-  <div style="display: flex;flex-wrap: wrap;align-items: center;">
+    </mat-expansion-panel>
 
+    <mat-expansion-panel style="margin:10px;" *ngIf="sel_target.value=='file'">
+      <mat-expansion-panel-header>Confidentialité</mat-expansion-panel-header>
+      <mat-slide-toggle [(ngModel)]="encrypt_nft">Crypter les NFTs pour le fichier d'operations</mat-slide-toggle>
+    </mat-expansion-panel>
+  </div>
+
+
+
+
+  <mat-expansion-panel [expanded]="tokens.length==0">
+    <mat-expansion-panel-header>Gestion des visuels</mat-expansion-panel-header>
 
     <app-upload-file (uploaded)="onFileSelected($event)"
                      width="180px" [maxsize]="10000000"
-                     extensions=".webp,.png,.gif,.jpeg,.jpg,.json">Charger des visuels
+                     extensions=".webp,.png,.gif,.jpeg,.jpg,.json">
+      Ajouter des NFTs
     </app-upload-file>
 
-
     <app-input [options]="network.config['PLATFORMS']"
-               style="max-width: 170px;" *ngIf="user.advance_mode"
-               label="Plateforme de stockage des visuel"
+               width="220px" *ngIf="user.advance_mode"
+               label="Stockage des visuels"
                [value]="sel_platform"
                (valueChange)="sel_platform=$event"></app-input>
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="clear()">
+      Enlever les NFTs
+    </button>
 
-    <app-input [options]="network.config['PLATFORMS']"
-               style="max-width: 170px;" *ngIf="user.advance_mode"
-               label="Plateforme de stockage des visuel"
-               [value]="sel_platform_document"
-               (valueChange)="sel_platform_document=$event"></app-input>
+
+
+    <button type="button" *ngIf="tokens.length>0"
+            mat-raised-button mat-button
+            style="margin-left: 50px;"
+            title="Mettre les visuels en lignes (en vue du minage)"
+            (click)="upload_all_tokens()">
+      <div class="bloc-button">
+        Mettre en ligne<br>les visuels
+      </div>
+    </button>
+
+
+
+
+  </mat-expansion-panel>
+
+  <mat-expansion-panel *ngIf="tokens.length>0">
+    <mat-expansion-panel-header>Lancement du minage</mat-expansion-panel-header>
+
+    <button type="button" [disabled]="user.key==undefined && network.network.indexOf('database')==-1"
+            mat-raised-button mat-button *ngIf="tokens.length>0" color="primary" style="margin: 50px;"
+            (click)="confirm_mint()">
+      Tout miner
+    </button>
+
 
     <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"
                  [if]="network.isElrond() && !sel_collection"></app-warning>
-
 
 
     <button type="button" mat-icon-button
@@ -92,78 +127,78 @@
                (valueChange)="sel_target=$event"
                [options]="targets"></app-input>
 
-    <div *ngIf="sel_target.value=='blockchain'" style="margin-left: 20px;display: flex;align-items: center;">
+    <div *ngIf="sel_target.value=='blockchain'" style="margin-left: 20px;display: inline-flex;">
       <app-input [value]="sel_network"
-                 label="Sélectionnez une blockchain"
-                 [options]="networks"
+                 label="Blockchain à utiliser"
+                 [options]="networks" width="300px"
                  value_type="list" color="white"
-                 (valueChange)="network.network=$event.value;network.init_keys($event.value);"></app-input>
+                 (valueChange)="updateChain($event)"></app-input>
 
-      <app-input value_type="list" color="white"
-                 *ngIf="network.keys.length>0"
-                 label="Sélectionnez un compte"
-                 [options]="network.keys" value_field="address"
-                 [value]="sel_addr"
-                 (valueChange)="sel_addr=$event;user.init(sel_addr,network.network);">
-      </app-input>
+      <app-selkey *ngIf="network.network" style="width: 200px;"
+                  (addrChange)="updateUser($event)"
+                  [network]="network.network"></app-selkey>
 
-      <app-input label="Collection utilisée" *ngIf="sel_addr.length>0"
-                 [value]="sel_collection" style="max-width: 150px;"
-                 (valueChange)="sel_collection=$event" value_type="list"
+      <app-input label="Collection utilisée"
+                 *ngIf="sel_addr.length>0 && network.isElrond()"
+                 [value]="sel_collection" width="200px"
+                 (valueChange)="changeCollection($event)" value_type="list"
                  [options]="user.collections">
       </app-input>
 
-    </div>
-
-
-
-
-    <div *ngIf="tokens.length>0" style="display: flex;">
-      <button type="button"
-              mat-raised-button mat-button
-              (click)="upload_all_tokens()">
-        Upload visuel
-      </button>
-
-      <button type="button" [disabled]="user.key==undefined && network.network.indexOf('database')==-1"
-              mat-raised-button mat-button
-              (click)="confirm_mint()">
-        Tout miner
-      </button>
-
-      <button type="button"
-              mat-raised-button mat-button
-              (click)="clear()">
-        Effacer
-      </button>
-
-
-      <div *ngIf="user.advance_mode">
-        <button type="button"
-                mat-raised-button mat-button
-                (click)="add_creator()">
-          <mat-icon>add_circle</mat-icon>&nbsp;Créateur
-        </button>
-
-        <button type="button"
-                mat-raised-button mat-button
-                (click)="download_all()">
-          Enregistrer
-        </button>
-
-
-        <button type="button" mat-raised-button mat-button
-                title="Synchronize les paramètres sur l'operation sélectionnée"
-                (click)="sync_on_ope()">
-          Depuis l'opération
-        </button>
-
-      </div>
+      <app-input label="Nom de la collection"
+                 *ngIf="sel_addr.length>0 && !network.isElrond()"
+                 [value]="collection_name" width="300px"
+                 (valueChange)="collection_name=$event">
+      </app-input>
 
     </div>
 
+
+  </mat-expansion-panel>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div *ngIf="user.advance_mode">
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="add_creator()">
+      <mat-icon>add_circle</mat-icon>&nbsp;Créateur
+    </button>
+
+    <button type="button"
+            mat-raised-button mat-button
+            (click)="download_all()">
+      Enregistrer
+    </button>
+
+
+    <button type="button" mat-raised-button mat-button
+            title="Synchronize les paramètres sur l'operation sélectionnée"
+            (click)="sync_on_ope()">
+      Depuis l'opération
+    </button>
 
   </div>
+
+
 
 
   <div *ngIf="content_for_clipboard.length>0">
@@ -251,16 +286,16 @@
       </td>
 
       <td style="max-width: 250px;text-align: left;overflow: hidden;" appFileDragNDrop (filesChangeEmiter)="drop($event,token)">
-          <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
-            <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
-              <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="delete_link(token,file)">cancel</mat-icon>
-              <div (dblclick)="open_document(file)">
-                <div *ngIf="file.indexOf('filename=')>0">{{file.split('filename=')[1]}}</div>
-                <div *ngIf="file.indexOf('filename=')==-1">{{file}}</div>
-              </div>
+        <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
+          <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
+            <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="delete_link(token,file)">cancel</mat-icon>
+            <div (dblclick)="open_document(file)">
+              <div *ngIf="file.indexOf('filename=')>0">{{file.split('filename=')[1]}}</div>
+              <div *ngIf="file.indexOf('filename=')==-1">{{file}}</div>
+            </div>
 
-            </small>
-          </div>
+          </small>
+        </div>
       </td>
 
       <td style="max-width: 50px;">

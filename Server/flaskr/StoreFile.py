@@ -129,14 +129,14 @@ class StoreFile(Network,Storage):
     return rc
 
 
-  def burn(self,nft_addr:str,miner:Key):
+  def burn(self,nft_addr:str,miner:Key,n_burn=1):
     rc=False
     self.read()
     nft=self.get_nft(nft_addr)
     if nft.miner==miner.address:
-      for pos in range(len(self.content["nfts"])):
+      for pos in range(len(self.content["nfts"])-1):
         if self.content["nfts"][pos]["address"]==nft_addr:
-          del self.content["ntfs"][pos]
+          del self.content["nfts"][pos]
           rc=True
 
     self.write()
@@ -182,7 +182,7 @@ class StoreFile(Network,Storage):
            storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
            domain_server="",price=0,symbol="NFluentToken"):
     self.read()
-    nft=NFT(title,miner.address,miner.address,"",{"id":collection},properties,description,tags,visual,creators,"",royalties,
+    nft=NFT(title,miner.address,miner.address,"",collection,properties,description,tags,visual,creators,"",royalties,
             {"quantity":quantity,"price":0},files)
 
     if nft.address=="": nft.address=FILE_PREFIX_ID+now("hex")
