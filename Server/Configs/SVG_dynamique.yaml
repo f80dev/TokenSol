@@ -27,13 +27,9 @@ layers:
     name: fond
     params: {}
     position: 0
-    scale:
-      x: 1
-      y: 1
+    scale: "1,1"
     text: ""
-    translation:
-      x: 0
-      y: 0
+    translation: "0,0"
     unique: false
     width: 800
   - elements:
@@ -50,13 +46,10 @@ layers:
     name: motif
     params: {}
     position: 1
-    scale:
-      x: 1
-      y: 1
+    translation: "0,0"
+    scale: "1,1"
     text: ""
-    translation:
-      x: 0
-      y: 0
+
     unique: false
     width: 800
   - elements:
@@ -87,13 +80,10 @@ layers:
     name: texte
     params: {}
     position: 3
-    scale:
-      x: 1
-      y: 1
     text: ""
-    translation:
-      x: 0
-      y: 0
+    translation: "0,0"
+    scale: "1,1"
+
     unique: false
     width: 800
 limit: 5

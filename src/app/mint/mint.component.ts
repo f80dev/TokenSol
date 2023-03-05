@@ -45,65 +45,92 @@ export class MintComponent implements OnInit {
   sel_network:{label:string,value:string} | undefined;
   networks:any[]=[];
 
+  //Opére le minage.
+  //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
+  create_options: any=[
+    {label:"Create",value:"ESDTRoleNFTCreate"},
+    {label:"Burn",value:"ESDTRoleNFTBurn"},
+    {label:"Update",value:"ESDTRoleNFTUpdateAttributes"},
+    {label:"Add URI",value:"ESDTRoleNFTAddURI"},
+    {label:"TransferRole",value:"ESDTTransferRole"}
+  ]
+  //sel_target: {value:string,label:string}={value:"",label:""};
+  targets=[
+    {label:"blockchain",value:"blockchain",only_advanced:false},
+    {label:"base de données",value:"db-server-nfluent",only_advanced:false},
+    {label:"base décentralisée",value:"db-web3-nfluent",only_advanced:true},
+    {label:"serveur",value:"vile",only_advanced: true},
+    {label:"Prestashop",value:"prestashop",only_advanced:true},
+  ];
+
+  sel_target: { value:string,label:string }=this.targets[0];
+  encrypt_nft: boolean = true;
+  sel_addr: string="";
+  message: string="";
+  collection_name: string = "";
+
   constructor(
-    public toast:MatSnackBar,
-    public network:NetworkService,
-    public dialog:MatDialog,
-    public user:UserService,
-    public operation:OperationService,
-    public _location:Location,
-    public router:Router,
-    public clipboard:Clipboard,
-    public routes:ActivatedRoute,
+      public toast:MatSnackBar,
+      public network:NetworkService,
+      public dialog:MatDialog,
+      public user:UserService,
+      public operation:OperationService,
+      public _location:Location,
+      public router:Router,
+      public clipboard:Clipboard,
+      public routes:ActivatedRoute,
   ) {
     //this.user.addr_change.subscribe((addr)=>{this.init_form();})
     this.sel_platform=this.network.config["PLATFORMS"][0];              //NFTStorage
     this.sel_platform_document=this.network.config["PLATFORMS"][3];     //Server
-
   }
 
 
   ngOnInit(): void {
-
-    getParams(this.routes).then((params:any)=>{
-      if(params.import){this.batch_import_from_url(params.import);}
-      let l_nets=params.networks ? params.networks.split(",") : this.network.config["NETWORKS"]; //Chargement des réseaux autorisé en priorité via les parametres
-      this.networks=l_nets.map((x:any)=>{return {label:x,value:x}});
-    })
     this.init_form();
   }
 
 
   init_form(){
+    let tmp=localStorage.getItem("tokenstoimport");
+    let local_config=JSON.parse(localStorage.getItem("miner_config") || "{}")
 
-      let tmp=localStorage.getItem("tokenstoimport");
-      let local_config=JSON.parse(localStorage.getItem("miner_config") || "{}")
-      this.sel_target=local_config.target || this.targets[0];
-      if(tmp)this.tokens=JSON.parse(tmp);
+    this.targets=this.targets.filter((x)=>{return(this.user.advance_mode || !x.only_advanced)})
 
-      if (this.user.nfts_to_mint.length > 0) {
-        $$("Chargement des NFT depuis la fenetre de création");
-        this.onFileSelected(this.user.nfts_to_mint);
-        this.user.nfts_to_mint=[];
+    this.sel_target=local_config.target || this.targets[0];
+    if(tmp)this.tokens=JSON.parse(tmp);
+
+    if (this.user.nfts_to_mint.length > 0) {
+      $$("Chargement des NFT depuis la fenetre de création");
+      this.onFileSelected(this.user.nfts_to_mint);
+      this.user.nfts_to_mint=[];
+    }
+
+    getParams(this.routes).then((params:any)=> {
+
+      if(params.import){this.batch_import_from_url(params.import);}
+      let l_nets=params.networks ? params.networks.split(",") : this.network.config["NETWORKS"]; //Chargement des réseaux autorisé en priorité via les parametres
+      this.networks=l_nets.map((x:any)=>{return {label:x,value:x}});
+      this.sel_network=local_config.network || this.networks[0];
+
+
+      //Récupération d'une collection en particulier
+      if (params.hasOwnProperty("collection")) {
+        if (this.user.find_collection(params["collection"])) {
+          this.sel_collection = params["collection"];
+        } else {
+          this.sel_collection = local_config.collection || this.user.collections[0];
+        }
       }
 
-      getParams(this.routes).then((params:any)=> {
-        if (params.hasOwnProperty("collection")) {
-          if (this.user.find_collection(params["collection"])) {
-            this.sel_collection = params["collection"];
-          } else {
-            this.sel_collection = local_config.collection || this.user.collections[0];
-          }
+      if (params.hasOwnProperty("files")) {
+        let files = [];
+        for (let f of params["files"]) {
+          files.push({filename: f});
         }
-
-        if (params.hasOwnProperty("files")) {
-          let files = [];
-          for (let f of params["files"]) {
-            files.push({filename: f});
-          }
-          this.onFileSelected(files);
-        }
-      })
+        this.onFileSelected(files);
+      }
+    })
   }
 
 
@@ -236,17 +263,17 @@ export class MintComponent implements OnInit {
   confirm_mint(){
     let nbtokens=this.tokens.length;
     _prompt(this,
-      "Confirmer le minage","",
-      "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.user.key?.name+"</strong> dans la collection "+this.sel_collection?.name +" ?",
-      "","Ok","Annuler",true
-      ).then((rep)=>{
-        if(rep=="yes"){
-          showMessage(this,"Lancement du processus de minage");
-          this.mintfile="sf_"+now()+".yaml";
-          this.message="Production du fichier";
-          this.content_for_clipboard="";
-          this.mint(0);
-        }
+        "Confirmer le minage","",
+        "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.user.key?.name+"</strong> dans la collection "+this.sel_collection?.name +" ?",
+        "","Ok","Annuler",true
+    ).then((rep)=>{
+      if(rep=="yes"){
+        showMessage(this,"Lancement du processus de minage");
+        this.mintfile="sf_"+now()+".yaml";
+        this.message="Production du fichier";
+        this.content_for_clipboard="";
+        this.mint(0);
+      }
     });
   }
 
@@ -349,29 +376,7 @@ export class MintComponent implements OnInit {
 
 
 
-  //Opére le minage.
-  //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
-  create_options: any=[
-    {label:"Create",value:"ESDTRoleNFTCreate"},
-    {label:"Burn",value:"ESDTRoleNFTBurn"},
-    {label:"Update",value:"ESDTRoleNFTUpdateAttributes"},
-    {label:"Add URI",value:"ESDTRoleNFTAddURI"},
-    {label:"TransferRole",value:"ESDTTransferRole"}
-  ]
-  //sel_target: {value:string,label:string}={value:"",label:""};
-  targets=[
-    "blockchain",
-    "db-server-nfluent",
-    "db-web3-nfluent",
-    "file",
-    "prestashop",
-    "db-cloud-nfluent"
-  ].map((x:string)=>{return {value:x,label:x}})
-  sel_target: { value:string,label:string }=this.targets[0];
-  encrypt_nft: boolean = true;
-  sel_addr: string="";
-  message: string="";
-  collection_name: string = "";
+
 
 
   miner(token: NFT) : Promise<any> {
@@ -474,13 +479,13 @@ export class MintComponent implements OnInit {
   add_miner_to_creator(){
     this.dialog.open(PromptComponent,{
       width: 'auto',data:
-        {
-          title: "Royalties pour "+this.user.key?.name,
-          type: "number",
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
+          {
+            title: "Royalties pour "+this.user.key?.name,
+            type: "number",
+            onlyConfirm:false,
+            lbl_ok:"Ok",
+            lbl_cancel:"Annuler"
+          }
     }).afterClosed().subscribe((royalties) => {
       if(royalties){
         for(let t of this.tokens){
@@ -509,26 +514,26 @@ export class MintComponent implements OnInit {
   add_creator() {
     this.dialog.open(PromptComponent,{
       width: 'auto',data:
-        {
-          title: "Adresse du créateur ?",
-          type: "text",
-          result:this.user.key?.address,
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((new_addr:string) => {
-        if (new_addr){
-          for(let t of this.tokens){
-            t.creators.push({
-              verified: 0,
-              address:new_addr,
-              share:0
-            });
+          {
+            title: "Adresse du créateur ?",
+            type: "text",
+            result:this.user.key?.address,
+            onlyConfirm:false,
+            lbl_ok:"Ok",
+            lbl_cancel:"Annuler"
           }
-          this.local_save();
+    }).afterClosed().subscribe((new_addr:string) => {
+          if (new_addr){
+            for(let t of this.tokens){
+              t.creators.push({
+                verified: 0,
+                address:new_addr,
+                share:0
+              });
+            }
+            this.local_save();
+          }
         }
-      }
     );
   }
 
@@ -604,13 +609,13 @@ export class MintComponent implements OnInit {
   edit_attribute(a: { trait_type: string; value: string }) {
     this.dialog.open(PromptComponent,{
       width: 'auto',data:
-        {
-          title: "modifier le trait_type et/ou la valeur",
-          result: a.trait_type+":"+a.value,
-          onlyConfirm: false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
+          {
+            title: "modifier le trait_type et/ou la valeur",
+            result: a.trait_type+":"+a.value,
+            onlyConfirm: false,
+            lbl_ok:"Ok",
+            lbl_cancel:"Annuler"
+          }
     }).afterClosed().subscribe((rep:string) => {
       if(rep){
         a.trait_type=rep.split(":")[0];
@@ -690,7 +695,7 @@ export class MintComponent implements OnInit {
             this.message="Mise en ligne du document";
             this.network.upload(body,this.sel_platform_document.value,file.type).subscribe((r:any)=>{
               this.message="";
-              token.files.push(r.url+"?filename="+encodeURIComponent(file.name));
+              token.files.push(r.url);
               this.local_save();
             });
 
@@ -701,6 +706,10 @@ export class MintComponent implements OnInit {
     } else {
       showMessage(this,"Impossible de mettre en ligne des documents attachés sur la plateforme "+this.sel_platform.label);
     }
+  }
+
+  open_link(token: NFT, file: any) {
+    open(file,"view_document")
   }
 
   delete_link(token: NFT, file: any) {
@@ -718,10 +727,10 @@ export class MintComponent implements OnInit {
           let _n: any = ope.lazy_mining?.networks[0];
           if (_n) {
             this.network.network_change.subscribe(() => {
-                this.user.init(_n.miner,this.network.network).then(()=>{
-                    let index=find(this.user.collections,_n.collection,"id");
-                    if(index>-1)this.sel_collection = this.user.collections[index];
-                })
+              this.user.init(_n.miner,this.network.network).then(()=>{
+                let index=find(this.user.collections,_n.collection,"id");
+                if(index>-1)this.sel_collection = this.user.collections[index];
+              })
             })
             this.network.network = _n.network;
 
@@ -786,5 +795,12 @@ export class MintComponent implements OnInit {
 
   changeCollection($event: any) {
     this.sel_collection=$event
+  }
+
+  show_file(filename: string) : string {
+    if(filename.indexOf("f=")>-1)return(atob(filename.split("f=")[1]));
+    if(filename.indexOf("filename=")>-1)return(filename.split("filename=")[1]);
+    let pos=filename.lastIndexOf("/");
+    return filename.substring(pos+1);
   }
 }

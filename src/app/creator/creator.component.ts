@@ -95,6 +95,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
   message="";
   palette: any={};
   quality: number=95;
+  networks_available:any[]=[]; //Liste des blockchaine autorisées si transfert direct vers le minage
+  stockage_available:any={};
 
   constructor(
       public network:NetworkService,
@@ -163,14 +165,14 @@ export class CreatorComponent implements OnInit,OnDestroy {
     })
 
 
-
     getParams(this.routes).then((params:any)=>{
       if(params.title_form)this.title_form=params.title_form;
-
+      this.networks_available=params.networks || [];
       this.platforms=this.network.config["PLATFORMS"];
       this.webstorage_platform=this.network.config["PLATFORMS"];
       if(this.platforms)this.sel_platform=this.platforms[0];
       this.sel_webstorage_platform=this.webstorage_platform[0];
+      this.stockage_available=params.stockage || "infura";
 
       this.network.list_config().subscribe((r:any)=> {
         if(r){
@@ -250,8 +252,10 @@ export class CreatorComponent implements OnInit,OnDestroy {
         height:this.sel_config.height,
         indexed:true,
         position:this.sel_config!.layers.length,
-        translation: {x:0,y:0},
-        scale: {x:1,y:1}
+        translation: "0,0",
+        scale: "1,1",
+        margin: "0,0",
+        padding: "0,0"
       }
 
 
@@ -259,7 +263,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         this.sel_config!.layers.push(new_layer)
         this.save_config();
       } else {
-        _prompt(this,"Nom du calque ?",name).then((name:string)=> {
+        _prompt(this,"Nom du calque ?",name,"","text","Valider","Annuler",false).then((name:string)=> {
           new_layer.name = name;
           if(names.indexOf(name)==-1){
             this.sel_config!.layers.push(new_layer)
@@ -319,7 +323,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
           if(this.operation!.sel_ope && this.operation!.sel_ope!.nftlive){
             this.sel_config!.data.operation=this.operation.sel_ope?.id;
           }
-          if(!this.sel_config.data.creators || this.sel_config.data.creators.length==0)this.sel_config.data.creators=this.user.addr+":100%";
+          // if(!this.sel_config.data.creators || this.sel_config.data.creators.length==0)
+          //   this.sel_config.data.creators=this.user.addr+":100%";
         }
 
 
@@ -350,8 +355,12 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
               if (direct_mint) {
                 showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
-                this.user.nfts_to_mint = this.previews;
-                this.router.navigate(["mint"]);
+                this.user.nfts_to_mint = r.preview;
+                this.router.navigate(["mint"],{queryParams:{param:setParams({
+                      toolbar: this.user.toolbar_visible,
+                      networks: this.networks_available,
+                      stockage: this.stockage_available
+                    })}});
               } else {
                 this.previews = r.preview;
                 this.show_generate = false;
@@ -438,6 +447,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       $event.stopPropagation();
       if($event.ctrlKey){
         layer.elements.splice(pos,1);
+        this.eval_max_nft();
       }
 
       if($event.altKey){
@@ -446,6 +456,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
           this.network.wait("")
           element.image=result["image"];
           layer.elements[pos]=element;
+          this.eval_max_nft();
         },()=>{this.network.wait("");})
       }
 
@@ -462,6 +473,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         let e=layer.elements[pos-1];
         layer.elements[pos-1]=layer.elements[pos];
         layer.elements[pos]=e;
+        this.eval_max_nft();
       }
 
       this.network.update_layer(layer).subscribe((elements:any)=>{
@@ -487,6 +499,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   delete_layer(layer: Layer) {
     let pos=this.sel_config!.layers.indexOf(layer);
     this.sel_config!.layers.splice(pos,1);
+    this.eval_max_nft();
   }
 
 
@@ -529,8 +542,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
           unique:false,
           indexed:true,
           position:l.position,
-          translation:{x:0,y:0},
-          scale:{x:1,y:1}
+          translation:"0,0",
+          scale:"1,1",
+          margin:"0,0"
         }
 
         if(l["text"]){
@@ -573,11 +587,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
-  async update_config(sel_config:Configuration | null,no_prompt=false) {
-    let rep=await _prompt(this,"Charger une nouvelle configuration","",
-        "Remplacer votre configuration actuelle ?","",
-        "Remplacer","Annuler",true, [],no_prompt);
-    if(rep=="yes"){
+  update_config(sel_config:Configuration | null,no_prompt=false) {
+    // let rep=await _prompt(this,"Charger une nouvelle configuration","",
+    //     "Remplacer votre configuration actuelle ?","oui/non",
+    //     "Remplacer","Annuler",true, [],no_prompt);
+    // if(rep=="yes"){
       this.sel_config=sel_config;
       if(this.sel_config){
         localStorage.setItem("config",stringify(sel_config))
@@ -601,7 +615,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
         this._location.replaceState("/creator");
       }
       this.eval_max_nft();
-    }
   }
 
   check_config(config:any){
@@ -646,8 +659,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   add_serial(layer: Layer) {
-    _prompt(this,"Début de la série","1","","number").then((txtStart:string)=>{
-      _prompt(this,"Fin de la série","100","","number").then((txtEnd:string)=> {
+    _prompt(this,"Début de la série","1","","number","ok","Annuler",false).then((txtStart:string)=>{
+      _prompt(this,"Fin de la série","100","","number","ok","Annuler",false).then((txtEnd:string)=> {
         let modele=this.sel_config!.text.text_to_add;
         if(modele.indexOf("_idx_")==-1)modele=modele+"_idx_";
         this.sel_config!.text.text_to_add="";
@@ -671,6 +684,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
     layer.elements=[];
     this.save_config();
+    this.eval_max_nft();
   }
 
 
@@ -746,7 +760,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         operation: "", properties: "",
         symbol: "token__idx__", title: "",
         tags:"",sequence:[],
-        creators:this.user.addr+":100%"},
+        creators:""},
       attributes: {},
       layers: [],
       limit: 10,
@@ -774,7 +788,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
     if(r=="yes"){
       if(this.user.isConnected()){
-        let name=await _prompt(this,"Nom de la configuration",default_name);
+        let name=await _prompt(this,"Nom de la configuration",default_name,"","text","Commencer","Annuler",false);
         if(!this.find_config(name,"name")){
           this.new_conf(name);
           this.configs.push(this.sel_config!);
@@ -790,14 +804,16 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   async find_image() {
-    let resp=await _prompt(this,"Saisissez un mot clé (de préférence en anglais)")
+    let resp=await _prompt(this,"Saisissez un mot clé (de préférence en anglais)",
+        "rabbit",
+        "Accéder directement à plusieurs moteurs de recherche d'image","text",
+        "Rechercher","Annuler",false)
     open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
     open("https://giphy.com/search/"+resp,"giphy")
     open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
     open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
     open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
     open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
-    open(""+resp+"/","search_pexels")
   }
 
 
@@ -899,20 +915,13 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
 
-
-  transform(layer: Layer) {
-    if(!layer.translation)layer.translation={x:0,y:0};
-    if(!layer.scale)layer.scale={x:1,y:1};
-
-    _prompt(this,"Translation (x,y) ?",layer.translation.x+","+layer.translation.y).then((translation:any)=>{
-      layer.translation.x=Number(translation.split(",")[0]);
-      layer.translation.y=Number(translation.split(",")[1]);
-
-      _prompt(this,"Echelle (x,y) ?",layer.scale.x+","+layer.scale.y).then((scale:any)=> {
-        layer.scale.x = Number(scale.split(",")[0]);
-        layer.scale.y = Number(scale.split(",")[1]);
-      });
-    })
+  async transform(layer: Layer) {
+    if(!layer.translation)layer.translation="0,0"
+    if(!layer.scale)layer.scale="1,1";
+    if(!layer.margin)layer.margin="0,0";
+    layer.translation=await _prompt(this,"Translation (x,y) ?",layer.translation)
+    layer.scale=await _prompt(this,"Echelle (x,y) ?",layer.scale)
+    layer.margin=await _prompt(this,"Marge (x,y) ?",layer.margin)
   }
 
 
@@ -967,13 +976,18 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   search_images(layer: Layer) {
-    _prompt(this,"Recherche d'images","background","Votre requête en quelques mots (ANGLAIS de préférence)","text","Rechercher","Annuler").then((query:string)=>{
+    _prompt(this,"Recherche d'images","background",
+        "Votre requête en quelques mots en ANGLAIS de préférence (ajouter 'sticker' pour des images transparentes)",
+        "text",
+        "Rechercher",
+        "Annuler",false).then((query:string)=>{
       this.network.search_images(query,(layer.position>0)).subscribe((r:any)=>{
         _prompt(this,"Choisissez une ou plusieurs images","","","images","Sélectionner","Annuler",false,r.images).then((images:string)=>{
           for(let link of images){
             layer.elements.push({image:link});
           }
           this.save_config();
+          this.eval_max_nft()
         })
       })
     })
@@ -981,7 +995,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   edit_name(layer: Layer) {
-    _prompt(this,"Changer le nom de la couche",layer.name).then((new_name:string)=>{
+    _prompt(this,"Changer le nom de la couche",layer.name,"","text","Enregistrer","Annuler",false).then((new_name:string)=>{
       layer.name=new_name;
     })
   }
@@ -990,6 +1004,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   //   let sample=this.samples[Math.trunc(Math.random()*this.samples.length)].value;
   //   this.build_sample(sample.layers,sample.data,false);
   // }
+  w_data_field: string="350px"
 
 
   publish(platform="nfluent",to_clipboard=true) {
@@ -1002,5 +1017,10 @@ export class CreatorComponent implements OnInit,OnDestroy {
         resolve(rc);
       });
     });
+  }
+
+  download_collection() {
+    open(this.url_collection)
+    showMessage(this,"Votre collection est en cours de préparation");
   }
 }

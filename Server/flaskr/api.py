@@ -219,7 +219,8 @@ def layers(body=None):
   layer=Layer(name,
               position=position,
               unique=(body["unique"] if "unique" in body else False),
-              indexed=(body["indexed"] if "indexed" in body else True)
+              indexed=(body["indexed"] if "indexed" in body else True),
+              scale=body["scale"],translation=body["translation"],margin=body["margin"]
               )
 
   elts=body["elements"]
@@ -1861,6 +1862,11 @@ def api_rescue_wallet(email:str):
 @bp.route('/encrypt_key/<network>/',methods=["POST"])
 #http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
 def encrypt_key(network:str):
+  '''
+  Encrypt une clé privée pour intégration dans un fichier d'opération
+  :param network:
+  :return:
+  '''
   secret_key=request.json["secret_key"]
   name=request.json["alias"]
   key=Key(name=name,secret_key=secret_key,network=network)
@@ -2508,10 +2514,16 @@ def validators(validator=""):
 @bp.route('/registration/<email>/',methods=["GET"])
 def api_registration(email:str):
   rc=DAO(config=current_app.config).registration(email,current_app.config["DEFAULT_PERMISSIONS"])
-  send_mail(open_html_file("mail_registration",{
-    "tokenforge_url":current_app.config["DOMAIN_APPLI"],
-    "access_code":rc["access_code"]
-  }),_to=email,subject="Inscription à tokenforge")
+  if "already" in rc["message"]:
+    send_mail(open_html_file("resend_mail_registration",{
+      "tokenforge_url":current_app.config["DOMAIN_APPLI"],
+      "access_code":rc["access_code"]
+    }),_to=email,subject="Renvoi du code d'accès")
+  else:
+    send_mail(open_html_file("mail_registration",{
+      "tokenforge_url":current_app.config["DOMAIN_APPLI"],
+      "access_code":rc["access_code"]
+    }),_to=email,subject="Inscription à tokenforge")
   return jsonify(rc)
 
 
@@ -2566,7 +2578,8 @@ def api_search_image():
   :return:
   """
   query=request.args.get("query")
-  rc=queryPixabay(query)+queryUnsplash(query)
+
+  rc=queryPixabay(query,limit=20 if "sticker" in query else 10)+queryUnsplash(query,limit=0 if "sticker" in query else 10)
   return jsonify({"images":rc})
 
 

@@ -6,7 +6,8 @@ export function _prompt(vm:any,title:string,_default:string="",description="",_t
                         force_yes=false):Promise<string> {
   //permet d'afficher une boite de dialog
   return new Promise((resolve, reject) => {
-    if(_type=="yesorno" || _type=="boolean" || _type=="bool")onlyConfirm=true;
+    if(_type=="yesorno" || _type=="oui/non" || _type=="boolean" || _type=="bool")onlyConfirm=true;
+    if(_default.length>0)onlyConfirm=false;
     if(force_yes){
       resolve("yes");
     } else {

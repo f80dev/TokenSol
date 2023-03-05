@@ -142,7 +142,7 @@ def test_create_sticker(section="backgrounds",index=0):
   for index in range(len(IMAGES[section])):
     can_strech=(index % 2==0)
     sticker=Sticker(name="background",image=get_image(section=section,index=index),work_dir=TEMP_TEST_DIR)
-    sticker.to_square(can_strech=can_strech)
+    sticker.to_square(can_strech=can_strech,extend=sticker.is_transparent())
     assert not sticker is None
     assert not can_strech or abs(sticker.image.height-sticker.image.width)<10
 

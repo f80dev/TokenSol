@@ -3,6 +3,7 @@ import {ActivatedRoute} from "@angular/router";
 import {Location} from "@angular/common";
 import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
+import {getParams} from "../../tools";
 
 
 @Component({
@@ -23,23 +24,24 @@ export class FaqsComponent implements AfterContentInit {
 
   ngAfterContentInit(): void {
     this.network.getfaqs().subscribe((rc:any)=>{
-      var params= this.route.snapshot.queryParamMap;
-      this.faqs=[];
+      getParams(this.route).then((params:any)=>{
+        this.faqs=[];
 
-      for(let faq of rc.content) {
-        if (!params.has("open") || faq["index"].indexOf(params.get("open")) > -1) {
-          faq.visible = params.has("open");
+        for(let faq of rc.content) {
+          if (!params.has("open") || faq["index"].indexOf(params.get("open")) > -1) {
+            faq.visible = params.has("open");
 
-          for(let i=0;i<5;i++){
-            faq.title=faq.title.replace("{{appname}}",environment.appname);
-            faq.content=faq.content.replace("{{appname}}",environment.appname);
-          }
+            for(let i=0;i<5;i++){
+              faq.title=faq.title.replace("{{appname}}",environment.appname);
+              faq.content=faq.content.replace("{{appname}}",environment.appname);
+            }
 
-          if(this.filter.length==0 || this.filter.indexOf(faq.index)>-1){
-            this.faqs.push(faq);
+            if(this.filter.length==0 || this.filter.indexOf(faq.index)>-1){
+              this.faqs.push(faq);
+            }
           }
         }
-      }
+      })
     });
     }
 

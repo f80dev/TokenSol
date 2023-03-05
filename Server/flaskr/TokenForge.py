@@ -68,7 +68,10 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",dom
 
   if platform.startswith("db-"):
     cid=DAO(network=platform,domain_server=domain_server).add(data)
-    rc={"cid":cid["cid"],"url":cid["url"] if "url" in cid else ""}
+    rc={
+      "cid":cid["cid"],
+      "url":cid["url"]+"?f="+str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "url" in cid else ""
+      }
 
 
   if platform=="server" or platform.startswith("nfluent") or platform=="file":
@@ -91,15 +94,18 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",dom
       return StoreFile(domain_server=domain_server).add(data)
 
 
-
   if platform=="nftstorage":
     if "content" in data:
       rc=NFTStorage().add(data["content"],data["type"])
     else:
       rc=NFTStorage().add(data)
 
+
+
   if platform=="googlecloud":
     rc=GoogleCloudStorageTools().add(data,id)
+
+
 
   if platform.startswith("github"):
     try:

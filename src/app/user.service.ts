@@ -44,6 +44,8 @@ export class UserService {
   balance: number=0;
   nfts_to_mint: any[]=[]
   advance_mode:boolean=false;
+  toolbar_visible: string="true";
+  appname: string=environment.appname;
 
   constructor(
     private httpClient: HttpClient,
@@ -152,8 +154,9 @@ export class UserService {
   }
 
   hasPerm(perm: string) {
-    if(this.profil.perms.indexOf("admin"))return true;
-    return this.profil.perms.indexOf(perm.toLowerCase())>-1;
+    if(this.profil.perms.indexOf("admin")>-1)return true; //L'admin a toutes les permissions
+    let rc=this.profil.perms.indexOf(perm.toLowerCase())>-1;
+    return rc
   }
 
 

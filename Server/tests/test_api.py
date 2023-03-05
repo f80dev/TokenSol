@@ -302,7 +302,15 @@ def test_transfer_all_networks(test_client, networks=NETWORKS):
 			assert rc, "Le transfert n'a pas eu lieu"
 
 
-def test_registration_and_login(test_client,email=MAIN_EMAIL,with_delete=True):
+def test_delete_user(test_client,email=MAIN_EMAIL):
+	rc=call_api(test_client,"registration/"+email+"/")
+	assert "email" in rc
+	rc=call_api(test_client,"delete_user/"+email+"/"+rc["access_code"]+"/",method="DELETE")
+	assert "deleted" in rc["message"]
+	return rc
+
+
+def test_registration_and_login(test_client,email=MAIN_EMAIL):
 	rc=call_api(test_client,"registration/"+email+"/")
 	assert "email" in rc
 	assert "alias" in rc
@@ -313,11 +321,7 @@ def test_registration_and_login(test_client,email=MAIN_EMAIL,with_delete=True):
 	assert "email" in account
 	assert account["email"]==encrypt(email,short_code=40)
 
-	if with_delete:
-		rc=call_api(test_client,"/delete_user/"+email+"/"+rc["access_code"]+"/",method="DELETE")
-		return rc
-	else:
-		return account
+	return account
 
 
 
@@ -574,7 +578,7 @@ def test_encrypt_keys(test_client):
 	for network in NETWORKS:
 		log("Encryptage de clé sur le réseau "+network)
 		key:Key=random_from(get_network_instance(network).get_keys())
-		rc=call_api(test_client,"encrypt_key/"+key.name+"/"+key.secret_key+"/"+key.network+"/")
+		rc=call_api(test_client,"encrypt_key/"+key.network+"/","",{"alias":key.name,"secret_key":key.secret_key})
 		assert not rc is None
 		assert len(rc["encrypt"])>0
 

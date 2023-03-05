@@ -1,13 +1,13 @@
 <app-splash *ngIf="showSplash"
-            [appname]="appname"
+            [appname]="user.appname"
             [image]="visual"
             [description]="claim"></app-splash>
 
-<mat-toolbar class="mat-body-2" color="primary" *ngIf="toolbar_visible=='true' && !showSplash">
+<mat-toolbar class="mat-body-2" color="primary" *ngIf="user.toolbar_visible=='true' && !showSplash">
   <mat-icon (click)="drawer!.toggle()" *ngIf="device.isHandset$ | async">menu</mat-icon>
 
   <div *ngIf="!(device.isHandset$ | async)" style="margin-left: 10px;">
-      {{network_service.config.title | async}}<br>
+      {{user!.appname}}<br>
       <small *ngIf="network_service.config.version?.length>0">v{{network_service.config.version | async}}</small>
   </div>
 
@@ -48,7 +48,7 @@
   <mat-sidenav #drawer class="sidenav sidemenu"
                [attr.role]="(device.isHandset$ | async) ? 'dialog' : 'navigation'"
                [mode]="(device.isHandset$ | async) ? 'over' : 'side'"
-               [opened]="(device.isHandset$ | async) === false && toolbar_visible=='true'">
+               [opened]="(device.isHandset$ | async) === false && user.toolbar_visible=='true'">
 
     <app-menu [items]="items" [status]="status"
               [with_label]="full_menu"

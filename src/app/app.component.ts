@@ -21,8 +21,6 @@ export class AppComponent implements AfterContentInit {
   @ViewChild('drawer', {static: false}) drawer: MatSidenav | undefined;
 
   networks:any[]=[];
-  toolbar_visible: string="true";
-  appname:string=environment.appname;
   claim:string="";
   visual:string="";
   operations: any;
@@ -64,7 +62,11 @@ export class AppComponent implements AfterContentInit {
     //   this.items["rescue"].actif=(operation!=null && operation.sel_ope!=null && operation.sel_ope.id.length>0);
     // })
 
-    this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.toolbar_visible=="true")this.drawer.toggle();})
+    this.user.profil_change.subscribe(()=>{
+      this.update_menu();
+    })
+
+    this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.user.toolbar_visible=="true")this.drawer.toggle();})
     this.device.smallScreen.subscribe((r:boolean)=>{this.full_menu=!r;})
 
     this.network_service.network_change.subscribe((network_name:string)=>{
@@ -146,17 +148,14 @@ export class AppComponent implements AfterContentInit {
     getParams(this.routes).then((params:any)=>{
 
       this.visual=params["visual"] || environment.splash_visual;
-      this.appname=params["appname"] || environment.appname;
       this.claim=params["claim"] || environment.claim;
+      this.network_service.server_nfluent=params["server"] || environment.server;
 
       this.load_mode();
 
-      if(params.hasOwnProperty("server")){
-        this.network_service.server_nfluent=params["server"];
-      }
-
       let network_name=params["network"] || this.networks[0].value;
       let index=find(this.networks,{value:network_name,label:network_name},"value");
+
       this.network_service.network=network_name;
       this.sel_network=this.networks[index];
 
@@ -168,18 +167,19 @@ export class AppComponent implements AfterContentInit {
         this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{
           this.network_service.init_keys(this.network_service.network);
         });
-      } else {
-        // let key=localStorage.getItem("addr") || "";
-        // if(key.length>0){
-        //   $$("Récupération de la clé "+key+" depuis les cookies")
-        //   this.user.init(key);
-        // }
       }
 
-      setTimeout(()=>{this.showSplash=false;},1000);
+      setTimeout(()=>{this.showSplash=false;},1500);
 
       this.network_service.version=params["version"] || "main";
-      this.toolbar_visible=params.hasOwnProperty("toolbar") ? params["toolbar"] : "true";
+
+      if(!params.hasOwnProperty("appname") && !params.hasOwnProperty("toolbar")){
+        this.router.navigate(["pagenotfound"],{queryParams:{message:"Parametre de l'application incorrect"}})
+      }
+
+      this.user.toolbar_visible=params["toolbar"] ? "true" : "false";
+      this.user.appname=params["appname"]
+
       this.update_menu();
 
     }).catch(

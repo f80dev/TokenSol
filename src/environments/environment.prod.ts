@@ -8,7 +8,8 @@ export const environment = {
   appname:"TokenForge",
   splash_visual:"./assets/forge.jpg",
   appli:"https://tokenforge.nfluent.io",
-  wallet:"https://wallet.nfluent.io"
+  wallet:"https://wallet.nfluent.io",
+  website:"https://nfluent.io"
 };
 
 //server:"https://server.f80lab.com:4242",

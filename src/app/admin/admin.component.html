@@ -92,7 +92,7 @@
           <button mat-raised-button mat-button
                   style="margin: 10px;"
                   title="Ouvrir l'application"
-                  (click)="open_appli()">
+                  (click)="open_appli(appli_addr)">
             Ouvrir
           </button>
         </td>
@@ -117,27 +117,39 @@
 
 
   <mat-expansion-panel>
-    <mat-expansion-panel-header>Déploiement de l'outil de création</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Déploiement de l'application</mat-expansion-panel-header>
     <table>
       <tr>
-        <td style="width: 400px;">
-          <app-input label="Titre de l'application" [value]="creator_title" (valueChange)="creator_title=$event;refresh();"></app-input>
-          <app-input [value]="appli_addr" label="Adresse de l'application" (valueChange)="appli_addr=$event;refresh();"></app-input>
-          <app-input [value]="intro_visual" label="Visuel d'introduction" (valueChange)="intro_visual=$event;refresh();"></app-input>
-          <app-input [value]="intro_claim" label="Phrase d'introduction" (valueChange)="intro_claim=$event;refresh();"></app-input>
-          <app-input [value]="intro_appname" label="Nom de l'application" (valueChange)="intro_appname=$event;refresh();"></app-input>
-          <app-input [value]="sel_networks" [multiselect]="true" [options]="networks"
+        <td>
+          <table>
+            <tr *ngFor="let url of urls">
+              <td>{{url.title}}</td>
+              <td></td>
+              <td>
+                <button mat-raised-button (click)="copy_appli(url)">Copier</button>
+                <button mat-raised-button (click)="open_appli(url)">Ouvrir</button>
+                <button mat-raised-button (click)="share_appli(url)">Partager</button>
+              </td>
+            </tr>
+          </table>
+        </td>
+
+        <td style="width: 70%;">
+          <app-input [width]="w" label="Titre de l'application" [value]="creator_title" (valueChange)="creator_title=$event;refresh();"></app-input>
+          <app-input [width]="w" [value]="appli_addr" label="Adresse de l'application" (valueChange)="appli_addr=$event;refresh();"></app-input>
+          <app-input [width]="w" [value]="intro_visual" label="Visuel d'introduction" (valueChange)="intro_visual=$event;refresh();"></app-input>
+          <app-input [width]="w" [value]="intro_claim" label="Phrase d'introduction" (valueChange)="intro_claim=$event;refresh();"></app-input>
+          <app-input [width]="w" [value]="intro_appname" label="Nom de l'application" (valueChange)="intro_appname=$event;refresh();"></app-input>
+
+          <app-input [width]="w" [value]="sel_networks" [multiselect]="true" [options]="networks"
                      label="Blockchains disponibles"
                      (valueChange)="sel_networks=$event;refresh();"></app-input>
+
+          <app-input [width]="w" [value]="sel_stockage" [options]="stockages"
+                     label="Platforme de stockage"
+                     (valueChange)="sel_stockage=$event;refresh();"></app-input>
         </td>
-        <td>
-          <app-input [rows]="15" [value]="code_creator" width="400px" label="Appli de création des NFTs"></app-input>
-          <app-input [rows]="15" [value]="code_miner" width="400px" label="Appli de création des NFTs"></app-input>
-        </td>
-        <td>
-          <a [href]="code_creator" target="_blank" style="margin: 10px;">Tester la création de NFT</a><br>
-          <a [href]="code_miner" target="_blank" style="margin: 10px;">Tester le minage</a>
-        </td>
+
       </tr>
     </table>
 

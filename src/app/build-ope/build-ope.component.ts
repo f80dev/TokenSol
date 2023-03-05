@@ -14,7 +14,7 @@ import {NFT} from "../../nft";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {get_in, Operation} from "../../operation";
-import {parse, stringify} from "yaml";
+import {parse} from "yaml";
 
 @Component({
   selector: 'app-build-ope',

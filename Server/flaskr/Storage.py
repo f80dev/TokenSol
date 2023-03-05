@@ -13,3 +13,6 @@ class Storage:
 
 	def rem(self,key):
 		pass
+
+	def burn(self,key):
+		self.rem(key)

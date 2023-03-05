@@ -1,6 +1,6 @@
 <app-hourglass [message]="message" [modal]="true" fontsize="xx-large"></app-hourglass>
 
-<div class="mainform">
+<div class="mainform" style="margin:0px;">
   <div class="titleform">{{title_form}}</div>
   <div class="subtitleform" *ngIf="sel_config && sel_config.message && sel_config.message!.length>0">
     {{sel_config!.message}}
@@ -8,69 +8,67 @@
   </div>
   <mat-expansion-panel [expanded]="!sel_config">
     <mat-expansion-panel-header>Gestion des configurations</mat-expansion-panel-header>
-    <table>
-      <tr>
-        <th>Charger une configuration</th>
-        <th *ngIf="sel_config">Enregistrer la configuration</th>
-      </tr>
-      <tr style="width: 100%;text-align: center;">
-        <td style="width:70%;">
-          <div style="display: flex;flex-wrap: wrap;align-items: center;justify-content: center;">
-            <app-upload-file (uploaded)="on_upload_config($event)"
-                             format="text" [maxsize]="1000000"
-                             title="Chargée une configuration depuis votre ordinateur"
-                             extensions=".yaml">
-                Importer
-            </app-upload-file>
 
 
-<!--            <button type="button" mat-raised-button mat-button (click)="online_config()"-->
-<!--                    *ngIf="user.advance_mode"-->
-<!--                    title="Permet d'utiliser un fichier en ligne avec son url">-->
-<!--              {{"Fichier en ligne" | screencutter:"En ligne"}}-->
-<!--            </button>-->
 
-            <button type="button" mat-raised-button mat-button (click)="reset()">
-              Nouveau
-            </button>
-
-            <br>
-            <div *ngIf="configs.length>0" style="display: flex;align-items: center;">
-              <app-input value_type="list" [options]="configs"
-                         [value]="sel_config"
-                         label="Charger des exemples"
-                         (valueChange)="update_config($event)"
-                         style="width: 200px;">
-              </app-input>
-            </div>
+    <div style="display: flex;flex-wrap: wrap;align-items: center;justify-content: center;">
+      <app-upload-file (uploaded)="on_upload_config($event)"
+                       format="text" [maxsize]="1000000"
+                       title="Chargée une configuration depuis votre ordinateur"
+                       extensions=".yaml">
+        <small>Importer depuis<br>votre terminal</small>
+      </app-upload-file>
 
 
-            <!--            <button type="button" mat-raised-button mat-button *ngIf="sel_config" (click)="clone()">-->
-<!--              Cloner-->
-<!--            </button>-->
-          </div>
-        </td>
+      <!--            <button type="button" mat-raised-button mat-button (click)="online_config()"-->
+      <!--                    *ngIf="user.advance_mode"-->
+      <!--                    title="Permet d'utiliser un fichier en ligne avec son url">-->
+      <!--              {{"Fichier en ligne" | screencutter:"En ligne"}}-->
+      <!--            </button>-->
 
-        <td style="width:30%;" *ngIf="sel_config">
+      <button type="button" mat-raised-button mat-button (click)="reset()">
+        Nouveau
+      </button>
 
-          <button type="button" mat-raised-button mat-button (click)="save_config(true)">
-            Enregistrer
-          </button>
+      <br>
+      <div *ngIf="configs.length>0" style="display: flex;align-items: center;">
+        <app-input value_type="list" [options]="configs"
+                   [value]="sel_config"
+                   label="Voir des exemples"
+                   (valueChange)="update_config($event)"
+                   style="width: 300px;">
+        </app-input>
+      </div>
 
-          <button type="button" mat-raised-button mat-button (click)="publish('nftstorage')">
-            Publier
-          </button>
+
+      <!--            <button type="button" mat-raised-button mat-button *ngIf="sel_config" (click)="clone()">-->
+      <!--              Cloner-->
+      <!--            </button>-->
 
 
-        </td>
-      </tr>
-    </table>
+
+      <div style="width:30%;" *ngIf="sel_config">
+
+        <button type="button" mat-raised-button mat-button (click)="save_config(true)"
+        title="Enregristrer cette configuration sur votre terminal">
+          Enregistrer cette configuration
+        </button>
+
+        <button type="button" mat-raised-button mat-button (click)="publish('nftstorage')"
+                *ngIf="user.advance_mode"
+                title="Permet de mettre en ligne cette configuration (pour usage dans les configurations)">
+          Publier
+        </button>
+      </div>
+    </div>
+
+
 
   </mat-expansion-panel>
 
 
   <!--  Travail sur les textes -->
-  <div *ngIf="sel_config">
+  <div *ngIf="sel_config" >
     <mat-expansion-panel [expanded]="show_addtext!=null" *ngIf="user.advance_mode">
       <mat-expansion-panel-header>Ajout de texte</mat-expansion-panel-header>
       <table style="width: 100%;vertical-align: middle;">
@@ -134,7 +132,6 @@
             <input type="number" [(ngModel)]="sel_config!.text!.fontsize"  style="width:50px;">
             <br>
 
-
           </td>
           <td>
 
@@ -146,7 +143,7 @@
       </table>
     </mat-expansion-panel>
 
-    <mat-expansion-panel [expanded]="show_conception">
+    <mat-expansion-panel [expanded]="show_conception" style="margin: 0;padding:0;">
       <mat-expansion-panel-header>Visuels / Images</mat-expansion-panel-header>
       <div style="display: flex;flex-wrap: wrap;align-items: center;">
         <button type="button" mat-raised-button mat-button (click)="add_layer()">
@@ -185,14 +182,14 @@
 
       <br>
 
-      <table style="padding: 2px;width:100%;margin:0;">
+      <table style="padding: 0;width:100%;margin:0;">
         <tr>
           <th *ngIf="!(device.isHandset$ | async) && user.advance_mode">Nom</th>
           <th>Commandes</th>
-          <th></th>
           <th>
             <small>
-              Faites glisser des images depuis l'explorateur ou cliquer sur une image + CTRL pour la supprimer ou SHIFT pour la déplacer
+              {{"Faites glisser des images depuis l'explorateur ou cliquer sur une image + CTRL pour la supprimer ou SHIFT pour la déplacer" | screencutter:"Calques"}}
+
             </small>
           </th>
         </tr>
@@ -206,32 +203,38 @@
             <span style="font-size: x-small;">{{layer.elements?.length}} éléments</span>
           </td>
 
-          <td style="width: 150px;" >
+          <td style="width: 150px;text-align: left;line-height: 85%;" >
 
-            <app-upload-file (uploaded)="on_upload($event,layer)" icon="image"
-                             [maxsize]="100000000"
-                             title="Charger une image depuis votre ordinateur"
-                             extensions=".png,.psd,.webp,.gif,.jpg,.svg,.yaml">
-            </app-upload-file>
-            <div style="width: 100%;display: flex;flex-wrap: wrap;justify-content: center;align-items: center;" *ngIf="user.advance_mode">
-              <mat-icon style="cursor: pointer;" (click)="add_link(layer)" title="Inclure une image sous forme d'une adresse internet">link</mat-icon>
-              <mat-icon style="cursor: pointer;" (click)="generate(layer)" title="Inclure du texte">notes</mat-icon>
-              <mat-icon style="cursor: pointer;" (click)="apply_filter(layer)" title="Appliquer des filtres">filter</mat-icon>
-              <mat-icon style="cursor: pointer;" (click)="paste_picture(layer)" title="Coller une image contenu dans le presse-papier">content_paste</mat-icon>
-              <mat-icon style="cursor: pointer;" (click)="generate_with_color(layer)" title="Générer des copies par variation de couleurs">palette</mat-icon>
-              <mat-icon style="cursor: pointer;" (click)="transform(layer)" title="Régler l'échelle et la position">edit</mat-icon>
+            <div style="display: flex;flex-wrap: wrap;justify-content: center;align-items: center;">
+              <app-upload-file (uploaded)="on_upload($event,layer)" icon="image"
+                               [maxsize]="100000000" style="display: inline-flex;"
+                               title="Charger une image depuis votre ordinateur"
+                               extensions=".png,.psd,.webp,.gif,.jpg,.svg,.yaml">
+              </app-upload-file>
+              <div *ngIf="user.advance_mode">
+                <mat-icon style="cursor: pointer;" (click)="add_link(layer)" title="Inclure une image sous forme d'une adresse internet">link</mat-icon>
+                <mat-icon style="cursor: pointer;" (click)="generate(layer)" title="Inclure du texte">notes</mat-icon>
+                <mat-icon style="cursor: pointer;" (click)="apply_filter(layer)" title="Appliquer des filtres">filter</mat-icon>
+                <mat-icon style="cursor: pointer;" (click)="paste_picture(layer)" title="Coller une image contenu dans le presse-papier">content_paste</mat-icon>
+                <mat-icon style="cursor: pointer;" (click)="generate_with_color(layer)" title="Générer des copies par variation de couleurs">palette</mat-icon>
+                <mat-icon style="cursor: pointer;" (click)="transform(layer)" [title]="'Translation '+layer.translation+' et échelle '+layer.scale">edit</mat-icon>
+              </div>
+              <mat-icon style="cursor: pointer;" *ngIf="layer.position>0" (click)="update_position(layer,-1)">arrow_circle_up</mat-icon>
+              <mat-icon style="cursor: pointer;" *ngIf="layer.position<sel_config!.layers.length-1"  (click)="update_position(layer,+1)">arrow_circle_down</mat-icon>
+              <mat-icon style="cursor: pointer;" (click)="search_images(layer)" title="Chercher des images dans une banque">image_search</mat-icon>
+              <mat-icon style="cursor: pointer;" (click)="delete_layer(layer)" *ngIf="layer.elements!.length==0" title="Effacer la ligne">cancel</mat-icon>
+              <mat-icon style="cursor: pointer;" (click)="clear_layer(layer)" *ngIf="layer.elements!.length>0" title="Effacer tous les éléments">delete</mat-icon>
+
             </div>
-            <mat-icon style="cursor: pointer;" *ngIf="layer.position>0" (click)="update_position(layer,-1)">arrow_circle_up</mat-icon>
-            <mat-icon style="cursor: pointer;" *ngIf="layer.position<sel_config!.layers.length-1"  (click)="update_position(layer,+1)">arrow_circle_down</mat-icon>
-            <mat-icon style="cursor: pointer;" (click)="search_images(layer)" title="Chercher des images dans une banque">image_search</mat-icon>
-            <mat-icon style="cursor: pointer;" (click)="delete_layer(layer)" *ngIf="layer.elements!.length==0" title="Effacer la ligne">cancel</mat-icon>
-            <mat-icon style="cursor: pointer;" (click)="clear_layer(layer)" *ngIf="layer.elements!.length>0" title="Effacer tous les éléments">delete</mat-icon>
+
+            <div style="line-height: 75%;">
+              <mat-checkbox  [(ngModel)]="layer.indexed" (ngModelChange)="eval_max_nft()">Dans l'unicité</mat-checkbox><br>
+              <mat-checkbox style="margin-top: -10px;" [(ngModel)]="layer.unique" (ngModelChange)="eval_max_nft()">Usage unique</mat-checkbox>
+            </div>
+
+
           </td>
 
-          <td style="width:100px">
-            <mat-checkbox style="margin-top: 10px;" [(ngModel)]="layer.indexed" (ngModelChange)="eval_max_nft()">Dans l'unicité</mat-checkbox><br>
-            <mat-checkbox style="margin-top: 10px;" [(ngModel)]="layer.unique" (ngModelChange)="eval_max_nft()">Usage unique</mat-checkbox>
-          </td>
 
           <td style="text-align: left;"
               appFileDragNDrop (filesChangeEmiter)="drop(layer,$event)"
@@ -239,11 +242,11 @@
 
             <div *ngFor="let elt of layer.elements?.slice(0,sel_config.max_items)"
                  title="Cliquer pour voir à l'échelle 1:1"
-                 style="display: inline-block;margin: 5px;">
+                 style="display: inline-block;margin: 5px;max-width: 100px;max-height: 100px;cursor: pointer;width:20%;height:100%;">
               <img *ngIf="elt?.image?.length>0"
                    [src]="elt.image"
                    alt="En cours de chargement"
-                   style="width: 100px;height: 100px;cursor: pointer;"
+                   style="width: 100%;"
                    [style.background-color]="backcolor" class="mat-elevation-z4"
                    (mousedown)="modify_element($event,layer,elt)"
                    (dblclick)="open_file(elt)">
@@ -257,10 +260,9 @@
 
     </mat-expansion-panel>
 
-
     <!--  preview-->
 
-    <mat-expansion-panel [expanded]="show_generate">
+    <mat-expansion-panel [(expanded)]="show_generate">
       <mat-expansion-panel-header>Génération</mat-expansion-panel-header>
 
       <app-input class="input-number" label="Nombre de NFT à générer"
@@ -325,6 +327,7 @@
 
             <button type="button" mat-raised-button mat-button color="primary"
                     title="Déclenche la génération, la mise en ligne des visuels et bascule dans la fenêtre de minage"
+                    *ngIf="networks_available.length>0 || user.isConnected()"
                     (click)="generate_collection('upload',true)">
               Générer & Miner
             </button>
@@ -345,16 +348,14 @@
 
     <mat-expansion-panel [expanded]="previews && previews.length>0">
       <mat-expansion-panel-header>Résultats / Prévisualisation</mat-expansion-panel-header>
-      <a [href]="url_collection" mat-button mat-raised-button
+      <button (click)="download_collection()" mat-raised-button
          *ngIf="url_collection.length>0"
-         target="_blank"
          title="Télécharger l'ensemble des visuels dans un fichier zip"
-         style="display:inline-block;height:60px;margin: 10px;"
-         download="collection.7z">
-        <div style="display:flex;align-items: center;justify-items:center;padding: 15px;">
+         style="display:inline-block;height:60px;margin: 10px;">
+        <div style="display:flex;align-items: center;justify-items:center;">
           <mat-icon>download</mat-icon>&nbsp;Télécharger la collection
         </div>
-      </a>
+      </button>
       <br>
 
       <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
@@ -363,8 +364,7 @@
       </div>
     </mat-expansion-panel>
 
-
-    <mat-expansion-panel *ngIf="user.isConnected()">
+    <mat-expansion-panel >
       <mat-expansion-panel-header>Datas</mat-expansion-panel-header>
       <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
 
@@ -381,48 +381,48 @@
 
       <br><br>
 
-      <div style="display: flex;flex-direction: column;width:100%;">
+      <div style="display: flex;flex-direction: row;justify-content: center;width: 90%;flex-wrap: wrap;">
 
-        <div style="display: flex;flex-direction: row;align-content: stretch;">
+        <app-input label="Titre du NFT" [width]="w_data_field"
+                   help="le champs __idx__ permet d'intégrer le numéro du NFT"
+                   [value]="sel_config.data.title"
+                   (valueChange)="sel_config.data.title=$event">
+        </app-input>
 
-          <app-input label="Titre" width="300px"
-                     [value]="sel_config.data.title" (valueChange)="sel_config.data.title=$event">
-          </app-input>
+        <app-input label="Mots clés associés (tags)" [width]="w_data_field"
+                   help="Séparer les tags par une virgule"
+                   [value]="sel_config.data.tags"
+                   (valueChange)="sel_config.data.tags=$event">
+        </app-input>
+
+        <app-input label="Description"
+                   help="le champs __idx__ permet d'intégrer le numéro du NFT"
+                   [value]="sel_config.data.description"
+                   [width]="w_data_field"
+                   (valueChange)="sel_config.data.description=$event">
+        </app-input>
 
 
-          <app-input label="Mots clés associés (tags)" width="150px"
-                     help="Séparer les tags par une virgule"
-                     [value]="sel_config.data.tags" (valueChange)="sel_config.data.tags=$event"></app-input>
-
-          <app-input label="Description" [value]="sel_config.data.description" width="300px"
-                     (valueChange)="sel_config.data.description=$event">
-
-          </app-input>
-
-        </div>
-
-
-
-
-        <app-input *ngIf="!network.isElrond()" label="Symbole" [value]="sel_config.data.symbol" (valueChange)="sel_config.data.symbol=$event"></app-input>
-
+        <app-input *ngIf="!network.isElrond()" label="Symbole"
+                   [value]="sel_config.data.symbol"
+                   (valueChange)="sel_config.data.symbol=$event">
+        </app-input>
 
         <app-input label="Propriétés / Attributs" [value]="sel_config!.data.properties"
-                   (valueChange)="sel_config!.data.properties=$event"
-                   help="Le format est 'nom_attribut=valeur' avec un attribut par ligne"
-                   [rows]="4" [cols]="40"></app-input>
+                   (valueChange)="sel_config!.data.properties=$event" [width]="w_data_field"
+                   help="Respectez le format est '<nom_attribut>=<valeur_attribut>' et un seul attribut par ligne"
+                   [rows]="4"></app-input>
 
-        <app-input label="Liens / Fichiers" help="Placer un seul lien par ligne"
+        <app-input label="Liens / Fichiers" help="Placer un seul lien par ligne" [width]="w_data_field"
                    [value]="sel_config!.data.files" (valueChange)="sel_config!.data.files=$event"
-                   [rows]="4" [cols]="40"></app-input>
+                   [rows]="4"></app-input>
 
         <app-input label="Créateurs" [value]="sel_config!.data.creators"
-                   (valueChange)="sel_config!.data.creators=$event"
+                   (valueChange)="sel_config!.data.creators=$event" [width]="w_data_field"
                    help="Chaque ligne contient <adresse du créateur>=<pourcentage de royalties>%"
-                   [rows]="4" [cols]="40"></app-input>
-
-
+                   [rows]="4" ></app-input>
       </div>
+
 
 
       <br>

@@ -71,6 +71,7 @@
                [value]="sel_platform"
                (valueChange)="sel_platform=$event"></app-input>
     <button type="button"
+            *ngIf="tokens.length>0"
             mat-raised-button mat-button
             (click)="clear()">
       Enlever les NFTs
@@ -103,16 +104,6 @@
     </button>
 
 
-    <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"
-                 [if]="network.isElrond() && !sel_collection"></app-warning>
-
-
-    <button type="button" mat-icon-button
-            title="Voir les collections disponibles"
-            (click)="open_collections()">
-      <mat-icon>visibility</mat-icon>
-    </button>
-
     <button type="button" mat-icon-button
             title="Copier l'identifiant de la collection sélectionnée"
             *ngIf="sel_collection"
@@ -138,39 +129,34 @@
                   (addrChange)="updateUser($event)"
                   [network]="network.network"></app-selkey>
 
-      <app-input label="Collection utilisée"
-                 *ngIf="sel_addr.length>0 && network.isElrond()"
-                 [value]="sel_collection" width="200px"
-                 (valueChange)="changeCollection($event)" value_type="list"
-                 [options]="user.collections">
-      </app-input>
+      <div *ngIf="sel_addr && sel_addr.length>0">
+        <app-input label="Collection utilisée"
+                   *ngIf="network.isElrond()"
+                   [value]="sel_collection" width="200px"
+                   (valueChange)="changeCollection($event)" value_type="list"
+                   [options]="user.collections">
+        </app-input>
+        <button type="button" mat-icon-button
+                title="Voir les collections disponibles"
+                (click)="open_collections()">
+          <mat-icon>visibility</mat-icon>
+        </button>
 
-      <app-input label="Nom de la collection"
-                 *ngIf="sel_addr.length>0 && !network.isElrond()"
-                 [value]="collection_name" width="300px"
-                 (valueChange)="collection_name=$event">
-      </app-input>
+        <app-input label="Nom de la collection"
+                   *ngIf="!network.isElrond()"
+                   [value]="collection_name" width="300px"
+                   (valueChange)="collection_name=$event">
+        </app-input>
+        <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"
+                     [if]="network.isElrond() && !sel_collection"></app-warning>
+
+      </div>
+
 
     </div>
 
 
   </mat-expansion-panel>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -227,7 +213,7 @@
         Fichiers / Liens
       </th>
       <th>
-        Price / Quantity
+        Price / Quantity / Royalties
         <mat-icon title="recopie les attributs du premier NFT sur les autres"
                   style="cursor: pointer;font-size: medium;"
                   (click)="clone_marketplace()">refresh</mat-icon>
@@ -288,34 +274,36 @@
       <td style="max-width: 250px;text-align: left;overflow: hidden;" appFileDragNDrop (filesChangeEmiter)="drop($event,token)">
         <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
           <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
-            <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="delete_link(token,file)">cancel</mat-icon>
-            <div (dblclick)="open_document(file)">
-              <div *ngIf="file.indexOf('filename=')>0">{{file.split('filename=')[1]}}</div>
-              <div *ngIf="file.indexOf('filename=')==-1">{{file}}</div>
+            <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="open_link(token,file)" [title]="file">visibility</mat-icon>
+            <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left: -6px;" (click)="delete_link(token,file)">cancel</mat-icon>
+            <div (dblclick)="open_document(file)" style="margin-left: -5px;">
+              {{show_file(file)}}
             </div>
 
           </small>
         </div>
       </td>
 
-      <td style="max-width: 50px;">
-        <table>
+      <td style="max-width: 50px;text-align: center;">
+        <table style="text-align: center;display: inline-block;">
           <tr>
-            <td>Price</td>
+            <td>P =</td>
             <td><input matInput type="number" style="max-width: 50px;text-align: right;" min="0" [(ngModel)]="token.marketplace!.price" ></td>
             <td>€</td>
+            <td style="width: 25px"></td>
           </tr>
           <tr>
-            <td>Quantity</td>
+            <td>Q =</td>
             <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" [(ngModel)]="token.marketplace!.quantity" ></td>
+            <td style="width: 25px"></td>
           </tr>
           <tr>
-            <td>
-              Royalties
-            </td>
+            <td>R =</td>
             <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" max="100" [(ngModel)]="token.royalties" ></td>
             <td>
               %
+            </td>
+            <td style="width: 25px">
               <app-warning help="En l'état les créateurs ne reçoivent aucune royalties"
                            [if]="token.creators.length>0 && token.royalties==0"></app-warning>
             </td>
@@ -347,10 +335,7 @@
         <mat-icon style="cursor: pointer" (click)="miner(token)"
                   title="minage du NFT"
                   *ngIf="user.key && !token.address">build</mat-icon>
-        <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0"
-                  (click)="see_in_hub(token)">
-          visibility
-        </mat-icon>
+        <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0" (click)="see_in_hub(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <app-upload-file title="Associer un fichier d'attributs"
                          (uploaded)="onUploadXMP($event,token)"

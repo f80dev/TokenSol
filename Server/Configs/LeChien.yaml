@@ -28,13 +28,10 @@ layers:
     name: fond
     params: {}
     position: 0
-    scale:
-      x: 1
-      y: 1
+    translation: "0,0"
+    scale: "1,1"
     text: ""
-    translation:
-      x: 0
-      y: 0
+
     unique: false
     width: 800
   - params: {}
@@ -54,12 +51,7 @@ layers:
     height: 800
     indexed: true
     position: 1
-    translation:
-      x: 0
-      y: 0
-    scale:
-      x: 1
-      y: 1
+
   - elements:
       - image: https://bafybeigpydpub6izkzglaugs24gog7e7eqah46ro3mcn2gp5boi5tgv2ye.ipfs.nftstorage.link
         name: dog
@@ -68,13 +60,11 @@ layers:
     name: texte
     params: {}
     position: 3
-    scale:
-      x: 1
-      y: 1
+    translation: "0,0"
+    scale: "1,1"
+
     text: ""
-    translation:
-      x: 0
-      y: 0
+
     unique: false
     width: 800
 limit: 5

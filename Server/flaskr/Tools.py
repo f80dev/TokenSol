@@ -504,7 +504,11 @@ def queryPixabay(query:str,limit:int=10,quality:bool=False,square=False):
   :param quality: permet de restreindre la recherche aux photos de l'éditeur
   :return: liste au format json des urls des photos correspondantes à la requête
   """
-  url=PIXABAY_SETTINGS["endpoint"]+"?per_page="+str(limit)+"&image_type=photo&key=" + PIXABAY_SETTINGS["key"] + "&q=" + query
+  if limit==0: return []
+  params=("&colors=transparent" if "sticker" in query else "")
+  if len(query.split(" "))>1: query=query.replace("sticker","").replace("transparent","")
+
+  url=PIXABAY_SETTINGS["endpoint"]+"?per_page="+str(limit)+"&key=" + PIXABAY_SETTINGS["key"] + params + "&q=" + query
   if quality:url=url+"&editors_choice=true"
 
   rc=[]
@@ -524,6 +528,7 @@ def queryUnsplash(query,limit=10,square=False):
   :param query:  contient le mot clé à utiliser pour rechercher les images
   :return: liste au format json des urls des photos correspondant à la requête
   """
+  if limit==0: return []
   url = UNSPLASH_SETTINGS["endpoint"] \
         + "search/photos?query="+query+"&per_page=" \
         +str(limit)+"&client_id=" + UNSPLASH_SETTINGS["key"]+("&orientation=squarish" if square else "")

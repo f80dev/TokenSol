@@ -12,8 +12,8 @@
                maxlength="6"
                [value]="access_code" (valueChange)="access_code=$event"></app-input>
 
-    <br>
-    <button type="button" mat-button mat-raised-button color="primary"
+    <br>    <br>    <br>
+    <button type="button" mat-button mat-raised-button
             (click)="authent()">
       Se connecter
     </button>
@@ -24,9 +24,19 @@
       S'inscrire
     </button>
 
+    <br><br>
+    <br><br>
+
+    <span (click)="resend_code()" style="cursor: pointer;font-style: oblique;">
+      Code d'accès oublié
+    </span>
+
+
+
   </div>
 
-  <app-authent [showEmail]="true" style="max-width: 700px;width: 80%;display: inline-block;"
+  <app-authent [showEmail]="true"
+               style="max-width: 700px;width: 80%;display: inline-block;"
                intro_message="Indiquer votre mail pour recevoir votre code d'accès"
                *ngIf="show_registration"
                [showGoogle]="true" [showCancel]="true"

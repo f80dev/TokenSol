@@ -126,6 +126,23 @@ class Sticker(Element):
       self.image=Image.new("RGBA",dimension)
 
 
+  def is_transparent(self):
+    if self.image.info.get("transparency", None) is not None:
+      return True
+    if self.image.mode == "P":
+      transparent = self.image.info.get("transparency", -1)
+      for _, index in self.image.getcolors():
+        if index == transparent:
+          return True
+    elif self.image.mode == "RGBA":
+      extrema = self.image.getextrema()
+      if extrema[3][0] < 255:
+        return True
+
+    return False
+
+
+
   def get_ext(self,ext:str,image:str) -> str:
     if ext is None:
       ext="webp"
@@ -180,7 +197,7 @@ class Sticker(Element):
     return (self.image.format=="WEBP" or self.image.format=="GIF") and self.image.is_animated
 
 
-  def to_square(self,can_strech=True):
+  def to_square(self,can_strech=True,extend=False):
     """
     Faire un crop carré
     :param can_strech:
@@ -193,7 +210,8 @@ class Sticker(Element):
         new_size=(width if width>height else int(width*1.1),height if height>width else int(height*1.1))
         self.image.resize(new_size)
         width, height = self.image.size
-      new_dimension=min(width, height)
+
+      new_dimension=max(width, height) if extend else min(width, height)
       left = (width - new_dimension)/2
       top = (height - new_dimension)/2
       right = (width + new_dimension)/2
@@ -220,11 +238,15 @@ class Sticker(Element):
     return self.image
 
 
-  def transform(self,scale,translation):
-    if scale!=(1,1) or translation!=(0,0):
+  def transform(self,scale,translation,margin):
+    if scale!=[1,1] or translation!=[0,0]:
       if ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
         offset=(translation[0]/self.image.width,translation[1]/self.image.height)
         pad(self.image,size=(self.image.width*scale[0],self.image.height*scale[1]),color=None,centering=(offset[0]+0.5,offset[1]+0.5))
+
+    if margin!=[0,0] and self.is_transparent():
+      self.image = self.image.crop((-margin[0], -margin[1], self.image.width+margin[0], self.image.height+margin[1]))
+
 
 
   def extract_dimension_from_svg(self,svg_code:str) -> (int,int):
@@ -426,13 +448,11 @@ class Sticker(Element):
             self.text=""                      #Maintenant l'image n'est plus un SVG
             self.ext=self.image.format
           to_concat.image.close()
-
         else:
-          to_concat.to_square()
+          to_concat.to_square(can_strech=True,extend=to_concat.is_transparent())
           log("Collage d'une image fixe ...")
           if not self.is_animated():
             log("... sur une base fixe")
-
             to_concat_resize=to_concat.image.resize(self.image.size).convert("RGBA")
             self.image.alpha_composite(to_concat_resize)
           else:
@@ -607,13 +627,14 @@ class TextElement(Element):
 
 
 class Layer:
-  def __init__(self,name="",element=None,position=0,unique=False,indexed=True,work_dir="./temp"):
+  def __init__(self,name="",element=None,position=0,unique=False,indexed=True,scale="1,1",translation="0,0",margin="0,0",work_dir="./temp"):
     self.elements:[Element]=[]
     self.name=name if len(name)>0 else str(now())
     self.unique=unique if type(unique)!=str else False
     self.indexed=indexed if type(indexed)!=str else False
-    self.scale=(1,1)
-    self.translation=(0,0)
+    self.scale=[float(x) for x in scale.split(",")]
+    self.translation=[float(x) for x in translation.split(",")]
+    self.margin=[float(x) for x in margin.split(",")]
     self.position=position
     self.work_dir=work_dir
     if element:self.add(element)
@@ -813,7 +834,7 @@ class ArtEngine:
           if layer.indexed or layer.unique: name.append(elt.name)
           elt.open()
 
-          #elt.transform(layer.scale,layer.translation)
+          elt.transform(layer.scale,layer.translation,layer.margin)
           try:
             log("Collage de "+str(elt)+" sur "+str(collage))
             collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)

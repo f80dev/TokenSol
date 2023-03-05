@@ -91,7 +91,7 @@ def get_nfts_from_src(srcs,collections=None,with_attributes=False) -> list[NFT]:
       if not "limit" in src: src["limit"]=10000
       owner=src["owner"] if "owner" in src else None
 
-      _network=get_network_instance(src["network"])
+      _network=get_network_instance(src["network"] if "network" in src else src["connexion"])
       if "collection" in src:
         nfts=nfts+_network.get_nfts_from_collections(src["collection"])
       else:
@@ -274,6 +274,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
         if not tx_transfer or len(tx_transfer["error"])>0:
           rc["error"]=tx_transfer["error"]
           return rc
+        nft.owner=owner
 
   if "solana" in network.network.lower():
     #voir https://metaboss.rs/mint.html
@@ -284,9 +285,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
       network.sign(rc["result"]["mint"],signers)
 
 
-
   # Transfert des NFTs vers la base de données
-
   rc["cost"]=network.get_account(miner.address).amount-old_amount
   rc["link"]=network.getExplorer(nft.address,"nfts")
 

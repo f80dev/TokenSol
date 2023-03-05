@@ -3,6 +3,7 @@ from json import dumps
 
 import requests.api
 
+from flaskr.Keys import Key
 from flaskr.settings import NFT_STORAGE_KEY
 
 

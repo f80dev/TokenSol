@@ -45,6 +45,18 @@ content:
       ici description de la procédure de validation
       "
 
+  - index: mint_target
+    title: A quoi corresponde les différentes cible pour le minage
+    order: 0
+    format: html
+    content: "
+      TokenForge permet de stocker les NFT fabriquer dans différents dispositif.
+      <ul>
+      <li>Une blockchain :  dans ce cas le NFT est miné, au moment de l'acquisition on procéde à un transfert de propriété</li>
+      <li>Une base de données :  dans ce cas le NFT est stocké dans une base de données et ne sera miné qu'au moment de son acquisition par le propriétaire</li>
+      </ul>
+    "
+
   - index: checkpoint
     title: Qu'est-ce qu'un point de contrôle d'accès ?
     order: 0

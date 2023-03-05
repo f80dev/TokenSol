@@ -355,10 +355,9 @@ class DAO(Storage,Network):
         "alias":email.split("@")[0],
         "routes":[],
         "perms":perms,
-        "access_code":encrypt(access_code,short_code=6)
+        "access_code":access_code
       }
       rc=self.db["users"].insert_one(obj)
-      obj["access_code"]=access_code
 
     del obj["_id"]
     return obj
@@ -455,8 +454,11 @@ class DAO(Storage,Network):
     if access_code is None:return False
     user=self.get_user(email,access_code)
     if user:
+      log("Suppression de "+email)
       rc=self.db["users"].delete_one({"email":user["email"],"access_code":user["access_code"]})
       return rc.deleted_count==1
+    else:
+      log("Impossible de supprimer "+user+" inexistant ou access_code incorrect")
     return False
 
   def set_access_code(self, email,access_code, new_access_code):

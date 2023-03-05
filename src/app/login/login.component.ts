@@ -51,6 +51,8 @@ export class LoginComponent implements OnInit {
       },(err:any)=>{
         showMessage(this,err.error);
         this.show_registration=false;
+        localStorage.removeItem("access_code");
+        localStorage.removeItem("email");
         this.access_code="";
       });
     }
@@ -61,6 +63,16 @@ export class LoginComponent implements OnInit {
     this.network.registration($event.address).subscribe((p:UserProfil)=>{
       this.show_registration=false;
       showMessage(this,"Consultez votre boite mail pour récupérer votre code d'accès");
+    })
+  }
+
+  resend_code() {
+    if(this.email.length==0){
+      showMessage(this,"Renseigner votre mail afin de recevoir votre code d'accès sur votre boite mail")
+      return;
+    }
+    this.network.registration(this.email).subscribe(()=>{
+      showMessage(this,"Consulter votre boite mail pour retrouver votre code d'accès à TokenForge")
     })
   }
 }

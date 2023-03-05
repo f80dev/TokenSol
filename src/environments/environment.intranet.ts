@@ -12,7 +12,8 @@ export const environment = {
   server:"http://192.168.3.7:4242",
   appname:"TokenForge",
   appli:"http://127.0.0.1:4200",
-  wallet:"http://127.0.0.1:4200"
+  wallet:"http://127.0.0.1:4200",
+  website:"https://nfluent.io"
 };
 
 /*

@@ -3,6 +3,8 @@ import {UserService} from "../user.service";
 import {setParams, showError, showMessage} from "../../tools";
 import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
+import {Clipboard} from "@angular/cdk/clipboard";
+import {NgNavigatorShareService} from "ng-navigator-share";
 
 interface ConfigServer {
   Server:string
@@ -42,12 +44,18 @@ export class AdminComponent implements OnInit {
   intro_claim: string = "Fabriquer vos séries NFT en quelques minutes";
   intro_appname:string="TokenForge Design";
   networks: any;
+  stockages:any;
   sel_networks: any[]=[];
+  sel_stockage:any;
+  urls: any[] = [];
+  w="550px";
 
 
   constructor(
     public user:UserService,
-    public network:NetworkService
+    public network:NetworkService,
+    public clipboard:Clipboard,
+    public ngShare:NgNavigatorShareService
   ) {
     this.reset();
   }
@@ -60,6 +68,11 @@ export class AdminComponent implements OnInit {
     this.network.info_server().subscribe((infos:any)=>{
       this.server_config=infos;
       this.networks=this.network.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
+      this.stockages=[
+        {label:"Infura",value:"infura"},
+        {label:"Serveur",value:"server"},
+        {label:"Base",value:"db-server-nfluent"}
+      ]
     },(err)=>{
       showMessage(this,"Problème de connexion serveur")
       showError(this,err);
@@ -129,27 +142,61 @@ export class AdminComponent implements OnInit {
 
   }
 
-  open_appli() {
-    open(this.appli_addr,"Test application")
+  open_appli(url:any) {
+    open(url.url,"Test application")
   }
 
   update_code_creator() {
-    this.code_creator=this.appli_addr+"/creator?param="+setParams({
-      toolbar:false,
-      title_form:this.creator_title,
-      claim:this.intro_claim,
-      visual:this.intro_visual,
-      appname:this.intro_appname
-    })
-
+    this.urls=[];
     let network_list=this.sel_networks.map((x:any)=>{return(x.value)}).join(",");
-    this.code_miner=this.appli_addr+"/mint?param="+setParams({
+    let url=this.appli_addr+"/creator?param="+setParams({
       toolbar:false,
       title_form:this.creator_title,
       claim:this.intro_claim,
       visual:this.intro_visual,
       appname:this.intro_appname,
-      networks:network_list
+      networks:network_list,
+      stockage:this.sel_stockage
+    })
+    this.urls.push({title:"Création des NFT", url:url})
+
+    url=this.appli_addr+"/mint?param="+setParams({
+      toolbar:false,
+      title_form:this.creator_title,
+      claim:this.intro_claim,
+      visual:this.intro_visual,
+      appname:this.intro_appname,
+      networks:network_list,
+      stockage:this.sel_stockage
+    })
+    this.urls.push({title:"Minage des NFT", url:url})
+
+    url=this.appli_addr+"/?param="+setParams({
+      toolbar:true,
+      visual:this.intro_visual,
+      appname:this.intro_appname,
+    })
+    this.urls.push({title:"Application", url:url})
+
+    url=this.appli_addr+"/?param="+setParams({
+      toolbar:true,
+      appname:"TokenForge",
+    })
+    this.urls.push({title:"Token Forge", url:url})
+
+
+  }
+
+  copy_appli(url: any) {
+    this.clipboard.copy(url.url);
+    showMessage(this,"Le lien est disponible dans le presse papier")
+  }
+
+  share_appli(url: any) {
+    this.ngShare.share({
+      title: url.title,
+      text: url.title,
+      url: url.url
     })
   }
 }

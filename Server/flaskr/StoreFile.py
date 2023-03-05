@@ -10,7 +10,7 @@ from flaskr.Network import Network
 from flaskr.Storage import Storage
 
 from flaskr.NFT import NFT
-from flaskr.Tools import now, get_hash_from_content
+from flaskr.Tools import now, get_hash_from_content, log
 from flaskr.secret import PASSWORD
 
 FILE_PREFIX_ID="file_"
@@ -74,13 +74,17 @@ class StoreFile(Network,Storage):
     return False
 
 
-  def transfer(self,nft_addr:str,from_addr:str,to_addr:str):
+  def transfer(self,nft_addr:str,miner:Key,to_addr:str):
     self.read()
     for pos in range(len(self.content["nfts"])):
-      if self.content["nfts"][pos]["address"]==nft_addr:
-        self.content["nfts"][pos]["owner"]=to_addr
-        self.write()
-        return True
+      nft=self.get_nft(nft_addr)
+      if nft:
+        if nft.miner==miner.address:
+          self.content["nfts"][pos]["owner"]=to_addr
+          self.write()
+          return True
+        else:
+          log(miner.address+" n'est pas autorisé")
     return False
 
 
@@ -130,6 +134,13 @@ class StoreFile(Network,Storage):
 
 
   def burn(self,nft_addr:str,miner:Key,n_burn=1):
+    """
+    Diminution du nombre de SFR (ou suppression pour les NFTs)
+    :param nft_addr:
+    :param miner:
+    :param n_burn:
+    :return:
+    """
     rc=False
     self.read()
     nft=self.get_nft(nft_addr)
