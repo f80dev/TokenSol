@@ -15,7 +15,7 @@
         <td><img [title]="nft.visual" [src]="nft.visual" style="width: 50px"></td>
         <td>{{nft.owner | alias}}</td>
         <td>
-          <button type="button" mat-raised-button mat-button (click)="open_explorer(nft)" id="cmdExplorer">
+          <button type="button" mat-raised-button (click)="open_explorer(nft)" id="cmdExplorer">
             Voir sur Explorer
           </button>
         </td>
@@ -45,7 +45,7 @@
         <td>{{transaction.token}}</td>
         <td>{{transaction.cost}}</td>
         <td>
-          <button type="button" mat-raised-button mat-button (click)="open_transaction(transaction)" id="cmdExplorerTransaction">
+          <button type="button" mat-raised-button (click)="open_transaction(transaction)" id="cmdExplorerTransaction">
             Voir sur Explorer
           </button>
         </td>

@@ -255,9 +255,6 @@ def test_generate_with_xmp(w=500,h=500,dir=TEMP_TEST_DIR,
   return rc
 
 
-
-
-
 def test_generate_svg():
   master=Sticker(image=get_image(section="svgs",index=2),work_dir=TEMP_TEST_DIR)
   images=generate_svg_from_fields(master.text["text"])
@@ -275,7 +272,7 @@ def test_all_platform_with_image(platforms=PLATFORM_LIST):
   img=Sticker(image=IMAGES["stickers"][1],work_dir=TEMP_TEST_DIR)
   for platform in platforms:
     print("Test de la platform "+platform)
-    rc=upload_on_platform(img.toBase64(),platform,upload_dir=TEMP_TEST_DIR)
+    rc=upload_on_platform(img.toBase64(),platform,upload_dir=TEMP_TEST_DIR,domain_server="http://localhost:4200/")
     assert len(rc["cid"])>0
 
 

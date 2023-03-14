@@ -1,5 +1,5 @@
 <div class="mainform">
-  <div class="titleform">Gestion des clés hébergées</div>
+  <div class="titleform">Gestion des clés hébergées sur {{network.network}}</div>
   <div class="subtitleform">
     Pour le minage ou la distribution, TokenForge peut utiliser différents comptes.
     Ces comptes peuvent être public pour les tests et totalement privés et sécurisé pour la production
@@ -7,10 +7,11 @@
 
   <mat-expansion-panel [expanded]="false">
     <mat-expansion-panel-header>Ouvrir un compte</mat-expansion-panel-header>
-    <div style="display: flex;align-items: center;justify-content: center;flex-wrap: wrap;">
-      <app-input label="Coller ici votre clé privée" width="300px"
+    <div style="display: flex;;align-content: space-between;flex-wrap: wrap;">
+      <app-input label="Coller ici votre clé privée" width="350px"
                  [value]="privateKey" (valueChange)="privateKey=$event"
-                 help="Plusieurs formats sont acceptés" maxlength="200"></app-input>
+                 help="Plusieurs formats sont acceptés"></app-input>
+
       <app-input label="Alias de la clé" width="150px"
                  [value]="name" (valueChange)="name=$event"
                  help="Nom court" maxlength="20"></app-input>
@@ -19,14 +20,21 @@
               [disabled]="name=='' || privateKey==''"
               title="Encripter une clé pour intégration dans un fichier d'opération"
               (click)="encrypt({name:name,key:privateKey})">
-        <div class="bloc-bouton">Crypter<br>et copier</div>
+        Crypter et copier
       </button>
 
       <button
               type="button" aria-label="Ajouter" mat-raised-button
-              [disabled]="name=='' || privateKey==''"
+              [disabled]="name=='' || privateKey==''" *ngIf="user.advance_mode"
               (click)="new_key()">
         <div class="bloc-bouton">Ajouter à<br>mes clés</div>
+      </button>
+
+      <button
+              type="button" aria-label="Nouvelle" mat-raised-button
+              title="Créer une nouvelle clé"
+              (click)="create_key()">
+        <div class="bloc-bouton">Créer une clés</div>
       </button>
 
 
@@ -59,14 +67,13 @@
   </h2>
 
 
-  <table class="table-elevation" style="text-align: left;">
-    <tr style="font-style: italic;font-size: large;width:100%;">
-      <th style="width:15%">Alias</th>
+  <table class="table-elevation" style="text-align: left;width:95%;">
+    <tr style="font-style: italic;font-size: large;">
+      <th style="width:15%;text-align: center;">Alias</th>
       <th *ngIf="user.advance_mode">Public Key</th>
       <th *ngIf="user.advance_mode">QRCode</th>
-      <th style="width: 50%;">Commandes</th>
-      <th></th>
-      <th style="width: 50px;">Solde</th>
+      <th style="text-align: center;" *ngIf="!(device.isHandset$ | async)">Commandes</th>
+      <th style="width: 75px;text-align: right;">Solde</th>
     </tr>
     <tr *ngFor="let key of network.keys">
       <td>
@@ -82,23 +89,23 @@
              title="cliquer pour copier l'adresse"
              [cdkCopyToClipboard]="key.address">
       </td>
-      <td style="display: flex;flex-wrap: wrap;justify-content: center;">
+      <td style="display: flex;flex-wrap: wrap;justify-content: center;" *ngIf="!(device.isHandset$ | async)">
         <button mat-icon-button (click)="del_key(key.name)" title="supprimer">
           <mat-icon>delete</mat-icon>
         </button>
         <button mat-icon-button  (click)="encrypt(key)" title="Encrypter">
           <mat-icon>key</mat-icon>
         </button>
-        <button type="button" mat-raised-button mat-button (click)="open_wallet(key)">
+        <button type="button" mat-raised-button (click)="open_wallet(key)">
           Wallet interne
         </button>
-        <button type="button" mat-raised-button mat-button (click)="open_lazy_wallet(key)">
+        <button type="button" mat-raised-button (click)="open_lazy_wallet(key)">
           Lazy
         </button>
-        <button type="button" mat-raised-button mat-button (click)="open_collections(key,'nfluent')">
+        <button type="button" mat-raised-button (click)="open_collections(key,'nfluent')">
           Collections
         </button>
-        <button type="button" mat-raised-button mat-button (click)="open_collections(key,'inspire')">
+        <button type="button" mat-raised-button (click)="open_collections(key,'inspire')">
           Inspire
         </button>
         <button type="button" mat-raised-button mat-button
@@ -107,8 +114,7 @@
           Recharger
         </button>
       </td>
-      <td></td>
-      <td>
+      <td style="text-align: right;">
         <span *ngIf="key.balance">{{key.balance/1e18 | number}} {{key.unity}}</span>
       </td>
     </tr>

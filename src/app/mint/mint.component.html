@@ -4,50 +4,55 @@
 
   <div class="titleform">Minage des NFTs</div>
   <div class="subtitleform">
-    Minage sur {{network.network}} prévu pour {{tokens.length}} NFTs assuré par {{user.key?.name}}
+    Minage sur {{network.network}} prévu pour {{tokens.length}} NFTs assuré par {{sel_key?.name}}
   </div>
 
 
   <div *ngIf="user.advance_mode">
     <mat-expansion-panel style="margin:10px;" >
       <mat-expansion-panel-header>Traitement en masse</mat-expansion-panel-header>
-      <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
+      <div class="expansion-content">
+        <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
 
-      <app-upload-file (uploaded)="batch_import($event)"
-                       width="100px"
-                       extensions=".xlsx,.xls,.csv">
-        Importer
-      </app-upload-file>
+        <app-upload-file (uploaded)="batch_import($event)"
+                         width="100px"
+                         extensions=".xlsx,.xls,.csv">
+          Importer
+        </app-upload-file>
 
-      <button type="button" mat-button mat-raised-button
-              [cdkCopyToClipboard]="nfts_to_clipboard()"
-              title="Copier la liste des NFT à miner dans le presse-papier"
-              (click)="confirm_clipboard()">
-        Exporter pour Opération
-      </button>
-    </mat-expansion-panel>
-
-    <mat-expansion-panel style="margin:10px;" *ngIf="user.advance_mode">
-      <mat-expansion-panel-header>Propriétés avancée</mat-expansion-panel-header>
-      <div id="command_panel" style="display: inline-block;margin:10px;" *ngIf="tokens.length>0">
-        <!--    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>-->
-
-        <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
-          {{create_option.label}}
-        </mat-checkbox>
-
+        <button type="button" mat-button mat-raised-button
+                [cdkCopyToClipboard]="nfts_to_clipboard()"
+                title="Copier la liste des NFT à miner dans le presse-papier"
+                (click)="confirm_clipboard()">
+          Exporter pour Opération
+        </button>
       </div>
 
-      <app-input [options]="network.config['PLATFORMS']" width="320px"
-                 *ngIf="user.advance_mode"
-                 label="Hébergement des documents liés"
-                 [value]="sel_platform_document"
-                 (valueChange)="sel_platform_document=$event"></app-input>
-
-
     </mat-expansion-panel>
 
-    <mat-expansion-panel style="margin:10px;" *ngIf="sel_target.value=='file'">
+      <mat-expansion-panel style="margin:10px;" *ngIf="user.advance_mode">
+        <mat-expansion-panel-header>Propriétés avancée</mat-expansion-panel-header>
+        <div id="command_panel" style="display: inline-block;margin:10px;" *ngIf="tokens.length>0">
+          <!--    <mat-checkbox [(ngModel)]="sign">Signer</mat-checkbox>-->
+
+          <mat-checkbox *ngFor="let create_option of create_options" [(ngModel)]="create_option.value" style="margin: 10px;">
+            {{create_option.label}}
+          </mat-checkbox>
+
+        </div>
+
+        <app-input [options]="network.stockage_document_available" width="320px"
+                   *ngIf="user.advance_mode"
+                   label="Stockage des documents liés"
+                   [value]="sel_platform_document"
+                   (valueChange)="sel_platform_document=$event"></app-input>
+
+
+      </mat-expansion-panel>
+
+
+
+    <mat-expansion-panel style="margin:10px;" *ngIf="network.isFile()">
       <mat-expansion-panel-header>Confidentialité</mat-expansion-panel-header>
       <mat-slide-toggle [(ngModel)]="encrypt_nft">Crypter les NFTs pour le fichier d'operations</mat-slide-toggle>
     </mat-expansion-panel>
@@ -65,19 +70,18 @@
       Ajouter des NFTs
     </app-upload-file>
 
-    <app-input [options]="network.config['PLATFORMS']"
+    <app-input [options]="network.stockage_available"
                width="220px" *ngIf="user.advance_mode"
-               label="Stockage des visuels"
+               label="Stockage visuels & metadata"
                [value]="sel_platform"
                (valueChange)="sel_platform=$event"></app-input>
+
     <button type="button"
             *ngIf="tokens.length>0"
             mat-raised-button mat-button
             (click)="clear()">
       Enlever les NFTs
     </button>
-
-
 
     <button type="button" *ngIf="tokens.length>0"
             mat-raised-button mat-button
@@ -89,53 +93,63 @@
       </div>
     </button>
 
-
-
-
+    <button type="button" *ngIf="tokens.length>0"
+            mat-raised-button mat-button
+            (click)="export_to_csv()">
+      Exporter sous Excel
+    </button>
   </mat-expansion-panel>
 
-  <mat-expansion-panel *ngIf="tokens.length>0">
+
+  <mat-expansion-panel *ngIf="tokens.length>0" [expanded]="show_mint_section" style="text-align: left;">
     <mat-expansion-panel-header>Lancement du minage</mat-expansion-panel-header>
 
-    <button type="button" [disabled]="user.key==undefined && network.network.indexOf('database')==-1"
-            mat-raised-button mat-button *ngIf="tokens.length>0" color="primary" style="margin: 50px;"
-            (click)="confirm_mint()">
-      Tout miner
-    </button>
+    <div class="expansion-content">
+
+      <button type="button" [disabled]="mintable()==0"
+              mat-raised-button *ngIf="tokens.length>0"
+              color="primary" style="margin: 50px;"
+              (click)="confirm_mint()">
+        Tout miner
+      </button>
+
+      <app-input
+              label="Cible"
+              [options]="networks" width="200px"
+              value_type="list" color="white"
+              [value]="network.network" value_field="value"
+              (valueChange)="updateChain($event)"></app-input>
 
 
-    <button type="button" mat-icon-button
-            title="Copier l'identifiant de la collection sélectionnée"
-            *ngIf="sel_collection"
-            [cdkCopyToClipboard]="sel_collection.id"
-            (click)="informe_copy_collection()">
-      <mat-icon>content_copy</mat-icon>
-    </button>
-
-
-    <app-input label="Cible"
-               [value]="sel_target" style="max-width: 150px;"
-               (valueChange)="sel_target=$event"
-               [options]="targets"></app-input>
-
-    <div *ngIf="sel_target.value=='blockchain'" style="margin-left: 20px;display: inline-flex;">
-      <app-input [value]="sel_network"
-                 label="Blockchain à utiliser"
-                 [options]="networks" width="300px"
-                 value_type="list" color="white"
-                 (valueChange)="updateChain($event)"></app-input>
-
-      <app-selkey *ngIf="network.network" style="width: 200px;"
-                  (addrChange)="updateUser($event)"
+      <app-selkey *ngIf="network.network"
+                  style="width: 350px;"
+                  label="Sélectionnez un mineur"
+                  (onChange)="updateUser($event)"
                   [network]="network.network"></app-selkey>
 
-      <div *ngIf="sel_addr && sel_addr.length>0">
+      <div *ngIf="sel_key">
         <app-input label="Collection utilisée"
-                   *ngIf="network.isElrond()"
-                   [value]="sel_collection" width="200px"
+                   *ngIf="network.network && network.isElrond()"
+                   [value]="sel_collection" width="250px"
                    (valueChange)="changeCollection($event)" value_type="list"
                    [options]="user.collections">
         </app-input>
+
+        <button type="button" mat-icon-button
+                title="Créer une nouvelle collection"
+                *ngIf="network.isElrond()"
+                (click)="new_collection()">
+          <mat-icon>add_circle</mat-icon>
+        </button>
+
+        <button type="button" mat-icon-button
+                title="Copier l'identifiant de la collection sélectionnée"
+                *ngIf="sel_collection"
+                [cdkCopyToClipboard]="sel_collection.id"
+                (click)="informe_copy_collection()">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+
         <button type="button" mat-icon-button
                 title="Voir les collections disponibles"
                 (click)="open_collections()">
@@ -151,21 +165,57 @@
                      [if]="network.isElrond() && !sel_collection"></app-warning>
 
       </div>
+    </div>
+
+  </mat-expansion-panel>
+
+
+  <mat-expansion-panel *ngIf="tokens.length>0">
+    <mat-expansion-panel-header>Créateurs</mat-expansion-panel-header>
+    <div class="expansion-content">
+
+      <div *ngIf="token_creators.length==1">
+        <strong>Créateurs</strong>: {{token_creators[0].address | alias:network.network}}
+      </div>
+
+      <table style="display: inline-block;" class="mat-elevation-z2" *ngIf="token_creators.length>1">
+        <tr *ngFor="let creator of token_creators">
+          <td></td>
+          <td style="text-align: right;">{{(creator.address | alias:network.network).substring(0,15)+(creator.address.length>15 ? '..' : '')}}</td>
+          <td><mat-slider [min]="0" [max]="100"><input matSliderThumb [(ngModel)]="creator.share" (valueChange)="recalc_rate_except(creator)"></mat-slider></td>
+          <td>{{creator.share}}%</td>
+          <td>
+            <mat-icon (click)="remove_creator(creator)" style="cursor: pointer;font-size: medium;">cancel</mat-icon>
+          </td>
+        </tr>
+      </table>
+
+      <button type="button" *ngIf="!isInCreators(token_creators)"
+              mat-raised-button [disabled]="!sel_key"
+              (click)="add_miner_to_creator()">
+        Ajouter le mineur
+      </button>
+
+      <button type="button"
+              mat-raised-button mat-button
+              (click)="ask_to_add_creator()">
+        Ajouter un créateur
+      </button>
+
 
 
     </div>
+
 
 
   </mat-expansion-panel>
 
 
 
-
-
   <div *ngIf="user.advance_mode">
     <button type="button"
             mat-raised-button mat-button
-            (click)="add_creator()">
+            (click)="ask_to_add_creator()">
       <mat-icon>add_circle</mat-icon>&nbsp;Créateur
     </button>
 
@@ -197,7 +247,7 @@
 
   <br><br>
 
-  <table style="padding: 5px;width:100%;text-align: center;" *ngIf="tokens.length>0">
+  <table style="padding: 5px;width:98%;border-spacing:0;text-align: center;" *ngIf="tokens.length>0">
     <tr class="mat-headline-6">
       <th>Visuel</th>
       <th>
@@ -231,10 +281,7 @@
                   style="cursor: pointer;font-size: medium;"
                   (click)="clear_attribute()">clear</mat-icon>
       </th>
-      <th>Créateurs
-        <mat-icon (click)="add_miner_to_creator()" style="cursor: pointer;font-size: medium;">add</mat-icon>
-        <mat-icon (click)="reset_creator()" style="cursor: pointer;font-size: medium;">cancel</mat-icon>
-      </th>
+
       <th>Commandes</th>
 
       <th style="min-width: 200px;">Message</th>
@@ -249,7 +296,7 @@
           </a>
         </div>
       </td>
-      <td style="cursor: pointer;width: 300px;">
+      <td style="cursor: pointer;max-width: 300px;">
         <table>
           <tr>
             <td>Nom</td>
@@ -271,16 +318,22 @@
 
       </td>
 
-      <td style="max-width: 250px;text-align: left;overflow: hidden;" appFileDragNDrop (filesChangeEmiter)="drop($event,token)">
-        <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
-          <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
-            <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="open_link(token,file)" [title]="file">visibility</mat-icon>
-            <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left: -6px;" (click)="delete_link(token,file)">cancel</mat-icon>
-            <div (dblclick)="open_document(file)" style="margin-left: -5px;">
-              {{show_file(file)}}
-            </div>
-
-          </small>
+      <td style="max-width: 200px;" >
+        <div appFileDragNDrop (filesChangeEmiter)="drop($event,token)"
+             title="Déposez vos fichiers à embarquer dans le NFT ici"
+             style="min-height: 100px;width: 90%;margin: 5%;text-align: left;">
+          <div *ngIf="token.files.length==0" style="display:inline;margin:50px;">Déposer vos fichiers ici</div>
+          <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
+            <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
+              <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="open_link(token,file)" [title]="file">visibility</mat-icon>
+              <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left: -6px;"
+                        title="Détacher le document du NFT"
+                        (click)="delete_link(token,file)">cancel</mat-icon>
+              <div (dblclick)="open_document(file)" style="margin-left: -5px;">
+                {{show_file(file)}}
+              </div>
+            </small>
+          </div>
         </div>
       </td>
 
@@ -315,7 +368,7 @@
 
       </td>
 
-      <td style="text-align: left;">
+      <td style="text-align: left;max-width: 150px;">
         <ul>
           <li *ngFor="let a of token.attributes" (click)="edit_attribute(a)" style="cursor: pointer;">
             <strong *ngIf="a['trait_type'] && a['trait_type'].length>0">{{a['trait_type']}}:</strong> {{a.value}}
@@ -324,27 +377,30 @@
       </td>
 
 
-      <td style="text-align: left;width: min-content;">
-        <div *ngFor="let creator of token.creators" class="mat-body-2">
-          {{(creator.address | alias:network.network).substring(0,15)+(creator.address.length>15 ? '..' : '')}}&nbsp;({{creator?.share}}%)
-        </div>
-      </td>
 
       <td>
-        <mat-icon style="cursor: pointer" (click)="upload_token(token)" title="upload du visuel" *ngIf="token.visual.startsWith('data')">upload</mat-icon>
+        <mat-icon style="cursor: pointer" (click)="upload_token(token)"
+                  title="upload du visuel"
+                  *ngIf="token.visual.startsWith('data')">upload</mat-icon>
         <mat-icon style="cursor: pointer" (click)="miner(token)"
                   title="minage du NFT"
-                  *ngIf="user.key && !token.address">build</mat-icon>
-        <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0" (click)="see_in_hub(token)">visibility</mat-icon>
+                  *ngIf="isValide(token)=='' && !token.address">build</mat-icon>
+        <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0"
+                  title="Voir la transaction"
+                  (click)="see_in_hub(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <app-upload-file title="Associer un fichier d'attributs"
+                         *ngIf="sel_key && !token.address"
                          (uploaded)="onUploadXMP($event,token)"
                          extensions=".xmp" icon="note"></app-upload-file>
       </td>
 
-      <td style="width: 50px;" *ngIf="token.message">
-        <app-hourglass *ngIf="token.message.startsWith('hourglass')" [message]="token.message.substring(10) || ''"></app-hourglass>
-        <span *ngIf="!token.message.startsWith('hourglass')">{{token.message.substring(20)}}</span>
+      <td style="width: 100px;font-size: small;">
+        <mat-icon style="cursor: pointer" *ngIf="!token.address && isValide(token)!=''" [title]="isValide(token)">warning</mat-icon>
+        <div *ngIf="token.message">
+          <app-hourglass *ngIf="token.message.startsWith('hourglass')" [message]="token.message.substring(10) || ''"></app-hourglass>
+          <span *ngIf="!token.message.startsWith('hourglass')">{{token.message.substring(20)}}</span>
+        </div>
       </td>
 
     </tr>

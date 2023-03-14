@@ -29,7 +29,7 @@
 
           /
 
-          <button type="button" mat-raised-button mat-button (click)="update_url_ope()">
+          <button type="button" mat-raised-button (click)="update_url_ope()">
             Lien Web
           </button>
 
@@ -38,13 +38,13 @@
         </td>
 
         <td>
-<!--          <button type="button" mat-raised-button mat-button (click)="delete_ope()">-->
+<!--          <button type="button" mat-raised-button (click)="delete_ope()">-->
 <!--            Supprimer-->
 <!--          </button>-->
-          <button type="button" mat-raised-button mat-button (click)="download_ope()">
+          <button type="button" mat-raised-button (click)="download_ope()">
             Télécharger
           </button>
-          <button type="button" mat-raised-button mat-button (click)="edit_ope()">
+          <button type="button" mat-raised-button (click)="edit_ope()">
             Editer
           </button>
 
@@ -237,13 +237,13 @@
             </ul>
           </td>
           <td style="text-align: right;">
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="open_appli('dispenser',{miner:user.addr,selfWalletConnexion:false})">
               Ouvrir
             </button>
 
             <br>
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="share_link(
                         get_url_for_appli('dispenser',{miner:user.addr,selfWalletConnexion:false}),
                     'Distributeur pour '+operation.sel_ope.title,
@@ -283,12 +283,12 @@
           </td>
           <td [innerHTML]="showMessages('airdrop')"></td>
           <td style="text-align: right;">
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="open_appli('cm',{airdrop:true})">
               Ouvrir
             </button>
             <br>
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="share_link(get_url_for_appli('cm',{airdrop:true}),'Gagner des NFT','Recevoir des NFT gratuitement')">
               Partager
             </button>
@@ -327,12 +327,12 @@
           <td [innerHTML]="showMessages('candymachine')"></td>
           <td style="text-align: right;">
             <br>Vérifier bien que {{user.addr | alias}} dispose des droits pour distribuer les NFTs<br><br>
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="open_appli('cm',{airdrop:false,miner:user.addr})">
               Ouvrir
             </button>
             <br>
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="share_link(get_url_for_appli('cm',{airdrop:false}),'Gagner des NFT','Recevoir des NFT gratuitement')">
               Partager
             </button>
@@ -384,13 +384,13 @@
             </span>
           </td>
           <td style="text-align: right;">
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="open_appli('lottery')">
               Ouvrir
             </button>
             <br>
 
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="share_link(operation.sel_ope.lottery!.application,'Mode lotterie pour '+operation.sel_ope.title,'Ouvrir ce lien pour initier la distribution')">
               Partager
             </button>
@@ -438,7 +438,7 @@
                 {{user}}
               </li>
             </ul>
-            <button type="button" mat-raised-button mat-button (click)="send_mail()">
+            <button type="button" mat-raised-button (click)="send_mail()">
               Tous les notifier
             </button>
           </td>
@@ -451,7 +451,7 @@
           </td>
 
           <td style="text-align: right;">
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     title="Permet de tester le processus de validation"
                     (click)="open_appli('validate')">
               Ouvrir
@@ -460,7 +460,7 @@
 
             <br>
 
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="share_link(operation.sel_ope.validate!.application,'validation '+operation.sel_ope.title,'Ouvrir ce lien pour commencer la validation')">
               Partager
             </button>
@@ -511,7 +511,7 @@
             </button>
           </td>
           <td style="text-align: right;">
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     (click)="open_appli('store')">
               Ouvrir
             </button>

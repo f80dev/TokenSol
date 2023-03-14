@@ -1,15 +1,15 @@
 attributes: {}
 data:
-  creators: :100%
-  description: ""
-  files: ""
+  creators: ""
+  description: "NFluent Access Card"
+  files: "https://nfluent.io"
   operation: ""
-  properties: ""
+  properties: "delivrance=04/02/2021\nexpiration=04/02/2026"
   sequence:
     - Texte ici
   symbol: token__idx__
   tags: ""
-  title: ""
+  title: "Card __idx__"
 height: 800
 help: /faqs?open=svg_dynamique
 layers:

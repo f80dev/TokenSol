@@ -45,10 +45,12 @@ export class AdminComponent implements OnInit {
   intro_appname:string="TokenForge Design";
   networks: any;
   stockages:any;
-  sel_networks: any[]=[];
-  sel_stockage:any;
+  sel_networks: string[]=[];
+  sel_stockage:string[]=["infura"];
+  sel_stockage_document:string[]=["infura"];
   urls: any[] = [];
   w="550px";
+  max_url_len: number=0;
 
 
   constructor(
@@ -68,15 +70,17 @@ export class AdminComponent implements OnInit {
     this.network.info_server().subscribe((infos:any)=>{
       this.server_config=infos;
       this.networks=this.network.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
+      this.sel_networks.push(this.networks[0]);
+      this.sel_networks.push(this.networks[1]);
       this.stockages=[
-        {label:"Infura",value:"infura"},
-        {label:"Serveur",value:"server"},
-        {label:"Base",value:"db-server-nfluent"}
+          {label:"NFTStorage",value:"nftstorage"},
+          {label:"Infura",value:"infura"},
+          {label:"Serveur",value:"server"},
+          {label:"Database",value:"db-server-nfluent"}
       ]
     },(err)=>{
       showMessage(this,"Problème de connexion serveur")
       showError(this,err);
-
     })
   }
 
@@ -96,6 +100,9 @@ export class AdminComponent implements OnInit {
       localStorage.setItem("db_addr",this.db_addr);
       localStorage.setItem("db_login",this.db_login);
       localStorage.setItem("db_password",this.db_password);
+      localStorage.setItem("networks",this.sel_networks.join(","))
+      localStorage.setItem("stockage",this.sel_stockage.join(","))
+      localStorage.setItem("stockage_document",this.sel_stockage_document.join(","))
     }
     this.update_code_creator()
     let port=this.server_addr.indexOf(":")>1 ? this.server_addr.split(":")[2] : "80";
@@ -125,7 +132,7 @@ export class AdminComponent implements OnInit {
     if(!this.debug_mode)s=s.replace(" debug "," ")
     this.setup_server=s;
 
-    this.setup_client=this.appli_addr+"/?param="+setParams({server:this.server_addr});
+    this.setup_client=this.appli_addr+"/?"+setParams({server:this.server_addr});
     this.update_code_creator();
   }
 
@@ -143,48 +150,80 @@ export class AdminComponent implements OnInit {
   }
 
   open_appli(url:any) {
+    this.copy_appli(url);
     open(url.url,"Test application")
   }
 
+
   update_code_creator() {
     this.urls=[];
-    let network_list=this.sel_networks.map((x:any)=>{return(x.value)}).join(",");
-    let url=this.appli_addr+"/creator?param="+setParams({
+    let url_len=0;
+
+    let networks=this.sel_networks.map((x:any)=>{return(x.value)});
+    var obj:any={
       toolbar:false,
       title_form:this.creator_title,
       claim:this.intro_claim,
       visual:this.intro_visual,
       appname:this.intro_appname,
-      networks:network_list,
-      stockage:this.sel_stockage
+      networks:networks.join(","),
+      stockage:this.sel_stockage.join(","),
+      stockage_document:this.sel_stockage_document.join(",")
+    }
+
+    var simple={
+      ...obj,                                 //spread syntax voir https://www.javascripttutorial.net/object/3-ways-to-copy-objects-in-javascript/
+    }
+
+    this.urls.push({
+      title:"Création des NFT avec minage",
+      description: "Ouverture sur la création de NFT",
+      url:this.appli_addr+"/creator?"+setParams(simple)
     })
-    this.urls.push({title:"Création des NFT", url:url})
 
-    url=this.appli_addr+"/mint?param="+setParams({
-      toolbar:false,
-      title_form:this.creator_title,
-      claim:this.intro_claim,
-      visual:this.intro_visual,
-      appname:this.intro_appname,
-      networks:network_list,
-      stockage:this.sel_stockage
+    simple.networks=[]
+    this.urls.push({
+      title:"Création des NFT sans minage",
+      description: "Ouverture sur la création de NFT",
+      url:this.appli_addr+"/creator?"+setParams(simple)
     })
-    this.urls.push({title:"Minage des NFT", url:url})
 
-    url=this.appli_addr+"/?param="+setParams({
-      toolbar:true,
-      visual:this.intro_visual,
-      appname:this.intro_appname,
+    this.urls.push({
+      title:"Minage des NFT",
+      description: "Ouverture sur le minage, Une seul plateforme de stockage",
+      url:this.appli_addr+"/mint?"+setParams(obj)
     })
-    this.urls.push({title:"Application", url:url})
+    url_len=Math.max(url_len,setParams(obj).length);
 
-    url=this.appli_addr+"/?param="+setParams({
-      toolbar:true,
-      appname:"TokenForge",
+    delete obj.stockage_document;
+    delete obj.stockage;
+    obj.toolbar=true;
+    this.urls.push({
+      title:this.intro_appname,
+      description: "Application standard mais rebranding",
+      url:this.appli_addr+"/?"+setParams(obj)
     })
-    this.urls.push({title:"Token Forge", url:url})
+    url_len=Math.max(url_len,setParams(obj).length);
 
+    obj.appname="TokenForge";
+    obj.networks=this.networks;
+    this.urls.push({
+      title:obj.appname,
+      description: "Application standard",
+      url:this.appli_addr+"/?"+setParams(obj)
+    })
+    url_len=Math.max(url_len,setParams(obj).length);
 
+    obj.appname="TokenForge Devnet";
+    obj.networks="elrond-devnet,polygon-devnet"
+    this.urls.push({
+      title:obj.appname,
+      description: "application standard limitée aux Devnet",
+      url:this.appli_addr+"/?"+setParams(obj)
+    })
+    url_len=Math.max(url_len,setParams(obj).length);
+
+    this.max_url_len=url_len;
   }
 
   copy_appli(url: any) {

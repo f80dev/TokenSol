@@ -13,7 +13,8 @@ export const environment = {
   appname:"TokenForge",
   appli:"http://127.0.0.1:4200",
   wallet:"http://127.0.0.1:4200",
-  website:"https://nfluent.io"
+  website:"https://nfluent.io",
+  networks_available:"elrond-devnet,polygon-devnet"
 };
 
 /*

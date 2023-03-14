@@ -226,6 +226,7 @@ def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_RESS
   :param domain_appli:
   :return:
   """
+  if name is None: return None
   if len(name)>10 and len(name.split(" "))>5:
     body=name
   else:

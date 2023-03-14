@@ -93,6 +93,11 @@ class DAO(Storage,Network):
     if self.domain_server: rc["url"]=self.domain_server+"/api/files/"+str(id)
     return rc
 
+  def get_unity(self):
+    return "OCT"
+
+
+
   def rem(self,key):
     key=str(base64.b64decode(key[3:]),"utf8").split("/")[0]
     rc=self.db["storage"].delete_one({"Hash":key})
@@ -121,6 +126,8 @@ class DAO(Storage,Network):
     return False
 
 
+  def get_balance(self,addr:str) -> int:
+    return 1e18
 
   def get_keys(self,qrcode_scale=0,with_balance=False,with_account=False,with_secretKey=False,address="") -> [Key]:
     """
@@ -355,7 +362,8 @@ class DAO(Storage,Network):
         "alias":email.split("@")[0],
         "routes":[],
         "perms":perms,
-        "access_code":access_code
+        "access_code":access_code,
+        "message":"account created"
       }
       rc=self.db["users"].insert_one(obj)
 
@@ -376,6 +384,8 @@ class DAO(Storage,Network):
     log("Aucun utilisateur trouver")
     return None
 
+  def toAddress(self,secret_key:str):
+    return secret_key.replace("privatekey_","")
 
   def add_email(self,email:str,addr:str,network:str):
     """

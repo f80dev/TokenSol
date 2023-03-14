@@ -1,12 +1,16 @@
-<div class="mainform" style="text-align: left;">
+<div class="mainform" style="text-align: left;" *ngIf="server_config">
   <mat-expansion-panel>
     <mat-expansion-panel-header>Tables</mat-expansion-panel-header>
 
-    <p>
-      Adresse de la base: {{server_config!.Database_Server}}<br>
-      Nom de la base : {{server_config!.Database_Name}}<br>
-    </p>
-
+    <table>
+      <tr>
+        <td>Adresse de la base</td><td><strong>{{server_config!.Database_Server}}</strong></td>
+      </tr>
+      <tr>
+        <td>Nom de la base</td>
+        <td><strong>{{server_config!.Database_Name}}</strong></td>
+      </tr>
+    </table>
 
     <mat-accordion>
       <mat-expansion-panel  *ngFor="let tablename of ['nfts','validators','users','histo','mintpool','account_by_emails']">
@@ -118,42 +122,41 @@
 
   <mat-expansion-panel>
     <mat-expansion-panel-header>Déploiement de l'application</mat-expansion-panel-header>
-    <table>
-      <tr>
-        <td>
-          <table>
-            <tr *ngFor="let url of urls">
-              <td>{{url.title}}</td>
-              <td></td>
-              <td>
-                <button mat-raised-button (click)="copy_appli(url)">Copier</button>
-                <button mat-raised-button (click)="open_appli(url)">Ouvrir</button>
-                <button mat-raised-button (click)="share_appli(url)">Partager</button>
-              </td>
-            </tr>
-          </table>
-        </td>
+    Longueur maximum : {{100*max_url_len/2000 | number: '1.0-0'}}%<br>
+    <div class="expansion-content">
+      <table class="mat-elevation-z2" style="margin: 10px;width:350px;display:inline-block;padding: 5px;">
+        <tr style="width:100%;" *ngFor="let url of urls">
+          <td style="width:150px;font-size: small;" [title]="url.description">{{url.title}}</td>
+          <td></td>
+          <td>
+            <button mat-raised-button (click)="open_appli(url)">Ouvrir</button>
+            <button mat-raised-button (click)="share_appli(url)">Partager</button>
+          </td>
+        </tr>
+      </table>
 
-        <td style="width: 70%;">
-          <app-input [width]="w" label="Titre de l'application" [value]="creator_title" (valueChange)="creator_title=$event;refresh();"></app-input>
-          <app-input [width]="w" [value]="appli_addr" label="Adresse de l'application" (valueChange)="appli_addr=$event;refresh();"></app-input>
-          <app-input [width]="w" [value]="intro_visual" label="Visuel d'introduction" (valueChange)="intro_visual=$event;refresh();"></app-input>
-          <app-input [width]="w" [value]="intro_claim" label="Phrase d'introduction" (valueChange)="intro_claim=$event;refresh();"></app-input>
-          <app-input [width]="w" [value]="intro_appname" label="Nom de l'application" (valueChange)="intro_appname=$event;refresh();"></app-input>
+      <div class="expansion-content" style="max-width: 800px">
+        <app-input [maxwidth]="w" label="Titre de la fenêtre principale" [value]="creator_title" (valueChange)="creator_title=$event;refresh();"></app-input>
+        <app-input [maxwidth]="w" [value]="appli_addr" label="Adresse de l'application" (valueChange)="appli_addr=$event;refresh();"></app-input>
+        <app-input [maxwidth]="w" [value]="intro_visual" label="Visuel d'introduction" (valueChange)="intro_visual=$event;refresh();"></app-input>
+        <app-input [maxwidth]="w" [value]="intro_claim" label="Phrase d'introduction" (valueChange)="intro_claim=$event;refresh();"></app-input>
+        <app-input [maxwidth]="w" [value]="intro_appname" label="Nom de l'application" (valueChange)="intro_appname=$event;refresh();"></app-input>
 
-          <app-input [width]="w" [value]="sel_networks" [multiselect]="true" [options]="networks"
-                     label="Blockchains disponibles"
-                     (valueChange)="sel_networks=$event;refresh();"></app-input>
+        <br>
+        <app-input [maxwidth]="w" [value]="sel_stockage" [options]="stockages" [multiselect]="true"
+                   label="Stockage offline visuel et metadata" value_field="value"
+                   (valueChange)="sel_stockage=$event;refresh();"></app-input>
 
-          <app-input [width]="w" [value]="sel_stockage" [options]="stockages"
-                     label="Platforme de stockage"
-                     (valueChange)="sel_stockage=$event;refresh();"></app-input>
-        </td>
+        <app-input [maxwidth]="w" [value]="sel_stockage_document" [options]="stockages" [multiselect]="true"
+                   label="Stockage documents attachés" value_field="value"
+                   (valueChange)="sel_stockage_document=$event;refresh();"></app-input>
 
-      </tr>
-    </table>
-
-
+        <br>
+        <app-input width="80%" maxwidth="800px" [value]="sel_networks" [multiselect]="true" [options]="networks"
+                   label="Blockchains disponibles"
+                   (valueChange)="sel_networks=$event;refresh();"></app-input>
+      </div>
+    </div>
 
   </mat-expansion-panel>
 

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {Clipboard} from '@angular/cdk/clipboard';
-import {$$, CryptoKey, getParams, setParams, showMessage} from "../../tools";
+import {$$, CryptoKey, getParams, isEmail, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
@@ -10,6 +10,7 @@ import {MatDialog} from "@angular/material/dialog";
 import {ActivatedRoute, Router} from "@angular/router";
 import {NFLUENT_WALLET} from "../../definitions";
 import {OperationService} from "../operation.service";
+import {DeviceService} from "../device.service";
 
 @Component({
   selector: 'app-keys',
@@ -27,6 +28,7 @@ export class KeysComponent implements OnInit {
     public network:NetworkService,
     public toast:MatSnackBar,
     public user:UserService,
+    public device:DeviceService,
     public operation:OperationService,
     public _location:Location,
     public routes:ActivatedRoute
@@ -53,7 +55,9 @@ export class KeysComponent implements OnInit {
           true,
           this.user.profil.access_code,
           this.operation.sel_ope!.id
-      ).then(()=>{this.network.wait();});
+      ).then(()=>{
+        this.network.wait();
+      });
     });
   }
 
@@ -96,24 +100,24 @@ export class KeysComponent implements OnInit {
   open_wallet(key: CryptoKey) {
     this.router.navigate(
       ["wallet"],
-      {queryParams:{param:setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.network.network})}}
+      {queryParams:{param:setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.network.network},"","")}}
     );
   }
 
   open_lazy_wallet(key: CryptoKey) {
     this.router.navigate(
       ["wallet"],
-      {queryParams:{param:setParams({addr:key.address,toolbar:false,takePhoto:true,network:"db-server-nfluent"})}}
+      {queryParams:{param:setParams({addr:key.address,toolbar:false,takePhoto:true,network:"db-server-nfluent"},"","")}}
     );
   }
 
   open_extra_wallet(key: CryptoKey) {
-    open(NFLUENT_WALLET+"/?param="+setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.network.network}))
+    open(NFLUENT_WALLET+"/?"+setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.network.network}))
   }
 
   open_collections(key: CryptoKey,tools="nfluent") {
     if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.address}});
-    if(tools=="inspire")this.network.open_gallery(this.user.addr);
+    if(tools=="inspire")open(this.network.getExplorer(key.address),"Explorer");
   }
 
   open_elrond_wallet() {
@@ -136,5 +140,17 @@ export class KeysComponent implements OnInit {
     encrypt_key() {
 
 
+    }
+
+    async create_key() {
+        let email=await _prompt(this,"Créer un nouveau wallet "+this.network.network,"@gmail.com",
+            "Indiquer votre mail pour recevoir la clé privée de votre wallet",
+            "text","Créer la clé","Annuler",false);
+        if(isEmail(email)){
+          this.network.create_account(this.network.network,email).subscribe((r:any)=>{
+            showMessage(this,"Consulter votre mail pour retrouver votre compte");
+            open(r.explorer,"Explorer");
+          })
+        }
     }
 }

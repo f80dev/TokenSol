@@ -9,6 +9,8 @@ class Key(object):
 	network: str=""
 	name:str=""
 	seed:str=""
+	balance=0
+	explorer=""
 
 	def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None, encrypted=""):
 		if len(encrypted)>0:

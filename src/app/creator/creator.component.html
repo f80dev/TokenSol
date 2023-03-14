@@ -9,9 +9,7 @@
   <mat-expansion-panel [expanded]="!sel_config">
     <mat-expansion-panel-header>Gestion des configurations</mat-expansion-panel-header>
 
-
-
-    <div style="display: flex;flex-wrap: wrap;align-items: center;justify-content: center;">
+    <div class="expansion-content">
       <app-upload-file (uploaded)="on_upload_config($event)"
                        format="text" [maxsize]="1000000"
                        title="Chargée une configuration depuis votre ordinateur"
@@ -20,13 +18,13 @@
       </app-upload-file>
 
 
-      <!--            <button type="button" mat-raised-button mat-button (click)="online_config()"-->
+      <!--            <button type="button" mat-raised-button (click)="online_config()"-->
       <!--                    *ngIf="user.advance_mode"-->
       <!--                    title="Permet d'utiliser un fichier en ligne avec son url">-->
       <!--              {{"Fichier en ligne" | screencutter:"En ligne"}}-->
       <!--            </button>-->
 
-      <button type="button" mat-raised-button mat-button (click)="reset()">
+      <button type="button" mat-raised-button (click)="reset()">
         Nouveau
       </button>
 
@@ -36,12 +34,12 @@
                    [value]="sel_config"
                    label="Voir des exemples"
                    (valueChange)="update_config($event)"
-                   style="width: 300px;">
+                   width="30vw" maxwidth="300px">
         </app-input>
       </div>
 
 
-      <!--            <button type="button" mat-raised-button mat-button *ngIf="sel_config" (click)="clone()">-->
+      <!--            <button type="button" mat-raised-button *ngIf="sel_config" (click)="clone()">-->
       <!--              Cloner-->
       <!--            </button>-->
 
@@ -49,12 +47,12 @@
 
       <div style="width:30%;" *ngIf="sel_config">
 
-        <button type="button" mat-raised-button mat-button (click)="save_config(true)"
+        <button type="button" mat-raised-button (click)="save_config(true)"
         title="Enregristrer cette configuration sur votre terminal">
           Enregistrer cette configuration
         </button>
 
-        <button type="button" mat-raised-button mat-button (click)="publish('nftstorage')"
+        <button type="button" mat-raised-button (click)="publish('nftstorage')"
                 *ngIf="user.advance_mode"
                 title="Permet de mettre en ligne cette configuration (pour usage dans les configurations)">
           Publier
@@ -145,8 +143,8 @@
 
     <mat-expansion-panel [expanded]="show_conception" style="margin: 0;padding:0;">
       <mat-expansion-panel-header>Visuels / Images</mat-expansion-panel-header>
-      <div style="display: flex;flex-wrap: wrap;align-items: center;">
-        <button type="button" mat-raised-button mat-button (click)="add_layer()">
+      <div class="expansion-content">
+        <button type="button" mat-raised-button (click)="add_layer()">
           <mat-icon>add_circle_outline</mat-icon> une couche
         </button>
 
@@ -173,9 +171,9 @@
           Trouver des images
         </button>
 
-        <app-input label="Plateforme de stockage" *ngIf="user.advance_mode"
-                   [value]="sel_platform"
-                   [options]="network.config['PLATFORMS']"
+        <app-input label="Stockage visuels et metadata" *ngIf="user.advance_mode"
+                   [value]="sel_platform" value_field="value"
+                   [options]="network.stockage_available"
                    (valueChange)="sel_platform=$event"></app-input>
 
       </div>
@@ -305,31 +303,39 @@
                        [value]="sel_config.seed" (valueChange)="sel_config.seed=$event">
             </app-input>
 
-            <app-input [options]="webstorage_platform" width="100%"
-                       [value]="sel_webstorage_platform" (valueChange)="sel_webstorage_platform=$event"
-                       help="Désigne la plateforme qui va héberger les visuels des NFT"
-                       label="Hébergement des visuels">
-            </app-input>
+<!--            <app-input [options]="webstorage_platform" width="100%"-->
+<!--                       [value]="sel_webstorage_platform" (valueChange)="sel_webstorage_platform=$event"-->
+<!--                       help="Désigne la plateforme qui va héberger les visuels des NFT"-->
+<!--                       label="Hébergement des visuels">-->
+<!--            </app-input>-->
           </mat-card-content>
 
         </mat-card>
         <mat-card appearance="outlined">
           <mat-card-title>Fabrication</mat-card-title>
           <mat-card-content>
-            <button type="button" mat-raised-button mat-button (click)="generate_collection('preview')">
+            <button type="button" mat-raised-button (click)="generate_collection('preview')">
               Aperçu
             </button>
 
-            <br><br>
+            <br>
 
             <app-input *ngIf="user.advance_mode" label="Nom des fichiers téléchargés"
                        [value]="filename_format" (valueChange)="filename_format=$event"></app-input>
 
-            <button type="button" mat-raised-button mat-button color="primary"
+            <button type="button" mat-raised-button color="primary"
                     title="Déclenche la génération, la mise en ligne des visuels et bascule dans la fenêtre de minage"
-                    *ngIf="networks_available.length>0 || user.isConnected()"
+                    *ngIf="network.networks_available.length>0"
                     (click)="generate_collection('upload',true)">
               Générer & Miner
+            </button>
+
+            <br>
+            <button type="button" mat-raised-button
+                    title="Fabrique la collection et envoi un mail dans le fichier est disponible"
+                    *ngIf="sel_config.limit>0"
+                    (click)="ask_email_for_collection()">
+              Fabriquer une<br>grande série
             </button>
 
           </mat-card-content>
@@ -342,7 +348,7 @@
         <div *ngFor="let url of upload_files">
           <a [href]="url">{{url}}</a>
         </div>
-        <button type="button" mat-raised-button mat-button (click)="miner()">Miner</button>
+        <button type="button" mat-raised-button (click)="miner()">Miner</button>
       </div>
     </mat-expansion-panel>
 
@@ -375,7 +381,7 @@
         Associer des propriétés
       </app-upload-file>
 
-      <button type="button" mat-raised-button mat-button (click)="clear_data()">
+      <button type="button" mat-raised-button (click)="clear_data()">
         Effacer tout
       </button>
 
@@ -383,7 +389,8 @@
 
       <div style="display: flex;flex-direction: row;justify-content: center;width: 90%;flex-wrap: wrap;">
 
-        <app-input label="Titre du NFT" [width]="w_data_field"
+        <app-input label="Titre du NFT"
+                   [width]="w_data_field"
                    help="le champs __idx__ permet d'intégrer le numéro du NFT"
                    [value]="sel_config.data.title"
                    (valueChange)="sel_config.data.title=$event">
@@ -453,6 +460,7 @@
   <!--  Options avancées-->
   <mat-expansion-panel *ngIf="user.advance_mode">
     <mat-expansion-panel-header>Options avancées</mat-expansion-panel-header>
+
     <table>
       <tr>
         <td>

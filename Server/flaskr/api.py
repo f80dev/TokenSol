@@ -26,6 +26,7 @@ from flask_jwt_extended import create_access_token
 from werkzeug.datastructures import FileStorage
 from yaml import dump
 
+import config
 from flaskr import Keys
 from flaskr.ArtEngine import Layer, Sticker, ArtEngine
 from flaskr.Elrond import Elrond, ELROND_KEY_DIR
@@ -43,7 +44,8 @@ from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, sen
   get_access_code, check_access_code, get_fonts, log, now, send_mail, open_html_file, encrypt, importer_file, \
   idx, generate_svg_from_fields, get_filename_from_content, queryPixabay, queryUnsplash, isLocal, is_email
 from flaskr.TransactionsGraph import TransactionsGraph
-from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation
+from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation, \
+  get_network_from_address, create_account
 from flaskr.dao import DAO
 from flaskr.ipfs import IPFS
 from flaskr.secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRETS_FILE, SECRET_ACCESS_CODE, ADMIN_EMAIL, \
@@ -220,7 +222,9 @@ def layers(body=None):
               position=position,
               unique=(body["unique"] if "unique" in body else False),
               indexed=(body["indexed"] if "indexed" in body else True),
-              scale=body["scale"],translation=body["translation"],margin=body["margin"]
+              scale=body["scale"] if "scale" in body else "1,1",
+              translation=body["translation"] if "translation" in body else "0,0",
+              margin=body["margin"] if "margin" in body else "0,0"
               )
 
   elts=body["elements"]
@@ -314,6 +318,7 @@ def api_get_collections(addresses:str):
 def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data={},ext="webp"):
   """
   Generation de la collection des NFTs
+  tag #generate generate_nft get_collection
   :param limit:
   :param format:
   :param seed:
@@ -379,7 +384,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
       log("Impossible de supprimer "+f)
 
 
-  if format=="zip":
+  if format.startswith("zip"):
     copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection","./README")
     files.append("./README")
     archive_file=BytesIO()
@@ -388,7 +393,15 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
         archive.write(f)
 
     archive_file.seek(0)
-    return send_file(archive_file,as_attachment=True,download_name="collection.7z")
+    email=format.replace("zip_","")
+    if is_email(email):
+      send_mail(open_html_file("mail_nft_collection"),email,
+                subject="Votre collection",
+                attach=bytes(archive_file),
+                filename="collection.zip")
+      return jsonify({"message":"mail contenant la collection envoyé a "+email})
+    else:
+      return send_file(archive_file,as_attachment=True,download_name="collection.7z")
 
   else:
     archive_file=""
@@ -493,6 +506,20 @@ def nftlive_access(addr:str):
           if not ope in rc:rc.append(ope)
 
   return jsonify(rc)
+
+
+@bp.route('/appli_configs/')
+def appli_configs():
+  """
+  retourne la liste des configurations serveur disponibles
+  :return:
+  """
+  rc=[]
+  rc.append(config.localConfig.__dict__)
+  rc.append(config.Config.__dict__)
+  rc.append(config.prodConfig.__dict__)
+  return jsonify(rc)
+
 
 
 
@@ -1567,7 +1594,8 @@ def configs(location:str="",format=""):
 
 
 
-@bp.route('/keys/',methods=["GET"])
+@bp.route('/keys/',methods=["GET","POST"])
+@bp.route('/accounts/',methods=["GET","POST"])
 @bp.route('/keys/<name>/',methods=["DELETE","GET","POST"])
 #https://metaboss.rs/set.html
 #test http://127.0.0.1:4242/api/keys/
@@ -1575,26 +1603,31 @@ def configs(location:str="",format=""):
 #http://127.0.0.1:4242/api/keys/?access_code=&network=elrond-devnet&with_private=true&with_balance=false&operation=
 def keys(name:str=""):
   dao=DAO(config=current_app.config)
-  network=get_network_instance(request.args.get("network","elrond-devnet").lower())
+  _network=get_network_instance(request.args.get("network","elrond-devnet"))
 
   if request.method=="GET":
+    qrcode_scale=int(request.args.get("qrcode_scale","0"))
+    with_balance=request.args.get("with_balance","false")=="true" or "accounts" in request.path
     access_code=request.args.get("access_code")
     email=request.args.get("email")
     operation=get_operation(request.args.get("operation"))
 
-    keys:[]=network.get_keys(qrcode_scale=int(request.args.get("qrcode_scale","0")))
-    if operation: keys=keys+extract_keys_from_operation(operation)
-    u=dao.get_user(email,access_code,network_for_keys=network.network)
-    if u: keys=keys+u["keys"][network.network]
+    if with_balance:
+      items=_network.get_accounts()
+    else:
+      items=_network.get_keys()
+      if operation: items=items+extract_keys_from_operation(operation)
+      # u=dao.get_user(email,access_code,network_for_keys=network.network)
+      # if u: keys=keys+u["keys"][network.network]
 
-    return jsonify([k.__dict__ for k in keys])
+    return jsonify([item.__dict__ for item in items])
 
 
   if request.method=="DELETE":
-    if "polygon" in network:
+    if _network.network_name=="polygon":
       filename=POLYGON_KEY_DIR+name+".secret"
     else:
-      filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in network else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
+      filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in _network.network_name else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
     os.remove(filename)
 
 
@@ -1603,18 +1636,17 @@ def keys(name:str=""):
     if "secret_key" in obj:
       secret_key=obj["secret_key"]
     else:
-      email=request.args.get("email","")
+      email=obj["email"]
 
-      addr,secret_key,words,qrcode=network.create_account(email,
-                                                    network=network,
+      key:Key=create_account(email,dao=dao,
+                                                    network=_network.network,
                                                     domain_appli=current_app.config["DOMAIN_APPLI"],
                                                     mail_new_wallet=obj["mail_new_wallet"] if "mail_new_wallet" in obj else None,
-                                                    mail_existing_wallet=obj["mail_existing_wallet"] if "mail_existing_wallet" in obj else None,
-                                                    histo=dao)
+                                                    mail_existing_wallet=obj["mail_existing_wallet"] if "mail_existing_wallet" in obj else None)
 
-    dao.add_key_to_user(obj["email"],obj["access_code"],network.network,secret_key,name)
+    #dao.add_key_to_user(obj["email"],obj["access_code"],_network.network,secret_key,name)
 
-  return jsonify({"message":"ok"})
+  return jsonify({"message":"ok","address":key.address,"explorer":_network.getExplorer(key.address,"address")})
 
 #
 #
@@ -1675,12 +1707,13 @@ def get_image(cid:str=""):
 
       if cid.startswith("db_"):
         r=DAO(cid=cid).get(cid)
-        if "content" in r and "base64," in r["content"]:
-          data=r["content"]
-          format=data.split("base64,")[0].replace("data:","")
-          f=BytesIO(base64.b64decode(data.split("base64,")[1]))
-        else:
-          return jsonify(r)
+        if r is None:
+          if "content" in r and "base64," in r["content"]:
+            data=r["content"]
+            format=data.split("base64,")[0].replace("data:","")
+            f=BytesIO(base64.b64decode(data.split("base64,")[1]))
+          else:
+            return jsonify(r)
       else:
         #Analyse du cid
         ext=cid.split(".")[1] if "." in cid else "webp"
@@ -1869,8 +1902,13 @@ def encrypt_key(network:str):
   '''
   secret_key=request.json["secret_key"]
   name=request.json["alias"]
-  key=Key(name=name,secret_key=secret_key,network=network)
-  return jsonify({"encrypt":key.encrypt()})
+
+  if not "-" in network:network=network+"-mainnet"
+  address=get_network_instance(network).toAddress(secret_key)
+
+  key=Key(name=name,secret_key=secret_key,network=network,address=address)
+
+  return jsonify({"encrypt":key.encrypt(),"address":key.address})
 
 
 
@@ -2041,7 +2079,7 @@ def api_create_collection():
 
   _net=get_network_instance(network) #DAO(config=current_app.config).get_user_from_access_code(request.args.get("access_code"))
 
-  miner=Key(obj=_data["miner"])
+  miner=Key(obj=_data["owner"])
 
   solde=_net.balance(miner.address)
   collection_id,newCollection=_net.add_collection(miner,_data["name"],_data["options"],type="NonFungible")

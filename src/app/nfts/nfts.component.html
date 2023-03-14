@@ -40,8 +40,8 @@
             <div style="display: inline-block;">{{creator.address | alias}}</div>
           </td>
           <td>
-            <mat-icon *ngIf="creator.verified==1">checkmark</mat-icon>
-            <mat-icon *ngIf="creator.verified==0" (click)="sign_token(nft,creator)">edit</mat-icon>
+            <mat-icon *ngIf="creator.verified">checkmark</mat-icon>
+            <mat-icon *ngIf="creator.verified" (click)="sign_token(nft,creator)">edit</mat-icon>
           </td>
           <td>{{creator.share}}%</td>
         </tr>

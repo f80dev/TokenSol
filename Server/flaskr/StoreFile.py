@@ -25,6 +25,10 @@ class StoreFile(Network,Storage):
     self.filename=(upload_dir+self.filename if not "/" in self.filename else self.filename)+".yaml"
 
 
+  def toAddress(self,secret_key:str):
+    return "file_"+secret_key.split("file_")[1]
+
+
   def __str__(self):
       return self.network
 
@@ -154,6 +158,11 @@ class StoreFile(Network,Storage):
     return rc
 
 
+  def get_unity(self):
+    return "OCT"
+
+  def get_balance(self,addr:str) -> int:
+    return 1e18
 
   def get_keys(self) -> [Key]:
     self.read()

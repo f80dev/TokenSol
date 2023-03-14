@@ -1,8 +1,9 @@
-import datetime
+from eth_keys import keys
 from os import listdir
 
 import requests
 from eth_account import Account
+from eth_keys.datatypes import PrivateKey
 from solcx import compile_source, install_solc
 from web3.contract import Contract
 from web3.middleware import geth_poa_middleware
@@ -60,6 +61,11 @@ class Polygon (Network):
     return tx_hash.hex()
 
 
+  def toAddress(self,private_key:str):
+    account=self.w3.eth.account.from_key(private_key)
+    return account.address
+
+
   def init_contract_interface(self,price=0):
     src=open(POLYGON_DIR+"Master/contracts/NFTCollection.sol","r").read()
     src=src.replace("PRICE = 0 ether","PRICE = "+str(price)+" ether")
@@ -83,8 +89,15 @@ class Polygon (Network):
     return _contract
 
 
-  def polygon_scan(self,address,action="txlist",module="account"):
-    url="https://api-testnet.polygonscan.com/api?module="+module+"&action="+action+"&address="+address+"&startblock=0&endblock=99999999&page=1&offset=0&sort=asc&apikey="+POLYGON_SCAN_API_KEY
+  def polygon_scan(self,address,action="txlist",module="account",limit=1000):
+    """
+    Retourne l'ensemble des transactions
+    :param address:
+    :param action:
+    :param module:
+    :return:
+    """
+    url="https://api-testnet.polygonscan.com/api?module="+module+"&action="+action+"&address="+address+"&startblock=0&endblock=99999999&page=1&offset="+str(limit)+"&sort=asc&apikey="+POLYGON_SCAN_API_KEY
     if "mainnet" in self.network:url=url.replace("-testnet","")
     result=requests.get(url)
 
@@ -317,6 +330,8 @@ class Polygon (Network):
     #Collection et marketplace ne font pas partie de la norme proposé par solana
     return rc
 
+  def get_unity(self):
+    return "MATIC"
 
   def mint(self, miner:Key, title,description="", collection={}, properties: list=[],storage:Storage=None,
            files=[], quantity=1, royalties=0, visual="", tags="",creators=[],
@@ -381,6 +396,7 @@ class Polygon (Network):
     if owner!=miner.address:
       #raise RuntimeError("Probleme de propriétaire pour le transfert")
       log("Le propriétaire n'est pas le mineur")
+    new_owner=self.get_key_with_name(new_owner).address
     rc= self.send_transaction(contract.functions.transferFrom(miner.address,new_owner,0),miner)
     return rc
 
@@ -522,6 +538,7 @@ class Polygon (Network):
 
 
   def get_key_with_name(self,name="sophie"):
+    if name.startswith("0x"): return Key(address=name)
     for k in self.get_keys():
       if k.name==name:
         return k

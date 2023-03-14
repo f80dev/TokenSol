@@ -6,11 +6,11 @@ import {
 } from "@solana/web3.js";
 import {TOKEN_PROGRAM_ID} from "@solana/spl-token";
 import * as SPLToken from "@solana/spl-token";
-import {HttpClient, HttpErrorResponse, HttpHeaders} from "@angular/common/http";
+import {HttpClient, HttpErrorResponse} from "@angular/common/http";
 import {$$, CryptoKey, encrypt, words} from "../tools";
 import {environment} from "../environments/environment";
 
-import {catchError, fromEvent, retry, Subject, throwError, timeout, TimeoutError} from "rxjs";
+import {catchError, fromEvent, retry, Subject, throwError, timeout} from "rxjs";
 import {Collection, Operation} from "../operation";
 import {NFT, SolanaToken, SplTokenInfo, Validator} from "../nft";
 import {Configuration, Layer} from "../create";
@@ -34,7 +34,10 @@ export class NetworkService implements OnInit {
   server_nfluent: string=environment.server;
   online: boolean=false;
   keys:CryptoKey[]=[];
-  config:any;
+  config:any={};
+  networks_available:string[]=[];          //network
+  stockage_available:string[]=[];          //stockage visuel et metadata
+  stockage_document_available:string[]=[]; //stockage document attaché
 
   constructor(
       private httpClient : HttpClient
@@ -345,7 +348,6 @@ export class NetworkService implements OnInit {
 
 
   private handleError(error: HttpErrorResponse) {
-
     if (error.status === 0) {
       // A client-side or network error occurred. Handle it accordingly.
       console.error('An error occurred:', error.error);
@@ -357,7 +359,7 @@ export class NetworkService implements OnInit {
       }
     }
     // Return an observable with a user-facing error message.
-    return throwError(() => new Error('Something bad happened; please try again later.'));
+    return throwError(() => new Error('Problème technique. Serveur probablement injoignable'));
   }
 
   _get(url: string, param: string="",_timeout=2000) {
@@ -379,7 +381,7 @@ export class NetworkService implements OnInit {
 
 
 
-  get_tokens_from(type_addr:string,addr:string,limit=100,short=false,filter:any=null,offset=0,network="elrond-devnet") : Promise<{result:any[],offset:number}> {
+  get_tokens_from(type_addr:string,addr:string,limit=100,with_attr=true,filter:any=null,offset=0,network="elrond-devnet") : Promise<{result:any[],offset:number}> {
 
     $$("Recherche de token par "+type_addr)
     return new Promise((resolve,reject) => {
@@ -389,9 +391,8 @@ export class NetworkService implements OnInit {
         if(this.network.indexOf("solana")>-1){
           let func:any=null;
 
-
           if(type_addr=="owner"){
-            this.httpClient.get(this.server_nfluent+"/api/nfts/?with_attr="+(!short)+"&limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
+            this.httpClient.get(this.server_nfluent+"/api/nfts/?with_attr="+with_attr+"&limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
               resolve(r);
             })
           }
@@ -408,7 +409,7 @@ export class NetworkService implements OnInit {
         }
 
         if(this.network.indexOf("elrond")>-1 || this.network.indexOf("polygon")>-1 || this.network.startsWith("db-")){
-          this.httpClient.get(this.server_nfluent+"/api/nfts/?limit="+limit+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
+          this.httpClient.get(this.server_nfluent+"/api/nfts/?limit="+limit+"&with_attr="+with_attr+"&offset="+offset+"&account="+addr+"&network="+this.network).subscribe((r:any)=>{
             resolve({result:r,offset:offset});
           },(err:any)=>{
             reject(err);
@@ -457,6 +458,7 @@ export class NetworkService implements OnInit {
   isElrond(addr="") {
     if(addr==null)return false;
     if(addr.length==0){
+      if(!this.network)return false;
       return this.network.indexOf("elrond")>-1;
     } else {
       return addr.startsWith("erd");
@@ -704,9 +706,12 @@ export class NetworkService implements OnInit {
     return this.httpClient.post(this.server_nfluent+"/api/generate_svg/",data);
   }
 
-  // create_account(network: string, alias: string) {
-  //   return this.httpClient.get(this.server_nfluent+"/api/create_account/"+network+"/"+alias+"/");
-  // }
+  create_account(network: string, email: string,mail="mail_new_account") {
+    let body={email:email,mail_new_wallet:mail,mail_existing_wallet:"mail_existing_account"}
+    return this.httpClient.post(this.server_nfluent+"/api/keys/?network="+network,body);
+  }
+
+
   export_to_prestashop(id:string,tokens:NFT[] | null=null,collection_filter=true) {
     if(!tokens || tokens?.length==0)
       return this.httpClient.get(this.server_nfluent+"/api/export_to_prestashop/?ope="+id+"&collection_filter="+collection_filter);
@@ -759,11 +764,9 @@ export class NetworkService implements OnInit {
 
   mint(token:NFT, miner:CryptoKey, owner:string,operation:string,sign=false, platform:string="nftstorage", network="",storage_file="",encrypt_nft=false){
     return new Promise((resolve, reject) => {
-      this.wait("Minage en cours sur "+network);
       let param="storage_file="+storage_file+"&keyfile="+miner+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network+"&operation="+operation
       param=param+"&encrypt_nft="+encrypt_nft;
       this.httpClient.post(this.server_nfluent+"/api/mint/?"+param,{nft:token,miner:miner}).subscribe((r)=>{
-        this.wait();
         resolve(r);
       },(err)=>{
         this.wait();
@@ -786,8 +789,8 @@ export class NetworkService implements OnInit {
     return this.httpClient.get<Collection[]>(url);
   }
 
-  create_collection(owner: string, new_collection: Collection) {
-    return this.httpClient.post(this.server_nfluent+"/api/create_collection/"+owner+"/?network="+this.network,new_collection);
+  create_collection(new_collection: Collection) {
+    return this.httpClient.post(this.server_nfluent+"/api/create_collection/?network="+this.network,new_collection);
   }
 
   get_minerpool() {
@@ -846,10 +849,13 @@ export class NetworkService implements OnInit {
   getExplorer(addr:string | undefined,_type="address") : string {
     if(this.isElrond())
       return "https://"+(this.isMain() ? "" : "devnet-")+"explorer.multiversx.com/"+_type+"/"+addr;
-
-    if(this.isPolygon())
-      return "https://"+(this.isMain() ? "" : "devnet-")+"polyscan.net/"+_type+"/"+addr;
-
+    if(this.isPolygon()){
+      if(this.isMain()){
+        return "https://polygonscan.com/"+_type+"/"+addr;
+      }else{
+        return "https://mumbai.polygonscan.com/"+_type+"/"+addr;
+      }
+    }
     return ""
   }
 
@@ -858,22 +864,6 @@ export class NetworkService implements OnInit {
     open(url,"explorer");
   }
 
-
-  open_gallery(id: string | undefined) {
-    let url="";
-    if(this.isElrond() && id){
-      let suffixe="/"+id;
-      if(id.split("-").length==3){
-        suffixe="/nfts/"+id;
-      }else {
-        if (!id.startsWith("erd")) suffixe = "/collections/" + id;
-      }
-      let nft_gallery=this.isElrond() ? "inspire.art" : "";
-      url="https://"+(this.isMain() ? "" : "devnet.")+nft_gallery+suffixe;
-    }
-
-    open(url,"gallery")
-  }
 
   access_code_checking(access_code: string, address: string) {
     return this.httpClient.get(this.server_nfluent+"/api/access_code_checking/"+access_code+"/"+address+"/");
@@ -943,5 +933,9 @@ export class NetworkService implements OnInit {
 
   update_access_code(access_code: string, new_password: string) {
     return this.httpClient.post(this.server_nfluent+"/api/update_password/"+access_code+"/",{access_code:new_password});
+  }
+
+  isFile() : boolean {
+    return this.network.startsWith("file-");
   }
 }

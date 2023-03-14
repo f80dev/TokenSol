@@ -1,9 +1,9 @@
 <div class="mainform">
 
   <div *ngIf="user.addr">
-    <div class="titleform">Gestion des collections de {{user.addr | alias}}</div>
+    <div class="titleform">Gestion des collections de <strong>{{user.addr | alias}}</strong> sur <strong>{{network.network}}</strong></div>
 
-    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;">
+    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;" *ngIf="network.isElrond()">
       <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
       <div style="width: fit-content;display: flex;flex-wrap:wrap;margin-left: 15px;">
         <app-input [(value)]="new_collection.name"
@@ -31,19 +31,22 @@
       </div>
     </mat-expansion-panel>
 
-
-
-    <button type="button" mat-raised-button mat-button (click)="open_inspire()" [disabled]="!user.addr">
+    <button type="button" mat-raised-button (click)="open_inspire()" [disabled]="!user.addr" *ngIf="network.isElrond()">
       Inspire.ART
     </button>
 
-    <button type="button" mat-raised-button mat-button (click)="refresh(user.addr)">
+    <button type="button" mat-raised-button (click)="create_with_wallet_elrond()" *ngIf="network.isElrond()">
+      Fabriquer avec<br>
+      le wallet natif
+    </button>
+
+    <button type="button" mat-raised-button (click)="refresh(user.addr,network.network)">
       Actualiser
     </button>
 
-
-
     <br><br>
+
+    <app-hourglass [message]="message"></app-hourglass>
 
     <table style="width: 96%;text-align: center;padding: 1%;margin:1%;" class="mat-elevation-z4">
       <tr>
@@ -76,24 +79,24 @@
 
 
         <td style="width: 300px;">
-          <button type="button" mat-raised-button mat-button (click)="set_roles(col)">
+          <button type="button" mat-raised-button (click)="set_roles(col)">
             Roles
           </button>
 
 
-          <button type="button" mat-raised-button mat-button (click)="open_collection(col)">
+          <button type="button" mat-raised-button (click)="open_collection(col)">
             Voir les NFTs
           </button>
           &nbsp;
-          <button type="button" mat-raised-button mat-button (click)="open_miner(col)" title="Utiliser cette collection pour miner des NFT">
+          <button type="button" mat-raised-button (click)="open_miner(col)" title="Utiliser cette collection pour miner des NFT">
             Miner
           </button>
           &nbsp;
-          <button type="button" mat-raised-button mat-button (click)="open_explorer(col)">
+          <button type="button" mat-raised-button (click)="open_explorer(col)">
             Explorer
           </button>
 
-          <button type="button" mat-raised-button mat-button (click)="open_analyser(col)">
+          <button type="button" mat-raised-button (click)="open_analyser(col)">
             Analyse
           </button>
 

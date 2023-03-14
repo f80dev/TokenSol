@@ -68,9 +68,11 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",dom
 
   if platform.startswith("db-"):
     cid=DAO(network=platform,domain_server=domain_server).add(data)
+    url=cid["url"]
+    if "filename" in data:url=url+"?f="+str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "url" in cid else ""
     rc={
       "cid":cid["cid"],
-      "url":cid["url"]+"?f="+str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "url" in cid else ""
+      "url":url
       }
 
 

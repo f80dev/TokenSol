@@ -54,6 +54,6 @@ export interface Configuration {
     operation:string | undefined,
     tags:string
     sequence:string[] | undefined
-    creators:string
+    creators:string | ""
   }
 }

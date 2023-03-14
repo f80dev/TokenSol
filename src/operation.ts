@@ -6,7 +6,7 @@ export interface Collection {
   id: string
   visual: string | undefined
   description: string | undefined
-  owner : string | undefined
+  owner : CryptoKey
   price: number | undefined
   type: string | undefined
   roles: any[] | undefined
@@ -339,8 +339,8 @@ export interface Operation {
 
 }
 
-export function newCollection(id="",name="",owner="") : Collection {
-  if(name.length==0)name=id;
+export function newCollection(name:string,owner:CryptoKey,id="") : Collection {
+  if(id.length==0)id=name;
   return {
     description: "",
     id: id,

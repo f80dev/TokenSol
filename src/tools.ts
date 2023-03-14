@@ -94,14 +94,19 @@ export function getBrowserName() {
 }
 
 
-export function setParams(_d:any,prefix="") : string {
+export function setParams(_d:any,prefix="",param_name="p") : string {
+  //Encryptage des parametres de l'url
+  //Version 1.0
   let rc=[];
   for(let k of Object.keys(_d)){
     if(typeof(_d[k])=="object")_d[k]="b64:"+btoa(JSON.stringify(_d[k]));
     rc.push(k+"="+encodeURIComponent(_d[k]));
   }
   let url=encrypt(prefix+rc.join("&"));
-  return encodeURIComponent(url);
+  if(param_name!="")
+    return param_name+"="+encodeURIComponent(url);
+  else
+    return encodeURIComponent(url);
 }
 
 
@@ -134,18 +139,58 @@ export function now(format="number") : number | string {
   return rc
 }
 
+export function exportToCsv(filename: string, rows: object[]) {
+  if (!rows || !rows.length) {
+    return;
+  }
+  const separator = ',';
+  const keys = Object.keys(rows[0]);
+  const csvContent =
+      keys.join(separator) +
+      '\n' +
+      rows.map((row:any) => {
+        return keys.map(k => {
+          let cell = row[k] === null || row[k] === undefined ? '' : row[k];
+          cell = cell instanceof Date
+              ? cell.toLocaleString()
+              : "'"+cell.toString().replace(/"/g, '""')+"'";
+          if (cell.search(/("|,|\n)/g) >= 0) {
+            cell = `"${cell}"`;
+          }
+          return cell;
+        }).join(separator);
+      }).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  if (link.download !== undefined) {
+    // Browsers that support HTML5 download attribute
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+}
 
 
-export function getParams(routes:ActivatedRoute,local_setting_params="") {
+
+export function getParams(routes:ActivatedRoute,local_setting_params="",force_treatment=false) {
+  //Decryptage des parametres de l'url
+  //Version 1.0
   return new Promise((resolve, reject) => {
     routes.queryParams.subscribe((params:any) => {
-      if(params.hasOwnProperty("params"))params["param"]=params["params"];
-      if(params.hasOwnProperty("param")){
-        let rc=analyse_params(decodeURIComponent(params["param"]));
-        if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["param"]);
+      if(params.hasOwnProperty("p")){
+        $$("Utilisation du paramétrage via l'url");
+        let rc=analyse_params(decodeURIComponent(params["p"]));
+        if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["p"]);
         resolve(rc);
       } else {
         if(local_setting_params.length>0){
+          $$("Utilisation des cookies pour les paramétrages");
           params=localStorage.getItem(local_setting_params)
           if(params){
             let rc=analyse_params(params);
@@ -157,7 +202,11 @@ export function getParams(routes:ActivatedRoute,local_setting_params="") {
         if(params){
           resolve(params);
         }else{
-          reject();
+          if(force_treatment){
+            resolve({});
+          }else{
+            reject();
+          }
         }
       }
     },(err)=>{
@@ -308,7 +357,7 @@ export function $$(s: string, obj: any= null) {
   }
   const lg = new Date().getHours() + ':' + new Date().getMinutes() + ' -> ' + s;
   if (obj != null) {
-    obj = JSON.stringify(obj);
+    obj = JSON.stringify(obj).replace(",",",\n");
   } else {
     obj = '';
   }

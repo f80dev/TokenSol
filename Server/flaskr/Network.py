@@ -12,9 +12,22 @@ class Network():
 
   def __init__(self,network:str):
     self.network=network
+    if not "-" in network:network="elrond-"+network
     self.network_name=network.split("-")[0]
-    self.network_type=network.split("-")[1] if "-" in network else ""
+    self.network_type=network.split("-")[1]
 
+  def get_accounts(self) -> [NfluentAccount]:
+    rc=[]
+    for k in self.get_keys():
+      rc.append(NfluentAccount(
+        name=k.name,
+        address=k.address,
+        network=k.network,
+        balance=self.get_balance(k.address),
+        nonce=0,
+        unity=self.get_unity()
+      ))
+    return rc
 
   def add_keys(self,operation=None,user=None):
     if operation:

@@ -16,6 +16,7 @@ import {Configuration, Layer} from "../../create";
 import {OperationService} from "../operation.service";
 import {parse, stringify} from "yaml";
 import {DeviceService} from "../device.service";
+import {wait_message} from "../hourglass/hourglass.component";
 
 
 @Component({
@@ -26,11 +27,11 @@ import {DeviceService} from "../device.service";
 //test : http://localhost:4200/creator
 
 export class CreatorComponent implements OnInit,OnDestroy {
-  backcolor="black";
+  backcolor="lighgray";
 
   platforms=null;
-  webstorage_platform=[{label:"",value:""}]
-  sel_webstorage_platform: any;
+  //webstorage_platform=[{label:"",value:""}]
+  //sel_webstorage_platform: any;
   url_collection="";
   show_addtext:any;
   configs:Configuration[]=[];
@@ -86,7 +87,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   //   }
   // ]
 
-  sel_platform: { label:string,value:string } | undefined;
+  sel_platform: string="nftstorage";
 
   sel_config: Configuration | null=null;
   fontfiles: any;
@@ -95,8 +96,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
   message="";
   palette: any={};
   quality: number=95;
-  networks_available:any[]=[]; //Liste des blockchaine autorisées si transfert direct vers le minage
-  stockage_available:any={};
+  //networks_available:any[]=[]; //Liste des blockchaine autorisées si transfert direct vers le minage
+  stockage_available:any={};    //Stockage des documents attachés
 
   constructor(
       public network:NetworkService,
@@ -167,12 +168,13 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
     getParams(this.routes).then((params:any)=>{
       if(params.title_form)this.title_form=params.title_form;
-      this.networks_available=params.networks || [];
-      this.platforms=this.network.config["PLATFORMS"];
-      this.webstorage_platform=this.network.config["PLATFORMS"];
-      if(this.platforms)this.sel_platform=this.platforms[0];
-      this.sel_webstorage_platform=this.webstorage_platform[0];
-      this.stockage_available=params.stockage || "infura";
+      //this.networks_available=this.network.config["NETWORKS"] || params.networks || [];
+      //this.networks_available=this.network.networks_available;
+
+      //this.webstorage_platform=this.network.config["PLATFORMS"];
+      this.sel_platform=this.network.stockage_available[0];
+      //this.sel_webstorage_platform=this.webstorage_platform[0];
+      this.stockage_available=this.network.config["PLATFORMS"] || params.stockage || "infura";
 
       this.network.list_config().subscribe((r:any)=> {
         if(r){
@@ -254,8 +256,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         position:this.sel_config!.layers.length,
         translation: "0,0",
         scale: "1,1",
-        margin: "0,0",
-        padding: "0,0"
+        margin: "0,0"
       }
 
 
@@ -280,8 +281,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
   fill_layer(i:number,w:number,h:number,preview:number,func:Function){
     if(this.sel_config){
-      this.message="Composition de " + i + " calques sur " + this.sel_config!.layers.length;
+      wait_message(this,"Composition de " + i + " calques sur " + this.sel_config!.layers.length)
       this.network.add_layer(this.sel_config!.layers[i],w,h,preview).subscribe(()=> {
+        wait_message(this);
         i = i + 1;
         if(this.sel_config && i<this.sel_config!.layers.length){
           this.fill_layer(i,w,h,preview,func);
@@ -291,6 +293,13 @@ export class CreatorComponent implements OnInit,OnDestroy {
       },(err)=>{showError(this,err)});
     }
 
+  }
+
+
+  async ask_email_for_collection(){
+    let email=await _prompt(this,"Email de reception de la collection",this.user.profil.email,
+        "Vous recevrez le lien de téléchargement dés que la collection est disponible","text","Démarrer","Annuler",false);
+    this.generate_collection("zip_"+email,false);
   }
 
 
@@ -333,8 +342,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         this.url_collection="";
 
 
-        // @ts-ignore
-        this.message="Fabrication: Fusion des calques ..."
+
         let url=this.network.get_url_collection(
             Math.min(this.sel_config!.limit,format=="preview" ? 10 : 1000),
             this.filename_format,this.sel_ext.value,
@@ -342,35 +350,45 @@ export class CreatorComponent implements OnInit,OnDestroy {
             this.sel_config!.seed,
             this.quality,format,
             this.sel_config!.data,
-            this.sel_config!.data.properties,
-            this.sel_webstorage_platform.value);
+            this.sel_config!.data.properties);
+
         this.url_collection=url.replace("format=preview","format=zip");
 
-        this.network._get(url,"",200000).subscribe((r: any) => {
-              showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
-              //    = this.network.server_nfluent + "/api/images/" + r.archive + "?f=" + r.archive;
-              $$("Lien de téléchargement " + this.url_collection);
+        if(format.startsWith("zip_")){
+          this.network._get(url,"",200000).subscribe((r: any) => {
+            showMessage(this,"Travail en cours ... consulter votre boite mail pour retrouver le résultat quand il sera prêt")
+          });
+        }else{
+          this.message="Fabrication: Fusion des calques ..."
+          this.network._get(url,"",200000).subscribe((r: any) => {
+                showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
+                //    = this.network.server_nfluent + "/api/images/" + r.archive + "?f=" + r.archive;
+                $$("Lien de téléchargement " + this.url_collection);
 
-              this.message = "";
+                this.message = "";
 
-              if (direct_mint) {
-                showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
-                this.user.nfts_to_mint = r.preview;
-                this.router.navigate(["mint"],{queryParams:{param:setParams({
-                      toolbar: this.user.toolbar_visible,
-                      networks: this.networks_available,
-                      stockage: this.stockage_available
-                    })}});
-              } else {
-                this.previews = r.preview;
-                this.show_generate = false;
-                this.show_preview = true;
-                this.show_conception = false;
+                if (direct_mint) {
+                  showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
+                  this.user.nfts_to_mint = r.preview;
+                  this.router.navigate(["mint"]); //A priori les paramétres ont été intégré au lancement
+                  // this.router.navigate(["mint"],{queryParams:{param:setParams({
+                  //       toolbar: this.user.toolbar_visible,
+                  //       networks: this.networks_available,
+                  //       stockage: this.stockage_available
+                  //     })}});
+                } else {
+                  this.previews = r.preview;
+                  this.show_generate = false;
+                  this.show_preview = true;
+                  this.show_conception = false;
+                }
               }
-            }
-        , (err) => {
-          showError(this, err);
-        })
+              , (err) => {
+                showError(this, err);
+              })
+        }
+
+
 
 
         // if(format=="upload"){
@@ -588,6 +606,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   update_config(sel_config:Configuration | null,no_prompt=false) {
+    //tag: load_config
     // let rep=await _prompt(this,"Charger une nouvelle configuration","",
     //     "Remplacer votre configuration actuelle ?","oui/non",
     //     "Remplacer","Annuler",true, [],no_prompt);
@@ -596,19 +615,19 @@ export class CreatorComponent implements OnInit,OnDestroy {
       if(this.sel_config){
         localStorage.setItem("config",stringify(sel_config))
 
-        this.sel_platform = this.sel_config.platform;
-        if(!this.sel_platform || this.sel_platform.value==""){
-          this.sel_platform=this.network.config["PLATFORMS"][isLocal(environment.appli) ? 4 : 3];
-        }
-
-        if (this.sel_config.layers) {
-          for (let l of this.sel_config.layers) {
-            for (let e of l.elements) {
-              if (this.sel_platform!.value == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
-              if (this.sel_platform!.value == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
-            }
-          }
-        }
+        // this.sel_platform = this.sel_config.platform;
+        // if(!this.sel_platform || this.sel_platform.value==""){
+        //   this.sel_platform=this.network.config["PLATFORMS"][isLocal(environment.appli) ? 4 : 3];
+        // }
+        //
+        // if (this.sel_config.layers) {
+        //   for (let l of this.sel_config.layers) {
+        //     for (let e of l.elements) {
+        //       if (this.sel_platform!.value == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
+        //       if (this.sel_platform!.value == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
+        //     }
+        //   }
+        // }
         this.previews = [];
 
       } else {
@@ -662,11 +681,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
     _prompt(this,"Début de la série","1","","number","ok","Annuler",false).then((txtStart:string)=>{
       _prompt(this,"Fin de la série","100","","number","ok","Annuler",false).then((txtEnd:string)=> {
         let modele=this.sel_config!.text.text_to_add;
-        if(modele.indexOf("_idx_")==-1)modele=modele+"_idx_";
+        if(modele.indexOf("__idx__")==-1)modele=modele+"__idx__";
         this.sel_config!.text.text_to_add="";
         let nbr_digits=txtEnd.length;
         for(let i=Number(txtStart);i<=Number(txtEnd);i++){
-          this.sel_config!.text.text_to_add=this.sel_config!.text.text_to_add+modele.replace("_idx_",i.toString().padStart(nbr_digits,'0'))+"|";
+          this.sel_config!.text.text_to_add=this.sel_config!.text.text_to_add+modele.replace("__idx__",i.toString().padStart(nbr_digits,'0'))+"|";
         }
         this.save_config();
       });
@@ -749,6 +768,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   new_conf(new_name:string,no_prompt=false){
+    //Génération d'une nouvelle config
+    //#tag new_config newConfig
     this.update_config({
       quality: 98,
       version: 1,
@@ -756,11 +777,17 @@ export class CreatorComponent implements OnInit,OnDestroy {
       id: now("hex").toString(),
       height: 800,
       width: 800,
-      data: { description: "", files: "",
-        operation: "", properties: "",
-        symbol: "token__idx__", title: "",
-        tags:"",sequence:[],
-        creators:""},
+      data: {
+        description: "",
+        files: "",
+        operation: "",
+        properties: "",
+        symbol: "token__idx__",
+        title: "MonNFT",
+        tags:"",
+        sequence:[],
+        creators:""
+      },
       attributes: {},
       layers: [],
       limit: 10,
@@ -833,7 +860,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     if(body.filename.endsWith("svg")){
       this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe((r:any)=>{
         for(let img of r){
-          this.network.upload(img,this.sel_platform!.value,"image/svg").subscribe((r:any)=>{
+          this.network.upload(img,this.sel_platform,"image/svg").subscribe((r:any)=>{
             layer.elements.push({"image":r.url,type:"image/svg"});
           })
         }
@@ -841,7 +868,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       })
     }else{
       this.message="Chargement des visuels";
-      this.network.upload(body,this.sel_platform!.value,"image/png","webp").subscribe((r:any)=>{
+      this.network.upload(body,this.sel_platform,"image/png","webp").subscribe((r:any)=>{
         this.message="";
         layer.elements.push({image:r.url,name:normalize(evt.filename)});
         this.eval_max_nft();
@@ -910,7 +937,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   miner() {
-    this.router.navigate(["miner"],{queryParams:{param:setParams({files:this.upload_files})}})
+    this.router.navigate(["miner"],{queryParams:{param:setParams({files:this.upload_files},"","")}})
   }
 
 
@@ -942,7 +969,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         operation: this.operation.sel_ope?.id,
         tags: "",
         title: "",
-        creators:this.user.addr+":100%",
+        creators:this.user.addr ? (this.user.addr+":100%") : "",
         symbol: "",
         description: "",
         sequence:[],

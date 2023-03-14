@@ -160,7 +160,7 @@ class Sticker(Element):
 
 
 
-  def init_svg(self,image):
+  def init_svg(self,image) -> bool:
     if type(image)==str:
       if image.startswith("http"):
         svg_code=str(requests.get(image).content,"utf8")
@@ -186,7 +186,7 @@ class Sticker(Element):
 
     self.text["dimension"]=self.extract_dimension_from_svg(self.text["text"])
     self.render_svg(with_picture=True,dimension=self.dimension)
-    return
+    return True
 
   def is_animated(self):
     if self.image is None or self.image.format is None: return False
@@ -318,6 +318,7 @@ class Sticker(Element):
           self.init_svg(str(content,"utf8"))
         else:
           self.image=Image.open(BytesIO(content))
+        return True
 
 
     if self.image and self.image.mode!="RGBA" and not self.is_animated():
@@ -819,13 +820,26 @@ class ArtEngine:
 
     log("Lancement de la génération de "+str(limit)+" images")
     _try=0
-    while index<limit and _try<20:
+
+    log("Génération des combinatoires")
+    sequences=[]
+    while len(sequences)<limit and _try<200:
+      seq=[]
+      for layer in self.layers:
+        elt:Sticker=None if len(layer.elements)==0 else (layer.random() if not layer.unique else layer.elements[0])
+        if elt: seq.append(elt)
+      if not seq in sequences:
+        sequences.append(seq)
+      else:
+        _try=_try+1
+
+    for seq in sequences:
       collage=Sticker("collage",dimension=(width,height),ext=ext,data=data,work_dir=self.work_dir)
 
       name=[]
       log("\nGénération du NFT "+str(index+1)+"/"+str(limit))
-      for layer in self.layers:
-        elt:Sticker=None if len(layer.elements)==0 else (layer.random() if not layer.unique else layer.elements[0])
+
+      for elt in seq:
         if elt is None:
           log("il n'y a plus assez de NFT pour respecter l'unicité")
           index=limit
@@ -837,7 +851,8 @@ class ArtEngine:
           elt.transform(layer.scale,layer.translation,layer.margin)
           try:
             log("Collage de "+str(elt)+" sur "+str(collage))
-            collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)
+            if not name in histo:
+              collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)
           except:
             log("Probleme de génération")
 

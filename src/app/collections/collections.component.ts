@@ -3,7 +3,7 @@ import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Collection} from "../../operation";
 import {ActivatedRoute, Router} from "@angular/router";
-import {showError, showMessage} from "../../tools";
+import {getParams, newCryptoKey, showError, showMessage} from "../../tools";
 import {Location} from "@angular/common";
 import {MatSnackBar} from "@angular/material/snack-bar";
 
@@ -13,11 +13,12 @@ import {MatSnackBar} from "@angular/material/snack-bar";
   styleUrls: ['./collections.component.css']
 })
 export class CollectionsComponent implements OnInit {
+  message="";
   new_collection:Collection = {
     description: "description",
     id: "",
     name: "MaCollection",
-    owner: undefined,
+    owner: newCryptoKey(),
     price: undefined,
     type: undefined,
     visual: undefined,
@@ -59,47 +60,43 @@ export class CollectionsComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.routes.queryParams.subscribe((params:any)=>{
-      if(params.hasOwnProperty("owner"))this.user.init(params["owner"],this.network.network);
+    getParams(this.routes).then((params:any)=>{
+      let owner=params["owner"] || this.user.addr
+      let network=params["network"] || this.network.network
+      this.user.init(owner,network);
+      this.refresh(this.user.addr,this.network.network);
     })
-
-    this.user.addr_change.subscribe((addr)=>{
-      this.refresh(addr);
-    })
-
-    this.network.network_change.subscribe((new_network)=>{
-      this.refresh(this.user.addr);
-    })
-
-    this.refresh(this.user.addr);
+    this.user.addr_change.subscribe((addr)=>{this.refresh(addr,this.network.network);})
+    this.network.network_change.subscribe((new_network)=>{this.refresh(this.user.addr,this.network.network);})
   }
 
 
-
-  refresh(addr:string){
-    this.network.wait("Récupération des collections");
-    this._location.replaceState("./collections","owner="+addr);
-    this.network.get_collections(addr,this.network.network,true).subscribe((r:any)=>{
-      this.network.wait();
-      this.user.collections=[];
-      for(let col of r){
-        if(col.roles){
-          for(let r of col.roles){
-            delete r.roles;
+  refresh(addr:string,network:string){
+    if(addr && network){
+      this._location.replaceState("./collections","owner="+addr+"&network="+network);
+      this.message="Récupération des collections";
+      this.network.get_collections(addr,network,true).subscribe((r:any)=>{
+        this.message="";
+        this.user.collections=[];
+        for(let col of r){
+          if(col.roles){
+            for(let r of col.roles){
+              delete r.roles;
+            }
           }
+          this.user.collections.push(col);
         }
-        this.user.collections.push(col);
-      }
-    },(error:any)=>{
-      this.network.wait();
-      showError(this,error);
-    })
+      },(error:any)=>{
+        this.network.wait();
+        showError(this,error);
+      })
+    }
   }
 
 
 
   open_collection(col: Collection) {
-    this.network.open_gallery(col.id);
+    open(this.network.getExplorer(col.id),"Explorer");
   }
 
 
@@ -120,7 +117,7 @@ export class CollectionsComponent implements OnInit {
         this.new_collection.options[col.name]=col.value;
       }
     }
-    this.network.create_collection(this.user.addr,this.new_collection).subscribe((r:any)=>{
+    this.network.create_collection(this.new_collection).subscribe((r:any)=>{
       this.user.collections.splice(0,0,r.collection);
       this.network.wait();
       showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
@@ -133,7 +130,7 @@ export class CollectionsComponent implements OnInit {
 
 
   open_inspire() {
-    this.network.open_gallery(this.user.addr);
+    open(this.network.getExplorer(this.user.addr),"Explorer");
   }
 
 
@@ -170,6 +167,10 @@ export class CollectionsComponent implements OnInit {
     // }
     return "checked";
 
+  }
+
+  create_with_wallet_elrond(){
+    open("https://wallet.multiversx.com/issue-nft/create-collection")
   }
 
 

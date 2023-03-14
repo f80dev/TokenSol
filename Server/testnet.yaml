@@ -49,22 +49,22 @@ accounts:
   secret_key: myprivatekey_file_c2a357edd49e54941f0c4c1e8be55eeb5cb63ae88f147018d5ec1405f44f5889
   unity: DBC
 nfts:
-- address: file_0xf426270171d
+- address: file_0xf44bf8f2e5c
   attributes:
   - birthday: 04/02/1971
   collection:
     id: ''
   creators: []
   description: le NFR de mon anniversaire
-  dtCreate: 1677779377.129398
+  dtCreate: 1678794602.454047
   files:
   - https://nfluent.io
   marketplace:
     price: 0
     quantity: 1
-  miner: file_2284de288a9843eaaa21d9ab5cbb1b0053ae0cc4eaf5047330db6eedc170a4be
+  miner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
   name: testName
-  owner: file_2284de288a9843eaaa21d9ab5cbb1b0053ae0cc4eaf5047330db6eedc170a4be
+  owner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
   royalties: 0
   symbol: ''
   tags: ''

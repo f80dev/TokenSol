@@ -1,10 +1,10 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import {AfterContentInit, AfterViewInit, Component, HostListener, OnInit, ViewChild} from '@angular/core';
+import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import {UserProfil, UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {Location} from "@angular/common";
-import {find, getBrowserName, getParams, setParams, showMessage} from "../tools";
+import {$$, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
 import {OperationService} from "./operation.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "./device.service";
@@ -16,7 +16,7 @@ import {menu_items} from "./menu/menu.component";
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements AfterContentInit {
+export class AppComponent implements OnInit {
   showSplash=true;
   @ViewChild('drawer', {static: false}) drawer: MatSidenav | undefined;
 
@@ -24,16 +24,15 @@ export class AppComponent implements AfterContentInit {
   claim:string="";
   visual:string="";
   operations: any;
-  //selected_operation:Operation | undefined;
   sel_network:{label:string,value:string} | undefined;
-  sel_addr: string="nfluent";
   items:menu_items={
     creator:{label:"Visuels NFT",title:"",actif:true,icon:"photo",queryParam:{}},
-    collections:{label:"Collections",title:"",actif:true,icon:"collections",queryParam:{}},
+    collections:{label:"Collections",title:"",actif:false,icon:"collections",queryParam:{}},
     keys:{label:"Clés",title:"",actif:true,icon:"key",queryParam:{}},
     mint:{label:"Miner",title:"",actif:true,icon:"build",queryParam:{}},
     build:{label:"Opérations",title:"",actif:true,icon:"edit",queryParam:{}},
     analytics:{label:"Analytics",title:"",actif:true,icon:"analytics",queryParam:{}},
+    wallet:{label:"Wallet",title:"",actif:false,icon:"dollar",queryParam:{}},
     pool:{label:"Pool de minage",title:"",actif:true,icon:"list",queryParam:{}},
     rescue:{label:"Restauration",title:"",actif:false,icon:"build_circle",queryParam:{}}, // & {'ope':operation!.sel_ope!.id,'network':network_service!.network}
     _logout:{label:"Déconnexion",title:"",actif:false,icon:"logout",queryParam:{}},
@@ -57,49 +56,52 @@ export class AppComponent implements AfterContentInit {
     public device:DeviceService
   ) {
 
-    // this.operation.sel_ope_change.subscribe((ope:Operation)=>{
-    //   this.selected_operation=ope;
-    //   this.items["rescue"].actif=(operation!=null && operation.sel_ope!=null && operation.sel_ope.id.length>0);
-    // })
 
-    this.user.profil_change.subscribe(()=>{
-      this.update_menu();
-    })
+    this.user.profil_change.subscribe(()=>{this.update_menu();})
 
-    this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.user.toolbar_visible=="true")this.drawer.toggle();})
+    this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.user.toolbar_visible)this.drawer.toggle();})
     this.device.smallScreen.subscribe((r:boolean)=>{this.full_menu=!r;})
 
-    this.network_service.network_change.subscribe((network_name:string)=>{
-      //Resynchronize le réseau
-      let index=find(this.networks,{label:network_name,value:network_name},"value");
-      if(index>-1)this.sel_network=this.networks[index];
-    });
+    // this.network_service.network_change.subscribe((network_name:string)=>{
+    //   //Resynchronize le réseau
+    //   let index=find(this.networks,{label:network_name,value:network_name},"value");
+    //   if(index>-1)this.sel_network=this.networks[index];
+    // });
+    //
+    // this.user.addr_change.subscribe((r:string)=>{this.sel_addr=r;})
 
-    this.user.addr_change.subscribe((r:string)=>{this.sel_addr=r;})
-
-    this.network_service.config_loaded.subscribe((r:any)=>{
-      let access_code=localStorage.getItem("access_code") || "";
-      let email=localStorage.getItem("email") || "";
-      this.user.setProfil(email,access_code).finally(()=>{
-        this.init_form()
-        this.filter_menu();
-      });
-      this.networks=this.network_service.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
-    },(err)=>{
-      this.showSplash=false;
-      this.router.navigate(["pagenotfound"]);
-    })
+    // this.network_service.config_loaded.subscribe((r:any)=>{
+    //   let access_code=localStorage.getItem("access_code") || "";
+    //   let email=localStorage.getItem("email") || "";
+    //   this.user.setProfil(email,access_code).finally(()=>{
+    //     this.init_form()
+    //     this.filter_menu();
+    //   });
+    // },(err)=>{
+    //   this.showSplash=false;
+    //   this.router.navigate(["pagenotfound"]);
+    // })
 
     this.user.profil_change.subscribe((p:UserProfil)=>{
       this.update_menu()
     })
   }
 
+  ngOnInit(): void {
+    setTimeout(()=>{this.showSplash=false;},2000);
+    if(getBrowserName()=="firefox"){
+      showMessage(this,"Le fonctionnement de TokenForge est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement",8000,()=>{},"Ok");
+    }
+    setTimeout(()=>{
+      this.init_form();
+    },200)
+  }
+
 
   update_menu(){
     let connected=this.user.isConnected(true);
     this.items["settings"].actif=connected;
-    this.items["keys"].actif=connected;
+    this.items["keys"].actif=connected && (this.network_service.network!="");
     this.items["build"].actif=connected;
     this.items["analytics"].actif=connected;
     this.items["login"].actif=!connected;
@@ -132,36 +134,47 @@ export class AppComponent implements AfterContentInit {
   }
 
   open_wallet() {
-    let url=environment.wallet+"/wallet/?param="+setParams({addr:this.user.addr,toolbar:true,network:this.sel_network?.value});
+    let url=environment.wallet+"/wallet/?"+setParams({addr:this.user.addr,toolbar:true,network:this.sel_network?.value});
     open(url,"wallet");
   }
 
 
-  set_key($event: string) {
-    this.user.init($event,this.network_service.network).then(()=>{
-      localStorage.setItem("addr",this.user.key?.address!);
-    })
-  }
+  // set_key($event: string) {
+  //   this.user.init($event,this.network_service.network).then(()=>{
+  //     localStorage.setItem("key",this.user.key?.address!);
+  //   })
+  // }
 
 
   init_form(){
-    getParams(this.routes).then((params:any)=>{
+    getParams(this.routes,"params",true).then((params:any)=>{
+      $$("Analyse des paramètres ",params);
+      this.user.appname=params["appname"] || environment.appname;
+      if(params.hasOwnProperty("toolbar")){
+        this.user.toolbar_visible=params["toolbar"]
+      }else{
+        this.user.toolbar_visible=true;  //Par défaut on ne montre pas la toolbar
+      }
 
       this.visual=params["visual"] || environment.splash_visual;
       this.claim=params["claim"] || environment.claim;
       this.network_service.server_nfluent=params["server"] || environment.server;
 
-      this.load_mode();
+      this.user.advance_mode=params["server"] || false;
 
-      let network_name=params["network"] || this.networks[0].value;
+      $$("Préparation des réseaux disponibles")
+      this.network_service.networks_available=params["networks"] ? params["networks"].split(",") : environment.networks_available.split(",");
+      this.network_service.stockage_available=params["stockage"] ? params["stockage"].split(",") : environment.stockage.split(",");
+      this.network_service.stockage_document_available=params["stockage_document"] ? params["stockage_document"].split(",") : environment.stockage_document.split(",");
+
+      this.networks=this.network_service.networks_available.map((x:any)=>{return {label:x,value:x}});
+      let network_name=this.networks[0].value;
       let index=find(this.networks,{value:network_name,label:network_name},"value");
-
       this.network_service.network=network_name;
       this.sel_network=this.networks[index];
 
-      if(getBrowserName()=="firefox"){
-        showMessage(this,"Le fonctionnement de TokenForge est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement",8000,()=>{},"Ok");
-      }
+
+
 
       if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
         this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{
@@ -169,16 +182,11 @@ export class AppComponent implements AfterContentInit {
         });
       }
 
-      setTimeout(()=>{this.showSplash=false;},1500);
-
       this.network_service.version=params["version"] || "main";
 
-      if(!params.hasOwnProperty("appname") && !params.hasOwnProperty("toolbar")){
-        this.router.navigate(["pagenotfound"],{queryParams:{message:"Parametre de l'application incorrect"}})
-      }
-
-      this.user.toolbar_visible=params["toolbar"] ? "true" : "false";
-      this.user.appname=params["appname"]
+      // if(!params.hasOwnProperty("appname") && !params.hasOwnProperty("toolbar")){
+      //   this.router.navigate(["pagenotfound"],{queryParams:{message:"Parametre de l'application incorrect"}})
+      // }
 
       this.update_menu();
 
@@ -223,16 +231,11 @@ export class AppComponent implements AfterContentInit {
     localStorage.setItem("advance_mode",$event ? "true" : "false");
   }
 
-  load_mode(){
-    this.user.advance_mode=localStorage.getItem("advance_mode")=="true" ? true : false;
-  }
 
   menuSelect($event: any) {
     if($event.link=="_logout"){this.logout();}
   }
 
-  ngAfterContentInit(): void {
 
-  }
 }
 

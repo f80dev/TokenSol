@@ -5,7 +5,7 @@ from flaskr.Tools import random_from, now
 from flaskr.apptools import get_network_instance, mint, create_account
 from tests.test_art import PLATFORM_LIST
 from tests.test_tools import NETWORKS, create_nft, MAIN_ACCOUNTS, DEFAULT_DOMAIN_APPLI, MAIN_EMAIL, RESSOURCE_TEST_DIR, \
-	PLATFORMS, DEFAULT_DOMAIN_SERVER
+	PLATFORMS, DEFAULT_DOMAIN_SERVER, MAIN_ACCOUNT, MAIN_NETWORK
 
 
 def test_get_keys(networks=NETWORKS):
@@ -13,6 +13,24 @@ def test_get_keys(networks=NETWORKS):
 		bl=get_network_instance(network)
 		keys=bl.get_keys()
 		assert not keys is None
+
+
+def test_get_account(addr=MAIN_ACCOUNT,network=MAIN_NETWORK):
+	_account=get_network_instance(network).get_account(addr)
+	assert not _account is None
+	assert "balance" in _account.__dict__
+	assert "address" in _account.__dict__
+	assert "amount" in _account.__dict__
+	return _account
+
+
+def test_get_accounts(networks=NETWORKS):
+	for network in networks:
+		bl=get_network_instance(network)
+		accounts=bl.get_accounts()
+		assert len(accounts)>0
+		assert accounts[0].balance>0
+		assert len(accounts[0].address)>0
 
 
 def test_get_nfts(networks=NETWORKS):
@@ -48,6 +66,13 @@ def test_get_nft(networks=NETWORKS):
 		assert nft.owner==owner.address
 		assert len(nft.miner)>0
 
+
+def test_get_collection(networks=NETWORKS):
+	for network in networks:
+		_network=get_network_instance(network)
+		owner=MAIN_ACCOUNTS[_network.network_name]
+		cols=_network.get_collections(owner,detail=True)
+		assert len(cols)>0
 
 
 def test_mint(networks=NETWORKS,platform=PLATFORMS[0],miner=None):

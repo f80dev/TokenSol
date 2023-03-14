@@ -60,7 +60,7 @@ if __name__=="__main__":
     log("Fonctionnement en mode SSL activé.")
   else:
     host=domain_server.split("//")[1].split(":")[0]
-    socketio.run(app,port=_port,host=host,debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=True)
+    socketio.run(app,port=_port,host=host,debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=False)
 
   if not "127.0.0.1" in domain_server:
     activity_report_sender(app.config,"Arret du server en mode "+("debug" if debug_mode else "prod"))

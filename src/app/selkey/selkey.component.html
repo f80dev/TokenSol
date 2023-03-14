@@ -1,17 +1,24 @@
-<div *ngIf="network && network.length>0">
-    <app-input value_type="list" color="white"
+<!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
+<div *ngIf="network && network.length>0" class="expansion-content" style="min-width: 300px;align-items: center;">
+    <button type="button" mat-icon-button
+            title="Voir le wallet"
+            *ngIf="sel_key"
+            (click)="open_wallet()">
+        <mat-icon>visibility</mat-icon>
+    </button>
+    <app-input value_type="list" color="white" width="170px"
                *ngIf="network_service.keys.length>0 && network.indexOf('devnet')>-1"
-               label="Clés disponibles"
-               [options]="network_service.keys" value_field="address"
-               [value]="sel_addr"
+               [label]="label"
+               [value]="sel_key"
+               [options]="network_service.keys"
                (valueChange)="onChangeKey($event)">
     </app-input>
 
-    <app-input
-                value_type="text" label="Clé privée"
-                [value]="sel_addr"
-                (valueChange)="onChangeKey($event)">
-    </app-input>
+    <button type="button" mat-raised-button style="margin-top: -10px;"
+            title="Utiliser votre propre clé privée"
+            (click)="paste_key()">
+        Utiliser<br>votre clé
+    </button>
 
 </div>
 

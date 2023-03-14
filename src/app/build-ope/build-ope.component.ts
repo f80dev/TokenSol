@@ -285,9 +285,9 @@ export class BuildOpeComponent implements OnInit {
 
   open_validate() {
     if(this.operation.sel_ope){
-      let url=environment.appli+"/autovalidate?param="+setParams({toolbar:false,ope:this.operation.sel_ope.id});
+      let url=environment.appli+"/autovalidate?"+setParams({toolbar:false,ope:this.operation.sel_ope.id});
       if(this.operation.sel_ope.validate && this.operation.sel_ope.validate?.users.length>0){
-        url=this.operation.sel_ope.validate!.application+"?param="+setParams({
+        url=this.operation.sel_ope.validate!.application+"?"+setParams({
           toolbar:false,
           ope:this.operation.sel_ope.id
         })

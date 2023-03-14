@@ -11,8 +11,8 @@ from os import listdir
 from os.path import exists
 from time import sleep
 import pyqrcode
-from flaskr.Tools import get_qrcode, hex_to_str, now, get_access_code_from_email, int_to_hex, str_to_hex, log, api, \
-  send_mail, open_html_file, strip_accents, returnError, decrypt, is_encrypt
+from flaskr.Tools import  hex_to_str, now, get_access_code_from_email, int_to_hex, str_to_hex, log, api, \
+  send_mail, open_html_file, strip_accents, returnError, decrypt
 from flaskr.NFT import NFT
 import textwrap
 
@@ -77,6 +77,11 @@ class Elrond(Network):
     self.transactions=[]
 
 
+  def get_unity(self):
+    return "eGLD"
+
+  def toAddress(self,private_key:str):
+    return private_key[0:16]
 
 
   def canMint(self,nft_to_check:NFT,dest:str=""):
@@ -377,10 +382,20 @@ class Elrond(Network):
 
 
   def set_roles(self,collection_id,owner):
+    """
+    voir https://docs.multiversx.com/tokens/nft-tokens#assigning-roles
+    :param collection_id:
+    :param owner:
+    :return:
+    """
     owner=self.toAccount(owner)
-    data = "setSpecialRole@" + str_to_hex(collection_id,False) + "@" + owner.address.hex() \
+    data = "setSpecialRole" \
+           + "@" + str_to_hex(collection_id,False) \
+           + "@" + owner.address.hex() \
            + "@" + str_to_hex("ESDTRoleNFTCreate",False) \
            + "@" + str_to_hex("ESDTRoleNFTBurn",False) \
+           + "@" + str_to_hex("ESDTRoleNFTAddURI",False) \
+           + "@" + str_to_hex("ESDTTransferRole ",False) \
            + "@" + str_to_hex("ESDTRoleNFTUpdateAttributes",False)
 
     sleep(3)
@@ -388,15 +403,19 @@ class Elrond(Network):
     #TODO pour l'instant ne fonctionne pas
     #data=data+ "@" + str_to_hex("ESDTRoleLocalBurn",False);
 
-    if type=="SemiFungible": data=data + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
+    if type=="SemiFungible":
+      data=data \
+           + "@" + str_to_hex("ESDTRoleNFTAddQuantity", False)
+
+
 
     #Exemple d'usage de setSpecialRole sur la collection présente
     #setSpecialRole@43414c5649323032322d356364623263@b13a017423c366caff8cecfb77a12610a130f4888134122c7937feae0d6d7d17@45534454526f6c654e4654437265617465@45534454526f6c654e46544164645175616e74697479
 
-    t = self.send_transaction(owner,
-                              Account(address=NETWORKS[self.network_type]["nft"]),
-                              owner, 0, data)
-    sleep(5)
+    t = self.send_transaction(_sender=owner,
+                              _receiver=Account(address=NETWORKS[self.network_type]["nft"]),
+                              _sign=owner, value=0, data=data)
+
     return t
 
 
@@ -511,10 +530,8 @@ class Elrond(Network):
     return NfluentAccount(address,network=self.network,balance=int(rc["balance"]),nonce=rc["nonce"])
 
 
-  # def get_balance(self,addr):
-  #   _user=self.get_account(addr)
-  #   return _user["amount"]
-
+  def get_balance(self,addr):
+    return int(self._proxy.get_account(address=Address(addr))["balance"])
 
 
   def get_pem(self,secret_key: bytes, pubkey: bytes):
@@ -937,7 +954,7 @@ class Elrond(Network):
       "tx":str(t["hash"]),
       "result":{"transaction":str(t["hash"]),"mint":collection["id"]+"-"+nonce},
       "balance":0,
-      "link_mint":self.getExplorer(collection["id"]+"-"+nonce,"token"),
+      "link_mint":self.getExplorer(collection["id"]+"-"+nonce,"nfts"),
       "link_transaction":self.getExplorer(t["hash"]),
       "out":"",
       "cost":0,
@@ -1048,7 +1065,7 @@ class Elrond(Network):
 
 
 
-  def get_keys(self,qrcode_scale=0,with_balance=False,address="") -> [Key]:
+  def get_keys(self,qrcode_scale=0,address="") -> [Key]:
     """
     retourne l'ensemble des clé ou une seul filtré par l'adresse ou le nom
     :param qrcode_scale:
@@ -1059,6 +1076,9 @@ class Elrond(Network):
     rc=[]
     log("Lecture des clés "+str(listdir(ELROND_KEY_DIR)))
     for f in listdir(ELROND_KEY_DIR)+self.keys:
+      name=""
+      pubkey=""
+      secret_key=""
 
       if type(f)==str and f.endswith(".pem"): #or f.endswith(".json"):
         acc=Account(pem_file=ELROND_KEY_DIR+f)
@@ -1071,19 +1091,8 @@ class Elrond(Network):
         address=f["address"]
 
       if len(address)==0 or (address==pubkey and address.startswith("erd")) or (not address.startswith("erd") and address==name):
-        balance=self.balance(Account(address=pubkey)) if with_balance else 0
-
-        rc.append(Key(name=name,address=pubkey,secret_key=secret_key,network="elrond"))
-
-        # rc.append({
-        #   "name":name,
-        #   "address":pubkey,
-        #   "qrcode": get_qrcode(pubkey,qrcode_scale) if qrcode_scale>0 else "",
-        #   "explorer":self.getExplorer(pubkey,"address"),
-        #   "amount":balance,
-        #   "balance":balance*1e18,
-        #   "unity":"egld"
-        # })
+        k=Key(name=name,address=pubkey,secret_key=secret_key,network="elrond")
+        rc.append(k)
 
     return rc
 

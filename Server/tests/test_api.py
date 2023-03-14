@@ -246,8 +246,8 @@ def test_api_mint(test_client, miner:Key=None, col_id=MAIN_COLLECTION, network=M
 	if col_id == "": # and not "elrond" in network:
 		col_id = find_collection_to_mint(test_client, miner.address,network)
 
-	_account=test_get_account(test_client,miner.address,network)
-	assert _account.amount>0.1,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
+	_account=call_api(test_client,"accounts/"+miner.address,network)
+	assert _account["amount"]>0.1,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
 
 	if col_id:
 		_nft = create_nft("test_" + now("hex"), col_id)
@@ -288,19 +288,6 @@ def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLEC
 	return nft_id, col_id
 
 
-def test_transfer_all_networks(test_client, networks=NETWORKS):
-	for from_network in networks:
-		for to_network in networks:
-			log("Test du transfer de "+from_network+" vers "+to_network)
-			miner_for_target_network=random_from(get_network_instance(network=to_network).get_keys())
-			owner=random_from(get_network_instance(network=from_network).get_keys())
-			rc=test_transfer_to(test_client,
-			                    from_network=from_network,to_network=to_network,
-			                    miner_for_target_network=miner_for_target_network,
-			                    owner=owner)
-
-			assert rc, "Le transfert n'a pas eu lieu"
-
 
 def test_delete_user(test_client,email=MAIN_EMAIL):
 	rc=call_api(test_client,"registration/"+email+"/")
@@ -327,7 +314,7 @@ def test_registration_and_login(test_client,email=MAIN_EMAIL):
 
 def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="",with_delete=True):
 	if len(new_password)==0:new_password=now("hex")[2:].upper()
-	user=test_registration_and_login(test_client,email,False)
+	user=test_registration_and_login(test_client,email)
 	rc=call_api(test_client,"change_password/"+email+"/"+user["access_code"]+"/"+new_password+"/")
 	assert len(rc["error"])==0
 	account=call_api(test_client,"login/"+email+"/"+new_password+"/?with_api=False")
@@ -337,7 +324,7 @@ def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="",with_de
 
 
 def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette"):
-	user=test_registration_and_login(test_client,email,False)
+	user=test_registration_and_login(test_client,email)
 	keys=call_api(test_client,"keys/")
 
 	obj={
@@ -350,7 +337,7 @@ def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette
 
 	rc=call_api(test_client,"keys/","network="+network+"&access_code="+user["access_code"])
 
-	user=test_registration_and_login(test_client,email,False)
+	user=test_registration_and_login(test_client,email)
 	assert "email" in user
 	assert len(user["keys"])==1
 
@@ -461,7 +448,7 @@ def test_create_collection(test_client, name="", miner=MAIN_MINER, network=MAIN_
 	body = {
 		"options": options,
 		"name": name,
-		"miner":miner.__dict__
+		"owner":miner.__dict__
 	}
 	rc = call_api(test_client, "create_collection/", "network=" + network, body)
 	assert not rc is None, "La collection n'est pas créer"
@@ -584,16 +571,33 @@ def test_encrypt_keys(test_client):
 
 
 
-def test_get_account(test_client,addr=MAIN_ACCOUNT,network=MAIN_NETWORK):
-	_account=get_network_instance(network).get_account(addr)
-	assert not _account is None
-	assert "balance" in _account.__dict__
-	assert "address" in _account.__dict__
-	assert "amount" in _account.__dict__
-	return _account
 
 
-def test_get_account_for_networks(test_client,networks=NETWORKS):
+
+
+def test_get_keys_and_accounts(test_client,networks=NETWORKS):
 	for network in networks:
-		addr=MAIN_ACCOUNTS[network.split("-")[0]]
-		test_get_account(test_client,addr,network)
+		log("Test network="+network)
+		for method in [("keys",""),("accounts",""),("keys","&with_balance=true")]:
+			items=call_api(test_client,method[0]+"/","network="+network+method[1])
+			assert len(items[0]["address"])>0
+			if len(method[1])>0 or method[0]=="accounts":
+				assert "balance" in items[0]
+				assert items[0]["balance"]>=0
+				assert len(items[0]["explorer"])>0
+
+
+
+
+def test_transfer_all_networks(test_client, networks=NETWORKS):
+	for from_network in networks:
+		for to_network in networks:
+			log("Test du transfer de "+from_network+" vers "+to_network)
+			miner_for_target_network=random_from(get_network_instance(network=to_network).get_keys())
+			owner=random_from(get_network_instance(network=from_network).get_keys())
+			rc=test_transfer_to(test_client,
+			                    from_network=from_network,to_network=to_network,
+			                    miner_for_target_network=miner_for_target_network,
+			                    owner=owner)
+
+			assert rc, "Le transfert n'a pas eu lieu"

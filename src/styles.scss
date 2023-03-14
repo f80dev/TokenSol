@@ -75,6 +75,16 @@ mat-expansion-panel-header {
   font-weight: bold !important;
 }
 
+//voir https://css-tricks.com/snippets/css/a-guide-to-flexbox/
+.expansion-content {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: space-between;
+  align-items: center;
+  justify-content: space-around;
+}
+
 
 .faq-content {
   text-align: left;
@@ -86,8 +96,54 @@ mat-expansion-panel-header {
   position: relative;
 }
 
+.app-prompt :host {
+  filter: blur(2px);
+}
+
 button {
   width: fit-content;
   margin: 2px;
   padding: 1px;
+}
+
+th {
+  background-color: #d8caea;
+  padding: 6px;
+  font-size: medium;
+  text-align: left;
+}
+
+.modal-popup-bg {
+  width:100vw;
+  height: 100vh;
+  position: fixed;
+  top:0;
+  left:0;
+  z-index: 100000;
+  display: block;
+  background-color: #efefef;
+  text-align: center;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.modal-popup-bg :host {
+  filter: blur(2px);
+}
+
+.modal-popup {
+  display:block;
+  position:fixed;
+  left: 50%;
+  top: 50%;
+  width: 60%;
+  max-width: 500px;
+  transform: translate(-50%, -50%);
+  font-size: 0.5em;
+  z-index:100001;
+  text-align: center;
+  padding:50px;
+  background-color: white;
+  border: darkgrey solid 1px;
+  opacity: 1 !important;
 }

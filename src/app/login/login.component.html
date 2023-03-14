@@ -5,32 +5,28 @@
     <app-input label="Votre email" width="300px"
                [value]="email" (valueChange)="email=$event"></app-input>
     <br>
-
     <app-input label="Votre code d'accès"
                help="Ce code vous as été envoyé sur votre mail à l'inscription"
                width="300px"
-               maxlength="6"
+               maxlength="6" (validate)="authent()"
                [value]="access_code" (valueChange)="access_code=$event"></app-input>
 
     <br>    <br>    <br>
-    <button type="button" mat-button mat-raised-button
+    <button type="button"  mat-raised-button color="primary" [disabled]="email=='' || access_code==''"
             (click)="authent()">
       Se connecter
     </button>
-
-
-    <button type="button" mat-button mat-raised-button color="primary"
-            (click)="show_registration=true">
-      S'inscrire
-    </button>
-
-    <br><br>
     <br><br>
 
     <span (click)="resend_code()" style="cursor: pointer;font-style: oblique;">
       Code d'accès oublié
     </span>
+    <br><br>
 
+    <button type="button" mat-button mat-raised-button
+            (click)="show_registration=true">
+      S'inscrire
+    </button>
 
 
   </div>
@@ -42,6 +38,5 @@
                [showGoogle]="true" [showCancel]="true"
                (cancel)="show_registration=false"
                (authent)="registration($event)"></app-authent>
-
 
 </div>

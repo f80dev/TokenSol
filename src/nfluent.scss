@@ -1,8 +1,7 @@
 //lire https://blog.thoughtram.io/angular/2017/05/23/custom-themes-with-angular-material.html
 //version 0.4 - mise a jour pour Angular 15 - 25/01/2023
-
-@use 'sass:map';
-@use './node_modules/@angular/material' as mat;
+@use '@angular/material' as mat;
+@include mat.core();
 
 @font-face {
         font-family: Helvetica;
