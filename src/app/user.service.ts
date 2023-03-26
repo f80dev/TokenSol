@@ -105,7 +105,8 @@ export class UserService {
     return new Promise((resolve, reject) => {
       if(!addr)reject()
       else{
-        this.network.get_account(addr, network).subscribe((r: any) => {
+        this.network.get_account(addr, network).subscribe((result: any) => {
+          let r=result[0];
           this.balance = r.amount;
           this.key = {
             balance: r.balance,

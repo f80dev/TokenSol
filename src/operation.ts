@@ -11,16 +11,7 @@ export interface Collection {
   type: string | undefined
   roles: any[] | undefined
   link: string | ""
-
-  options: {
-    canFreeze: boolean | true
-    canWipe: boolean | true
-    canPause: boolean | true
-    canTransferNFTCreateRole: boolean | true
-    canChangeOwner: boolean | true
-    canUpgrade: boolean | true
-    canAddSpecialRoles: boolean | true
-  }
+  options: string[] | []
 }
 
 export interface Connexion {
@@ -346,15 +337,7 @@ export function newCollection(name:string,owner:CryptoKey,id="") : Collection {
     id: id,
     link: "",
     name: name,
-    options: {
-      canAddSpecialRoles: false,
-      canChangeOwner: false,
-      canFreeze: false,
-      canPause: false,
-      canTransferNFTCreateRole: false,
-      canUpgrade: false,
-      canWipe: false
-    },
+    options: [],
     owner: owner,
     price: 0,
     roles: undefined,

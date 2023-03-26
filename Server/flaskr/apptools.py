@@ -1,6 +1,7 @@
 import base64
 import json
 from os import listdir
+from time import sleep
 
 from flaskr import GitHubStorage
 from flaskr.Keys import Key
@@ -14,7 +15,7 @@ from flask import request
 
 from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
-from flaskr.Solana import Solana
+
 
 from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt
 
@@ -112,8 +113,9 @@ def extract_keys_from_operation(ope):
 
 def get_network_instance(network:str):
   _network=None
+  if not "-" in network: network=network+"-mainnet"
   if "elrond" in network:_network=Elrond(network)
-  if "solana" in network:_network=Solana(network)
+  # if "solana" in network:_network=Solana(network)
   if "polygon" in network:_network=Polygon(network)
   if network.startswith("db-"): _network= DAO(network=network)
   if network.startswith("file"): _network=StoreFile(network=network,domain_server="")
@@ -152,11 +154,14 @@ def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4
 
 def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,nft_name="",send_real_email=True) -> Key:
   _network=get_network_instance(network)
-  key=_network.create_account(email=email,histo=dao,
-                                                          subject="Votre NFT '"+nft_name+"' est disponible",
-                                                          domain_appli=domain_appli,
-                                                          mail_new_wallet=mail_new_wallet,
-                                                          mail_existing_wallet=mail_existing_wallet,send_real_email=send_real_email)
+  key=_network.create_account(email=email,
+                              histo=dao,
+                              subject="Votre NFT '"+nft_name+"' est disponible",
+                              domain_appli=domain_appli,
+                              mail_new_wallet=mail_new_wallet,
+                              mail_existing_wallet=mail_existing_wallet,
+                              send_real_email=send_real_email
+                              )
   return key
 
 
@@ -218,7 +223,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
          offchaindata_platform:str="IPFS",
          domain_server=None,
          operation=None,
-         dao=None,encrypt_nft=False,price=0,symbol="NFluentToken"):
+         dao=None,encrypt_nft=False,price=0):
   """
   minage du NFT
   :param nft:
@@ -238,7 +243,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
     for k in network.get_keys():
       if k.address==miner.address: miner=k
   if len(miner.secret_key)==0: return returnError("!La clé privée du mineur est indispensable")
-  if not get_network_from_address(miner.address) in network.network_name: return returnError("!L'address du mineur ne correspond pas au réseau cible")
+  if len(miner.address)>0 and not get_network_from_address(miner.address) in network.network_name: return returnError("!L'address du mineur ne correspond pas au réseau cible")
 
   collection=nft.collection if nft.collection else {}
   #if collection_id=="": returnError("!La collection est indispensable")
@@ -246,7 +251,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
   nft.miner=miner.address
   #if not _ope is None: dao.add_histo(_ope["id"],"new_account",account,"","",_ope["network"],"Création d'un compte pour "+owner,owner)
 
-  old_amount=network.get_account(miner.address).amount
+  old_amount=network.get_account(miner.address).amount if len(miner.address)>0 else 0
   rc=network.mint(miner,
                      title=nft.name,
                      description=nft.description,
@@ -259,9 +264,12 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
                      royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
                      visual=nft.visual,
                      creators=nft.creators,
-                     domain_server=domain_server,price=price,symbol=symbol)
+                     domain_server=domain_server,
+                    price=price,
+                    symbol=nft.symbol)
 
-  if rc is None: return returnError("!"+rc["error"])
+  if rc is None or len(rc["error"])>0:
+    return returnError("!"+rc["error"])
 
   nft.address=rc["result"]["mint"] if "result" in rc else ""
   if "elrond" in network.network:
@@ -270,6 +278,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
       rc={"error":"Mint error: "+rc["error"],"hash":rc["hash"]}
     else:
       if miner.address!=owner:
+        sleep(2.0)
         tx_transfer=network.transfer(nft.address,miner,owner)
         if not tx_transfer or len(tx_transfer["error"])>0:
           rc["error"]=tx_transfer["error"]
@@ -286,7 +295,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
 
 
   # Transfert des NFTs vers la base de données
-  rc["cost"]=network.get_account(miner.address).amount-old_amount
+  rc["cost"]=network.get_account(miner.address).amount-old_amount if len(miner.address)>0 else 0
   rc["link"]=network.getExplorer(nft.address,"nfts")
 
   if type(network)==StoreFile:

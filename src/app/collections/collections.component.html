@@ -6,14 +6,22 @@
     <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;" *ngIf="network.isElrond()">
       <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
       <div style="width: fit-content;display: flex;flex-wrap:wrap;margin-left: 15px;">
-        <app-input [(value)]="new_collection.name"
+        <app-input [value]="new_collection.name" (valueChange)="new_collection.name=$event"
                    id="txtCollectionName" style="max-width: 200px"
                    label="Nom de la collection" maxlength="20"
                    help="Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux ou espace"></app-input>
 
-        <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">
-          {{collection_option.label}}
-        </mat-checkbox>
+        <app-input [value]="new_collection.type" (valueChange)="new_collection.type=$event"
+                   [options]="types_collection" value_field="value"
+                   label="Type de collection" ></app-input>
+
+        <app-input [value]="new_collection.options" (valueChange)="new_collection.options=$event"
+                   [options]="collection_options" [multiselect]="true" width="300px" value_field="value"
+                   label="Options de la collection" ></app-input>
+
+<!--        <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">-->
+<!--          {{collection_option.label}}-->
+<!--        </mat-checkbox>-->
 
         <div *ngIf="user.balance==0">
           Vous devez abonder le compte pour créer une collection
@@ -52,6 +60,7 @@
       <tr>
         <th>Name</th>
         <th>Identifiant</th>
+        <th>SemiFongible</th>
 
         <th *ngIf="user.advance_mode">{{"Propriétés de la collection" | screencutter}}</th>
         <th *ngIf="user.advance_mode">Roles</th>
@@ -60,9 +69,10 @@
 
       <tr *ngFor="let col of user.collections">
         <td style="width: 50px;" title="Nom de la collection">{{col.name}}</td>
-        <td style="width: fit-content;overflow: hidden;" title="Identifiant"><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
+        <td style="width: 50px;overflow: hidden;" title="Identifiant"><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
+        <td style="width: 20px;"><mat-icon *ngIf="col.type?.startsWith('SemiFungible')">checkmark</mat-icon></td>
 
-        <td style="max-width: 150px;overflow: hidden;font-size: small;" *ngIf="user.advance_mode">
+        <td style="overflow: hidden;font-size: small;" *ngIf="user.advance_mode">
           <app-json-to-list style="text-align: left;" [data]="col.options"></app-json-to-list>
         </td>
 

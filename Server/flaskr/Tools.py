@@ -70,6 +70,7 @@ def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
   if dictionnary!={}:
     for k in dictionnary.keys():
       svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
+      svg_code=svg_code.replace("__"+k+"__",str(dictionnary[k]))
 
   filename=get_filename_from_content(svg_code,prefix_name,ext="svg")
   with open(dir+filename,"w",encoding="utf8") as file:
@@ -158,7 +159,7 @@ def is_email(addr):
   return True
 
 
-def setParams(_d:dict,prefix="param="):
+def setParams(_d:dict,prefix="p="):
   rc=[]
   for k in _d.keys():
     value=_d[k]
@@ -183,10 +184,10 @@ def send(app,event_name: str, message=None):
 
   if message:
     log("WebSocket.send "+str(message)+" a "+event_name)
-    rc = socketio.emit(event_name,message, broadcast=True)
+    rc = socketio.emit(event_name,message)
   else:
     log("WebSocket.send de " + event_name)
-    rc = socketio.emit(event_name, broadcast=True)
+    rc = socketio.emit(event_name)
   return rc
 
 def returnError(msg:str="",_d=dict(),status=500):
@@ -226,16 +227,19 @@ def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_RESS
   :param domain_appli:
   :return:
   """
-  if name is None: return None
-  if len(name)>10 and len(name.split(" "))>5:
-    body=name
+  if name.startswith("http"):
+    body=requests.get(name).text
   else:
-    if not name.endswith("html"):name=name+".html"
-    if exists(directory+name):
-      with open(directory+name, 'r', encoding='utf-8') as f: body = f.read()
+    if name is None: return None
+    if len(name)>10 and len(name.split(" "))>5:
+      body=name
     else:
-      log("Le mail type "+name+" n'existe pas")
-      return None
+      if not name.endswith("html"):name=name+".html"
+      if exists(directory+name):
+        with open(directory+name, 'r', encoding='utf-8') as f: body = f.read()
+      else:
+        log("Le mail type "+name+" n'existe pas")
+        return None
 
   style="""
         <style>

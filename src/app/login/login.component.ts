@@ -29,6 +29,8 @@ export class LoginComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    this.network.check_network(this.router);
+
     getParams(this.routes).then((params:any)=>{
       if(params.hasOwnProperty("message") || params.hasOwnProperty("title"))this.title=params["title"] || params["message"];
       this.access_code=decrypt(localStorage.getItem("access_code"));
@@ -38,7 +40,6 @@ export class LoginComponent implements OnInit {
   }
 
   authent() {
-
     if(this.access_code && this.email){
       this.user.setProfil(this.email,this.access_code).then(()=>{
         localStorage.setItem("access_code",encrypt(this.access_code));

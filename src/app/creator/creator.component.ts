@@ -302,13 +302,24 @@ export class CreatorComponent implements OnInit,OnDestroy {
     this.generate_collection("zip_"+email,false);
   }
 
+  async ask_confirmation_for_big_collection(format="zip",direct_mint=false){
+    let conf="no";
+    if(this.sel_config!.limit>20){
+      conf=await _prompt(this,"Etes-vous sûr de lancer une génération en temps réel ?","","La génération de cette collection risque de prendre beaucoup de temps.");
+    }
+    if(this.sel_config!.limit<=20 || conf=="yes"){
+      this.generate_collection(format,direct_mint,2000000);
+    }
+  }
 
 
-  generate_collection(format="zip",direct_mint=false) {
+  generate_collection(format="zip",direct_mint=false,timeout=200000) {
     //Format peut contenir "preview"
     if(!this.sel_config)return;
     this.url_collection="";
     this.save_config(false);
+
+
 
     //Vérification du format des datas
     if(this.sel_config!.data.properties && this.sel_config!.data.properties!=""){
@@ -321,10 +332,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
 
     let i=0;
-
-    this.message="";
+    wait_message(this,"Fabrication: chargement des images ...");
     this.network.reset_collection().subscribe(()=>{
-      this.message="Fabrication: chargement des images ..."
+
       this.fill_layer(i,this.sel_config?.width || 800,this.sel_config?.height || 800,0,()=>{
 
         if(this.sel_config && this.sel_config.data){
@@ -332,17 +342,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
           if(this.operation!.sel_ope && this.operation!.sel_ope!.nftlive){
             this.sel_config!.data.operation=this.operation.sel_ope?.id;
           }
-          // if(!this.sel_config.data.creators || this.sel_config.data.creators.length==0)
-          //   this.sel_config.data.creators=this.user.addr+":100%";
         }
-
 
         if(!direct_mint)showMessage(this,"L'aperçu se limite à 10 NFT maximum");
 
         this.url_collection="";
-
-
-
         let url=this.network.get_url_collection(
             Math.min(this.sel_config!.limit,format=="preview" ? 10 : 1000),
             this.filename_format,this.sel_ext.value,
@@ -355,19 +359,19 @@ export class CreatorComponent implements OnInit,OnDestroy {
         this.url_collection=url.replace("format=preview","format=zip");
 
         if(format.startsWith("zip_")){
-          this.network._get(url,"",200000).subscribe((r: any) => {
+          wait_message(this);
+          this.network._post(url,"",this.sel_config!,100).subscribe((r: any) => {
             showMessage(this,"Travail en cours ... consulter votre boite mail pour retrouver le résultat quand il sera prêt")
           });
         }else{
-          this.message="Fabrication: Fusion des calques ..."
-          this.network._get(url,"",200000).subscribe((r: any) => {
+          wait_message(this,"Fabrication: Fusion des calques ...",true,2000000);
+          this.network._get(url,"",timeout).subscribe((r: any) => {
                 showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
                 //    = this.network.server_nfluent + "/api/images/" + r.archive + "?f=" + r.archive;
                 $$("Lien de téléchargement " + this.url_collection);
 
-                this.message = "";
-
                 if (direct_mint) {
+                  wait_message(this)
                   showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
                   this.user.nfts_to_mint = r.preview;
                   this.router.navigate(["mint"]); //A priori les paramétres ont été intégré au lancement
@@ -377,10 +381,14 @@ export class CreatorComponent implements OnInit,OnDestroy {
                   //       stockage: this.stockage_available
                   //     })}});
                 } else {
-                  this.previews = r.preview;
-                  this.show_generate = false;
-                  this.show_preview = true;
-                  this.show_conception = false;
+                  wait_message("Préparation de l'aperçu")
+                  setTimeout(()=>{
+                    this.previews = r.preview;
+                    this.show_generate = false;
+                    this.show_preview = true;
+                    this.show_conception = false;
+                    wait_message(this)
+                  },50);
                 }
               }
               , (err) => {
@@ -560,9 +568,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
           unique:false,
           indexed:true,
           position:l.position,
-          translation:"0,0",
-          scale:"1,1",
-          margin:"0,0"
+          margin:"0"
         }
 
         if(l["text"]){
@@ -611,29 +617,29 @@ export class CreatorComponent implements OnInit,OnDestroy {
     //     "Remplacer votre configuration actuelle ?","oui/non",
     //     "Remplacer","Annuler",true, [],no_prompt);
     // if(rep=="yes"){
-      this.sel_config=sel_config;
-      if(this.sel_config){
-        localStorage.setItem("config",stringify(sel_config))
+    this.sel_config=sel_config;
+    if(this.sel_config){
+      localStorage.setItem("config",stringify(sel_config))
 
-        // this.sel_platform = this.sel_config.platform;
-        // if(!this.sel_platform || this.sel_platform.value==""){
-        //   this.sel_platform=this.network.config["PLATFORMS"][isLocal(environment.appli) ? 4 : 3];
-        // }
-        //
-        // if (this.sel_config.layers) {
-        //   for (let l of this.sel_config.layers) {
-        //     for (let e of l.elements) {
-        //       if (this.sel_platform!.value == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
-        //       if (this.sel_platform!.value == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
-        //     }
-        //   }
-        // }
-        this.previews = [];
+      // this.sel_platform = this.sel_config.platform;
+      // if(!this.sel_platform || this.sel_platform.value==""){
+      //   this.sel_platform=this.network.config["PLATFORMS"][isLocal(environment.appli) ? 4 : 3];
+      // }
+      //
+      // if (this.sel_config.layers) {
+      //   for (let l of this.sel_config.layers) {
+      //     for (let e of l.elements) {
+      //       if (this.sel_platform!.value == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
+      //       if (this.sel_platform!.value == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
+      //     }
+      //   }
+      // }
+      this.previews = [];
 
-      } else {
-        this._location.replaceState("/creator");
-      }
-      this.eval_max_nft();
+    } else {
+      this._location.replaceState("/creator");
+    }
+    this.eval_max_nft();
   }
 
   check_config(config:any){
@@ -671,10 +677,24 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
-  on_upload_config($event: any) {
-    let config:Configuration=parse($event.file);
-    this.configs.push(config);
-    this.update_config(config);
+  isValide(conf:Configuration){
+    if(!conf.layers || conf.layers.length==0)return false;
+    if(!conf.data)return false;
+    return true;
+  }
+
+  async on_upload_config($event: any) {
+    let r=await _prompt(this,"Effacer la configuration actuelle");
+    if(r=="yes"){
+      let config:Configuration=parse($event.file);
+      if(this.isValide(config)){
+        this.sel_config=config;
+        this.update_config(config);
+      }else{
+        showMessage(this,"Cette configuration n'est pas conforme");
+      }
+
+    }
   }
 
   add_serial(layer: Layer) {
@@ -831,6 +851,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   async find_image() {
+    showMessage(this,"Il est possible de faire directement glisser les images d'un site web vers le calque souhaité")
     let resp=await _prompt(this,"Saisissez un mot clé (de préférence en anglais)",
         "rabbit",
         "Accéder directement à plusieurs moteurs de recherche d'image","text",
@@ -943,12 +964,14 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   async transform(layer: Layer) {
-    if(!layer.translation)layer.translation="0,0"
-    if(!layer.scale)layer.scale="1,1";
-    if(!layer.margin)layer.margin="0,0";
-    layer.translation=await _prompt(this,"Translation (x,y) ?",layer.translation)
-    layer.scale=await _prompt(this,"Echelle (x,y) ?",layer.scale)
+    //if(!layer.translation)layer.translation="0,0"
+    //if(!layer.scale)layer.scale="1,1";
+    if(!layer.margin)layer.margin="0";
+    //layer.translation=await _prompt(this,"Translation (x,y) ?",layer.translation)
+    //layer.scale=await _prompt(this,"Echelle (x,y) ?",layer.scale)
     layer.margin=await _prompt(this,"Marge (x,y) ?",layer.margin)
+    if(!layer.margin)layer.margin="0,0"
+    if(layer.margin.indexOf(",")==-1)layer.margin=layer.margin+","+layer.margin;
   }
 
 
@@ -1003,11 +1026,14 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   search_images(layer: Layer) {
-    _prompt(this,"Recherche d'images","background",
+    let pos=this.sel_config?.layers.indexOf(layer) || 0;
+    let sample=(pos==0 ? "background" : "emoji");
+    _prompt(this,"Recherche d'images",sample,
         "Votre requête en quelques mots en ANGLAIS de préférence (ajouter 'sticker' pour des images transparentes)",
         "text",
         "Rechercher",
         "Annuler",false).then((query:string)=>{
+      if(pos>0 && query.indexOf("sticker")==-1){query=query+" sticker"};
       this.network.search_images(query,(layer.position>0)).subscribe((r:any)=>{
         _prompt(this,"Choisissez une ou plusieurs images","","","images","Sélectionner","Annuler",false,r.images).then((images:string)=>{
           for(let link of images){
@@ -1047,7 +1073,12 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   download_collection() {
-    open(this.url_collection)
     showMessage(this,"Votre collection est en cours de préparation");
+    window.location.assign(this.url_collection);
+  }
+
+  show_max_item() {
+    this.sel_config!.max_items=(this.sel_config!.max_items<500 ? 500 : 15);
+    showMessage(this,"Pour repasser en vue réduite, utiliser de nouveau ce bouton");
   }
 }

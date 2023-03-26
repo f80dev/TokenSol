@@ -6,10 +6,12 @@
 <mat-toolbar class="mat-body-2" color="primary" *ngIf="user.toolbar_visible && !showSplash">
   <mat-icon (click)="drawer!.toggle()" *ngIf="device.isHandset$ | async">menu</mat-icon>
 
-  <div *ngIf="!(device.isHandset$ | async)" style="margin-left: 10px;">
+  <div *ngIf="!(device.isHandset$ | async) && network_service.online" style="margin-left: 10px;">
       {{user!.appname}}<br>
       <small *ngIf="network_service.config.version?.length>0">v{{network_service.config.version | async}}</small>
   </div>
+
+  <div *ngIf="!network_service.online">Connexion serveur interompu</div>
 
   <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-headline-6">
     <mat-spinner *ngIf="!network_service.waiting.startsWith('!')" style="display: inline-block;" color="warn" diameter="20"></mat-spinner>

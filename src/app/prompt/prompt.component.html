@@ -13,7 +13,7 @@
     <div *ngIf="data && data.question!='' && (data?.question?.startsWith('http') || data?.question?.startsWith('./'))">
       <iframe scrolling="auto" frameborder="0"
               style="background: none;"
-              [src]="data?.question?.replace('html:','') | safe" width="100%">
+              [src]="data!.question!.replace('html:','') | safe">
       </iframe>
       <br>
     </div>

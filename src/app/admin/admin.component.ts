@@ -5,6 +5,7 @@ import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {NgNavigatorShareService} from "ng-navigator-share";
+import {Router} from "@angular/router";
 
 interface ConfigServer {
   Server:string
@@ -51,13 +52,17 @@ export class AdminComponent implements OnInit {
   urls: any[] = [];
   w="550px";
   max_url_len: number=0;
+  sel_key: string | undefined;
+  first_network: string="";
+  sel_col: string="";
 
 
   constructor(
     public user:UserService,
     public network:NetworkService,
     public clipboard:Clipboard,
-    public ngShare:NgNavigatorShareService
+    public ngShare:NgNavigatorShareService,
+    public router:Router
   ) {
     this.reset();
   }
@@ -66,12 +71,12 @@ export class AdminComponent implements OnInit {
 
     this.user.login("Se connecter pour accèder aux commandes d'administration");
     this.load_values();
-    this.update_code_creator();
     this.network.info_server().subscribe((infos:any)=>{
       this.server_config=infos;
       this.networks=this.network.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
       this.sel_networks.push(this.networks[0]);
       this.sel_networks.push(this.networks[1]);
+      this.first_network=this.networks[0]["value"];
       this.stockages=[
           {label:"NFTStorage",value:"nftstorage"},
           {label:"Infura",value:"infura"},
@@ -90,6 +95,7 @@ export class AdminComponent implements OnInit {
     this.db_addr=localStorage.getItem("db_addr") || this.db_addr;
     this.db_login=localStorage.getItem("db_login") || this.db_login;
     this.db_password=localStorage.getItem("db_password") || this.db_password;
+    this.sel_key=localStorage.getItem("sel_key") || this.sel_key;
     this.refresh()
   }
 
@@ -102,6 +108,7 @@ export class AdminComponent implements OnInit {
       localStorage.setItem("db_password",this.db_password);
       localStorage.setItem("networks",this.sel_networks.join(","))
       localStorage.setItem("stockage",this.sel_stockage.join(","))
+      localStorage.setItem("sel_key",this.sel_key || "");
       localStorage.setItem("stockage_document",this.sel_stockage_document.join(","))
     }
     this.update_code_creator()
@@ -157,7 +164,15 @@ export class AdminComponent implements OnInit {
 
   update_code_creator() {
     this.urls=[];
+    if(this.appli_addr.endsWith("/"))this.appli_addr=this.appli_addr.substring(0,this.appli_addr.length-1);
     let url_len=0;
+    if(this.sel_networks.length>0){
+      let first_network:any=this.sel_networks[0];
+      this.first_network=first_network["value"];
+    }else{
+      this.first_network="";
+    }
+
 
     let networks=this.sel_networks.map((x:any)=>{return(x.value)});
     var obj:any={
@@ -195,8 +210,25 @@ export class AdminComponent implements OnInit {
     })
     url_len=Math.max(url_len,setParams(obj).length);
 
-    delete obj.stockage_document;
+
+    let miner=""
+    if(this.sel_key)miner=this.sel_key.indexOf(":")==-1 ? this.sel_key : this.sel_key.split(":")[1]
+    this.urls.push({
+      title:"TokenDoc",
+      description:"application de tokenisation de document",
+      url:this.appli_addr+"/?"+setParams({
+        stockage:obj.stockage,
+        stockage_document:obj.stockage_document,
+        network:this.first_network,
+        miner: miner,
+        claim: this.intro_claim,
+        appname:this.intro_appname,
+        collection:this.sel_col
+      })
+    })
+
     delete obj.stockage;
+    delete obj.stockage_document;
     obj.toolbar=true;
     this.urls.push({
       title:this.intro_appname,
@@ -223,6 +255,7 @@ export class AdminComponent implements OnInit {
     })
     url_len=Math.max(url_len,setParams(obj).length);
 
+
     this.max_url_len=url_len;
   }
 
@@ -237,5 +270,13 @@ export class AdminComponent implements OnInit {
       text: url.title,
       url: url.url
     })
+  }
+
+  update_key($event: any) {
+    this.sel_key=$event;
+  }
+
+  navigate_to_key() {
+    this.router.navigate(["keys"]);
   }
 }

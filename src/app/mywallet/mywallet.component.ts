@@ -72,7 +72,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   ngOnInit(): void {
-    getParams(this.routes,"").then((params:any)=>{
+    getParams(this.routes).then((params:any)=>{
       $$("Récupération des paramètres: ",params);
 
       let network=params["network"] || "elrond-mainnet";
@@ -138,14 +138,14 @@ export class MywalletComponent implements OnInit,OnDestroy {
   refresh(index:number=0) {
     $$("Refresh de l'onglet "+index);
     if(index==0 && this.nfts.length==0){
-      this.message=(this.sel_collection.name=="Toutes") ? "Chargement de tous vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
+      this.message=(this.sel_collection.name=="Toutes") ? "Recherches de vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
       let with_attr=!this.network.isElrond();
-      this.network.get_tokens_from("owner",this.addr,50,with_attr,null,0,this.network.network).then((r:any)=>{
+      this.network.get_tokens_from("owner",this.addr,10,with_attr,null,0,this.network.network).then((r:any)=>{
         this.add_nfts(r.result,r.offset);
       });
 
       setTimeout(()=>{
-        this.network.get_tokens_from("owner",this.addr,250,with_attr,null,5,this.network.network).then((r:any)=>{
+        this.network.get_tokens_from("owner",this.addr,250,with_attr,null,10,this.network.network).then((r:any)=>{
           this.message="";
           this.add_nfts(r.result,r.offset);
         }).catch(err=>{showError(this,err)});
@@ -217,15 +217,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
         price: undefined,
         type:"NFT",
         link:"",
-        options:{
-          canWipe:true,
-          canTransferNFTCreateRole:true,
-          canUpgrade:true,
-          canPause:true,
-          canFreeze:true,
-          canChangeOwner:true,
-          canAddSpecialRoles:true
-        }
+        options:[]
       };
 
       let token:NFT= {

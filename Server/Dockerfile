@@ -57,11 +57,10 @@ RUN pip3 -v install Flask
 RUN pip3 -v install Flask-Cors
 RUN pip3 -v install pyyaml
 RUN pip3 -v install --upgrade pip setuptools wheel
-RUN pip3 -v install pyopenssl==22.0.0
+
 RUN pip3 -v install solana
 RUN pip3 -v install base58
 RUN pip3 -v install ipfshttpclient
-RUN pip3 -v install erdpy
 RUN pip3 -v install ansi
 RUN pip3 -v install -U secret-sdk
 RUN pip3 -v install pyqrcode
@@ -87,7 +86,7 @@ RUN pip3 -v install flask-jwt-extended
 RUN pip3 -v install apscheduler
 RUN pip3 -v install Flask-Caching
 RUN pip3 -v install requests-cache
-RUN pip3 -v install cryptography
+RUN pip3 -v install cryptography==40.0.0
 RUN pip3 -v install networkx
 RUN pip3 -v install flask-socketio
 RUN pip3 -v install simple-websocket
@@ -96,8 +95,8 @@ RUN pip3 -v install py-solc-x
 RUN pip3 -v install web3
 RUN pip3 -v install pandas
 RUN pip3 -v install rembg
-
-
+RUN pip3 -v install erdpy==4.0.0
+RUN pip3 -v install pyopenssl
 
 WORKDIR /
 RUN mkdir Solana
@@ -114,6 +113,8 @@ RUN mkdir flaskr/static
 RUN mkdir ./Solana/Temp
 RUN mkdir ./Elrond/PEM
 RUN mkdir ./Polygon/Keys
+RUN mkdir ./Polygon/Master
+
 RUN mkdir ./Solana/Keys
 RUN mkdir ./Secret/Keys
 VOLUME /certs
@@ -135,6 +136,9 @@ COPY ./Elrond/*.py $APP_HOME/Elrond/
 COPY ./Elrond/PEM/*.pem $APP_HOME/Elrond/PEM/
 COPY ./Elrond/PEM/*.json $APP_HOME/Elrond/PEM/
 COPY ./Polygon/Keys/*.secret $APP_HOME/Polygon/Keys/
+COPY ./Polygon/Master/contracts $APP_HOME/Polygon/Master/contracts/
+COPY ./Polygon/Master/node_modules/@openzeppelin $APP_HOME/Polygon/Master/node_modules/@openzeppelin
+
 COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
 COPY ./Configs/*.yaml $APP_HOME/Configs/

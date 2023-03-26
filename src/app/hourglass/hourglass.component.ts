@@ -1,11 +1,9 @@
 import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
 import {Router} from '@angular/router';
 
-
-
-export function wait_message(vm:any,message="",modal=false,duration=10000) : boolean {
+export function wait_message(vm:any,message="",modal=false,duration=1000000) : boolean {
   //Active les messages d'attentes
-  if(vm.hasOwnProperty("message"))return false;
+  if(!vm.hasOwnProperty("message"))return false;
   if(vm.hasOwnProperty("modal"))vm.modal=modal;
   vm.message=message;
   setTimeout(()=>{vm.message=""},duration);

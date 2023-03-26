@@ -43,10 +43,10 @@ textarea {
   border: dotted 1px #aaa;
 }
 
-.input-number {
-  max-width: 120px;
-  min-width: 60px;
-}
+/*.input-number {*/
+/*  max-width: 120px;*/
+/*  min-width: 60px;*/
+/*}*/
 
 
 mat-slider {
@@ -61,6 +61,8 @@ textarea {
   background-color: #efefef;
   padding: 5px;
 }
+
+
 
 
 

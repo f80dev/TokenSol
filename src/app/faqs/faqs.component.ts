@@ -28,8 +28,8 @@ export class FaqsComponent implements AfterContentInit {
         this.faqs=[];
 
         for(let faq of rc.content) {
-          if (!params.has("open") || faq["index"].indexOf(params.get("open")) > -1) {
-            faq.visible = params.has("open");
+          if (!params.hasOwnProperty("open") || faq["index"].indexOf(params.get("open")) > -1) {
+            faq.visible = params.hasOwnProperty("open");
 
             for(let i=0;i<5;i++){
               faq.title=faq.title.replace("{{appname}}",environment.appname);

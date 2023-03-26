@@ -147,10 +147,13 @@ class Sticker(Element):
     if ext is None:
       ext="webp"
       if type(image)==str:
-        if image.startswith("http"):
-          ext=Image.open(BytesIO(requests.get(image).content)).format.lower()
+        if image.startswith("data:image/"):
+          ext=image.split(";base64")[0][11:]
         else:
-          ext=image[image.rindex(".")+1:]
+          if image.startswith("http"):
+            ext=Image.open(BytesIO(requests.get(image).content)).format.lower()
+          else:
+            ext=image[image.rindex(".")+1:]
     else:
       ext=ext.replace(";","").lower()
 
@@ -480,7 +483,7 @@ class Sticker(Element):
     _data_to_add=self.data
     if len(self.data)>0:
       for i in range(10): #Jusqu'a 10 remplacements
-        _data_to_add=_data_to_add.replace("_idx_",str(index))
+        _data_to_add=_data_to_add.replace("__idx__",str(index))
 
       _data=loads(_data_to_add)
       if not "title" in _data:_data["title"]=""
@@ -866,7 +869,7 @@ class ArtEngine:
 
           histo.append(name)
           if len(dir)>0:
-            filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
+            filename=dir+prefix+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
             rc.append(filename)
             if collage.ext.lower()=="gif" or export_metadata:
               rc.append(filename+".xmp")

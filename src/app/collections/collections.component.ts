@@ -6,6 +6,7 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {getParams, newCryptoKey, showError, showMessage} from "../../tools";
 import {Location} from "@angular/common";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {wait_message} from "../hourglass/hourglass.component";
 
 @Component({
   selector: 'app-collections',
@@ -14,40 +15,34 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 })
 export class CollectionsComponent implements OnInit {
   message="";
+
+  //voir https://docs.elrond.com/tokens/nft-tokens/
+  collection_options=[
+    {label:"Freezable",value:"canFreeze"},
+    {label:"Wipeable",value:"canWipe"},
+    {label:"Pausable",value:"canPause"},
+    {label:"Délégation de minage",value:"canTransferNFTCreateRole"},
+    {label:"Transférable",value:"canChangeOwner"},
+    {label:"Modifiable",value:"canUpgrade"},
+    {label:"Role spéciaux",value:"canAddSpecialRoles"},
+  ]
+
   new_collection:Collection = {
     description: "description",
     id: "",
     name: "MaCollection",
     owner: newCryptoKey(),
     price: undefined,
-    type: undefined,
+    type: "NonFungibleESDT",
     visual: undefined,
     roles: [],
     link: "",
-    options:{
-      canWipe:true,
-      canTransferNFTCreateRole:true,
-      canUpgrade:true,
-      canPause:true,
-      canFreeze:true,
-      canChangeOwner:true,
-      canAddSpecialRoles:true
-    }
+    options: this.collection_options.map((x:any)=>{return x.value})
   };
 
 
-  //voir https://docs.elrond.com/tokens/nft-tokens/
-  collection_options=[
-    {label:"Freezable",name:"canFreeze",value:true},
-    {label:"Wipeable",name:"canWipe",value:true},
-    {label:"Pausable",name:"canPause",value:true},
-    {label:"Délégation de minage",name:"canTransferNFTCreateRole",value:true},
-    {label:"Transférable",name:"canChangeOwner",value:true},
-    {label:"Modifiable",name:"canUpgrade",value:true},
-    {label:"Role spéciaux",name:"canAddSpecialRoles",value:true},
-  ]
   perms: any;
-
+  types_collection=[{label:"Non fongible",value:"NonFungibleESDT"},{label:"Semi Fongible",value:"SemiFungibleESDT"}];
 
   constructor(
     public network:NetworkService,
@@ -60,10 +55,10 @@ export class CollectionsComponent implements OnInit {
 
 
   ngOnInit(): void {
-    getParams(this.routes).then((params:any)=>{
+    getParams(this.routes).then(async (params:any)=>{
       let owner=params["owner"] || this.user.addr
       let network=params["network"] || this.network.network
-      this.user.init(owner,network);
+      let r=await this.user.init(owner,network);
       this.refresh(this.user.addr,this.network.network);
     })
     this.user.addr_change.subscribe((addr)=>{this.refresh(addr,this.network.network);})
@@ -106,20 +101,23 @@ export class CollectionsComponent implements OnInit {
       showMessage(this,"Solde insuffisant pour créer une collection")
       return;
     }
+    if(!this.user.key?.privatekey){
+      for(let k of this.network.keys){
+        if(k.address==this.user.addr){
+          this.user.key=k;
+        }
+      }
+    }
+    if(this.user.key)this.new_collection.owner=this.user.key;
 
     if(!this.new_collection.name || this.new_collection.name.length<3 || this.new_collection.name?.indexOf(' ')>-1){
       showMessage(this,"Format du nom incorrect");
       return;
     }
-    this.network.wait("Fabrication de la collection sur la blochain")
-    for(let col of this.collection_options){
-      if(col.name){ // @ts-ignore
-        this.new_collection.options[col.name]=col.value;
-      }
-    }
+    wait_message(this,"Fabrication de la collection sur la blockchain");
     this.network.create_collection(this.new_collection).subscribe((r:any)=>{
       this.user.collections.splice(0,0,r.collection);
-      this.network.wait();
+      wait_message(this)
       showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
     },(err)=>{
       this.network.wait();

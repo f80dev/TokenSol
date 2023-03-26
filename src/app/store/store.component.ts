@@ -71,8 +71,8 @@ export class StoreComponent implements OnInit {
         selfWalletConnexion:true,
         mining:this.operation.lazy_mining?.networks[0].miner,
         section:"store"
-      })
-      this.router.navigate(["dm"],{queryParams:{param:param}});
+      },"","")
+      this.router.navigate(["dm"],{queryParams:{p:param}});
     }
   }
 }

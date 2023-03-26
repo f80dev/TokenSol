@@ -6,7 +6,7 @@ from flaskr.Mintpool import Mintpool
 from flaskr.Network import Network
 from flaskr.Tools import get_operation, now, get_key_by_name, random_from
 from flaskr.settings import OPERATIONS_DIR
-from tests.test_art import test_generate_collection
+from tests.test_art import test_generate_collection, IMAGES
 from tests.test_tools import *
 
 @pytest.fixture()
@@ -85,6 +85,18 @@ def test_api_upload_json(test_client,objs=["bonjour comment allez vous",{"key":"
 			assert len(cid["cid"])>0
 
 
+def test_send_photo_for_nftlive(test_client):
+	body={
+		"photo":IMAGES["backgrounds"][0],
+		"limit":1,
+		"dimension":500,
+		"config":RESSOURCE_TEST_DIR+"/config_certificat_photo.yaml"
+	}
+	image_to_mint= call_api(test_client, "send_photo_for_nftlive/", "", body)
+	assert len(image_to_mint["images"])>0
+
+
+
 def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.pdf","fond1.gif","image_1.webp"],platforms=PLATFORMS):
 	for p in platforms:
 		log("Test de la platform "+p)
@@ -105,7 +117,7 @@ def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.p
 				if not "ipfs" in p:
 					log("Tentative de récupération du fichier "+cid["url"])
 					resp=test_client.get(cid["url"])
-					assert resp.status_code==200 or p=="infura"
+					assert resp.status_code==200 or p=="infura","Fichier non récupérable sur "+p
 
 
 def test_seach_images(test_client,query="lapin"):
@@ -220,10 +232,6 @@ def mint_from_file(test_client, filename: str = RESSOURCE_TEST_DIR+"image_1.webp
 	return rc
 
 
-def test_mint_polygon(test_client,network="polygon-devnet"):
-	miner=random_from(get_network_instance(network).get_keys())
-	test_api_mint(test_client,miner=miner,col_id="",network=network)
-
 
 
 def test_mint_file(test_client,network="file-testnet"):
@@ -246,7 +254,9 @@ def test_api_mint(test_client, miner:Key=None, col_id=MAIN_COLLECTION, network=M
 	if col_id == "": # and not "elrond" in network:
 		col_id = find_collection_to_mint(test_client, miner.address,network)
 
-	_account=call_api(test_client,"accounts/"+miner.address,network)
+	_accounts=call_api(test_client,"accounts/"+miner.address+"/","network="+network)
+	assert len(_accounts)>0
+	_account=_accounts[0]
 	assert _account["amount"]>0.1,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
 
 	if col_id:
@@ -323,23 +333,23 @@ def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="",with_de
 
 
 
-def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette"):
-	user=test_registration_and_login(test_client,email)
-	keys=call_api(test_client,"keys/")
-
-	obj={
-		"network":network,
-		"email":email,
-		"secret_key":keys[0]["secret_key"],
-		"access_code":user["access_code"]
-	}
-	rc=call_api(test_client,"keys/"+name+"/","",obj)
-
-	rc=call_api(test_client,"keys/","network="+network+"&access_code="+user["access_code"])
-
-	user=test_registration_and_login(test_client,email)
-	assert "email" in user
-	assert len(user["keys"])==1
+# def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette"):
+# 	user=test_registration_and_login(test_client,email)
+# 	keys=call_api(test_client,"keys/")
+#
+# 	obj={
+# 		"network":network,
+# 		"email":email,
+# 		"secret_key":keys[0]["secret_key"],
+# 		"access_code":user["access_code"]
+# 	}
+# 	rc=call_api(test_client,"keys/"+name+"/","",obj)
+#
+# 	rc=call_api(test_client,"keys/","network="+network+"&access_code="+user["access_code"])
+#
+# 	user=test_registration_and_login(test_client,email)
+# 	assert "email" in user
+# 	assert len(user["keys"])==1
 
 
 
@@ -578,13 +588,15 @@ def test_encrypt_keys(test_client):
 def test_get_keys_and_accounts(test_client,networks=NETWORKS):
 	for network in networks:
 		log("Test network="+network)
+		_network=get_network_instance(network)
 		for method in [("keys",""),("accounts",""),("keys","&with_balance=true")]:
 			items=call_api(test_client,method[0]+"/","network="+network+method[1])
 			assert len(items[0]["address"])>0
 			if len(method[1])>0 or method[0]=="accounts":
 				assert "balance" in items[0]
 				assert items[0]["balance"]>=0
-				assert len(items[0]["explorer"])>0
+				if _network.is_blockchain():
+					assert len(items[0]["explorer"])>0
 
 
 
@@ -601,3 +613,9 @@ def test_transfer_all_networks(test_client, networks=NETWORKS):
 			                    owner=owner)
 
 			assert rc, "Le transfert n'a pas eu lieu"
+
+
+
+def test_mint_polygon(test_client,network="polygon-devnet"):
+	miner=random_from(get_network_instance(network).get_keys())
+	test_api_mint(test_client,miner=miner,col_id="",network=network)

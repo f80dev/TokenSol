@@ -127,13 +127,13 @@ class StoreFile(Network,Storage):
   def getExplorer(self,addr="",type="address") -> str:
     return ""
 
-  def get_collections(self,addr:str,detail=False,filter_type="NFT"):
+  def get_collections(self,addr:str,detail=False,type_collection="NonFungible"):
     self.read()
     rc=list()
     if "nfts" in self.content:
       for nft in self.content["nfts"]:
         if not nft["collection"]["id"] in rc:
-          rc.append({"id":nft["collection"]["id"]})
+          rc.append(nft["collection"])
     return rc
 
 
@@ -202,12 +202,23 @@ class StoreFile(Network,Storage):
            storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
            domain_server="",price=0,symbol="NFluentToken"):
     self.read()
-    nft=NFT(title,miner.address,miner.address,"",collection,properties,description,tags,visual,creators,"",royalties,
-            {"quantity":quantity,"price":0},files)
+    nft=NFT(title,
+            miner.address,
+            miner.address,
+            "",
+            collection={"id":collection},
+            attributes=properties,
+            description=description,
+            tags=tags,
+            visual=visual,
+            creators=creators,
+            address="",
+            royalties=royalties,
+            marketplace={"quantity":quantity,"price":0},
+            files=files)
 
     if nft.address=="": nft.address=FILE_PREFIX_ID+now("hex")
     obj=nft.__dict__
-    obj["collection"]={"id":obj["collection"]["id"]}
     obj["dtCreate"]=now()
 
     if not "nfts" in self.content:

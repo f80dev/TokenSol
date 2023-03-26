@@ -11,10 +11,11 @@
 
     <div class="expansion-content">
       <app-upload-file (uploaded)="on_upload_config($event)"
+                       [zone]="false"
                        format="text" [maxsize]="1000000"
                        title="Chargée une configuration depuis votre ordinateur"
                        extensions=".yaml">
-        <small>Importer depuis<br>votre terminal</small>
+        Importer
       </app-upload-file>
 
 
@@ -144,19 +145,21 @@
     <mat-expansion-panel [expanded]="show_conception" style="margin: 0;padding:0;">
       <mat-expansion-panel-header>Visuels / Images</mat-expansion-panel-header>
       <div class="expansion-content">
-        <button type="button" mat-raised-button (click)="add_layer()">
-          <mat-icon>add_circle_outline</mat-icon> une couche
+        <button type="button" mat-raised-button (click)="add_layer()" title="Ajouter un nouveau calque">
+          <mat-icon>add_circle_outline</mat-icon> un calque
         </button>
 
         <button type="button" mat-raised-button mat-button
                 color="primary" *ngIf="total_picture()>1"
+                title="Voir un aperçu des 10 premiers NFT"
                 (click)="generate_collection('preview')">
           Aperçu
         </button>
 
         <button type="button" mat-raised-button mat-button
                 *ngIf="total_picture()>0"
-                (click)="sel_config!.max_items=500">
+                title="Permet de voir tous les visuels d'un calque"
+                (click)="show_max_item()">
           Voir toutes les images
         </button>
         <button type="button" mat-raised-button mat-button
@@ -166,7 +169,7 @@
           Inverser le fond
         </button>
         <button style="width: fit-content" mat-raised-button mat-button
-                title="Trouver des images sur le web"
+                title="Ouvrir des banques d'images"
                 (click)="find_image()">
           Trouver des images
         </button>
@@ -187,7 +190,6 @@
           <th>
             <small>
               {{"Faites glisser des images depuis l'explorateur ou cliquer sur une image + CTRL pour la supprimer ou SHIFT pour la déplacer" | screencutter:"Calques"}}
-
             </small>
           </th>
         </tr>
@@ -204,8 +206,8 @@
           <td style="width: 150px;text-align: left;line-height: 85%;" >
 
             <div style="display: flex;flex-wrap: wrap;justify-content: center;align-items: center;">
-              <app-upload-file (uploaded)="on_upload($event,layer)" icon="image"
-                               [maxsize]="100000000" style="display: inline-flex;"
+              <app-upload-file (uploaded)="on_upload($event,layer)" icon="image" [zone]="false"
+                               [maxsize]="100000000"
                                title="Charger une image depuis votre ordinateur"
                                extensions=".png,.psd,.webp,.gif,.jpg,.svg,.yaml">
               </app-upload-file>
@@ -215,11 +217,11 @@
                 <mat-icon style="cursor: pointer;" (click)="apply_filter(layer)" title="Appliquer des filtres">filter</mat-icon>
                 <mat-icon style="cursor: pointer;" (click)="paste_picture(layer)" title="Coller une image contenu dans le presse-papier">content_paste</mat-icon>
                 <mat-icon style="cursor: pointer;" (click)="generate_with_color(layer)" title="Générer des copies par variation de couleurs">palette</mat-icon>
-                <mat-icon style="cursor: pointer;" (click)="transform(layer)" [title]="'Translation '+layer.translation+' et échelle '+layer.scale">edit</mat-icon>
+                <mat-icon style="cursor: pointer;" (click)="transform(layer)" [title]="'Marge '+layer.margin">edit</mat-icon>
               </div>
               <mat-icon style="cursor: pointer;" *ngIf="layer.position>0" (click)="update_position(layer,-1)">arrow_circle_up</mat-icon>
               <mat-icon style="cursor: pointer;" *ngIf="layer.position<sel_config!.layers.length-1"  (click)="update_position(layer,+1)">arrow_circle_down</mat-icon>
-              <mat-icon style="cursor: pointer;" (click)="search_images(layer)" title="Chercher des images dans une banque">image_search</mat-icon>
+              <mat-icon style="cursor: pointer;" (click)="search_images(layer)" title="Chercher des images sur Internet pour intégrer directement dans le calque">image_search</mat-icon>
               <mat-icon style="cursor: pointer;" (click)="delete_layer(layer)" *ngIf="layer.elements!.length==0" title="Effacer la ligne">cancel</mat-icon>
               <mat-icon style="cursor: pointer;" (click)="clear_layer(layer)" *ngIf="layer.elements!.length>0" title="Effacer tous les éléments">delete</mat-icon>
 
@@ -272,24 +274,33 @@
 
       <div style="display: flex;flex-wrap: wrap;">
 
-        <mat-card appearance="outlined">
+        <mat-card appearance="outlined" style="width: 300px;">
           <mat-card-title>Propriétés des visuels</mat-card-title>
           <mat-card-content>
 
-            <app-input class="input-number" label="Longeur" help="en pixels"
-                       value_type="number"  [value]="sel_config.width" (valueChange)="sel_config.width=$event"></app-input>
-            <app-input class="input-number" label="Hauteur" value_type="number"  help="en pixels"
-                       [value]="sel_config.height" (valueChange)="sel_config.height=$event"></app-input>
+            <div *ngIf="user.advance_mode">
+              <app-input label="Longeur" help="en pixels" [max]="2000" [min]="0"
+                         value_type="number" [value]="sel_config.width" (valueChange)="sel_config.width=$event"></app-input>
 
-            <div style="display: inline-block;width:200px" *ngIf="user.advance_mode">
-              <app-input label="Qualité" [max]="100" [value]="sel_config!.quality" maxwidth="400px"
+              <app-input label="Hauteur" value_type="number" help="en pixels" [max]="2000" [min]="0"
+                         [value]="sel_config.height" (valueChange)="sel_config.height=$event"></app-input>
+
+              <app-input label="Qualité" [min]="0" [max]="100"
+                         [value]="sel_config!.quality" maxwidth="400px"
                          (valueChange)="sel_config!.quality=$event"></app-input>
-
 
               <app-input label="Format des images"
                          value_type="list"
                          [options]="formats" [(value)]="sel_ext"></app-input>
             </div>
+
+            <div *ngIf="!user.advance_mode" style="width: 100%;">
+              <app-input label="Dimension" value_type="slider" help="en pixels" [max]="2000" [min]="0" width="250px"
+                         [value]="sel_config.height" (valueChange)="sel_config.height=$event;sel_config.width=$event"></app-input>
+
+            </div>
+
+
           </mat-card-content>
 
         </mat-card>
@@ -298,7 +309,7 @@
           <mat-card-title>Options avancées</mat-card-title>
           <mat-card-content>
 
-            <app-input class="input-number" label="Série aléatoire" value_type="number"
+            <app-input class="input-number" label="Série aléatoire" value_type="number" [min]="0" [max]="100000"
                        title="La séquence aléatoire de NFT généré sera toujours la même pour un nombre donnée"
                        [value]="sel_config.seed" (valueChange)="sel_config.seed=$event">
             </app-input>
@@ -311,31 +322,33 @@
           </mat-card-content>
 
         </mat-card>
-        <mat-card appearance="outlined">
+        <mat-card appearance="outlined" style="width: 250px;">
           <mat-card-title>Fabrication</mat-card-title>
           <mat-card-content>
-            <button type="button" mat-raised-button (click)="generate_collection('preview')">
+            <button type="button" mat-raised-button
+                    style="width: 100%;"
+                    (click)="generate_collection('preview')">
               Aperçu
             </button>
 
             <br>
 
-            <app-input *ngIf="user.advance_mode" label="Nom des fichiers téléchargés"
-                       [value]="filename_format" (valueChange)="filename_format=$event"></app-input>
+<!--            <app-input *ngIf="user.advance_mode" label="Nom des fichiers téléchargés"-->
+<!--                       [value]="filename_format" (valueChange)="filename_format=$event"></app-input>-->
 
-            <button type="button" mat-raised-button color="primary"
+            <button type="button" mat-raised-button color="primary" style="width: 100%;"
                     title="Déclenche la génération, la mise en ligne des visuels et bascule dans la fenêtre de minage"
                     *ngIf="network.networks_available.length>0"
-                    (click)="generate_collection('upload',true)">
+                    (click)="ask_confirmation_for_big_collection('upload',true)">
               Générer & Miner
             </button>
 
             <br>
-            <button type="button" mat-raised-button
+            <button type="button" mat-raised-button style="width: 100%;"
                     title="Fabrique la collection et envoi un mail dans le fichier est disponible"
-                    *ngIf="sel_config.limit>0"
+                    *ngIf="sel_config.limit>10"
                     (click)="ask_email_for_collection()">
-              Fabriquer une<br>grande série
+              Récupérer par mail<br>la collection
             </button>
 
           </mat-card-content>
@@ -358,20 +371,29 @@
          *ngIf="url_collection.length>0"
          title="Télécharger l'ensemble des visuels dans un fichier zip"
          style="display:inline-block;height:60px;margin: 10px;">
-        <div style="display:flex;align-items: center;justify-items:center;">
-          <mat-icon>download</mat-icon>&nbsp;Télécharger la collection
-        </div>
+            <mat-icon>download</mat-icon>
+            <div style="display: inline-block;">Télécharger la collection</div>
       </button>
+      <br>
       <br>
 
       <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
-        <img [src]="img.src" style="width: 100px;margin-left:5px;" (click)="open_file({image:img.src})">
-        <small>{{img.filename}}</small>
+        <img [src]="img.src"
+             [title]="img.filename"
+             style="width: 100px;margin-left:5px;"
+             (click)="open_file({image:img.src})">
       </div>
+
+      <div *ngIf="previews.length>0">
+        <br>
+        Cliquer sur une image pour la voir en taille standard
+      </div>
+
+
     </mat-expansion-panel>
 
     <mat-expansion-panel >
-      <mat-expansion-panel-header>Datas</mat-expansion-panel-header>
+      <mat-expansion-panel-header>Attributs des NFTs</mat-expansion-panel-header>
       <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
 
       <br><br>

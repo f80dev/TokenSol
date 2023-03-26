@@ -49,13 +49,16 @@ bloc-bouton {
 }
 
 mat-card {
+  @extend .mat-body-2;
   padding: 7px;
   margin: 10px;
   text-align: left;
+
 }
 
 mat-card-title {
-  @extend .mat-body-2, .color-primary;
+  @extend .mat-body-1, .color-primary;
+  font-size: medium !important;
   padding: 10px;
 }
 

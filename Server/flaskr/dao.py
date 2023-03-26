@@ -90,7 +90,7 @@ class DAO(Storage,Network):
 
     id="db_"+str(base64.b64encode(bytes(id,"utf8")),"utf8")
     rc={"cid":id}
-    if self.domain_server: rc["url"]=self.domain_server+"/api/files/"+str(id)
+    if self.domain_server: rc["url"]=self.domain_server+"api/files/"+str(id)
     return rc
 
   def get_unity(self):
@@ -238,7 +238,7 @@ class DAO(Storage,Network):
     rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
 
-  def get_collections(self,owner:str,detail:bool=False,filter_type=""):
+  def get_collections(self,owner:str,detail:bool=False,type_collection=""):
     rc=[]
     if "nfts" in self.db.list_collection_names():
       for nft in self.db["nfts"].find():

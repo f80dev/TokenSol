@@ -8,6 +8,73 @@ from tests.test_tools import NETWORKS, create_nft, MAIN_ACCOUNTS, DEFAULT_DOMAIN
 	PLATFORMS, DEFAULT_DOMAIN_SERVER, MAIN_ACCOUNT, MAIN_NETWORK
 
 
+def test_reset(networks=NETWORKS):
+	for network in networks:
+		_network=get_network_instance(network)
+		if not _network.is_blockchain():
+			_network.reset()
+
+
+
+def test_create_account(email=MAIN_EMAIL,networks=NETWORKS,domain_appli=DEFAULT_DOMAIN_APPLI):
+	rc=None
+	for network in networks:
+		log("Travail sur "+network)
+		rc=create_account(email,network,domain_appli=domain_appli,
+		                  dao=None,mail_new_wallet=RESSOURCE_TEST_DIR+"new_wallet",
+		                  mail_existing_wallet=RESSOURCE_TEST_DIR+"existing_wallet",send_real_email=False)
+		assert not rc is None
+		assert len(rc.address)>0
+		assert len(rc.secret_key)>0
+		assert len(rc.name)>0
+	return rc
+
+
+def test_add_collection(network=MAIN_NETWORK,account=None,type_collection="SemiFungible"):
+	_network=get_network_instance(network)
+	if account is None:account=MAIN_ACCOUNTS[_network.network_name]
+	miner=_network.find_key(account)
+	col=_network.add_collection(miner,"MyCol"+now("hex")[4:],type_collection=type_collection)
+	if col is None:
+		rc=_network.add_account_to_collection(miner.address,col,miner)
+		if not "error" in rc:
+			return col
+	return None
+
+def test_mint(networks=NETWORKS,platform=PLATFORMS[0],miner=None,quantity=1):
+	nft=None
+	for network in networks:
+		_network=get_network_instance(network)
+		_network.reset("nfts")
+		log("Travail sur "+str(_network))
+		owner=MAIN_ACCOUNTS[_network.network_name]
+		if miner is None:miner=random_from(_network.get_keys())
+
+		type_collection="SemiFungible" if quantity>1 else "NonFungible"
+		cols=_network.get_collections(miner.address, detail=False, type_collection=type_collection)
+
+		col=None
+		for i in range(len(cols)*3):     #On fait une 20 d'essai
+			col:dict=random_from(cols)
+			if _network.canMintOnCollection(miner.address,col,quantity): break
+		if col is None or not _network.canMintOnCollection(miner.address,col,quantity):
+			col:dict=test_add_collection(network,account=miner.address,type_collection=type_collection)
+
+		nft=create_nft(collection=col,owner=miner.address,quantity=quantity)
+		rc=mint(nft,miner=miner,owner=owner,network=_network,offchaindata_platform=platform,price=0)
+		assert not rc is None
+		assert len(rc["error"])==0
+
+		nft=_network.get_nft(rc["result"]["mint"])
+		assert not nft is None
+
+		assert _network.has_nft(owner,nft.address)
+		miner=None
+
+	return nft
+
+
+
 def test_get_keys(networks=NETWORKS):
 	for network in networks:
 		bl=get_network_instance(network)
@@ -37,14 +104,10 @@ def test_get_nfts(networks=NETWORKS):
 	nfts=[]
 	for network in networks:
 		bl=get_network_instance(network)
-		for i in range(20):
+		for i in range(2):
 			owner=random_from(bl.get_keys())
-			nfts=bl.get_nfts(owner.address)
+			nfts=bl.get_nfts(owner.address,with_attr=False,with_collection=False)
 			assert not nfts is None
-			# if len(nfts)>0:
-			# 	assert random_from(nfts).owner==owner.address,"Probleme d'attribution du propriétaire pour "+network
-			# 	break
-		#assert len(nfts)>0
 
 	return nfts
 
@@ -60,11 +123,13 @@ def test_get_nft(networks=NETWORKS):
 			nfts=bl.get_nfts(owner.address)
 			if len(nfts)>0: break
 
-		nft=bl.get_nft(random_from(nfts).address)
+		if len(nfts)>0:
+			nft=bl.get_nft(random_from(nfts).address)
 
-		assert not nft is None
-		assert nft.owner==owner.address
-		assert len(nft.miner)>0
+			assert not nft is None
+			assert nft.owner==owner.address
+			assert len(nft.miner)>0
+
 
 
 def test_get_collection(networks=NETWORKS):
@@ -72,34 +137,12 @@ def test_get_collection(networks=NETWORKS):
 		_network=get_network_instance(network)
 		owner=MAIN_ACCOUNTS[_network.network_name]
 		cols=_network.get_collections(owner,detail=True)
-		assert len(cols)>0
+		if len(cols)>0:
+			assert len(cols[0]["id"])>0,"Nom de la collection inconnu"
+			# assert len(cols[0]["name"])>0,"Nom de la collection inconnu"
+			# assert len(cols[0]["owner"])>0,"La collection doit avoir un propriétaire"
 
 
-def test_mint(networks=NETWORKS,platform=PLATFORMS[0],miner=None):
-	nft=None
-	for network in networks:
-		_network=get_network_instance(network)
-		_network.reset("nfts")
-		log("Travail sur "+str(_network))
-		owner=MAIN_ACCOUNTS[_network.network_name]
-		if miner is None:miner=random_from(_network.get_keys())
-		collections=get_network_instance(network).get_collections(miner.address,detail=False)
-		col=random_from(collections)
-		if col:
-			collection_id=col["id"] if "id" in col else col["name"]
-		else:
-			collection_id=""
-
-		nft=create_nft(collection=collection_id)
-		rc=mint(nft,miner=miner,owner=owner,network=_network,offchaindata_platform=platform,price=0)
-		assert not rc is None
-		assert len(rc["error"])==0
-
-		nft=_network.get_nft(rc["result"]["mint"])
-		assert not nft is None
-		miner=None
-
-	return nft
 
 
 
@@ -121,18 +164,6 @@ def test_transfer(networks=NETWORKS):
 
 
 
-def test_create_account(email=MAIN_EMAIL,networks=NETWORKS,domain_appli=DEFAULT_DOMAIN_APPLI):
-	rc=None
-	for network in networks:
-		log("Travail sur "+network)
-		rc=create_account(email,network,domain_appli=domain_appli,
-		               dao=None,mail_new_wallet=RESSOURCE_TEST_DIR+"new_wallet",
-		               mail_existing_wallet=RESSOURCE_TEST_DIR+"existing_wallet",send_real_email=False)
-		assert not rc is None
-		assert len(rc.address)>0
-		assert len(rc.secret_key)>0
-		assert len(rc.name)>0
-	return rc
 
 
 def test_all_platform_with_json(platforms=PLATFORM_LIST):

@@ -191,7 +191,7 @@ export class MintComponent implements OnInit {
     if(_infos.hasOwnProperty("marketplace"))marketplace=_infos.marketplace;
 
     let rc:NFT={
-      collection: null,
+      collection: undefined,
       address: undefined,
       message:"",
       tags:_infos.tags,
@@ -410,7 +410,7 @@ export class MintComponent implements OnInit {
 
       //if(!token.collection)token.collection=this.sel_collection || null;
       if(this.network.isElrond()){
-        token.collection=this.user.find_collection(this.sel_collection?.id);
+        token.collection!=this.user.find_collection(this.sel_collection?.id);
       }else{
         if(this.sel_key)
           token.collection=newCollection(this.collection_name,this.sel_key)

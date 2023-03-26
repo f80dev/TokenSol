@@ -1,15 +1,18 @@
 <div class="mainform">
   <div class="titleform">{{title}}</div>
-  <div *ngIf="!show_registration">
-    <p>Déjà inscrit ?</p>
-    <app-input label="Votre email" width="300px"
-               [value]="email" (valueChange)="email=$event"></app-input>
-    <br>
-    <app-input label="Votre code d'accès"
-               help="Ce code vous as été envoyé sur votre mail à l'inscription"
-               width="300px"
-               maxlength="6" (validate)="authent()"
-               [value]="access_code" (valueChange)="access_code=$event"></app-input>
+  <div *ngIf="!show_registration" style="width: 100%;text-align: center;">
+    <p>Déjà inscrit ?<br><br>
+      <app-input label="Votre email" width="300px" style="display: inline-block;"
+                 [value]="email" (valueChange)="email=$event"></app-input>
+      <br>
+      <app-input label="Votre code d'accès" style="display: inline-block;"
+                 help="Ce code vous as été envoyé sur votre mail à l'inscription"
+                 width="300px" value_type="number"
+                 maxlength="6" (validate)="authent()"
+                 [value]="access_code" (valueChange)="access_code=$event"></app-input>
+    </p>
+
+
 
     <br>    <br>    <br>
     <button type="button"  mat-raised-button color="primary" [disabled]="email=='' || access_code==''"

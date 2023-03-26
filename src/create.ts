@@ -7,10 +7,10 @@ export interface Layer {
   position:number
   elements:any[]
   text:string
-  translation: string | "0,0"
-  scale: string | "1,1"
   margin: string | "0,0"
 }
+//translation: string | "0,0"
+//   scale: string | "1,1"
 
 
 //Décrit la structure d'une configuration pour la création des NFTs

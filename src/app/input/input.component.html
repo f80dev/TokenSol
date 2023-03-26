@@ -2,10 +2,12 @@
 
   <!-- input standard -->
   <mat-form-field appearance="fill" class="mat-body-2" [title]="help_input" style="width: 100%;"
-                  *ngIf="value_type!='slider' && value_type!='list' && options.length==0 && cols==0 && rows==0 && max==0">
+                  *ngIf="value_type!='slider' && value_type!='list' && options.length==0 && cols==0 && rows==0">
     <mat-label *ngIf="label.length>0" class="mat-caption">{{label}}</mat-label>
 
     <input matInput
+           [max]="max"
+           [min]="min"
            [type]="value_type"
            [maxlength]="maxlength"
            [(ngModel)]="value"
@@ -16,7 +18,7 @@
     <mat-icon matSuffix *ngIf="value_type!='number' && value && value!.length>0"
               style="opacity: 0.6;"
               (click)="on_clear()">cancel</mat-icon>
-    <mat-hint *ngIf="showHelp" class="mat-body-1 help-input">{{help}}</mat-hint>
+    <mat-hint *ngIf="showHelp" class="mat-body-2 help-input">{{help}}</mat-hint>
   </mat-form-field>
 
   <!-- input de type textarea-->
@@ -30,7 +32,7 @@
     </textarea>
 
     <mat-icon matSuffix *ngIf="value && value!.length>0" (click)="on_clear()" style="opacity: 0.7;">cancel</mat-icon>
-    <mat-hint *ngIf="showHelp" class="mat-body-1 help-input">
+    <mat-hint *ngIf="showHelp" class="mat-body-2 help-input">
       {{help}}
     </mat-hint>
   </mat-form-field>
@@ -62,13 +64,13 @@
   </mat-form-field>
 
   <!--  Slider -->
-  <div *ngIf="value_type=='slider'">
+  <div *ngIf="value_type=='slider' || value_type=='slide'" style="width: 100%;">
     <table *ngIf="label.length>0" style="width: 100%;"><tr>
       <td></td>
       <td style="text-align: left;"><span class="mat-caption">{{label}}</span></td>
       <td style="text-align: right;" class="mat-headline-6 color-primary">{{value}}</td>
     </tr></table>
-    <mat-slider  [max]="max" [min]="min" [step]="step"
+    <mat-slider [max]="max" [min]="min" [step]="step"
                  style="width:100%;margin-top: -15px;" *ngIf="max>min"
                  (focusin)="showHelp=true" (focusout)="showHelp=false">
       <input matSliderThumb [(ngModel)]="value" (ngModelChange)="sel_change({value:$event})">

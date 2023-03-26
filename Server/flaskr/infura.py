@@ -26,6 +26,7 @@ class Infura(Storage):
 
       filename=self.upload_dir+body["filename"]
       #f=open(filename,"wb")
+      if not "content" in body and "file" in body: body["content"]=body["file"]
       f.write(base64.b64decode(body["content"].split(";base64,")[1]))
       #voir si nécessaire d'ajouter : headers={"Content-Type":"multipart/form-data"}
       #open(filename,"rb")

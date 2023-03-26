@@ -67,7 +67,7 @@ export interface Search {
 
 
 export interface NFT {
-  collection:Collection | null
+  collection:Collection | undefined
   symbol:string
   network: string | undefined
   attributes:{

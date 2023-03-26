@@ -233,8 +233,7 @@ export class BuildOpeComponent implements OnInit {
     _d.claim=get_in(this.operation.sel_ope,"branding.claim",null);
     _d.appname=get_in(this.operation.sel_ope,"branding.appname",null);
 
-    let param = setParams(_d);
-    return environment.appli+"/"+appli+"?param="+param;
+    return environment.appli+"/"+appli+"?"+setParams(_d);
   }
 
   open_appli(appli:string,add_param:any={}) {

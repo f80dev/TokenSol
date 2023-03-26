@@ -2,6 +2,7 @@ import {environment} from "./environments/environment";
 import {ActivatedRoute} from "@angular/router";
 import {NFT} from "./nft";
 import {Clipboard} from "@angular/cdk/clipboard";
+import {NFLUENT_WALLET} from "./definitions";
 
 export interface CryptoKey {
   name: string
@@ -34,7 +35,16 @@ export function url_wallet(network:string) : string {
   }
 }
 
-
+export function get_nfluent_wallet_url(address:string,network:string,domain_appli:string=NFLUENT_WALLET,take_photo=false,) : string {
+  let domain=domain_appli.split('//')[0]+domain_appli.split("//")[1].split("/")[0]
+  let url=domain+"/?"+setParams({
+    toolbar:false,
+    address:address,
+    takePhoto:take_photo,
+    network:network
+  })
+  return url;
+}
 
 
 export function hashCode(s:string):number {
@@ -182,37 +192,39 @@ export function getParams(routes:ActivatedRoute,local_setting_params="",force_tr
   //Decryptage des parametres de l'url
   //Version 1.0
   return new Promise((resolve, reject) => {
-    routes.queryParams.subscribe((params:any) => {
-      if(params.hasOwnProperty("p")){
-        $$("Utilisation du paramétrage via l'url");
-        let rc=analyse_params(decodeURIComponent(params["p"]));
-        if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["p"]);
-        resolve(rc);
-      } else {
-        if(local_setting_params.length>0){
-          $$("Utilisation des cookies pour les paramétrages");
-          params=localStorage.getItem(local_setting_params)
-          if(params){
-            let rc=analyse_params(params);
-            resolve(rc);
+    setTimeout(()=>{
+      routes.queryParams.subscribe((params:any) => {
+        if(params.hasOwnProperty("p")){
+          $$("Utilisation du paramétrage via l'url");
+          let rc=analyse_params(decodeURIComponent(params["p"]));
+          if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["p"]);
+          resolve(rc);
+        } else {
+          if(local_setting_params.length>0){
+            $$("Utilisation des cookies pour les paramétrages");
+            params=localStorage.getItem(local_setting_params)
+            if(params){
+              let rc=analyse_params(params);
+              resolve(rc);
+            }
           }
-        }
 
-        $$("Param n'est pas présent dans les parametres, on fait une analyse standard")
-        if(params){
-          resolve(params);
-        }else{
-          if(force_treatment){
-            resolve({});
+          $$("Param n'est pas présent dans les parametres, on fait une analyse standard")
+          if(params){
+            resolve(params);
           }else{
-            reject();
+            if(force_treatment){
+              resolve({});
+            }else{
+              reject();
+            }
           }
         }
-      }
-    },(err)=>{
-      $$("!Impossible d'analyser les parametres de l'url");
-      reject(err);
-    })
+      },(err)=>{
+        $$("!Impossible d'analyser les parametres de l'url");
+        reject(err);
+      })
+    },200);
   });
 }
 

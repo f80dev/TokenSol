@@ -13,58 +13,72 @@ accounts:
   network: file
   secret_key: myprivatekey_file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
   unity: DBC
-- address: file_51e957d46ea1b7d6d74e462f208abcc1a19ccf60d6f34967c5cdbe636ff50ee2
-  amount: 100
-  balance: 1.0e+20
-  name: paul.dudule0xf41e7b94795
-  network: file
-  secret_key: myprivatekey_file_51e957d46ea1b7d6d74e462f208abcc1a19ccf60d6f34967c5cdbe636ff50ee2
-  unity: DBC
-- address: file_2284de288a9843eaaa21d9ab5cbb1b0053ae0cc4eaf5047330db6eedc170a4be
-  amount: 100
-  balance: 1.0e+20
-  name: paul.dudule0xf41ed7f11ef
-  network: file
-  secret_key: myprivatekey_file_2284de288a9843eaaa21d9ab5cbb1b0053ae0cc4eaf5047330db6eedc170a4be
-  unity: DBC
-- address: file_3e43ab1866135f45010ca83eb23414ec42628a7a13ddb240a88a764ee94e42f4
-  amount: 100
-  balance: 1.0e+20
-  name: paul.dudule0xf4218bbe949
-  network: file
-  secret_key: myprivatekey_file_3e43ab1866135f45010ca83eb23414ec42628a7a13ddb240a88a764ee94e42f4
-  unity: DBC
-- address: file_87dc4503efe00a583103994f0b546a1e3b939654e485bd4986e921001fc18045
-  amount: 100
-  balance: 1.0e+20
-  name: paul.dudule0xf425793599f
-  network: file
-  secret_key: myprivatekey_file_87dc4503efe00a583103994f0b546a1e3b939654e485bd4986e921001fc18045
-  unity: DBC
-- address: file_c2a357edd49e54941f0c4c1e8be55eeb5cb63ae88f147018d5ec1405f44f5889
-  amount: 100
-  balance: 1.0e+20
-  name: paul.dudule0xf425c4298f4
-  network: file
-  secret_key: myprivatekey_file_c2a357edd49e54941f0c4c1e8be55eeb5cb63ae88f147018d5ec1405f44f5889
-  unity: DBC
 nfts:
-- address: file_0xf44bf8f2e5c
+- address: file_0xf468fd6c973
   attributes:
   - birthday: 04/02/1971
   collection:
-    id: ''
+    id:
+      id: MACOLLEC
+      name: MACOLLEC
+      owner: ''
   creators: []
-  description: le NFR de mon anniversaire
-  dtCreate: 1678794602.454047
+  description: ceci est la description du NFT
+  dtCreate: 1679573534.552312
   files:
   - https://nfluent.io
   marketplace:
     price: 0
     quantity: 1
-  miner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
-  name: testName
-  owner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  name: test_0xf468fd6bfaf
+  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf4698bd7cb5
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id:
+      id: MACOLLEC
+      name: MACOLLEC
+      owner: ''
+  creators: []
+  description: ceci est la description du NFT
+  dtCreate: 1679588468.242116
+  files:
+  - https://nfluent.io
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  name: test_0xf4698bd7216
+  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf46ba232568
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id:
+      id: MACOLLEC
+      name: MACOLLEC
+      owner: ''
+  creators: []
+  description: ceci est la description du NFT
+  dtCreate: 1679644499.287236
+  files:
+  - https://nfluent.io
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  name: test_0xf46ba2319ad
+  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
   royalties: 0
   symbol: ''
   tags: ''

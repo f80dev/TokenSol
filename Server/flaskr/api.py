@@ -24,7 +24,7 @@ from bson import ObjectId
 from flask import request, jsonify, send_file, make_response, Blueprint, current_app
 from flask_jwt_extended import create_access_token
 from werkzeug.datastructures import FileStorage
-from yaml import dump
+from yaml import dump, Dumper
 
 import config
 from flaskr import Keys
@@ -37,7 +37,7 @@ from flaskr.NFT import NFT
 from flaskr.Network import Network
 from flaskr.Polygon import POLYGON_KEY_DIR
 from flaskr.PrestaTools import PrestaTools
-from flaskr.Solana import SOLANA_KEY_DIR, Solana
+# from flaskr.Solana import SOLANA_KEY_DIR, Solana
 from flaskr.StoreFile import StoreFile
 from flaskr.TokenForge import upload_on_platform
 from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, send, convert_to, returnError, setParams, \
@@ -303,18 +303,19 @@ def api_get_collections(addresses:str):
   """
   bl=get_network_instance(request.args.get("network","elrond-devnet"))
   detail=(request.args.get("detail","true")=="true")
+  operations=request.args.get("operations","canCreate")
 
   cols=[]
   for addr in addresses.split(","):
-    filter_type=request.args.get("filter_type","NonFungibleESDT")
-    cols=cols+bl.get_collections(addr,detail=detail,filter_type=filter_type)
+    filter_type=request.args.get("filter_type","")
+    cols=cols+bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations)
 
   return jsonify(cols)
 
 
 
 
-@bp.route('/collection/')
+@bp.route('/collection/',methods=["GET","POST"])
 def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data={},ext="webp"):
   """
   Generation de la collection des NFTs
@@ -340,6 +341,8 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     nft=ArtEngine(name=request.args.get("name","mycollection").replace(".png",""),
                   work_dir=current_app.config["UPLOAD_FOLDER"])
     target_platform=request.args.get("platform","")
+
+  config=request.json if request.method=="POST" else None
 
   log("On détermine le nombre d'image maximum générable")
   max_item=1
@@ -377,34 +380,50 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     domain_server=current_app.config["DOMAIN_SERVER"]
   )
 
-  for f in os.listdir(current_app.config["UPLOAD_FOLDER"]):
-    try:
-      if f.startswith(prefix):os.remove(work_dir+f)
-    except:
-      log("Impossible de supprimer "+f)
-
-
   if format.startswith("zip"):
+    email=format.replace("zip_","")
+
+    #Ajout d'un fichier README d'explication à l'archive
     copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection","./README")
     files.append("./README")
-    archive_file=BytesIO()
+
+    #Ajout du fichier de configuration
+    if config:
+      config_filename=current_app.config["UPLOAD_FOLDER"]+"config.yaml"
+      with open(config_filename,"w") as f:
+        f.writelines([
+          "#Ceci est le fichier de configuration correspondant à la collection jointe",
+          "#Il peut être utilisé dans {{appname}} pour regénérer cette collection",
+        ])
+        yaml.dump(config,f,Dumper=Dumper)
+        files.append(config_filename)
+        f.close()
+
+    filename="col_"+now("hex")+".zip"
+    archive_file=open(current_app.config["UPLOAD_FOLDER"]+filename,"wb") if is_email(email) else BytesIO()
     with py7zr.SevenZipFile(archive_file, 'w') as archive:
       for f in files:
         archive.write(f)
+        os.remove(f)
 
-    archive_file.seek(0)
-    email=format.replace("zip_","")
     if is_email(email):
-      send_mail(open_html_file("mail_nft_collection"),email,
-                subject="Votre collection",
-                attach=bytes(archive_file),
-                filename="collection.zip")
+      archive_file.close()
+      url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
+      send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection")
       return jsonify({"message":"mail contenant la collection envoyé a "+email})
     else:
+      archive_file.seek(0)
       return send_file(archive_file,as_attachment=True,download_name="collection.7z")
 
   else:
     archive_file=""
+
+  # for f in os.listdir(current_app.config["UPLOAD_FOLDER"]):
+  #   try:
+  #     if f.startswith(prefix):os.remove(work_dir+f)
+  #   except:
+  #     log("Impossible de supprimer "+f)
+
 
   if format=="list":
     return files
@@ -423,21 +442,26 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
   #     _f.close()
 
 
-  for filename in files:
-    f=open(filename,"rb")
-    only_filename=filename[filename.rindex("/")+1:]
-    rc.append({"src":"data:image/webp;base64,"+str(base64.b64encode(f.read()),"utf8"),"filename":only_filename})
-    f.close()
-    os.remove(filename)
+  if format=="preview" or format=="upload":
+    for filename in files:
+      f=open(filename,"rb")
+      only_filename=filename[filename.rindex("/")+1:]
+      rc.append({"src":"data:image/webp;base64,"+str(base64.b64encode(f.read()),"utf8"),"filename":only_filename})
+      f.close()
+      os.remove(filename)
 
 
-  return jsonify({"preview":rc,"archive":archive_file})
+    return jsonify({"preview":rc,"archive":archive_file})
+
+  return jsonify({"error":"problème technique"})
 
 
 
 @bp.route('/send_photo_for_nftlive/<conf_id>/',methods=['POST'])
-def send_photo_for_nftlive(conf_id:str):
+@bp.route('/send_photo_for_nftlive/',methods=['POST'])
+def send_photo_for_nftlive(conf_id:str=""):
 
+  if len(conf_id)==0: conf_id=request.json["config"]
   config=configs(conf_id,format="dict")
   if len(config)==0:
     return returnError("Configuration "+conf_id+" introuvable")
@@ -446,10 +470,12 @@ def send_photo_for_nftlive(conf_id:str):
 
   image=request.json["photo"]
   dim=request.json["dimensions"] if "dimensions" in request.json else str(config["width"])+"x"+str(config["height"])
+  if not "x" in dim: dim=dim+"x"+dim
   limit=request.json["limit"] if "limit" in request.json else config["limit"]
   quality=request.json["quality"] if "quality" in request.json else 90
-  note=request.json["note"] if "note" in request.json else ""
+  data=config["data"] if "data" in config else {}
   seq=request.json["sequence"] if "sequence" in request.json else []
+  format=request.json["format"]
 
   dyna_fields=dict()
   for field in request.json["dynamic_fields"] if "dynamic_fields" in request.json else []:
@@ -462,6 +488,7 @@ def send_photo_for_nftlive(conf_id:str):
   for layer in config["layers"]: layers(layer)
 
   dir=current_app.config["UPLOAD_FOLDER"]
+
   files=nft.generate(
     dir=dir,
     limit=int(limit),
@@ -469,11 +496,14 @@ def send_photo_for_nftlive(conf_id:str):
     width=int(dim.split("x")[0]),
     height=int(dim.split("x")[1]),
     quality=quality,
-    data=note,
+    data=data,
     ext="webp",
     replacements=dyna_fields
   )
-  files=[x.replace(dir,"") for x in files]
+  if format=="link":
+    files=[current_app.config["DOMAIN_SERVER"]+x.replace(dir,"") for x in files]
+  else:
+    files=[Sticker(image=x).toBase64() for x in files]
 
   return jsonify({"images":files})
 
@@ -908,7 +938,7 @@ def action():
             #TODO: Ajouter la destruction de l'ancien fichier
             #private_key=decrypt(operation["accounts"][operation["network"].split("-")[0]][section_method["update_authority"]])
             keyfile=section_method["update_authority"]
-            tx=Solana(operation["network"]).exec("update","uri --new-uri "+rc["url"],account=body["token"],keyfile=keyfile)
+            # tx=Solana(operation["network"]).exec("update","uri --new-uri "+rc["url"],account=body["token"],keyfile=keyfile)
           else:
             keyfile=section_method["update_authority"]
             body["offchain"]["attributes"]=attrs
@@ -1228,7 +1258,7 @@ def api_access_code(addr=""):
     if format=="base64":
       return jsonify({
         "image":"data:image/png;base64,"+str(base64.b64encode(buffer.getvalue()),"utf8"),
-        "access_code":str(access_code,'utf-8')
+        "access_code":str(access_code,'utf-8') if type(access_code)==bytes else access_code
       })
 
 
@@ -1390,7 +1420,7 @@ def mint_for_prestashop():
       bNewAccount=False
 
     if not "address" in _p or _p["address"] is None or _p["address"]=="":
-      collection_id,newCollection=elrond.add_collection(miner,collection,type="NonFungible")
+      collection_id=elrond.add_collection(miner,collection,type="NonFungible")
       nonce,rc=elrond.mint(miner,_p["name"],_p["description"],collection_id,attributes,storage_platform,[],body["quantity"],royalties,visual)
       t=elrond.transfer(collection_id,nonce,miner,_account)
     else:
@@ -1408,33 +1438,33 @@ def mint_for_prestashop():
         },domain_appli=current_app.config["DOMAIN_APPLI"]),body["email"],subject="Votre NFT est disponible dans votre wallet")
 
 
-  if "solana" in _p["network"]:
-    solana=Solana(_p["network"])
-    if not "solana" in addresses:
-      pubkey,privkey,words,qrcode=solana.create_account(body["email"],domain_appli=current_app.config["DOMAIN_APPLI"])
-      addresses["solana"]=pubkey
-      prestashop.edit_customer(body["customer"],"note",yaml.dump(addresses))
-    else:
-      pubkey=addresses["solana"]
-
-    if not "address" in _p or len(_p["address"])==0:
-      _data=solana.prepare_offchain_data({
-        "attributes":attributes,
-        "category":"image",
-        "properties":{"creators":[{"address":c.split("_")[0],"share":int(c.split("_")[1])} for c in _p["creators"].split(" ")]},
-        "seller_fee_basis_points":int(_p["royalties"]) if "royalties" in _p else 0,
-        "image":_p["visual"],
-        "name":_p["name"],
-        "symbol":_p["reference"].split(" / ")[1],
-        "description":_p["description"],
-        "collection":collection
-      })
-      rc=solana.mint(_data,miner=miner,sign=True,owner=pubkey)
-    else:
-      result=solana.transfer(_p["address"],pubkey,_p["owner"])
-      if not result:
-        return returnError("Probléme de transfert",{"address":pubkey})
-    account_addr=pubkey
+  # if "solana" in _p["network"]:
+  #   solana=Solana(_p["network"])
+  #   if not "solana" in addresses:
+  #     pubkey,privkey,words,qrcode=solana.create_account(body["email"],domain_appli=current_app.config["DOMAIN_APPLI"])
+  #     addresses["solana"]=pubkey
+  #     prestashop.edit_customer(body["customer"],"note",yaml.dump(addresses))
+  #   else:
+  #     pubkey=addresses["solana"]
+  #
+  #   if not "address" in _p or len(_p["address"])==0:
+  #     _data=solana.prepare_offchain_data({
+  #       "attributes":attributes,
+  #       "category":"image",
+  #       "properties":{"creators":[{"address":c.split("_")[0],"share":int(c.split("_")[1])} for c in _p["creators"].split(" ")]},
+  #       "seller_fee_basis_points":int(_p["royalties"]) if "royalties" in _p else 0,
+  #       "image":_p["visual"],
+  #       "name":_p["name"],
+  #       "symbol":_p["reference"].split(" / ")[1],
+  #       "description":_p["description"],
+  #       "collection":collection
+  #     })
+  #     rc=solana.mint(_data,miner=miner,sign=True,owner=pubkey)
+  #   else:
+  #     result=solana.transfer(_p["address"],pubkey,_p["owner"])
+  #     if not result:
+  #       return returnError("Probléme de transfert",{"address":pubkey})
+  #   account_addr=pubkey
 
 
   return jsonify({"result":"ok","address":account_addr,"mint":nonce})
@@ -1539,8 +1569,17 @@ def configs(location:str="",format=""):
     if len(format)==0: format=request.args.get("format","json")
     if location.startswith("b64"): location=base64.b64decode(location[3:])
 
+    if location.startswith("./"):
+      rc=yaml.load(open(location,"r",encoding="utf8"),Loader=yaml.FullLoader)
+      return [rc] if format=="dict" else jsonify([rc])
+
     if location.startswith("http"):
-      return jsonify(yaml.load(location,Loader=yaml.FullLoader))
+      r=requests.get(location)
+      if r.status_code==200:
+        rc=yaml.load(r.text,Loader=yaml.FullLoader)
+        return [rc] if format=="dict" else jsonify([rc])
+      else:
+        raise RuntimeError("Impossible de trouver le fichier "+location)
 
     rc=DAO(config=current_app.config).get_docs(user=user,type_doc="config")
     for f in os.listdir(CONFIG_DIR):
@@ -1591,11 +1630,35 @@ def configs(location:str="",format=""):
 
 
 
+# @bp.route('/accounts/<addr>/',methods=["GET"])
+# @bp.route('/accounts/',methods=["GET"])
+# def api_get_accounts(addr:str=""):
+#   _network=get_network_instance(request.args.get("network","elrond-devnet"))
+#   if len(addr)>0:
+#     rc=_network.get_account(addr).__dict__
+#   else:
+#     rc=[]
+#     for k in _network.get_keys():
+#       obj=_network.get_account(k.address).__dict__
+#       obj["name"]=k.name
+#       rc.append(obj)
+#
+#   return jsonify(rc)
+
+
+@bp.route('/users/<email>/',methods=["GET","POST"])
+def api_users(email=""):
+  dao=DAO(config=current_app.config)
+  access_code=request.args.get("access_code")
+  _network=get_network_instance(request.args.get("network","elrond-devnet"))
+  u=dao.get_user(email,access_code,network_for_keys=_network.network)
+
 
 
 
 @bp.route('/keys/',methods=["GET","POST"])
 @bp.route('/accounts/',methods=["GET","POST"])
+@bp.route('/accounts/<name>/',methods=["GET","POST"])
 @bp.route('/keys/<name>/',methods=["DELETE","GET","POST"])
 #https://metaboss.rs/set.html
 #test http://127.0.0.1:4242/api/keys/
@@ -1606,19 +1669,14 @@ def keys(name:str=""):
   _network=get_network_instance(request.args.get("network","elrond-devnet"))
 
   if request.method=="GET":
-    qrcode_scale=int(request.args.get("qrcode_scale","0"))
     with_balance=request.args.get("with_balance","false")=="true" or "accounts" in request.path
-    access_code=request.args.get("access_code")
-    email=request.args.get("email")
     operation=get_operation(request.args.get("operation"))
 
-    if with_balance:
-      items=_network.get_accounts()
+    if with_balance or "/accounts" in request.url:
+      items=_network.get_accounts() if len(name)==0 else [_network.get_account(name)]
     else:
-      items=_network.get_keys()
+      items=_network.get_keys() if len(name)==0 else [_network.find_key(name)]
       if operation: items=items+extract_keys_from_operation(operation)
-      # u=dao.get_user(email,access_code,network_for_keys=network.network)
-      # if u: keys=keys+u["keys"][network.network]
 
     return jsonify([item.__dict__ for item in items])
 
@@ -1626,8 +1684,8 @@ def keys(name:str=""):
   if request.method=="DELETE":
     if _network.network_name=="polygon":
       filename=POLYGON_KEY_DIR+name+".secret"
-    else:
-      filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in _network.network_name else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
+    # else:
+    #   filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in _network.network_name else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
     os.remove(filename)
 
 
@@ -1646,7 +1704,7 @@ def keys(name:str=""):
 
     #dao.add_key_to_user(obj["email"],obj["access_code"],_network.network,secret_key,name)
 
-  return jsonify({"message":"ok","address":key.address,"explorer":_network.getExplorer(key.address,"address")})
+  return jsonify({"message":"ok","address":key.address,"explorer":_network.getExplorer(key.address,"address"),"secret_key":key.secret_key})
 
 #
 #
@@ -1656,29 +1714,29 @@ def keys(name:str=""):
 #   addr=request.args.get("addr","")
 
 
-@bp.route('/scan/<token>',methods=["GET"])
-#http://127.0.0.1:4242/api/scan/HQwsV7o25ZPaDrBLHT7mDs2vbrAUjzujexF2aBkmLHZh
-def explorer(token:str):
-  network=request.args.get("network","solana-devnet")
-  format=request.args.get("format","json")
-  rc=Solana(network).scan(token)
-  if format=="json":
-    return jsonify(rc)
-  else:
-    return str(rc)
+# @bp.route('/scan/<token>',methods=["GET"])
+# #http://127.0.0.1:4242/api/scan/HQwsV7o25ZPaDrBLHT7mDs2vbrAUjzujexF2aBkmLHZh
+# def explorer(token:str):
+#   network=request.args.get("network","solana-devnet")
+#   format=request.args.get("format","json")
+#   rc=Solana(network).scan(token)
+#   if format=="json":
+#     return jsonify(rc)
+#   else:
+#     return str(rc)
 
 
 
 
-@bp.route('/use/',methods=["GET"])
-#https://metaboss.rs/mint.html
-def use():
-  keyfile=request.args.get("keyfile","paul")
-  network=request.args.get("network","solana-devnet")
-  owner=request.args.get("owner")
-  account=request.args.get("account","")
-  rc=Solana(network).exec("use utilize",param="-h "+owner,account=account,keyfile=keyfile)
-  return jsonify(rc)
+# @bp.route('/use/',methods=["GET"])
+# #https://metaboss.rs/mint.html
+# def use():
+#   keyfile=request.args.get("keyfile","paul")
+#   network=request.args.get("network","solana-devnet")
+#   owner=request.args.get("owner")
+#   account=request.args.get("account","")
+#   rc=Solana(network).exec("use utilize",param="-h "+owner,account=account,keyfile=keyfile)
+#   return jsonify(rc)
 
 
 
@@ -1707,13 +1765,15 @@ def get_image(cid:str=""):
 
       if cid.startswith("db_"):
         r=DAO(cid=cid).get(cid)
-        if r is None:
+        if not r is None:
           if "content" in r and "base64," in r["content"]:
             data=r["content"]
             format=data.split("base64,")[0].replace("data:","")
             f=BytesIO(base64.b64decode(data.split("base64,")[1]))
           else:
             return jsonify(r)
+        else:
+          return returnError("Image introuvable")
       else:
         #Analyse du cid
         ext=cid.split(".")[1] if "." in cid else "webp"
@@ -1758,18 +1818,18 @@ def get_json(cid:str):
 
 
 
-@bp.route('/sign/',methods=["GET"])
-#https://metaboss.rs/mint.html
-def sign():
-  creator=request.args.get("creator","")
-  keyfile=request.args.get("keyfile","paul")
-  network=request.args.get("network","solana-devnet")
-  account=request.args.get("account","")
-  log("Demande de signature pour "+keyfile)
-  rc={}
-  if len(account)>0:
-    rc=Solana(network).exec("sign one",account=account,keyfile=keyfile)
-  return jsonify(rc)
+# @bp.route('/sign/',methods=["GET"])
+# #https://metaboss.rs/mint.html
+# def sign():
+#   creator=request.args.get("creator","")
+#   keyfile=request.args.get("keyfile","paul")
+#   network=request.args.get("network","solana-devnet")
+#   account=request.args.get("account","")
+#   log("Demande de signature pour "+keyfile)
+#   rc={}
+#   if len(account)>0:
+#     rc=Solana(network).exec("sign one",account=account,keyfile=keyfile)
+#   return jsonify(rc)
 
 
 
@@ -1863,13 +1923,13 @@ def check_private_key(seed:str,addr:str,network:str):
 #   return jsonify(rc)
 
 
-@bp.route('/token_by_delegate/',methods=["GET"])
-#http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
-def get_token_by_delegate():
-  network=request.args.get("network","solana-devnet")
-  account=request.args.get("account","")
-  rc=Solana(network).get_token_by_miner(account)
-  return jsonify(rc)
+# @bp.route('/token_by_delegate/',methods=["GET"])
+# #http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
+# def get_token_by_delegate():
+#   network=request.args.get("network","solana-devnet")
+#   account=request.args.get("account","")
+#   rc=Solana(network).get_token_by_miner(account)
+#   return jsonify(rc)
 
 
 @bp.route('/rescue_wallet/<email>/',methods=["GET"])
@@ -1902,13 +1962,15 @@ def encrypt_key(network:str):
   '''
   secret_key=request.json["secret_key"]
   name=request.json["alias"]
+  address=request.json["address"] if "address" in request.json else ""
 
-  if not "-" in network:network=network+"-mainnet"
-  address=get_network_instance(network).toAddress(secret_key)
+  if secret_key=="" and len(name)>0:
+    key=get_network_instance(network).find_key(name if len(name)>0 else address)
+  else:
+    if len(address)==0: address=get_network_instance(network).toAddress(secret_key)
+    key=Key(name=name,secret_key=secret_key,network=network,address=address)
 
-  key=Key(name=name,secret_key=secret_key,network=network,address=address)
-
-  return jsonify({"encrypt":key.encrypt(),"address":key.address})
+  return jsonify({"encrypt":key.encrypt(),"address":key.address,"private_key":key.encrypt(True)})
 
 
 
@@ -1982,7 +2044,7 @@ def upload():
         "type":_type
       }
       if "svg" in _type:
-        if "base64," in body["content"]:
+        if "base64" in body["content"] and body["content"].index("base64")<200:     #On suppose que le fichier SVG est intégralement code en base64
           body["content"]=str(base64.b64decode(body["content"].split("base64,")[1]),"utf8")
         else:
           format=request.args.get("convert","")
@@ -2037,31 +2099,17 @@ def upload_metadata():
   id=request.args.get("filename_for_metadata",None)
   repo=request.args.get("repository","CalviOnTheRocks2022")
   offchaindata_platform=request.args.get("offchaindata_platform","ipfs").replace(" ","").lower()
-  if "solana" in network.lower():
-    solana=Solana(network)
-    rc=upload_on_platform(solana.prepare_offchain_data(_data),offchaindata_platform,id=id,
-                          options={"repository":repo},
-                          upload_dir=current_app.config["UPLOAD_FOLDER"])
+  _network=get_network_instance(network)
+
+  rc=upload_on_platform(_network.prepare_offchain_data(_data),offchaindata_platform,id=id,
+                        options={"repository":repo},
+                        upload_dir=current_app.config["UPLOAD_FOLDER"])
 
   return jsonify(rc)
 
 
 
 
-@bp.route('/accounts/<addr>/',methods=["GET"])
-@bp.route('/accounts/',methods=["GET"])
-def api_get_accounts(addr:str=""):
-  _network=get_network_instance(request.args.get("network","elrond-devnet"))
-  if len(addr)>0:
-    rc=_network.get_account(addr).__dict__
-  else:
-    rc=[]
-    for k in _network.get_keys():
-      obj=_network.get_account(k.address).__dict__
-      obj["name"]=k.name
-      rc.append(obj)
-
-  return jsonify(rc)
 
 
 
@@ -2082,11 +2130,11 @@ def api_create_collection():
   miner=Key(obj=_data["owner"])
 
   solde=_net.balance(miner.address)
-  collection_id,newCollection=_net.add_collection(miner,_data["name"],_data["options"],type="NonFungible")
-  if not newCollection:
+  collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"])
+  if collection is None:
     return returnError("Cette collection existe déjà")
 
-  new_collection=_net.get_collection(collection_id)
+  new_collection=_net.get_collection(collection["id"])
   new_solde=_net.balance(miner.address)
 
   return jsonify({
@@ -2301,7 +2349,7 @@ def set_role_for_collection():
   owner=request.json['owner']
   network=request.json["network"]
   if "elrond" in network:
-    t=Elrond(network).set_roles(collection_id,owner)
+    t=Elrond(network).add_account_to_collection({"id":collection_id}, owner)
     return jsonify({"transaction":t})
 
 
@@ -2451,18 +2499,20 @@ def update_obj():
   keyfile=request.args.get("keyfile")
   account=request.args.get("account")
 
-  if "elrond" in network:
-    rc=Elrond(network).update(
-      user=keyfile,
-      token_id=account,
-      properties=request.json,
-      ipfs=ipfs
-    )
-    return rc
-  else:
-    cid=ipfs.add(request.json)
-    url=ipfs.get_link(cid["Hash"])
-    return Solana(network).exec("update","uri --new-uri "+url,account=account,keyfile=keyfile)
+
+  _network=get_network_instance(network)
+  rc=_network.update(
+    user=keyfile,
+    token_id=account,
+    properties=request.json,
+    ipfs=ipfs
+  )
+  return rc
+
+  # else:
+  #   cid=ipfs.add(request.json)
+  #   url=ipfs.get_link(cid["Hash"])
+  #   return Solana(network).exec("update","uri --new-uri "+url,account=account,keyfile=keyfile)
 
 
 @bp.route('/export/',methods=["POST"])
@@ -2684,8 +2734,8 @@ def burn():
 
   if "elrond" in network:
     rc=Elrond(network).burn(keyfile,account)
-  else:
-    rc=Solana(network).exec("burn one",account=account,keyfile=keyfile,delay=int(delay))
+  # else:
+  #   rc=Solana(network).exec("burn one",account=account,keyfile=keyfile,delay=int(delay))
 
   return jsonify(rc)
 

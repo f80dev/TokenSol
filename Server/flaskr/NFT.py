@@ -61,11 +61,17 @@ class NFT:
 
       self.files=extract_from_dict(object,"files",[])
       self.attributes=object["attributes"] if "attributes" in object else ""
-      self.collection=object["collection"] if "collection" in object else ""
+      self.network=object["network"] if "network" in object else ""
+
+      if "elrond" in self.network:
+        self.collection=object["collection"] if "collection" in object else ""
+        if not "name" in object["collection"]:object["collection"]["name"]=object["collection"]["id"]
+        if not "owner" in object["collection"]:object["collection"]["owner"]=self.miner
+
       self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1,"max_mint":1}
       self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)
       self.address=object["address"] if "address" in object else ("db_"+str(object["_id"]) if "_id" in object else "")     #Données obligatoire
-      self.network=object["network"] if "network" in object else ""
+
       self.owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
       self.tags=object["tags"] if "tags" in object else ""

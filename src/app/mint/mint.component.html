@@ -345,7 +345,7 @@
             <td>€</td>
             <td style="width: 25px"></td>
           </tr>
-          <tr>
+          <tr *ngIf="!network.isElrond() || (sel_collection?.type=='SemiFungibleESDT' || sel_collection?.type=='NFT')">
             <td>Q =</td>
             <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" [(ngModel)]="token.marketplace!.quantity" ></td>
             <td style="width: 25px"></td>

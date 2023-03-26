@@ -86,14 +86,14 @@
       </tr>
       <tr style="text-align: center;">
         <td>
-          <button mat-raised-button mat-button
+          <button mat-raised-button
                   style="margin: 10px;"
                   (click)="test_server()">
             Tester le serveur
           </button>
         </td>
         <td>
-          <button mat-raised-button mat-button
+          <button mat-raised-button
                   style="margin: 10px;"
                   title="Ouvrir l'application"
                   (click)="open_appli(appli_addr)">
@@ -105,13 +105,13 @@
 
     <br>
 
-    <button mat-raised-button mat-button
+    <button mat-raised-button
             title="Restaurer les valeurs par défaut"
             (click)="reset()">
       Valeurs par défaut
     </button>
 
-    <button mat-raised-button mat-button
+    <button mat-raised-button
             title="Restaurer les valeurs par défaut"
             (click)="load_values()">
       Valeurs enregistrées
@@ -135,7 +135,7 @@
         </tr>
       </table>
 
-      <div class="expansion-content" style="max-width: 800px">
+      <div class="expansion-content" style="max-width: 800px;justify-content: flex-start;">
         <app-input [maxwidth]="w" label="Titre de la fenêtre principale" [value]="creator_title" (valueChange)="creator_title=$event;refresh();"></app-input>
         <app-input [maxwidth]="w" [value]="appli_addr" label="Adresse de l'application" (valueChange)="appli_addr=$event;refresh();"></app-input>
         <app-input [maxwidth]="w" [value]="intro_visual" label="Visuel d'introduction" (valueChange)="intro_visual=$event;refresh();"></app-input>
@@ -155,6 +155,26 @@
         <app-input width="80%" maxwidth="800px" [value]="sel_networks" [multiselect]="true" [options]="networks"
                    label="Blockchains disponibles"
                    (valueChange)="sel_networks=$event;refresh();"></app-input>
+
+        <app-input [value]="sel_key" value_type="text" width="700px"
+                   label="Clé à utiliser"
+                   (valueChange)="sel_key=$event;refresh();"></app-input>
+
+        <app-input [value]="sel_col" value_type="text" width="400px"
+                   label="Identifiant de la collection à utiliser"
+                   (valueChange)="sel_col=$event;refresh();"></app-input>
+
+        <button mat-raised-button
+                (click)="navigate_to_key()">
+          Encrypter une clé
+        </button>
+        
+
+<!--        <app-selkey *ngIf="first_network.length>0"-->
+<!--                    [network]="first_network"-->
+<!--                    style="width: 350px;"-->
+<!--                    label="Sélectionnez un mineur"-->
+<!--                    (onChange)="update_key($event)"></app-selkey>-->
       </div>
     </div>
 

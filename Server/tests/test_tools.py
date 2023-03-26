@@ -1,7 +1,7 @@
 import pytest
 
 from flaskr.StoreFile import StoreFile
-from flaskr.Tools import generate_svg_from_fields, encrypt, decrypt
+from flaskr.Tools import generate_svg_from_fields, encrypt, decrypt, open_html_file
 from flaskr.apptools import get_network_instance, create_account
 from flaskr import create_app, log, DAO
 from flaskr.NFT import NFT
@@ -31,16 +31,23 @@ RESSOURCE_TEST_DIR="./tests/ressources/"
 
 
 
-def create_nft(name: str= "testName", collection=MAIN_COLLECTION,
-               visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg"):
+def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,owner=MAIN_MINER,quantity=1,
+               visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg",
+               description="ceci est la description du NFT",files=["https://nfluent.io"]) -> NFT:
   return NFT(name,
              symbol="",
-             collection={"id": collection},
-             attributes={"birthday": "04/02/1971"},
-             files=["https://nfluent.io"],
-             description="le NFR de mon anniversaire",
-             visual=visual
+             collection={"id":collection},
+             attributes=[{"birthday": "04/02/1971"}],
+             files=files,
+             description=description,
+             visual=visual,
+             marketplace={"quantity":quantity,"price":0}
              )
+
+
+def test_open_html_file():
+  rc=open_html_file("https://nfluent.io/assets/new_account.html",{})
+  assert not rc is None
 
 
 def test_explorer(networks=NETWORKS):

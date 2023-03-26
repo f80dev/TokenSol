@@ -19,14 +19,16 @@ class Network():
   def get_accounts(self) -> [NfluentAccount]:
     rc=[]
     for k in self.get_keys():
-      rc.append(NfluentAccount(
-        name=k.name,
-        address=k.address,
-        network=k.network,
-        balance=self.get_balance(k.address),
-        nonce=0,
-        unity=self.get_unity()
-      ))
+      if not k.address is None and len(k.address)>0:
+        rc.append(NfluentAccount(
+          name=k.name,
+          address=k.address,
+          network=k.network,
+          balance=self.get_balance(k.address),
+          nonce=0,
+          explorer=self.getExplorer(k.address,"address"),
+          unity=self.get_unity()
+        ))
     return rc
 
   def add_keys(self,operation=None,user=None):
@@ -54,9 +56,12 @@ class Network():
     return not self.network is None and not self.network.startswith("file-") and not self.network.startswith("db-")
 
 
-  def mint(self, miner:Key, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken"):
+  def mint(self, miner:Key, title,description, collection:dict, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken"):
     raise NotImplementedError()
 
+
+  def canMintOnCollection(self,miner_addr:str,collection:dict,quantity=1):  #Pour l'ensemble des réseaux excepté Elrond c'est toujours vrai
+    return True
 
   def transfer(self,addr:str,miner:Key,owner:str):
     raise NotImplementedError("Fonction transfer")
@@ -86,9 +91,15 @@ class Network():
     return True
 
 
+  def has_nft(self,owner:str,nft_addr:str):
+    nft=self.get_nft(nft_addr)
+    return nft.owner==owner
+
 
   def get_nfts(self,_user,limit=2000,with_attr=False,offset=0,with_collection=False):
     pass
 
-  def get_collections(self,addr:str,detail=False,filter_type="NFT"):
-    pass
+  def get_collections(self,addr:str,detail=False,type_collection="NFT"):
+    return [
+         {"id":self.network_name+"Collection","name":self.network_name+"colname","owner":self.network_name}
+       ]
