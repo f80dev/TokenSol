@@ -117,7 +117,7 @@ export class DispenserComponent implements OnInit {
   copy_link(nft: NFT) {
     let url=this.get_nft_link(nft);
     if(url){
-      url=environment.appli+"/dm?param="+url;
+      url=environment.appli+"/dm?p="+url;
       this.clipboardService.copy(url);
       showMessage(this,"Le lien de distribution est dans votre presse-papier")
     }

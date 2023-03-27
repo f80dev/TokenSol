@@ -1,19 +1,18 @@
 import pytest
 
-from flaskr.Keys import Key
 from flaskr.StoreFile import StoreFile
-from flaskr.Tools import generate_svg_from_fields, encrypt, decrypt, random_from
-from flaskr.apptools import get_network_instance, create_account, transfer
-from flaskr import create_app, log, DAO, Elrond
+from flaskr.Tools import generate_svg_from_fields, encrypt, decrypt, open_html_file
+from flaskr.apptools import get_network_instance, create_account
+from flaskr import create_app, log, DAO
 from flaskr.NFT import NFT
 
-MAIN_POLYGON_ACCOUNT="0xa617546acC33A600f128051455e6aD2a628f4a79"
-MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  # bob
+MAIN_POLYGON_ACCOUNT="0xa617546acC33A600f128051455e6aD2a628f4a79" #faucet https://mumbaifaucet.com/ et
+MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  #nfluent voir http://127.0.0.1:4200/collections?owner=erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt&network=elrond-devnet
 MAIN_NETWORK = "elrond-devnet"
 MAIN_MINER="bob"
 
-NETWORKS=["polygon-devnet","file-testnet","elrond-devnet","db-server-nfluent_test"]
-PLATFORMS=["nftstorage","file","infura","db-server-nfluent_test"] #ipfs
+NETWORKS=["file-testnet","db-server-nfluent_test","elrond-devnet","polygon-devnet"]
+PLATFORMS=["db-server-nfluent_test","nftstorage","file","infura"] #ipfs
 MAIN_STORAGE_PLATFORM=PLATFORMS[0]
 
 MAIN_EMAIL = "paul.dudule@gmail.com"
@@ -22,8 +21,8 @@ DB_NETWORK = "db-server-nfluent_test"
 MAIN_ACCOUNTS={
   "elrond":MAIN_ACCOUNT,
   "polygon":MAIN_POLYGON_ACCOUNT,
-  "db":DAO(network=DB_NETWORK).create_account(MAIN_EMAIL,1000).address,
-  "file":StoreFile(network="file-testnet").create_account(MAIN_EMAIL,1000).address
+  "db":DAO(network=DB_NETWORK).create_account(MAIN_EMAIL).address,
+  "file":StoreFile(network="file-testnet").create_account(MAIN_EMAIL).address
 }
 DEFAULT_DOMAIN_APPLI="http://127.0.0.1:4200/"
 DEFAULT_DOMAIN_SERVER="http://127.0.0.1:4242/"
@@ -32,17 +31,23 @@ RESSOURCE_TEST_DIR="./tests/ressources/"
 
 
 
-
-def create_nft(name: str= "testName", collection=MAIN_COLLECTION,
-               visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg"):
+def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,owner=MAIN_MINER,quantity=1,
+               visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg",
+               description="ceci est la description du NFT",files=["https://nfluent.io"]) -> NFT:
   return NFT(name,
              symbol="",
-             collection={"id": collection},
-             attributes={"birthday": "04/02/1971"},
-             files=["https://nfluent.io"],
-             description="le NFR de mon anniversaire",
-             visual=visual
+             collection={"id":collection},
+             attributes=[{"birthday": "04/02/1971"}],
+             files=files,
+             description=description,
+             visual=visual,
+             marketplace={"quantity":quantity,"price":0}
              )
+
+
+def test_open_html_file():
+  rc=open_html_file("https://nfluent.io/assets/new_account.html",{})
+  assert not rc is None
 
 
 def test_explorer(networks=NETWORKS):

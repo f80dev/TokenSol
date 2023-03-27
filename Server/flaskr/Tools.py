@@ -33,7 +33,7 @@ from fontTools import ttLib
 from pandas import read_excel
 
 from flaskr.secret import USERNAME, PASSWORD, SALT, UNSPLASH_SETTINGS, PIXABAY_SETTINGS
-from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR
+from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR, STATIC_RESSOURCES_DIR
 
 
 def get_hash_from_content(content):
@@ -70,8 +70,9 @@ def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
   if dictionnary!={}:
     for k in dictionnary.keys():
       svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
+      svg_code=svg_code.replace("__"+k+"__",str(dictionnary[k]))
 
-  filename=get_filename_from_content(svg_code,prefix_name)
+  filename=get_filename_from_content(svg_code,prefix_name,ext="svg")
   with open(dir+filename,"w",encoding="utf8") as file:
     file.writelines(svg_code)
   file.close()
@@ -158,7 +159,7 @@ def is_email(addr):
   return True
 
 
-def setParams(_d:dict,prefix="param="):
+def setParams(_d:dict,prefix="p="):
   rc=[]
   for k in _d.keys():
     value=_d[k]
@@ -183,10 +184,10 @@ def send(app,event_name: str, message=None):
 
   if message:
     log("WebSocket.send "+str(message)+" a "+event_name)
-    rc = socketio.emit(event_name,message, broadcast=True)
+    rc = socketio.emit(event_name,message)
   else:
     log("WebSocket.send de " + event_name)
-    rc = socketio.emit(event_name, broadcast=True)
+    rc = socketio.emit(event_name)
   return rc
 
 def returnError(msg:str="",_d=dict(),status=500):
@@ -218,7 +219,7 @@ def get_key_by_name(keys:[],name:str):
   return None
 
 
-def open_html_file(name:str,replace=dict(),domain_appli="",directory="./flaskr/static/"):
+def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_RESSOURCES_DIR):
   """
   ouvre un fichier html et remplace le code avec le dictionnaire de remplacement
   :param name:
@@ -226,15 +227,19 @@ def open_html_file(name:str,replace=dict(),domain_appli="",directory="./flaskr/s
   :param domain_appli:
   :return:
   """
-  if len(name)>10 and len(name.split(" "))>5:
-    body=name
+  if name.startswith("http"):
+    body=requests.get(name).text
   else:
-    if not name.endswith("html"):name=name+".html"
-    if exists(directory+name):
-      with open(directory+name, 'r', encoding='utf-8') as f: body = f.read()
+    if name is None: return None
+    if len(name)>10 and len(name.split(" "))>5:
+      body=name
     else:
-      log("Le mail type "+name+" n'existe pas")
-      return None
+      if not name.endswith("html"):name=name+".html"
+      if exists(directory+name):
+        with open(directory+name, 'r', encoding='utf-8') as f: body = f.read()
+      else:
+        log("Le mail type "+name+" n'existe pas")
+        return None
 
   style="""
         <style>
@@ -382,23 +387,27 @@ def filetype(filename=""):
 
 def api(url,alternate_domain="",timeout=60000):
   log("Appel de "+url)
-  data=requests.api.get(url)
+  try:
+    data=requests.api.get(url,timeout=timeout)
+  except:
+    data=None
 
-  if data.status_code!=200:
+  if data is None:
     if len(alternate_domain)>0:
       url=url.replace(alternate_domain.split("=")[0],alternate_domain.split("=")[1])
       log("Appel de "+url)
-
-    data=requests.api.get(url,timeout=timeout)
-
-    if data.status_code!=200:
-      log("Echec de l'appel "+str(data.status_code)+" "+data.text)
+      return api(url,"",timeout=timeout)
+    else:
       return None
+  else:
+    if data.status_code!=200:
+        log("Echec de l'appel "+str(data.status_code)+" "+data.text)
+        return None
 
-  try:
-    return data.json()
-  except:
-    return data.text
+    try:
+      return data.json()
+    except:
+      return data.text
 
 
 
@@ -504,7 +513,11 @@ def queryPixabay(query:str,limit:int=10,quality:bool=False,square=False):
   :param quality: permet de restreindre la recherche aux photos de l'éditeur
   :return: liste au format json des urls des photos correspondantes à la requête
   """
-  url=PIXABAY_SETTINGS["endpoint"]+"?per_page="+str(limit)+"&image_type=photo&key=" + PIXABAY_SETTINGS["key"] + "&q=" + query
+  if limit==0: return []
+  params=("&colors=transparent" if "sticker" in query else "")
+  if len(query.split(" "))>1: query=query.replace("sticker","").replace("transparent","")
+
+  url=PIXABAY_SETTINGS["endpoint"]+"?per_page="+str(limit)+"&key=" + PIXABAY_SETTINGS["key"] + params + "&q=" + query
   if quality:url=url+"&editors_choice=true"
 
   rc=[]
@@ -524,6 +537,7 @@ def queryUnsplash(query,limit=10,square=False):
   :param query:  contient le mot clé à utiliser pour rechercher les images
   :return: liste au format json des urls des photos correspondant à la requête
   """
+  if limit==0: return []
   url = UNSPLASH_SETTINGS["endpoint"] \
         + "search/photos?query="+query+"&per_page=" \
         +str(limit)+"&client_id=" + UNSPLASH_SETTINGS["key"]+("&orientation=squarish" if square else "")

@@ -13,7 +13,7 @@
     <div *ngIf="data && data.question!='' && (data?.question?.startsWith('http') || data?.question?.startsWith('./'))">
       <iframe scrolling="auto" frameborder="0"
               style="background: none;"
-              [src]="data?.question?.replace('html:','') | safe" width="100%">
+              [src]="data!.question!.replace('html:','') | safe">
       </iframe>
       <br>
     </div>
@@ -63,10 +63,11 @@
 
   <div *ngIf="_type=='images' && data.options.length>0" style="display: flex;width:500px;flex-direction: row;flex-wrap: wrap;">
 
-    <div *ngFor="let img of data.options">
-      <img [src]="img" class="mat-elevation-z2"
-           style="width: 60px;height:60px;margin:3px;cursor: pointer;"
-           [style.opacity]="data.result.indexOf(img)==-1 ? 0.8 : 1"
+    <div *ngFor="let img of data.options" style="margin-left: 5%;">
+      <img [src]="img"
+           style="width: 60px;height:60px;margin:3px;cursor: pointer;border: 0.1rem solid transparent;"
+           [style.opacity]="data.result.indexOf(img)==-1 ? 0.85 : 1"
+           [style.border-color]="data.result.indexOf(img)==-1 ? 'transparent' : 'blue'"
            (dblclick)="select_option([img])" (click)="select_image(img)">
     </div>
   </div>

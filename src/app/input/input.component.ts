@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
-import {MatSelectChange} from "@angular/material/select";
+//version 1.0 3/3/23
 
 @Component({
   selector: 'app-input',
@@ -39,7 +39,7 @@ export class InputComponent implements OnChanges,OnInit {
   @Input() cols: number=0;
   @Input() rows: number=0;
 
-  @Input() max: number=0;
+  @Input() max: number=1e18;
   @Input() min: number=0;
   @Input() step: number=1;
   @Input() multiselect: boolean = false;

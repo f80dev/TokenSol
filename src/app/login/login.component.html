@@ -1,30 +1,45 @@
 <div class="mainform">
   <div class="titleform">{{title}}</div>
-  <div *ngIf="!show_registration">
-    <p>Déjà inscrit ?</p>
-    <app-input label="Votre code d'accès"
-               help="Ce code vous as été envoyé sur votre mail à l'inscription"
-               style="font-size: xx-large;width:60%;text-align: center;"
-               maxlength="6" label_button="Se connecter"
-               [value]="access_code" (valueChange)="access_code=$event"
-               (validate)="authent($event)"></app-input>
+  <div *ngIf="!show_registration" style="width: 100%;text-align: center;">
+    <p>Déjà inscrit ?<br><br>
+      <app-input label="Votre email" width="300px" style="display: inline-block;"
+                 [value]="email" (valueChange)="email=$event"></app-input>
+      <br>
+      <app-input label="Votre code d'accès" style="display: inline-block;"
+                 help="Ce code vous as été envoyé sur votre mail à l'inscription"
+                 width="300px" value_type="number"
+                 maxlength="6" (validate)="authent()"
+                 [value]="access_code" (valueChange)="access_code=$event"></app-input>
+    </p>
 
 
-    <p style="margin-top: 50px;">Pas encore inscrit ?</p>
 
-    <button type="button" mat-button mat-raised-button color="primary"
+    <br>    <br>    <br>
+    <button type="button"  mat-raised-button color="primary" [disabled]="email=='' || access_code==''"
+            (click)="authent()">
+      Se connecter
+    </button>
+    <br><br>
+
+    <span (click)="resend_code()" style="cursor: pointer;font-style: oblique;">
+      Code d'accès oublié
+    </span>
+    <br><br>
+
+    <button type="button" mat-button mat-raised-button
             (click)="show_registration=true">
       S'inscrire
     </button>
 
+
   </div>
 
-  <app-authent [showEmail]="true" style="max-width: 700px;width: 80%;display: inline-block;"
+  <app-authent [showEmail]="true"
+               style="max-width: 700px;width: 80%;display: inline-block;"
                intro_message="Indiquer votre mail pour recevoir votre code d'accès"
                *ngIf="show_registration"
                [showGoogle]="true" [showCancel]="true"
                (cancel)="show_registration=false"
                (authent)="registration($event)"></app-authent>
-
 
 </div>

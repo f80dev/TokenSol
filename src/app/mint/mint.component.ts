@@ -1,8 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {
   $$, b64DecodeUnicode,
-  base64ToArrayBuffer, copyAchievements, find,
-  getParams, now,
+  base64ToArrayBuffer, CryptoKey, exportToCsv, find,
+  getParams, isEmail, newCryptoKey, now,
   showError,
   showMessage
 } from "../../tools";
@@ -17,11 +17,12 @@ import {UserService} from "../user.service";
 import {ActivatedRoute, Router} from "@angular/router";
 
 import {OperationService} from "../operation.service";
-import {NFT} from "../../nft";
+import {Creator, NFT} from "../../nft";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Location} from "@angular/common";
-import {Collection, Operation} from "../../operation";
+import {Collection, newCollection, Operation} from "../../operation";
 import {environment} from "../../environments/environment";
+import {wait_message} from "../hourglass/hourglass.component";
 
 
 @Component({
@@ -42,67 +43,105 @@ export class MintComponent implements OnInit {
   quantity: any=1;
   sel_collection:Collection | undefined;
   mintfile: string="sf_"+now()+".yaml";
-  sel_network:{label:string,value:string} | undefined;
   networks:any[]=[];
+  token_creators: Creator[]=[];
+
+  //Opére le minage.
+  //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
+  create_options: any=[
+    {label:"Create",value:"ESDTRoleNFTCreate"},
+    {label:"Burn",value:"ESDTRoleNFTBurn"},
+    {label:"Update",value:"ESDTRoleNFTUpdateAttributes"},
+    {label:"Add URI",value:"ESDTRoleNFTAddURI"},
+    {label:"TransferRole",value:"ESDTTransferRole"}
+  ]
+  //sel_target: {value:string,label:string}={value:"",label:""};
+  // targets=[
+  //   {label:"blockchain",value:"blockchain",only_advanced:false},
+  //   {label:"base de données",value:"db-server-nfluent",only_advanced:false},
+  //   {label:"base décentralisée",value:"db-web3-nfluent",only_advanced:true},
+  //   {label:"serveur",value:"vile",only_advanced: true},
+  //   {label:"Prestashop",value:"prestashop",only_advanced:true},
+  // ];
+
+  //sel_target: { value:string,label:string }=this.targets[0];
+  encrypt_nft: boolean = true;
+  sel_key: CryptoKey | undefined;
+  message: string="";
+  collection_name: string = "";
+  show_mint_section: boolean=false;
 
   constructor(
-    public toast:MatSnackBar,
-    public network:NetworkService,
-    public dialog:MatDialog,
-    public user:UserService,
-    public operation:OperationService,
-    public _location:Location,
-    public router:Router,
-    public clipboard:Clipboard,
-    public routes:ActivatedRoute,
+      public toast:MatSnackBar,
+      public network:NetworkService,
+      public dialog:MatDialog,
+      public user:UserService,
+      public operation:OperationService,
+      public _location:Location,
+      public router:Router,
+      public clipboard:Clipboard,
+      public routes:ActivatedRoute,
   ) {
-    this.user.addr_change.subscribe((addr)=>{
-      this.init_form();
-    })
-    this.sel_platform=this.network.config["PLATFORMS"][1];
-
+    //this.user.addr_change.subscribe((addr)=>{if(this.user.collections.length>0)this.sel_collection=this.user.collections[0];})
+    this.sel_platform=this.network.config["PLATFORMS"][0];              //NFTStorage
+    this.sel_platform_document=this.network.config["PLATFORMS"][3];     //Server
   }
 
 
   ngOnInit(): void {
-
-    getParams(this.routes).then((params:any)=>{
-      if(params.import){this.batch_import_from_url(params.import);}
-      let l_nets=params.networks ? params.networks.split(",") : this.network.config["NETWORKS"]; //Chargement des réseaux autorisé en priorité via les parametres
-      this.networks=l_nets.map((x:any)=>{return {label:x,value:x}});
-    })
     this.init_form();
   }
 
+  set_creators(){
+    for(let t of this.tokens){
+      if(!t.address)t.creators=this.token_creators;
+    }
+  }
 
   init_form(){
+    let tmp=localStorage.getItem("tokenstoimport");
+    let local_config=JSON.parse(localStorage.getItem("miner_config") || "{}")
+    this.token_creators=local_config.creators || [];
+    this.sel_key=local_config.key ? local_config.key : null;
+    this.set_creators();
 
-      let tmp=localStorage.getItem("tokenstoimport");
-      if(tmp)this.tokens=JSON.parse(tmp);
+    //this.targets=this.targets.filter((x)=>{return(this.user.advance_mode || !x.only_advanced)})
+    //this.sel_target=local_config.target || this.targets[0];
 
-      if (this.user.nfts_to_mint.length > 0) {
-        $$("Chargement des NFT depuis la fenetre de création");
-        this.onFileSelected(this.user.nfts_to_mint);
-        this.user.nfts_to_mint=[];
+    if(tmp){
+      this.tokens=JSON.parse(tmp);
+      this.set_creators();
+    }
+
+    if (this.user.nfts_to_mint.length > 0) {
+      $$("Chargement des NFT depuis la fenetre de création");
+      this.onFileSelected(this.user.nfts_to_mint);
+      this.user.nfts_to_mint=[];
+    }
+
+    this.networks=this.network.networks_available.map((x:any)=>{return {label:x,value:x}});
+    this.network.network=local_config.network || this.networks[0].value;
+
+    getParams(this.routes).then((params:any)=> {
+      if(params.import){this.batch_import_from_url(params.import);}
+
+      //Récupération d'une collection en particulier
+      if (params.hasOwnProperty("collection")) {
+        if (this.user.find_collection(params["collection"])) {
+          this.sel_collection = params["collection"];
+        } else {
+          this.sel_collection = local_config.collection || this.user.collections[0];
+        }
       }
 
-      getParams(this.routes).then((params:any)=> {
-        if (params.hasOwnProperty("collection")) {
-          if (this.user.find_collection(params["collection"])) {
-            this.sel_collection = params["collection"];
-          } else {
-            this.sel_collection = this.user.collections[0];
-          }
+      if (params.hasOwnProperty("files")) {
+        let files = [];
+        for (let f of params["files"]) {
+          files.push({filename: f});
         }
-
-        if (params.hasOwnProperty("files")) {
-          let files = [];
-          for (let f of params["files"]) {
-            files.push({filename: f});
-          }
-          this.onFileSelected(files);
-        }
-      })
+        this.onFileSelected(files);
+      }
+    })
   }
 
 
@@ -118,10 +157,10 @@ export class MintComponent implements OnInit {
         }
       }
     } else {
-      if(this.user.key){
+      if(this.sel_key){
         creators.push(
             {
-              address: this.user.key?.address!,
+              address: this.sel_key?.address!,
               share:100,
               verified: 0
             }
@@ -143,13 +182,16 @@ export class MintComponent implements OnInit {
       }
     }
 
-    if(!_infos.hasOwnProperty("files") || _infos.files=="")_infos["files"]=[];
+    if(!_infos.hasOwnProperty("files") || _infos.files=="")
+      _infos["files"]=[];
+    else
+      _infos["files"]=_infos["files"].split("\n");
 
     let marketplace={price:this.price,quantity:this.quantity};
     if(_infos.hasOwnProperty("marketplace"))marketplace=_infos.marketplace;
 
     let rc:NFT={
-      collection: null,
+      collection: undefined,
       address: undefined,
       message:"",
       tags:_infos.tags,
@@ -161,13 +203,15 @@ export class MintComponent implements OnInit {
       marketplace: marketplace,
       name: _infos.title,
       network: this.network.network,
-      miner:"",
+      miner:newCryptoKey(""),
       owner: this.user.addr,
       royalties: !_infos.royalties ? 0 : _infos.royalties,
       visual: url,
       solana:null,
-      style:{}
+      style:{},
+      links:undefined
     }
+
 
     return(rc);
   }
@@ -233,19 +277,18 @@ export class MintComponent implements OnInit {
 
 
   confirm_mint(){
-    let nbtokens=this.tokens.length;
+    let nbtokens=this.mintable();
     _prompt(this,
-      "Confirmer le minage","",
-      "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.user.key?.name+"</strong> dans la collection "+this.sel_collection?.name +" ?",
-      "","Ok","Annuler",true
-      ).then((rep)=>{
-        if(rep=="yes"){
-          showMessage(this,"Lancement du processus de minage");
-          this.mintfile="sf_"+now()+".yaml";
-          this.network.wait("Production du fichier");
-          this.content_for_clipboard="";
-          this.mint(0);
-        }
+        "Confirmer le minage","",
+        "html:... de "+nbtokens+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.sel_key?.name+"</strong> dans la collection "+this.sel_collection?.name +" ?",
+        "","Ok","Annuler",true
+    ).then((rep)=>{
+      if(rep=="yes"){
+        showMessage(this,"Lancement du processus de minage");
+        this.mintfile="sf_"+now()+".yaml";
+        this.content_for_clipboard="";
+        this.mint(0);
+      }
     });
   }
 
@@ -253,26 +296,34 @@ export class MintComponent implements OnInit {
   //Fonction récurente appeler pour le minage en masse
   content_for_clipboard: string="";
 
+
   mint(index=0){
     if(index>=this.tokens.length){
       showMessage(this,"Traitement terminé");
+      wait_message(this,"");
     } else {
-      this.set_collection();
       let _t:NFT=this.tokens[index];
-      _t.marketplace={price:this.price,quantity:this.quantity}
-      _t.message="hourglass:Minage";
+      if(!_t.address || _t.address==""){
+        _t.marketplace={price:this.price,quantity:this.quantity}
+        _t.message="hourglass:Minage";
+        _t.creators=this.token_creators;
+        wait_message(this,"Minage de "+_t.name+" ("+index+"/"+this.tokens.length+")");
+        this.miner(_t).then((nft:any)=>{
 
-      this.miner(_t).then((nft:any)=>{
-        this.content_for_clipboard=this.content_for_clipboard+"\t\t\t\t- "+nft.message+"\n"
-        if(this.sel_target.value=="file"){
-          nft.message="miné";
-          nft.address="";
-        }
-        this.local_save();
+          if(this.network.network?.startsWith("file")){
+            this.content_for_clipboard=this.content_for_clipboard+"\t\t\t\t- "+nft.message+"\n"
+            nft.message="miné";
+            nft.address="";
+          }
+          this.local_save();
+          this.mint(index+1);
+
+        }).catch((result:any)=>{
+          _t.message="Anomalie de minage: "+result.message;
+        });
+      } else {
         this.mint(index+1);
-      }).catch((result:any)=>{
-        _t.message="Anomalie de minage: "+result.message;
-      });
+      }
     }
   }
 
@@ -289,6 +340,15 @@ export class MintComponent implements OnInit {
 
   local_save(){
     localStorage.setItem("tokenstoimport",JSON.stringify(this.tokens));
+    //target:this.sel_target,
+    localStorage.setItem("miner_config",JSON.stringify({
+      network:this.network.network,
+      key:this.sel_key,
+      platform:this.sel_platform,
+      document_platform:this.sel_platform_document,
+      collection:this.sel_collection,
+      creators:this.token_creators,
+    }))
   }
 
 
@@ -315,10 +375,12 @@ export class MintComponent implements OnInit {
       })
     }
     token.message="visual uploading ...";
+    this.message="Upload du visuel";
     this.upload_file({content:token.visual,type:""}).then((r:any)=>{
       token.visual=r;
       token.message="visual uploaded";
-    });
+      this.local_save();
+    }).finally(()=>{this.message="";});
 
   }
 
@@ -326,11 +388,11 @@ export class MintComponent implements OnInit {
   upload_all_tokens() {
     for(let i=0;i<this.tokens.length;i++){
       setTimeout(()=>{
-        this.network.wait("Upload de "+i+"/"+this.tokens.length+" en cours");
+        this.message="Upload de "+i+"/"+this.tokens.length+" en cours";
         this.upload_token(this.tokens[i]);
         if(i==this.tokens.length-1){
           this.local_save();
-          this.network.wait("");
+          this.message="";
         }
       },i*2000);
     }
@@ -339,37 +401,24 @@ export class MintComponent implements OnInit {
 
 
 
-  //Opére le minage.
-  //Cette fonction est à la fois utilisé par le process récurent en masse et le process individuel
-  create_options: any=[
-    {label:"Create",value:"ESDTRoleNFTCreate"},
-    {label:"Burn",value:"ESDTRoleNFTBurn"},
-    {label:"Update",value:"ESDTRoleNFTUpdateAttributes"},
-    {label:"Add URI",value:"ESDTRoleNFTAddURI"},
-    {label:"TransferRole",value:"ESDTTransferRole"}
-  ]
-  //sel_target: {value:string,label:string}={value:"",label:""};
-  targets=[
-    "blockchain",
-    "db-server-nfluent",
-    "db-web3-nfluent",
-    "file",
-    "prestashop",
-    "db-cloud-nfluent"
-  ].map((x:string)=>{return {value:x,label:x}})
-  sel_target: { value:string,label:string }=this.targets[0];
-  encrypt_nft: boolean = true;
-  sel_addr: string="";
-
 
   miner(token: NFT) : Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      if(this.user.key==undefined){
+      if(!this.sel_key){
         reject("no signature");
       }
+
+      //if(!token.collection)token.collection=this.sel_collection || null;
+      if(this.network.isElrond()){
+        token.collection!=this.user.find_collection(this.sel_collection?.id);
+      }else{
+        if(this.sel_key)
+          token.collection=newCollection(this.collection_name,this.sel_key)
+      }
+
       if(this.isValide(token)==""){
         token.message="Minage en cours";
-        if(this.sel_target.value=="prestashop"){
+        if(this.network.network && this.network.network.startsWith("prestashop")){
           this.prestashop(token).subscribe((result:any)=>{
             showMessage(this,"NFT ajouter à prestashop");
             result.nft=token
@@ -379,40 +428,51 @@ export class MintComponent implements OnInit {
 
         let error_message="";
 
-        if(!this.user.key)error_message="Vous devez avoir sélectionné une clé";
+        if(!this.sel_key)error_message="Vous devez avoir sélectionné une clé";
         if(error_message.length>0){
           showMessage(this,error_message);
           reject(error_message);
           token.message="Error: "+error_message;
         }
 
-        if(this.user.key){
+        if(this.sel_key && this.network.network){
           let id_operation=this.operation.sel_ope ? this.operation.sel_ope.id : "";
-          let target_network=this.sel_target.value;
 
-          token.collection=this.user.find_collection(this.sel_collection?.id);
-          token.owner=this.user.addr;
+          token.owner=this.sel_key.address;
 
-          if(target_network=="blockchain"){
-            target_network=this.network.network;
-            token.network=target_network
-          }
-          this.network.mint(token,this.user.key.address,token.owner || "",id_operation,this.sign, this.sel_platform.value,target_network,this.mintfile,this.encrypt_nft).then((result:any)=>{
+          // let target_network=this.sel_target.value;
+          // if(target_network=="blockchain"){
+          //   target_network=this.network.network;
+          //   token.network=target_network;
+          // }
+          //
+          let target_network=this.network.network;
+
+          this.message="Minage du NFT "+token.name;
+          this.network.mint(token,this.sel_key,token.owner || "",id_operation,this.sign, this.sel_platform.value,target_network,this.mintfile,this.encrypt_nft).then((result:any)=>{
+            this.message="";
             if(!result.error || result.error==""){
               token.address=result.result.mint;
+              token.links={
+                explorer:result.link_mint,
+                transaction: result.link_transaction,
+                gallery:""
+              }
               if(target_network=="file"){
                 if(this.encrypt_nft)result.out="encrypt: \""+result.out+"\"";
                 this.clipboard.beginCopy(result.out).copy();
                 token.message=result.out;
               } else {
-                token.message="NFT id="+token.address+", minted for 0"
+                token.message="NFT "+token.address+", minted for "+(Math.round(result.cost*10000)/10000)+" "+result.unity;
               }
+              this.local_save();
               resolve(token);
             } else {
               token.message=result.error;
               reject(result.error);
             }
           }).catch((err)=>{
+            this.message="";
             token.message=err.error;
             showError(err);
           })
@@ -431,13 +491,9 @@ export class MintComponent implements OnInit {
   }
 
 
-  see_in_hub(nft:NFT){
-    if(!nft.address)return;
-    if(nft.address.startsWith('db_')){
-      showMessage(this,nft.address)
-    } else {
-      this.network.open_gallery(nft.address);
-    }
+  see_in_hub(nft:NFT) {
+    if (!nft.address) return;
+    open(nft.links?.explorer,"Explorer")
   }
 
 
@@ -449,65 +505,51 @@ export class MintComponent implements OnInit {
     }
   }
 
-  add_miner_to_creator(){
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Royalties pour "+this.user.key?.name,
-          type: "number",
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((royalties) => {
-      if(royalties){
-        for(let t of this.tokens){
-          if(t.creators.length>0){
-            t.creators[0].share=t.creators[0].share-Number(royalties);
-            t.creators.push({
-              verified: 0,
-              address:this.user.key?.address,
-              share:Number(royalties)
-            });
-          } else {
-            t.creators.push({
-              verified: 0,
-              address:this.user.key?.address,
-              share:100
-            });
-          }
+  eval_total_creator_sharing(){
+    let rc=0;
+    for(let c of this.token_creators)
+      rc=rc+c.share;
+    return rc;
+  }
 
-        }
-        this.local_save();
-      }
-    });
+  add_creator(addr:string) : boolean {
+    if(!this.isInCreators(this.token_creators,addr)){
+      this.token_creators.push({
+        address:addr,
+        share: 100-this.eval_total_creator_sharing(),
+        verified: true
+      });
+      this.set_creators();
+      this.local_save();
+      return true;
+    }
+    return false;
+  }
+
+  async ask_to_add_creator(){
+    let addr:string=await _prompt(this,"Adresse email ou "+this.network.network+" du créateur à ajouter","","","text","Ok","Annuler",false);
+    if(isEmail(addr)){
+      this.network.create_account(this.network.network,addr,"mail_new_account_as_creator","mail_new_account_as_creator").subscribe((r:any)=>{
+        this.add_creator(addr);
+      })
+    }else{
+      this.add_creator(addr);
+    }
 
   }
 
-  add_creator() {
-    this.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: "Adresse du créateur ?",
-          type: "text",
-          result:this.user.key?.address,
-          onlyConfirm:false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
-    }).afterClosed().subscribe((new_addr:string) => {
-        if (new_addr){
-          for(let t of this.tokens){
-            t.creators.push({
-              verified: 0,
-              address:new_addr,
-              share:0
-            });
-          }
-          this.local_save();
-        }
-      }
-    );
+  add_miner_to_creator() {
+    if(this.sel_key){
+      this.token_creators.push({
+        address:this.sel_key?.address,
+        share: 100-this.eval_total_creator_sharing(),
+        verified: true
+      });
+      this.set_creators();
+    } else {
+      showMessage(this,"Vous devez sélectionner un mineur")
+      this.show_mint_section=true;
+    }
   }
 
   remove(token: any) {
@@ -517,33 +559,40 @@ export class MintComponent implements OnInit {
   }
 
 
+  isInCreators(l_creators:Creator[], addr="") : boolean {
+    if(!this.sel_key)return false;
+    if(addr.length==0)addr=this.sel_key?.address
+    let miner_present=false;
+    for(let c of l_creators){
+      if(c.address==addr)miner_present=true;
+    }
+    return miner_present;
+  }
+
+
 
   isValide(token: any):string {
-    $$("Vérifier la validiter du token pour le minage");
     if(token.properties){
       for(let f of token.properties.files){
         if(!f.uri.startsWith("http"))return("Au moins un des fichier attaché n'est pas partagé");
       }
       if(!token.image.startsWith("http"))return "Le visuel n'est pas partagé";
-      let canSign=false;
-      for(let c of token.properties.creators){
-        if(c.address==this.user.key?.address)canSign=true;
-      }
-      if(!canSign)return "Le miner ne fait pas parti des créateurs";
+      // let canSign=false;
+      // for(let c of token.properties.creators){
+      //   if(c.address==this.sel_key?.address)canSign=true;
+      // }
+      // if(!canSign)return "Le miner ne fait pas parti des créateurs";
     }
+    if(token.creators.length==0)return "Aucun créateur n'est déclaré pour ce NFT";
+    if(token.name=="")return "Le NFT doit avoir un nom";
+
     if(token.visual=="")return "Le NFT doit avoir un visuel";
     if(!token.visual.startsWith("https"))return "Le visuel n'est pas en ligne";
+    if(this.network.isElrond() && !token.collection)return "Le token doit être rataché à une collection";
+
     return "";      //Le token est valide
   }
 
-
-
-  set_collection() {
-    let col=this.user.find_collection(this.sel_collection?.id);
-    for(let token of this.tokens){
-      token.collection=col;
-    }
-  }
 
 
 
@@ -570,8 +619,8 @@ export class MintComponent implements OnInit {
   reset_creator() {
     for(let t of this.tokens){
       t.creators=[{
-        verified: 0,
-        address:this.user.key?.address,
+        verified: false,
+        address:this.sel_key?.address || "",
         share:100
       }];
     }
@@ -586,13 +635,13 @@ export class MintComponent implements OnInit {
   edit_attribute(a: { trait_type: string; value: string }) {
     this.dialog.open(PromptComponent,{
       width: 'auto',data:
-        {
-          title: "modifier le trait_type et/ou la valeur",
-          result: a.trait_type+":"+a.value,
-          onlyConfirm: false,
-          lbl_ok:"Ok",
-          lbl_cancel:"Annuler"
-        }
+          {
+            title: "modifier le trait_type et/ou la valeur",
+            result: a.trait_type+":"+a.value,
+            onlyConfirm: false,
+            lbl_ok:"Ok",
+            lbl_cancel:"Annuler"
+          }
     }).afterClosed().subscribe((rep:string) => {
       if(rep){
         a.trait_type=rep.split(":")[0];
@@ -622,7 +671,12 @@ export class MintComponent implements OnInit {
   }
 
   open_collections() {
-    this.router.navigate(["collections"],{queryParams:{owner:this.user.addr}});
+    this.router.navigate(["collections"],{
+      queryParams:{
+        owner:this.user.addr,
+        network:this.network.network
+      }
+    });
   }
 
   clear_attribute() {
@@ -659,20 +713,20 @@ export class MintComponent implements OnInit {
 
   drop(files: File[],token:NFT) {
     //Intégration des fichiers attachés
-    if(this.sel_platform_document.value!="nftstorage"){
-      this.network.wait("Décodage des fichiers");
+    if(this.sel_platform_document.value && this.sel_platform_document.value!="nftstorage"){
+      this.message="Décodage des fichiers";
       for(let file of files){
         if(file.size>MAX_FILE_SIZE*1024){
-          this.network.wait("");
+          this.message="";
           showMessage(this,"La taille de "+file.name+" excéde la limite de "+MAX_FILE_SIZE+" ko. Vous pouvez le mettre en ligne et coller le lien dans cette zone",10000)
         } else {
           let reader = new FileReader();
           reader.onload=()=>{
             let body={filename:file.name,content:reader.result,type:file.type};
-            this.network.wait("Mise en ligne du document");
+            this.message="Mise en ligne du document";
             this.network.upload(body,this.sel_platform_document.value,file.type).subscribe((r:any)=>{
-              this.network.wait();
-              token.files.push(r.url+"?filename="+encodeURIComponent(file.name));
+              this.message="";
+              token.files.push(r.url);
               this.local_save();
             });
 
@@ -683,6 +737,10 @@ export class MintComponent implements OnInit {
     } else {
       showMessage(this,"Impossible de mettre en ligne des documents attachés sur la plateforme "+this.sel_platform.label);
     }
+  }
+
+  open_link(token: NFT, file: any) {
+    open(file,"view_document")
   }
 
   delete_link(token: NFT, file: any) {
@@ -700,21 +758,21 @@ export class MintComponent implements OnInit {
           let _n: any = ope.lazy_mining?.networks[0];
           if (_n) {
             this.network.network_change.subscribe(() => {
-                this.user.init(_n.miner,this.network.network).then(()=>{
-                    let index=find(this.user.collections,_n.collection,"id");
-                    if(index>-1)this.sel_collection = this.user.collections[index];
-                })
+              this.user.init(_n.miner,this.network.network).then(()=>{
+                let index=find(this.user.collections,_n.collection,"id");
+                if(index>-1)this.sel_collection = this.user.collections[index];
+              })
             })
             this.network.network = _n.network;
 
             for(let src of ope.data.sources){
               if(src.type=="database"){
-                let index=find(this.targets,{value:src.connexion,label:src.connexion},"value");
-                if(index>-1)this.sel_target=this.targets[index];
+                //let index=find(this.targets,{value:src.connexion,label:src.connexion},"value");
+                //if(index>-1)this.sel_target=this.targets[index];
               }
             }
           } else {
-            this.sel_target=this.targets[0];
+            //this.sel_target=this.targets[0];
             this.network.network=ope.network;
           }
         }
@@ -754,4 +812,114 @@ export class MintComponent implements OnInit {
   open_document(file: any) {
     open(file.split("filename=")[0],"_blank");
   }
+
+
+
+  updateChain($event:any) {
+    this.network.network=$event;
+    this.token_creators=[];
+  }
+
+  async updateUser($event: any) {
+    this.sel_key=$event;
+    let with_collection=this.network.isElrond();
+    let r=await this.user.init($event.address,this.network.network,with_collection);
+    this.local_save();
+  }
+
+  changeCollection($event: any) {
+    //Modification de la collection sélectionnée
+    this.sel_collection=$event
+    for(let token of this.tokens){
+      if(!token.address && this.sel_collection){
+        token.collection=this.sel_collection;
+      }
+    }
+  }
+
+  show_file(filename: string) : string {
+    if(filename.indexOf("f=")>-1)return(atob(filename.split("f=")[1]));
+    if(filename.indexOf("filename=")>-1)return(filename.split("filename=")[1]);
+    let pos=filename.lastIndexOf("/");
+    return filename.substring(pos+1);
+  }
+
+  async new_collection() {
+    if(this.sel_key){
+      let cost='0.05 egld';
+      let new_name=await _prompt(this,"Nom de votre collection","maCollect",
+          "Pas d'espace et 20 caractères maximum (Coût de "+cost+")","text",
+          "Créer","Annuler",false);
+      let _col=newCollection(new_name,this.sel_key);
+      if(_col){
+        wait_message(this,"Création de la collection en cours");
+        this.network.create_collection(_col).subscribe(async (r: any) => {
+          wait_message(this);
+          await this.user.init(this.sel_key?.address ,this.network.network, true);
+          this.sel_collection=this.user.collections[0];
+        },()=>{
+          showError(this);
+        })
+      }
+    }
+
+  }
+
+  async export_to_csv() {
+    let filename=await _prompt(this,"Nom du fichier","mesNFTs","","text","Enregistrer","Annuler",false);
+    let rc=[];
+    for(let token of this.tokens){
+      rc.push({
+        name:token.name,
+        visual: token.visual,
+        description:token.description,
+        address:token.address,
+        message:token.message,
+        tags:token.tags,
+        symbol: token.symbol,
+        network: token.network
+      })
+    }
+    exportToCsv(filename+".csv",rc);
+  }
+
+  remove_creator(creator:Creator) {
+    let pos=this.token_creators.indexOf(creator);
+    this.token_creators.splice(pos,1)
+    this.recalc_rate_except(null)
+    this.local_save();
+  }
+
+  recalc_rate_except(creator: Creator | null) {
+    if(this.token_creators.length<2 && creator){
+      let pos=this.token_creators.indexOf(creator);
+      this.token_creators[pos].share=100;
+    }else{
+      let total=this.eval_total_creator_sharing();
+      let reste=1
+
+      reste=100-total;
+      if(creator){
+        for(let c of this.token_creators){
+          if(c.address!=creator.address)c.share=Math.round(c.share+reste/(this.token_creators.length-1));
+          c.share=Math.max(0,Math.min(100,c.share));
+        }
+      }
+      for(let i=0;i<this.token_creators.length;i++){
+        this.token_creators[i].share=Math.min(Math.max(0,this.token_creators[i].share+(100-this.eval_total_creator_sharing())),100);
+      }
+
+    }
+    for(let token of this.tokens){
+      token.creators=this.token_creators;
+    }
+  }
+
+    mintable() : number {
+      let rc=0;
+      for(let t of this.tokens){
+        if(!t.address && this.isValide(t)=="")rc=rc+1;
+      }
+      return rc;
+    }
 }

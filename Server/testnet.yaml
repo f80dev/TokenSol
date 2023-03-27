@@ -14,102 +14,52 @@ accounts:
   secret_key: myprivatekey_file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
   unity: DBC
 nfts:
-- address: file_0xf3fc3be3124
+- address: file_0xf476676712a
   attributes:
   - birthday: 04/02/1971
   collection:
-    id: ''
+    id: &id001
+      id:
+        id: MyCol766766b88
+        name: MyCol766766b88
+    name: *id001
+    owner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
   creators: []
-  description: le NFR de mon anniversaire
-  dtCreate: 1676654137.782802
-  files:
-  - https://nfluent.io
-  marketplace:
-    price: 0
-    quantity: 1
-  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
-  name: testName
-  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
-  royalties: 0
-  symbol: ''
-  tags: ''
-  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
-- address: file_0xf3fc3dae75e
-  attributes:
-  - birthday: 04/02/1971
-  collection:
-    id: MACOLLEC
-  creators: []
-  description: le NFR de mon anniversaire
-  dtCreate: 1676654325.948639
+  description: ceci est la description du NFT
+  dtCreate: 1679933613.290624
   files:
   - https://nfluent.io
   marketplace:
     price: 0
     quantity: 1
   miner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
-  name: test_0xf3fc3dae240
+  name: testName
   owner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
   royalties: 0
   symbol: ''
   tags: ''
   visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
-- address: file_0xf3fcc6e512c
+- address: file_0xf4766d8b108
   attributes:
   - birthday: 04/02/1971
   collection:
-    id: MACOLLEC
+    id: &id002
+      id: MACOLLEC
+      name: MACOLLEC
+      owner: ''
+    name: *id002
+    owner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
   creators: []
-  description: le NFR de mon anniversaire
-  dtCreate: 1676668713.809271
+  description: ceci est la description du NFT
+  dtCreate: 1679934257.178482
   files:
   - https://nfluent.io
   marketplace:
     price: 0
     quantity: 1
-  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
-  name: test_0xf3fcc6e4b16
-  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
-  royalties: 0
-  symbol: ''
-  tags: ''
-  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
-- address: file_0xf3fcf9cc3d7
-  attributes:
-  - birthday: 04/02/1971
-  collection:
-    id: MACOLLEC
-  creators: []
-  description: le NFR de mon anniversaire
-  dtCreate: 1676674051.375103
-  files:
-  - https://nfluent.io
-  marketplace:
-    price: 0
-    quantity: 1
-  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
-  name: test_0xf3fcf9cbe20
-  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
-  royalties: 0
-  symbol: ''
-  tags: ''
-  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
-- address: file_0xf3fd1cf60ef
-  attributes:
-  - birthday: 04/02/1971
-  collection:
-    id: MACOLLEC
-  creators: []
-  description: le NFR de mon anniversaire
-  dtCreate: 1676677738.519946
-  files:
-  - https://nfluent.io
-  marketplace:
-    price: 0
-    quantity: 1
-  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
-  name: test_0xf3fd1cf5bc1
-  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  miner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf4766d8a647
+  owner: file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
   royalties: 0
   symbol: ''
   tags: ''

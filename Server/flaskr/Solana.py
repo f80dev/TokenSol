@@ -21,6 +21,7 @@ from solana.transaction import Transaction
 from spl.token.constants import TOKEN_PROGRAM_ID
 from spl.token.instructions import transfer,TransferParams
 
+from flaskr.Keys import Key
 from flaskr.NFT import NFT
 from flaskr.Tools import log, send_mail, open_html_file, get_qrcode, setParams
 
@@ -388,7 +389,7 @@ class Solana:
     """
     return NFT(object={})
 
-  def transfer(self, nft_addr, to_addr):
+  def transfer(self, nft_addr:str, miner:Key,to_addr:str):
     nft=self.get_nft(nft_addr)
     owner=nft.owner
     log("Demande de transfert de "+self.getExplorer(nft_addr,"token"))

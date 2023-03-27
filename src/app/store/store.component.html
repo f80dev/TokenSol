@@ -17,7 +17,7 @@
           {{nft.name}}
         </div>
 
-        <button type="button" mat-raised-button mat-button color="primary" style="display: inline-block;position: absolute;right: 20px;bottom: 20px;"
+        <button type="button" mat-raised-button color="primary" style="display: inline-block;position: absolute;right: 20px;bottom: 20px;"
                 (click)="buy(nft)">
           <span *ngIf="nft.marketplace!.price>0">Acheter {{nft.marketplace!.price}}€</span>
           <span *ngIf="nft.marketplace!.price==0">Acquérir</span>

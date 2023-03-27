@@ -98,8 +98,8 @@ export class ValidatorsComponent implements OnInit {
         let param=setParams({
           token:nft,
           section:"store"
-        })
-        this.router.navigate(["dm"],{queryParams:{param:param}});
+        },"","")
+        this.router.navigate(["dm"],{queryParams:{p:param}});
       })
 
     }

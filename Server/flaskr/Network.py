@@ -12,9 +12,24 @@ class Network():
 
   def __init__(self,network:str):
     self.network=network
+    if not "-" in network:network="elrond-"+network
     self.network_name=network.split("-")[0]
-    self.network_type=network.split("-")[1] if "-" in network else ""
+    self.network_type=network.split("-")[1]
 
+  def get_accounts(self) -> [NfluentAccount]:
+    rc=[]
+    for k in self.get_keys():
+      if not k.address is None and len(k.address)>0:
+        rc.append(NfluentAccount(
+          name=k.name,
+          address=k.address,
+          network=k.network,
+          balance=self.get_balance(k.address),
+          nonce=0,
+          explorer=self.getExplorer(k.address,"address"),
+          unity=self.get_unity()
+        ))
+    return rc
 
   def add_keys(self,operation=None,user=None):
     if operation:
@@ -41,9 +56,12 @@ class Network():
     return not self.network is None and not self.network.startswith("file-") and not self.network.startswith("db-")
 
 
-  def mint(self, miner:Key, title,description, collection, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken"):
+  def mint(self, miner:Key, title,description, collection:dict, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken"):
     raise NotImplementedError()
 
+
+  def canMintOnCollection(self,miner_addr:str,collection:dict,quantity=1):  #Pour l'ensemble des réseaux excepté Elrond c'est toujours vrai
+    return True
 
   def transfer(self,addr:str,miner:Key,owner:str):
     raise NotImplementedError("Fonction transfer")
@@ -69,13 +87,38 @@ class Network():
     raise NotImplementedError()
 
 
+  def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
+    return {"id":collection_name,"name":collection_name}
+
   def burn(self,addr:str,miner:Key,n_token=1):
     return True
 
 
+  def has_nft(self,owner:str,nft_addr:str):
+    nft=self.get_nft(nft_addr)
+    return nft.owner==owner
+
+  def find_key(self,addr) -> Key:
+    for k in self.get_keys():
+      if k.address==addr: return k
+    return None
 
   def get_nfts(self,_user,limit=2000,with_attr=False,offset=0,with_collection=False):
     pass
 
-  def get_collections(self,addr:str,detail=False,filter_type="NFT"):
-    pass
+  def get_collections(self,addr:str,detail=False,type_collection="NFT",special_role=""):
+    return [
+         {"id":self.network_name+"Collection","name":self.network_name+"colname","owner":self.network_name}
+       ]
+
+
+  def create_transaction(self,error="",hash="",nft_addr=""):
+    rc={
+      "id":hash,
+      "tx":hash,
+      "error":error,
+      "hash":hash,
+      "explorer":self.getExplorer(hash,"explorer") if len(hash)>0 else ""
+    }
+    if len(nft_addr)>0:rc["nft"]=nft_addr
+    return rc

@@ -8,7 +8,11 @@ export const environment = {
   appname:"Token Forge beta",
   splash_visual:"./assets/forge.jpg",
   appli:"https://tokenfactory.nfluent.io",
-  wallet:"https://walletbeta.nfluent.io"
+  wallet:"https://walletbeta.nfluent.io",
+  website:"https://nfluent.io",
+  stockage: "nftstorage,infura",
+  stockage_document: "infura,server",
+  networks_available:"elrond-devnet,polygon-devnet"
 };
 
 //server:"https://server.f80lab.com:4242",

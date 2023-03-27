@@ -1,24 +1,17 @@
 //Description d'une collection
+import {CryptoKey} from "./tools";
+
 export interface Collection {
   name:string
   id: string
   visual: string | undefined
   description: string | undefined
-  owner : string | undefined
+  owner : CryptoKey
   price: number | undefined
   type: string | undefined
   roles: any[] | undefined
   link: string | ""
-
-  options: {
-    canFreeze: boolean | true
-    canWipe: boolean | true
-    canPause: boolean | true
-    canTransferNFTCreateRole: boolean | true
-    canChangeOwner: boolean | true
-    canUpgrade: boolean | true
-    canAddSpecialRoles: boolean | true
-  }
+  options: string[] | []
 }
 
 export interface Connexion {
@@ -106,7 +99,7 @@ export interface Operation {
     content_storage: string
     networks:[{
         network: string
-        miner: string
+        miner: CryptoKey
         collection: string
       }]
   } | null
@@ -248,7 +241,7 @@ export interface Operation {
     nft_target: {
       collection: string
       name: string
-      miner: string
+      miner: CryptoKey
       dimensions: string
       royalties: number
       configuration: string
@@ -335,6 +328,22 @@ export interface Operation {
     data: string
   }]
 
+}
+
+export function newCollection(name:string,owner:CryptoKey,id="") : Collection {
+  if(id.length==0)id=name;
+  return {
+    description: "",
+    id: id,
+    link: "",
+    name: name,
+    options: [],
+    owner: owner,
+    price: 0,
+    roles: undefined,
+    type: undefined,
+    visual: undefined
+  }
 }
 
 export function find_collection(ope:Operation,name:string) : Collection | null {

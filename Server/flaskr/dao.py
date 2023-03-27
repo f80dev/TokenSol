@@ -1,5 +1,7 @@
 import base64
 import hashlib
+from random import randint
+
 import pymongo
 from pymongo import database
 
@@ -93,6 +95,11 @@ class DAO(Storage,Network):
     if self.domain_server: rc["url"]=self.domain_server+"/api/files/"+str(id)
     return rc
 
+  def get_unity(self):
+    return "OCT"
+
+
+
   def rem(self,key):
     key=str(base64.b64decode(key[3:]),"utf8").split("/")[0]
     rc=self.db["storage"].delete_one({"Hash":key})
@@ -121,14 +128,27 @@ class DAO(Storage,Network):
     return False
 
 
+  def get_balance(self,addr:str) -> int:
+    return 1e18
 
   def get_keys(self,qrcode_scale=0,with_balance=False,with_account=False,with_secretKey=False,address="") -> [Key]:
+    """
+    retourne l'ensemble des clés public/privées du réseau
+    :param qrcode_scale:
+    :param with_balance:
+    :param with_account:
+    :param with_secretKey:
+    :param address:
+    :return:
+    """
     rc=[]
     for obj in self.db["keys"].find():
       del obj["_id"]
       key=Key(obj=obj)
       rc.append(key)
     return rc
+
+
 
 
   def get_nfts(self,addr:str=None,limit=2000,with_attr=False,offset=0,with_collection=False):
@@ -202,9 +222,19 @@ class DAO(Storage,Network):
     return rc
 
 
+  def reset(self,item="all"):
+    if item=="all":
+      self.db["nfts"].drop()
+      self.db["keys"].drop()
+      self.db["accounts"].drop()
+    else:
+      self.db[item].drop()
+
 
   def delete(self, id):
     return self.db["nfts"].delete_one(filter={"id":id})
+
+
 
   def add_data(self, data):
     if type(data)==str:data=base64.b64decode(data)
@@ -212,7 +242,7 @@ class DAO(Storage,Network):
     rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
 
-  def get_collections(self,owner:str,detail:bool=False,filter_type=""):
+  def get_collections(self,owner:str,detail:bool=False,type_collection="",special_role=""):
     rc=[]
     if "nfts" in self.db.list_collection_names():
       for nft in self.db["nfts"].find():
@@ -264,7 +294,7 @@ class DAO(Storage,Network):
 
 
 
-  def transfer(self,nft_addr:str,from_addr:str,to_addr:str):
+  def transfer(self,nft_addr:str,_from:Key,to_addr:str):
     """
     correspond à un changement d'address
     :param nft_addr:
@@ -273,9 +303,11 @@ class DAO(Storage,Network):
     """
     nft=self.get_nft(nft_addr)
     if nft:
+      if nft.owner!=_from.address: raise RuntimeError(str(_from)+" n'est pas le propriétaire de "+str(nft))
       rc=self.db["nfts"].update_one({"address":nft.address},{"$set":{"owner":to_addr}})
-      return (rc.modified_count==1)
-    return False
+      if rc.modified_count==1: return self.create_transaction()
+
+    return self.create_transaction(error="transfert annulé")
 
 
   def create_account(self,email="",seed="",domain_appli="",
@@ -283,20 +315,20 @@ class DAO(Storage,Network):
                      mail_new_wallet="",mail_existing_wallet="",
                      send_qrcode_with_mail=True,
                      histo=None,send_real_email=True,solde=100) -> Key:
+    name=email.split("@")[0]
     addr=DB_PREFIX_ID+get_hash_from_content(email)
     obj=self.db["keys"].find_one({"address":addr})
-    if obj is None:
-      obj=self.get_account(addr)
-      if obj is None:obj={"address":addr,
-                          "amount":solde,
-                          "seed":"",
-                          "balance":solde*1e18,
-                          "unity":"DBC",              #DBCoin
-                          "secret_key":"myprivatekey_"+addr,
-                          "name":email.split("@")[0]}
-      self.db["keys"].insert_one(obj)
 
-    return Key(obj=obj)
+    for i in range(5):
+      seed=seed+str(now("hex"))+" "
+
+    if obj is None:
+      k=Key("privatekey_"+addr,name,addr,"db-"+self.domain+"-"+self.dbname,seed)
+      self.db["keys"].insert_one(k.__dict__) #Dans le cas d'une simulation de blockchain, la
+    else:
+      k=Key(obj=obj)
+
+    return k
 
 
   def burn(self,nft_addr:str,miner:Key,occ=1):
@@ -308,9 +340,9 @@ class DAO(Storage,Network):
         return rc.deleted_count==1
       else:
         rc=self.db["nfts"].update_one({"address":nft_addr},{"$set":{"marketplace":nft.marketplace}})
-        return rc.modified_count==1
+        if rc.modified_count==1: return self.create_transaction()
 
-    return False
+    return self.create_transaction("Probleme de burn pour "+nft.address,nft_addr=nft.address)
 
 
 
@@ -329,16 +361,16 @@ class DAO(Storage,Network):
     if not obj is None and not force:
       obj["message"]="already exists"
     else:
-      access_code=encrypt(simplify_email(email),short_code=6)
+      access_code=str(randint(100000,999999))
       obj={
         "email":encrypt(email,short_code=ENCODING_LENGTH_FOR_EMAIL),
         "alias":email.split("@")[0],
         "routes":[],
         "perms":perms,
-        "access_code":encrypt(access_code,short_code=6)
+        "access_code":access_code,
+        "message":"account created"
       }
       rc=self.db["users"].insert_one(obj)
-      obj["access_code"]=access_code
 
     del obj["_id"]
     return obj
@@ -357,6 +389,8 @@ class DAO(Storage,Network):
     log("Aucun utilisateur trouver")
     return None
 
+  def toAddress(self,secret_key:str):
+    return secret_key.replace("privatekey_","")
 
   def add_email(self,email:str,addr:str,network:str):
     """
@@ -435,8 +469,11 @@ class DAO(Storage,Network):
     if access_code is None:return False
     user=self.get_user(email,access_code)
     if user:
+      log("Suppression de "+email)
       rc=self.db["users"].delete_one({"email":user["email"],"access_code":user["access_code"]})
       return rc.deleted_count==1
+    else:
+      log("Impossible de supprimer "+user+" inexistant ou access_code incorrect")
     return False
 
   def set_access_code(self, email,access_code, new_access_code):

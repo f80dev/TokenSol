@@ -51,7 +51,11 @@
 
       <div style="width: 90%;padding:5%;overflow: hidden;">
         <div class="mat-body-2" *ngIf="nft.collection">{{nft.collection!.name}}</div>
-        <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/10+'px'">{{nft.name}}</div>
+        <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/10+'px'">
+          {{nft.name}}
+          <span *ngIf="nft.marketplace && nft.marketplace['quantity']>1">({{nft.marketplace['quantity']}})</span>
+
+        </div>
         <br>
         <div class="mat-body-2" [style.font-size]="(nft_size || 100)/15+'px'">{{nft.description}}</div><br>
         <table style="width: 100%;">
@@ -89,7 +93,7 @@
       <img [src]="url_key" style="width: 90%;margin-left: 5%;max-width: 600px;" [cdkCopyToClipboard]="access_code">
       <br>
       <br>
-      <button  type="button" mat-raised-button mat-button (click)="showScanner=true">
+      <button  type="button" mat-raised-button (click)="showScanner=true">
         Scanner un QRCode
       </button>
     </div>
@@ -167,7 +171,7 @@
             </td>
           <tr>
             <td>
-              <button type="button" mat-raised-button mat-button (click)="photo()">
+              <button type="button" mat-raised-button (click)="photo()">
                 Déclencher
               </button>
             </td>
@@ -228,11 +232,11 @@
 
       <br>
 
-      <button type="button" mat-raised-button mat-button (click)="reset()">
+      <button type="button" mat-raised-button (click)="reset()">
         Annuler
       </button>
 
-      <button type="button" mat-raised-button mat-button (click)="send(token_to_send)" *ngIf="token_to_send">
+      <button type="button" mat-raised-button (click)="send(token_to_send)" *ngIf="token_to_send">
         Envoyer <span *ngIf="sel_ope!.nftlive">(Prix:{{sel_ope!.nftlive!.price}})</span>
       </button>
 
@@ -281,11 +285,11 @@
         </app-upload-file>
       </div>
 
-      <button type="button" mat-raised-button mat-button (click)="strong=false">
+      <button type="button" mat-raised-button (click)="strong=false">
         Annuler
       </button>
 
-      <button type="button" mat-raised-button mat-button (click)="save_privacy()">
+      <button type="button" mat-raised-button (click)="save_privacy()">
         Valider
       </button>
 

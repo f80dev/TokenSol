@@ -1,0 +1,70 @@
+attributes: {}
+data:
+  operation: nfluent_access_card
+  tags: ""
+  title: Emojies __idx__
+  creators: ""
+  symbol: ""
+  description: ""
+  sequence:
+    - Texte ici
+  properties: ""
+  files: ""
+height: 600
+help: ""
+label: Emoticons Série
+layers:
+  - elements:
+      - image: https://images.unsplash.com/32/Mc8kW4x9Q3aRR3RkP5Im_IMG_4417.jpg?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDF8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+      - image: https://pixabay.com/get/gc6537103cbdad032bb31e44e303a7ad1420331ff44f1a71afa98d8a202a8afa7b6019f2c1b55d3defe77701ab71fad9342559d44e6baf432b4d7e13adb7b6151_1280.jpg
+      - image: https://images.unsplash.com/photo-1531685250784-7569952593d2?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDN8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+      - image: https://images.unsplash.com/photo-1521459467264-802e2ef3141f?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDd8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+      - image: https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDZ8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+      - image: https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDJ8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+      - image: https://pixabay.com/get/ga8982944f4568a7b36d6405c3df438beade903b7b52055d37c3f00ce4999cf72984e942ff2b1c058e19d453f44ca4ff7_1280.jpg
+      - image: https://pixabay.com/get/g023f9a1768d3271d2136da514949962b325701486131fa0943fa655d2043ddfe3be916f89f96dd342ce245cf7fed68e6e763a0a33fc7f9de45694f86ffc06bd4_1280.png
+    height: 800
+    indexed: true
+    name: fond
+    params: {}
+    position: 0
+    scale: 1,1
+    text: ""
+    translation: 0,0
+    unique: false
+    width: 800
+  - elements:
+      - image: https://pixabay.com/get/g9af51b9faba380dd35c8d4470155463b4bcd81d3a2cc2e8798f6dacb44ce93fcc257de3af2a0d75eeeef93679aae72bcad0447a4342d8f0014febc637040eaaa_1280.png
+      - image: https://pixabay.com/get/g3a8920102571c3d1244965868ea6c5fb808cda41d96987776d381fe2938b363cc28d83a75db30a13bfc75709076b5c91ab1b0f997229f2f5e2764325cf01e3e1_1280.png
+      - image: https://pixabay.com/get/gb65fdda239ab943703868af3dee603d199c401083a72b947cc015ca5a652e2a8282178bb54a2fa2bbec074c43053f3739d323336a81a44201573c75e88449acd_1280.png
+      - image: https://pixabay.com/get/g869b86be67016c41d433a3fe7bc6fc18d6742bcb8c9552c0dce7d247f577b2edd34b6fad3c2be5ac99fe835b47404fc1a287ea5fe26f763d77151bad280eb292_1280.png
+    height: 800
+    indexed: true
+    name: motif
+    params: {}
+    position: 1
+    scale: 1,1
+    text: ""
+    translation: 0,0
+    unique: false
+    width: 800
+limit: 25
+location: Emoticons.yaml
+max_items: 11
+message: Exemple d'empilement de fichier PNG
+platform:
+  label: "nftstorage"
+  value: "nftstorage"
+quality: 98
+seed: 0
+text:
+  color: "#FFFFFF"
+  font:
+    file: corbel.ttf
+    name: Corbel
+  fontsize: 12
+  position_text:
+    x: 10
+    y: 10
+  text_to_add: Texte ici
+width: 430

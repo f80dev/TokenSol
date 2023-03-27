@@ -14,7 +14,7 @@ def test_add():
 		assert "url" in cid
 		obj_copy=storage.get(cid["cid"])
 		assert obj == obj_copy
-		rc=storage.burn(cid["cid"])
+		rc=storage.rem(cid["cid"])
 		assert rc
 
 

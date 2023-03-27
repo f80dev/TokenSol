@@ -10,7 +10,7 @@ from flaskr.Network import Network
 from flaskr.Storage import Storage
 
 from flaskr.NFT import NFT
-from flaskr.Tools import now, get_hash_from_content
+from flaskr.Tools import now, get_hash_from_content, log
 from flaskr.secret import PASSWORD
 
 FILE_PREFIX_ID="file_"
@@ -23,6 +23,10 @@ class StoreFile(Network,Storage):
     Storage.__init__(self,domain_server=domain_server)
     self.filename=network.split("-")[1] if "-" in network else "storage"
     self.filename=(upload_dir+self.filename if not "/" in self.filename else self.filename)+".yaml"
+
+
+  def toAddress(self,secret_key:str):
+    return "file_"+secret_key.split("file_")[1]
 
 
   def __str__(self):
@@ -74,14 +78,18 @@ class StoreFile(Network,Storage):
     return False
 
 
-  def transfer(self,nft_addr:str,from_addr:str,to_addr:str):
+  def transfer(self,nft_addr:str,miner:Key,to_addr:str):
     self.read()
     for pos in range(len(self.content["nfts"])):
-      if self.content["nfts"][pos]["address"]==nft_addr:
-        self.content["nfts"][pos]["owner"]=to_addr
-        self.write()
-        return True
-    return False
+      nft=self.get_nft(nft_addr)
+      if nft:
+        if nft.miner==miner.address:
+          self.content["nfts"][pos]["owner"]=to_addr
+          self.write()
+          return self.create_transaction()
+        else:
+          log(miner.address+" n'est pas autorisé")
+    return self.create_transaction(error=miner.address+" n'est pas autorisé")
 
 
 
@@ -114,40 +122,59 @@ class StoreFile(Network,Storage):
     if not exists(self.filename):
       self.content={"version":"1.0","nfts":[]}
     else:
-      self.content=yaml.safe_load(open(self.filename,"r",encoding="utf8").read())
+      try:
+        self.content=yaml.safe_load(open(self.filename,"r",encoding="utf8").read())
+      except:
+        raise RuntimeError("Blockchain file corrompue")
 
   def getExplorer(self,addr="",type="address") -> str:
     return ""
 
-  def get_collections(self,addr:str,detail=False,filter_type="NFT"):
+  def get_collections(self,addr:str,detail=False,type_collection="NonFungible",special_role=""):
     self.read()
     rc=list()
     if "nfts" in self.content:
       for nft in self.content["nfts"]:
         if not nft["collection"]["id"] in rc:
-          rc.append({"id":nft["collection"]["id"]})
+          rc.append(nft["collection"])
     return rc
 
 
-  def burn(self,nft_addr:str,miner:Key):
+  def burn(self,nft_addr:str,miner:Key,n_burn=1):
+    """
+    Diminution du nombre de SFR (ou suppression pour les NFTs)
+    :param nft_addr:
+    :param miner:
+    :param n_burn:
+    :return:
+    """
     rc=False
     self.read()
     nft=self.get_nft(nft_addr)
     if nft.miner==miner.address:
-      for pos in range(len(self.content["nfts"])):
+      for pos in range(len(self.content["nfts"])-1):
         if self.content["nfts"][pos]["address"]==nft_addr:
-          del self.content["ntfs"][pos]
+          del self.content["nfts"][pos]
           rc=True
 
     self.write()
     return rc
 
 
+  def get_unity(self):
+    return "OCT"
+
+  def get_balance(self,addr:str) -> int:
+    return 1e18
 
   def get_keys(self) -> [Key]:
     self.read()
     if not "accounts" in self.content: return []
     return [Key(obj=x) for x in self.content["accounts"]]
+
+
+
+
 
 
   def create_account(self,email="",seed="",domain_appli="",
@@ -182,12 +209,23 @@ class StoreFile(Network,Storage):
            storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
            domain_server="",price=0,symbol="NFluentToken"):
     self.read()
-    nft=NFT(title,miner.address,miner.address,"",{"id":collection},properties,description,tags,visual,creators,"",royalties,
-            {"quantity":quantity,"price":0},files)
+    nft=NFT(title,
+            miner.address,
+            miner.address,
+            "",
+            collection={"id":collection},
+            attributes=properties,
+            description=description,
+            tags=tags,
+            visual=visual,
+            creators=creators,
+            address="",
+            royalties=royalties,
+            marketplace={"quantity":quantity,"price":0},
+            files=files)
 
     if nft.address=="": nft.address=FILE_PREFIX_ID+now("hex")
     obj=nft.__dict__
-    obj["collection"]={"id":obj["collection"]["id"]}
     obj["dtCreate"]=now()
 
     if not "nfts" in self.content:

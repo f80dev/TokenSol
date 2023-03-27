@@ -1,12 +1,12 @@
 <div class="mainform">
   <div class="titleform">Liste des validateurs</div>
-  <button type="button" mat-raised-button mat-button (click)="delete_all()">
+  <button type="button" mat-raised-button (click)="delete_all()">
     Tous supprimer
   </button>
-  <button type="button" mat-raised-button mat-button (click)="refresh()">
+  <button type="button" mat-raised-button (click)="refresh()">
     Actualiser
   </button>
-    <button type="button" mat-raised-button mat-button (click)="add_validator()">
+    <button type="button" mat-raised-button (click)="add_validator()">
         Nouveau validateur
     </button>
   <br>
@@ -38,9 +38,9 @@
 
       </td>
       <td>
-        <button type="button" mat-raised-button mat-button (click)="desactivate(validator)">Désactiver</button>
-        <button type="button" mat-raised-button mat-button (click)="receive_nft(validator)">Obtenir NFT requis</button>
-        <button type="button" mat-raised-button mat-button color="accent" (click)="delete(validator)">Supprimer</button>
+        <button type="button" mat-raised-button (click)="desactivate(validator)">Désactiver</button>
+        <button type="button" mat-raised-button (click)="receive_nft(validator)">Obtenir NFT requis</button>
+        <button type="button" mat-raised-button color="accent" (click)="delete(validator)">Supprimer</button>
       </td>
 
     </tr>

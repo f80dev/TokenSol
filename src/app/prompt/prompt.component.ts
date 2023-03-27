@@ -1,28 +1,36 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 
-export function _prompt(vm:any,title:string,_default:string="",description="",_type="text",lbl_ok="ok",lbl_cancel="Annuler",onlyConfirm=false,options:any=null):Promise<string> {
+export function _prompt(vm:any,title:string,_default:string="",description="",_type="text",lbl_ok="ok",
+                        lbl_cancel="Annuler",onlyConfirm=true,options:any=null,
+                        force_yes=false):Promise<string> {
+  //permet d'afficher une boite de dialog
   return new Promise((resolve, reject) => {
-    if(_type=="yesorno" || _type=="boolean" || _type=="bool")onlyConfirm=true;
-    vm.dialog.open(PromptComponent,{
-      width: 'auto',data:
-        {
-          title: title,
-          type: _type,
-          question:description,
-          options:options,
-          result:_default,
-          onlyConfirm:onlyConfirm,
-          lbl_ok:lbl_ok,
-          lbl_cancel:lbl_cancel
+    if(_type=="yesorno" || _type=="oui/non" || _type=="boolean" || _type=="bool")onlyConfirm=true;
+    if(_default.length>0)onlyConfirm=false;
+    if(force_yes){
+      resolve("yes");
+    } else {
+      vm.dialog.open(PromptComponent,{
+        width: 'auto',data:
+            {
+              title: title,
+              type: _type,
+              question:description,
+              options:options,
+              result:_default,
+              onlyConfirm:onlyConfirm,
+              lbl_ok:lbl_ok,
+              lbl_cancel:lbl_cancel
+            }
+      }).afterClosed().subscribe((resp:any) => {
+        if(resp) {
+          resolve(resp);
+        } else {
+          reject()
         }
-    }).afterClosed().subscribe((resp:any) => {
-      if(resp) {
-        resolve(resp);
-      } else {
-        reject()
-      }
-    },(err:any)=>{reject(err)});
+      },(err:any)=>{reject(err)});
+    }
   });
 }
 

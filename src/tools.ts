@@ -2,6 +2,7 @@ import {environment} from "./environments/environment";
 import {ActivatedRoute} from "@angular/router";
 import {NFT} from "./nft";
 import {Clipboard} from "@angular/cdk/clipboard";
+import {NFLUENT_WALLET} from "./definitions";
 
 export interface CryptoKey {
   name: string
@@ -14,6 +15,18 @@ export interface CryptoKey {
   unity:string | null
 }
 
+export function newCryptoKey(address="",name="",privateKey="") : CryptoKey {
+  let rc:CryptoKey= {
+    explorer:null, qrcode: "", unity: "",
+    name:name,
+    address:address,
+    privatekey:privateKey,
+    encrypt:null,
+    balance:null
+  }
+  return rc
+}
+
 export function url_wallet(network:string) : string {
   if(network.indexOf("elrond")>-1){
     return network.indexOf("devnet")==-1 ? "https://wallet.elrond.com" : "https://devnet-wallet.elrond.com";
@@ -22,7 +35,16 @@ export function url_wallet(network:string) : string {
   }
 }
 
-
+export function get_nfluent_wallet_url(address:string,network:string,domain_appli:string=NFLUENT_WALLET,take_photo=false,) : string {
+  let domain=domain_appli.split('//')[0]+domain_appli.split("//")[1].split("/")[0]
+  let url=domain+"/?"+setParams({
+    toolbar:false,
+    address:address,
+    takePhoto:take_photo,
+    network:network
+  })
+  return url;
+}
 
 
 export function hashCode(s:string):number {
@@ -82,14 +104,19 @@ export function getBrowserName() {
 }
 
 
-export function setParams(_d:any,prefix="") : string {
+export function setParams(_d:any,prefix="",param_name="p") : string {
+  //Encryptage des parametres de l'url
+  //Version 1.0
   let rc=[];
   for(let k of Object.keys(_d)){
     if(typeof(_d[k])=="object")_d[k]="b64:"+btoa(JSON.stringify(_d[k]));
     rc.push(k+"="+encodeURIComponent(_d[k]));
   }
   let url=encrypt(prefix+rc.join("&"));
-  return encodeURIComponent(url);
+  if(param_name!="")
+    return param_name+"="+encodeURIComponent(url);
+  else
+    return encodeURIComponent(url);
 }
 
 
@@ -122,36 +149,82 @@ export function now(format="number") : number | string {
   return rc
 }
 
+export function exportToCsv(filename: string, rows: object[]) {
+  if (!rows || !rows.length) {
+    return;
+  }
+  const separator = ',';
+  const keys = Object.keys(rows[0]);
+  const csvContent =
+      keys.join(separator) +
+      '\n' +
+      rows.map((row:any) => {
+        return keys.map(k => {
+          let cell = row[k] === null || row[k] === undefined ? '' : row[k];
+          cell = cell instanceof Date
+              ? cell.toLocaleString()
+              : "'"+cell.toString().replace(/"/g, '""')+"'";
+          if (cell.search(/("|,|\n)/g) >= 0) {
+            cell = `"${cell}"`;
+          }
+          return cell;
+        }).join(separator);
+      }).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  if (link.download !== undefined) {
+    // Browsers that support HTML5 download attribute
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+}
 
 
-export function getParams(routes:ActivatedRoute,local_setting_params="") {
+
+export function getParams(routes:ActivatedRoute,local_setting_params="",force_treatment=false) {
+  //Decryptage des parametres de l'url
+  //Version 1.0
   return new Promise((resolve, reject) => {
-    routes.queryParams.subscribe((params:any) => {
-      if(params.hasOwnProperty("params"))params["param"]=params["params"];
-      if(params.hasOwnProperty("param")){
-        let rc=analyse_params(decodeURIComponent(params["param"]));
-        if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["param"]);
-        resolve(rc);
-      } else {
-        if(local_setting_params.length>0){
-          params=localStorage.getItem(local_setting_params)
+    setTimeout(()=>{
+      routes.queryParams.subscribe((params:any) => {
+        if(params.hasOwnProperty("p")){
+          $$("Utilisation du paramétrage via l'url");
+          let rc=analyse_params(decodeURIComponent(params["p"]));
+          if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["p"]);
+          resolve(rc);
+        } else {
+          if(local_setting_params.length>0){
+            $$("Utilisation des cookies pour les paramétrages");
+            params=localStorage.getItem(local_setting_params)
+            if(params){
+              let rc=analyse_params(params);
+              resolve(rc);
+            }
+          }
+
+          $$("Param n'est pas présent dans les parametres, on fait une analyse standard")
           if(params){
-            let rc=analyse_params(params);
-            resolve(rc);
+            resolve(params);
+          }else{
+            if(force_treatment){
+              resolve({});
+            }else{
+              reject();
+            }
           }
         }
-
-        $$("Param n'est pas présent dans les parametres, on fait une analyse standard")
-        if(params){
-          resolve(params);
-        }else{
-          reject();
-        }
-      }
-    },(err)=>{
-      $$("!Impossible d'analyser les parametres de l'url");
-      reject(err);
-    })
+      },(err)=>{
+        $$("!Impossible d'analyser les parametres de l'url");
+        reject(err);
+      })
+    },200);
   });
 }
 
@@ -296,7 +369,7 @@ export function $$(s: string, obj: any= null) {
   }
   const lg = new Date().getHours() + ':' + new Date().getMinutes() + ' -> ' + s;
   if (obj != null) {
-    obj = JSON.stringify(obj);
+    obj = JSON.stringify(obj).replace(",",",\n");
   } else {
     obj = '';
   }
@@ -329,7 +402,7 @@ export function canTransfer(nft:NFT,by_addr:string) : boolean {
   //Détermine si un NFT peut être transférer d'une blockchain à une autre
   if(nft.address && (nft.address.startsWith("db_") || nft.address.startsWith("file_"))){
     if(nft.marketplace?.quantity==0)return false;
-    if(nft.miner!="" && nft.miner!=by_addr)return false;
+    if(nft.miner.address!="" && nft.miner.address!=by_addr)return false;
     return true;
   } else {
     if(by_addr==nft.owner)return true;

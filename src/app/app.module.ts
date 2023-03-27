@@ -93,6 +93,7 @@ import {MatCardModule} from "@angular/material/card";
 import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 import { MenuComponent } from './menu/menu.component';
 import { SettingsComponent } from './settings/settings.component';
+import { SelkeyComponent } from './selkey/selkey.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -153,7 +154,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         WarningComponent,
         RescuewalletComponent,
         MenuComponent,
-        SettingsComponent
+        SettingsComponent,
+        SelkeyComponent
     ],
     imports: [
         BrowserModule,

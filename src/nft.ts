@@ -1,9 +1,10 @@
 import {Collection} from "./operation";
+import {CryptoKey} from "./tools";
 
 export interface Creator {
-  address:string
-  verified:number
-  share:number
+  address: string
+  verified: boolean
+  share: number | 100
 }
 
 export interface SplTokenInfo {
@@ -66,7 +67,7 @@ export interface Search {
 
 
 export interface NFT {
-  collection:Collection | null
+  collection:Collection | undefined
   symbol:string
   network: string | undefined
   attributes:{
@@ -77,11 +78,11 @@ export interface NFT {
   tags:string | ""
   description:string
   visual:string
-  creators: any[]
+  creators: Creator[]
   address:string | undefined
   royalties:number
   owner:string | undefined
-  miner:string
+  miner:CryptoKey
   marketplace: {
     price: number
     quantity: number
@@ -90,6 +91,11 @@ export interface NFT {
   solana: any | undefined
   message: string | undefined
   style: any | undefined
+  links:{
+    gallery:string | undefined
+    explorer: string  | undefined
+    transaction: string | undefined
+  } | undefined
 }
 
 export interface SolanaToken {

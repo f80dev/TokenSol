@@ -8,7 +8,11 @@ export const environment = {
   appname:"TokenForge",
   splash_visual:"./assets/forge.jpg",
   appli:"https://tokenforge.devnet.nfluent.io",
-  wallet:"https://wallet.nfluent.io"
+  wallet:"https://wallet.nfluent.io",
+  website:"https://nfluent.io",
+  stockage: "nftstorage,infura",
+  stockage_document: "infura,server",
+  networks_available:"elrond-devnet,polygon-devnet"
 };
 
 //server:"https://server.f80lab.com:4242",

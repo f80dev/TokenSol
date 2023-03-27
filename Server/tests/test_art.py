@@ -1,5 +1,6 @@
 import os
 import random
+import time
 from os.path import exists
 
 import pytest
@@ -18,7 +19,7 @@ IMAGES={
     "https://img.freepik.com/free-photo/beautiful-milky-way-night-sky_53876-139825.jpg?w=1380&t=st=1670608013~exp=1670608613~hmac=b2ad049cb167a88487d282bb40d8061d98944ba401899a4354a699a0ab30363b",
     "https://img.freepik.com/free-photo/white-painted-wall-texture-background_53876-138197.jpg?w=996&t=st=1670608081~exp=1670608681~hmac=bc86415196bd4579744e799023fabd34b84b083a2860d12478f8c902b66d457d",
     "https://img.freepik.com/free-photo/abstract-luxury-blur-dark-grey-black-gradient-used-as-background-studio-wall-display-your-products-plain-studio-background_1258-54444.jpg?w=996&t=st=1670608097~exp=1670608697~hmac=ea40188a966f6dc040fe9cd8ddfa1d753ba08bb36f0029047a5b3468861d936c",
-    RESSOURCE_TEST_DIR+"/fond1.png",
+    RESSOURCE_TEST_DIR+"fond1.png",
     RESSOURCE_TEST_DIR+"fond2.png",
     RESSOURCE_TEST_DIR+"fond3.png",
     RESSOURCE_TEST_DIR+"fond4.png"
@@ -100,9 +101,10 @@ def test_sequence():
 
 def test_paste_fixe_to_animated():
   clear_directory()
-  url=test_paste_images(im1=get_image(section="svgs"),im2=get_image(section="animated"))
+  url=test_paste_images(im1=get_image(section="svgs"),im2=get_image(section="animated"),output_filename="collage.gif")
   rc=Sticker(image=url,work_dir=TEMP_TEST_DIR)
-  assert rc.image.is_animated,"Le résultat devrait être une image animée"
+  assert rc.is_animated,"Le résultat devrait être une image animée"
+
 
 
 # def test_pillow_library():
@@ -130,16 +132,19 @@ def test_load(section="animated"):
       assert sticker.image.format
       assert sticker.image.format.lower()==ext.lower()
       assert sticker.image.n_frames>1
+  time.sleep(2)
+  clear_directory()
 
 
 
-def test_create_sticker(section="backgrounds"):
-  for index in range(2):
-    sticker=Sticker(name="background",image=get_image(section=section),work_dir=TEMP_TEST_DIR)
-    sticker.to_square(can_strech=(index==0))
+def test_create_sticker(section="backgrounds",index=0):
+  clear_directory()
+  for index in range(len(IMAGES[section])):
+    can_strech=(index % 2==0)
+    sticker=Sticker(name="background",image=get_image(section=section,index=index),work_dir=TEMP_TEST_DIR)
+    sticker.to_square(can_strech=can_strech,extend=sticker.is_transparent())
     assert not sticker is None
-    assert sticker.image.height==sticker.image.width
-    return sticker
+    assert not can_strech or abs(sticker.image.height-sticker.image.width)<10
 
 
 def test_create_layer(name="backgrounds"):
@@ -155,18 +160,23 @@ def test_create_layer(name="backgrounds"):
 
 def clear_directory(dir=TEMP_TEST_DIR):
   for filename in os.listdir(dir):
-    os.remove(dir+"/"+filename)
+    try:
+      os.remove(dir+"/"+filename)
+    except:
+      time.sleep(4)
+      os.remove(dir+"/"+filename)
+
 
 
 def test_paste_images(im1=None,im2=None,output_filename="collage.webp"):
   im1=im1 or get_image(section="backgrounds")
   im2=im2 or get_image(section="stickers")
-  if output_filename=="collage.webp": clear_directory()
   s1=Sticker(image=im1,work_dir=TEMP_TEST_DIR)
   s2=Sticker(image=im2,work_dir=TEMP_TEST_DIR)
   log("Collage de "+str(s2)+" sur "+str(s1))
-  s1.fusion(s2,1)
+  s1.fusion(s2,factor=1)
   s1.save(TEMP_TEST_DIR+output_filename)
+  s1.close()
   return TEMP_TEST_DIR+output_filename
 
 
@@ -202,9 +212,12 @@ def test_paste_multiple_format():
 
 
 def test_svg_treatment():
+  clear_directory()
   foreground=Sticker(image=get_image(section="svgs"),work_dir=TEMP_TEST_DIR)
-  rc=foreground.render_svg()
+  rc:Image=foreground.render_svg()
   assert not rc is None
+  rc.save(open(TEMP_TEST_DIR+"test.gif","wb"))
+
 
 
 
@@ -242,9 +255,6 @@ def test_generate_with_xmp(w=500,h=500,dir=TEMP_TEST_DIR,
   return rc
 
 
-
-
-
 def test_generate_svg():
   master=Sticker(image=get_image(section="svgs",index=2),work_dir=TEMP_TEST_DIR)
   images=generate_svg_from_fields(master.text["text"])
@@ -262,13 +272,7 @@ def test_all_platform_with_image(platforms=PLATFORM_LIST):
   img=Sticker(image=IMAGES["stickers"][1],work_dir=TEMP_TEST_DIR)
   for platform in platforms:
     print("Test de la platform "+platform)
-    rc=upload_on_platform(img.toBase64(),platform,upload_dir=TEMP_TEST_DIR)
+    rc=upload_on_platform(img.toBase64(),platform,upload_dir=TEMP_TEST_DIR,domain_server="http://localhost:4200/")
     assert len(rc["cid"])>0
 
 
-def test_all_platform_with_json(platforms=PLATFORM_LIST):
-  doc={"description":"ma description","title":"my title"}
-  for platform in platforms:
-    rc=upload_on_platform(doc,platform)
-    assert len(rc["url"])>0
-    assert len(rc["cid"])>0

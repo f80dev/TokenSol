@@ -14,7 +14,7 @@ import {NFT} from "../../nft";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {get_in, Operation} from "../../operation";
-import {parse, stringify} from "yaml";
+import {parse} from "yaml";
 
 @Component({
   selector: 'app-build-ope',
@@ -233,8 +233,7 @@ export class BuildOpeComponent implements OnInit {
     _d.claim=get_in(this.operation.sel_ope,"branding.claim",null);
     _d.appname=get_in(this.operation.sel_ope,"branding.appname",null);
 
-    let param = setParams(_d);
-    return environment.appli+"/"+appli+"?param="+param;
+    return environment.appli+"/"+appli+"?"+setParams(_d);
   }
 
   open_appli(appli:string,add_param:any={}) {
@@ -285,9 +284,9 @@ export class BuildOpeComponent implements OnInit {
 
   open_validate() {
     if(this.operation.sel_ope){
-      let url=environment.appli+"/autovalidate?param="+setParams({toolbar:false,ope:this.operation.sel_ope.id});
+      let url=environment.appli+"/autovalidate?"+setParams({toolbar:false,ope:this.operation.sel_ope.id});
       if(this.operation.sel_ope.validate && this.operation.sel_ope.validate?.users.length>0){
-        url=this.operation.sel_ope.validate!.application+"?param="+setParams({
+        url=this.operation.sel_ope.validate!.application+"?"+setParams({
           toolbar:false,
           ope:this.operation.sel_ope.id
         })

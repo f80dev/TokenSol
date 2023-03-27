@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {environment} from "../../environments/environment";
+import {UserService} from "../user.service";
 
 @Component({
   selector: 'app-about',
@@ -10,10 +11,10 @@ export class AboutComponent implements OnInit {
 
   appname="";
 
-  constructor() { }
+  constructor(public user:UserService) { }
 
   ngOnInit(): void {
-    this.appname=environment.appname;
+    this.appname=this.user.appname;
   }
 
 }

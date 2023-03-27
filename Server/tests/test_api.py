@@ -1,11 +1,12 @@
 import base64
 from json import loads
 
+from flaskr.Keys import Key
 from flaskr.Mintpool import Mintpool
 from flaskr.Network import Network
-from flaskr.Tools import get_operation, now, get_key_by_name
+from flaskr.Tools import get_operation, now, get_key_by_name, random_from
 from flaskr.settings import OPERATIONS_DIR
-from tests.test_art import test_generate_collection
+from tests.test_art import test_generate_collection, IMAGES
 from tests.test_tools import *
 
 @pytest.fixture()
@@ -84,6 +85,23 @@ def test_api_upload_json(test_client,objs=["bonjour comment allez vous",{"key":"
 			assert len(cid["cid"])>0
 
 
+def test_send_photo_for_nftlive(test_client):
+	for format in ["base64","link"]:
+		body={
+			"photo":IMAGES["backgrounds"][0],
+			"limit":1,
+			"dimension":500,
+			"config":RESSOURCE_TEST_DIR+"/config_certificat_photo.yaml",
+			"format":format
+		}
+		image_to_mint= call_api(test_client, "send_photo_for_nftlive/", "", body)
+		assert len(image_to_mint["images"])>0
+		if format=="base64": assert image_to_mint["images"][0].startswith("data:")
+		if format=="link": assert image_to_mint["images"][0].startswith("http")
+
+
+
+
 def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.pdf","fond1.gif","image_1.webp"],platforms=PLATFORMS):
 	for p in platforms:
 		log("Test de la platform "+p)
@@ -104,7 +122,7 @@ def test_api_upload(test_client,files=["batch_importation.xlsx","CV.docx","doc.p
 				if not "ipfs" in p:
 					log("Tentative de récupération du fichier "+cid["url"])
 					resp=test_client.get(cid["url"])
-					assert resp.status_code==200 or p=="infura"
+					assert resp.status_code==200 or p=="infura","Fichier non récupérable sur "+p
 
 
 def test_seach_images(test_client,query="lapin"):
@@ -140,7 +158,7 @@ def test_keys_networks(test_client,networks=NETWORKS):
 	for network in networks:
 		if not Network(network).is_blockchain():
 			get_network_instance(network).create_account("paul.dudule@gmail.com")
-			get_network_instance(network).create_account("sophie.dudule@gmail.com",10)
+			get_network_instance(network).create_account("sophie.dudule@gmail.com")
 
 		print("Analyse du réseau "+network)
 		#test_keys(test_client,network,0,"")
@@ -167,7 +185,7 @@ def test_nfts_from_collection(test_client, col_id="", network=MAIN_NETWORK):
 	return rc["nfts"]
 
 
-def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,seuil=1):
+def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,seuil=1,limit=2000):
 	"""
   Récupére les nfts d'une collection ou d'un client
   :param test_client:
@@ -177,7 +195,7 @@ def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,s
 		account = get_account_from_network(test_client, network=network, seuil=1)
 		owner = account["address"]
 
-	rc = call_api(test_client, "nfts/", "account=" + owner + "&network=" + network)
+	rc = call_api(test_client, "nfts/", "account=" + owner + "&network=" + network+"&limit="+str(limit))
 	assert len(rc) >= seuil
 
 	return rc
@@ -188,10 +206,14 @@ def test_find_collection_for_networks(test_client,networks=NETWORKS):
 		miner=MAIN_ACCOUNTS[network.split("-")[0]]
 		cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)
 		assert not cols is None
+		if len(cols)>0:
+			assert "id" in cols[0]
+
 
 def find_collection_to_mint(test_client, miner:str,network="elrond-devnet"):
 	cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)
-	if len(cols) > 0:
+	if len(cols)==0: return None
+	if "elrond" in network:
 		col_id = None
 		for col in cols:
 			if not col_id:
@@ -199,6 +221,9 @@ def find_collection_to_mint(test_client, miner:str,network="elrond-devnet"):
 					if role["canCreate"] and miner == role["address"]:
 						col_id = col["collection"]
 						return col_id
+	else:
+		return random_from(cols)
+
 	return None
 
 
@@ -214,10 +239,6 @@ def mint_from_file(test_client, filename: str = RESSOURCE_TEST_DIR+"image_1.webp
 	assert len(rc["error"]) == 0, "Erreur " + rc["error"] + " hash=" + rc["hash"]
 	return rc
 
-
-def test_mint_polygon(test_client,network="polygon-devnet"):
-	miner=random_from(get_network_instance(network).get_keys())
-	test_api_mint(test_client,miner=miner,col_id="",network=network)
 
 
 
@@ -238,11 +259,13 @@ def test_api_mint(test_client, miner:Key=None, col_id=MAIN_COLLECTION, network=M
 			col=test_create_collection(test_client,"LaCollec",miner,network)
 			col_id=col["id"]
 
-	if col_id == "":
+	if col_id == "": # and not "elrond" in network:
 		col_id = find_collection_to_mint(test_client, miner.address,network)
 
-	_account=test_get_account(test_client,miner.address,network)
-	assert _account.amount>0.1,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
+	_accounts=call_api(test_client,"accounts/"+miner.address+"/","network="+network)
+	assert len(_accounts)>0
+	_account=_accounts[0]
+	assert _account["amount"]>0.1,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
 
 	if col_id:
 		_nft = create_nft("test_" + now("hex"), col_id)
@@ -283,17 +306,16 @@ def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLEC
 	return nft_id, col_id
 
 
-def test_transfer_all_networks(test_client, networks=NETWORKS):
-	for from_network in networks:
-		for to_network in networks:
-			log("Test du transfer de "+from_network+" vers "+to_network)
-			miner_for_target_network=get_main_account_for_network(to_network)
-			rc=test_transfer_to(test_client,from_network,to_network,miner_for_target_network)
 
-			assert rc, "Le transfert n'a pas eu lieu"
+def test_delete_user(test_client,email=MAIN_EMAIL):
+	rc=call_api(test_client,"registration/"+email+"/")
+	assert "email" in rc
+	rc=call_api(test_client,"delete_user/"+email+"/"+rc["access_code"]+"/",method="DELETE")
+	assert "deleted" in rc["message"]
+	return rc
 
 
-def test_registration_and_login(test_client,email=MAIN_EMAIL,with_delete=True):
+def test_registration_and_login(test_client,email=MAIN_EMAIL):
 	rc=call_api(test_client,"registration/"+email+"/")
 	assert "email" in rc
 	assert "alias" in rc
@@ -304,17 +326,13 @@ def test_registration_and_login(test_client,email=MAIN_EMAIL,with_delete=True):
 	assert "email" in account
 	assert account["email"]==encrypt(email,short_code=40)
 
-	if with_delete:
-		rc=call_api(test_client,"/delete_user/"+email+"/"+rc["access_code"]+"/",method="DELETE")
-		return rc
-	else:
-		return account
+	return account
 
 
 
 def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="",with_delete=True):
 	if len(new_password)==0:new_password=now("hex")[2:].upper()
-	user=test_registration_and_login(test_client,email,False)
+	user=test_registration_and_login(test_client,email)
 	rc=call_api(test_client,"change_password/"+email+"/"+user["access_code"]+"/"+new_password+"/")
 	assert len(rc["error"])==0
 	account=call_api(test_client,"login/"+email+"/"+new_password+"/?with_api=False")
@@ -323,42 +341,50 @@ def test_update_access_code(test_client,email=MAIN_EMAIL,new_password="",with_de
 
 
 
-def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette"):
-	user=test_registration_and_login(test_client,email,False)
-	keys=call_api(test_client,"keys/")
-
-	obj={
-		"network":network,
-		"email":email,
-		"secret_key":keys[0]["secret_key"],
-		"access_code":user["access_code"]
-	}
-	rc=call_api(test_client,"keys/"+name+"/","",obj)
-
-	rc=call_api(test_client,"keys/","network="+network+"&access_code="+user["access_code"])
-
-	user=test_registration_and_login(test_client,email,False)
-	assert "email" in user
-	assert len(user["keys"])==1
-
-
+# def test_add_key(test_client,email=MAIN_EMAIL,network=MAIN_NETWORK,name="lucette"):
+# 	user=test_registration_and_login(test_client,email)
+# 	keys=call_api(test_client,"keys/")
+#
+# 	obj={
+# 		"network":network,
+# 		"email":email,
+# 		"secret_key":keys[0]["secret_key"],
+# 		"access_code":user["access_code"]
+# 	}
+# 	rc=call_api(test_client,"keys/"+name+"/","",obj)
+#
+# 	rc=call_api(test_client,"keys/","network="+network+"&access_code="+user["access_code"])
+#
+# 	user=test_registration_and_login(test_client,email)
+# 	assert "email" in user
+# 	assert len(user["keys"])==1
 
 
 
-def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NETWORK, miner_for_target_network:Key=None, token_id="", dest:Key=None):
+
+
+def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NETWORK, miner_for_target_network:Key=None, token_id="", dest:Key=None,owner:Key=None):
 	_from_network=get_network_instance(from_network)
 	_to_network=get_network_instance(to_network)
 
+	if owner is None: owner:Key=random_from(_from_network.get_keys())
+
 	if token_id == "":
-		owner:Key=random_from(_from_network.get_keys())
 		nfts=test_nfts_from_owner(test_client,owner.address,from_network,0)
 		if len(nfts)>0:
-			token_id=random_from(nfts)["address"]
+			for iter in range(50):
+				nft=random_from(nfts)
+				if nft["miner"]==owner.address:break
+			token_id=nft["address"]
+			col_id=nft["collection"]["id"] if "id" in nft["collection"] else ""
 		else:
 			token_id, col_id = test_api_mint(test_client, miner=owner, network=from_network)
 
 	if miner_for_target_network is None:
-		miner_for_target_network=random_from(_from_network.get_keys())
+		if from_network==to_network:
+			miner_for_target_network=owner
+		else:
+			miner_for_target_network=random_from(_from_network.get_keys())
 
 	if dest is None:
 		dest=random_from(_to_network.get_keys())
@@ -372,7 +398,7 @@ def test_transfer_to(test_client, from_network=MAIN_NETWORK, to_network=MAIN_NET
 	# 	account = get_account_from_network(test_client, network=to_network, seuil=0,filter="")
 	# 	dest = account["address"]
 
-	body={"token_id":token_id,"dest":dest.address,"miner":miner_for_target_network.__dict__}
+	body={"token_id":token_id,"dest":dest.address,"target_miner":miner_for_target_network.__dict__,"from_miner":owner.__dict__}
 	rc = call_api(test_client, "transfer/","from_network=" + from_network + "&to_network=" + to_network,body, method="POST")
 
 	assert not rc is None
@@ -440,7 +466,7 @@ def test_create_collection(test_client, name="", miner=MAIN_MINER, network=MAIN_
 	body = {
 		"options": options,
 		"name": name,
-		"miner":miner.__dict__
+		"owner":miner.__dict__
 	}
 	rc = call_api(test_client, "create_collection/", "network=" + network, body)
 	assert not rc is None, "La collection n'est pas créer"
@@ -472,6 +498,7 @@ def test_mintpool(test_client, dest=MAIN_ACCOUNT,  target_network=MAIN_NETWORK,s
 
 	miner:Key=random_from(get_network_instance(target_network).get_keys())
 	col = random_from(test_api_get_collections(test_client, target_network, miner.address))
+	assert not col is None,"Pas de collection disponible pour "+str(miner)
 
 	#nft_id,col_id=test_lazymint(test_client,source_network,cols[0]["id"])
 
@@ -556,22 +583,47 @@ def test_encrypt_keys(test_client):
 	for network in NETWORKS:
 		log("Encryptage de clé sur le réseau "+network)
 		key:Key=random_from(get_network_instance(network).get_keys())
-		rc=call_api(test_client,"encrypt_key/"+key.name+"/"+key.secret_key+"/"+key.network+"/")
+		rc=call_api(test_client,"encrypt_key/"+key.network+"/","",{"alias":key.name,"secret_key":key.secret_key})
 		assert not rc is None
 		assert len(rc["encrypt"])>0
 
 
 
-def test_get_account(test_client,addr=MAIN_ACCOUNT,network=MAIN_NETWORK):
-	_account=get_network_instance(network).get_account(addr)
-	assert not _account is None
-	assert "balance" in _account.__dict__
-	assert "address" in _account.__dict__
-	assert "amount" in _account.__dict__
-	return _account
 
 
-def test_get_account_for_networks(test_client,networks=NETWORKS):
+
+
+def test_get_keys_and_accounts(test_client,networks=NETWORKS):
 	for network in networks:
-		addr=MAIN_ACCOUNTS[network.split("-")[0]]
-		test_get_account(test_client,addr,network)
+		log("Test network="+network)
+		_network=get_network_instance(network)
+		for method in [("keys",""),("accounts",""),("keys","&with_balance=true")]:
+			items=call_api(test_client,method[0]+"/","network="+network+method[1])
+			assert len(items[0]["address"])>0
+			if len(method[1])>0 or method[0]=="accounts":
+				assert "balance" in items[0]
+				assert items[0]["balance"]>=0
+				if _network.is_blockchain():
+					assert len(items[0]["explorer"])>0
+
+
+
+
+def test_transfer_all_networks(test_client, networks=NETWORKS):
+	for from_network in networks:
+		for to_network in networks:
+			log("Test du transfer de "+from_network+" vers "+to_network)
+			miner_for_target_network=random_from(get_network_instance(network=to_network).get_keys())
+			owner=random_from(get_network_instance(network=from_network).get_keys())
+			rc=test_transfer_to(test_client,
+			                    from_network=from_network,to_network=to_network,
+			                    miner_for_target_network=miner_for_target_network,
+			                    owner=owner)
+
+			assert rc, "Le transfert n'a pas eu lieu"
+
+
+
+def test_mint_polygon(test_client,network="polygon-devnet"):
+	miner=random_from(get_network_instance(network).get_keys())
+	test_api_mint(test_client,miner=miner,col_id="",network=network)

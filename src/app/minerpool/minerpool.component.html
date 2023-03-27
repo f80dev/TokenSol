@@ -2,7 +2,7 @@
   <div class="titleform">Pool de minage des NFTs</div>
   <app-hourglass [message]="message"></app-hourglass>
   <div id="cmdPanel" style="width: 100%;" *ngIf="message.length==0">
-    <button type="button" mat-raised-button mat-button *ngIf="user.advance_mode"
+    <button type="button" mat-raised-button *ngIf="user.advance_mode"
             (click)="run()">
       Traitement
     </button>
@@ -12,12 +12,12 @@
       Reset
     </button>
 
-    <button type="button" mat-raised-button mat-button *ngIf="user.advance_mode"
+    <button type="button" mat-raised-button *ngIf="user.advance_mode"
               (click)="export_pool()">
       Export
     </button>
 
-    <button type="button" mat-raised-button mat-button *ngIf="user.advance_mode"
+    <button type="button" mat-raised-button *ngIf="user.advance_mode"
             (click)="refresh()">
       Actualiser
     </button>

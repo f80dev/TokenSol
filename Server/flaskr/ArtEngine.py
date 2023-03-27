@@ -70,7 +70,7 @@ class Sticker(Element):
                ext=None,data="",work_dir="./temp/"):
 
     self.work_dir=work_dir
-    if not exists(work_dir): raise RuntimeError("Répertoire de travail innexistant")
+    if not exists(work_dir): raise RuntimeError("Répertoire de travail inexistant")
 
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
     super().__init__(name,ext)
@@ -80,6 +80,7 @@ class Sticker(Element):
 
     if not image is None:
       if type(image)==str:
+        image=image.replace(self.work_dir,"")
         # if image.startswith("./") and not image.startswith(self.work_dir):
         #   raise RuntimeError("Le repertoire de travail doit macher avec les fichiers contenant un chemin")
         self.file=image
@@ -125,14 +126,34 @@ class Sticker(Element):
       self.image=Image.new("RGBA",dimension)
 
 
+  def is_transparent(self):
+    if self.image.info.get("transparency", None) is not None:
+      return True
+    if self.image.mode == "P":
+      transparent = self.image.info.get("transparency", -1)
+      for _, index in self.image.getcolors():
+        if index == transparent:
+          return True
+    elif self.image.mode == "RGBA":
+      extrema = self.image.getextrema()
+      if extrema[3][0] < 255:
+        return True
+
+    return False
+
+
+
   def get_ext(self,ext:str,image:str) -> str:
     if ext is None:
       ext="webp"
       if type(image)==str:
-        if image.startswith("http"):
-          ext=Image.open(BytesIO(requests.get(image).content)).format.lower()
+        if image.startswith("data:image/"):
+          ext=image.split(";base64")[0][11:]
         else:
-          ext=image[image.rindex(".")+1:]
+          if image.startswith("http"):
+            ext=Image.open(BytesIO(requests.get(image).content)).format.lower()
+          else:
+            ext=image[image.rindex(".")+1:]
     else:
       ext=ext.replace(";","").lower()
 
@@ -142,7 +163,7 @@ class Sticker(Element):
 
 
 
-  def init_svg(self,image):
+  def init_svg(self,image) -> bool:
     if type(image)==str:
       if image.startswith("http"):
         svg_code=str(requests.get(image).content,"utf8")
@@ -168,14 +189,18 @@ class Sticker(Element):
 
     self.text["dimension"]=self.extract_dimension_from_svg(self.text["text"])
     self.render_svg(with_picture=True,dimension=self.dimension)
-    return
+    return True
 
   def is_animated(self):
     if self.image is None or self.image.format is None: return False
+    try:
+      if self.image.is_animated: return True
+    except:
+      return False
     return (self.image.format=="WEBP" or self.image.format=="GIF") and self.image.is_animated
 
 
-  def to_square(self,can_strech=True):
+  def to_square(self,can_strech=True,extend=False):
     """
     Faire un crop carré
     :param can_strech:
@@ -188,7 +213,8 @@ class Sticker(Element):
         new_size=(width if width>height else int(width*1.1),height if height>width else int(height*1.1))
         self.image.resize(new_size)
         width, height = self.image.size
-      new_dimension=min(width, height)
+
+      new_dimension=max(width, height) if extend else min(width, height)
       left = (width - new_dimension)/2
       top = (height - new_dimension)/2
       right = (width + new_dimension)/2
@@ -215,11 +241,15 @@ class Sticker(Element):
     return self.image
 
 
-  def transform(self,scale,translation):
-    if scale!=(1,1) or translation!=(0,0):
+  def transform(self,scale,translation,margin):
+    if scale!=[1,1] or translation!=[0,0]:
       if ((not "_is_animated" in self.image.__dict__ and not "is_animated" in self.image.__dict__) or not self.image.is_animated):
         offset=(translation[0]/self.image.width,translation[1]/self.image.height)
         pad(self.image,size=(self.image.width*scale[0],self.image.height*scale[1]),color=None,centering=(offset[0]+0.5,offset[1]+0.5))
+
+    if margin!=[0,0] and self.is_transparent():
+      self.image = self.image.crop((-margin[0], -margin[1], self.image.width+margin[0], self.image.height+margin[1]))
+
 
 
   def extract_dimension_from_svg(self,svg_code:str) -> (int,int):
@@ -231,7 +261,7 @@ class Sticker(Element):
       return (500,500)
 
 
-  def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,prefix_name="svg"):
+  def render_svg(self,dictionnary:dict={},dimension=(500,500),with_picture=True,prefix_name="svg") -> Image:
 
     filename,svg_code=save_svg(svg_code=self.text["text"],dir=self.work_dir,dictionnary=dictionnary)
 
@@ -251,13 +281,13 @@ class Sticker(Element):
 
       image.putdata(newImage)
       self.image=image.convert("RGBA")
+      self.image.format="GIF"
       self.text["dimension"]=(self.image.width,self.image.height)
     else:
       self.text["dimension"]=self.extract_dimension_from_svg(svg_code)
-
       self.image=filename
 
-    return self.image
+    return self.image.copy()
 
 
   def clear(self):
@@ -291,6 +321,7 @@ class Sticker(Element):
           self.init_svg(str(content,"utf8"))
         else:
           self.image=Image.open(BytesIO(content))
+        return True
 
 
     if self.image and self.image.mode!="RGBA" and not self.is_animated():
@@ -417,14 +448,15 @@ class Sticker(Element):
 
           log("Collage d'une image animé "+str(to_concat)+" sur la base "+str(self))
           self.image=merge_animated_image(self.image,to_concat.image,prefix,temp_dir=self.work_dir)
+          if self.ext=="svg":
+            self.text=""                      #Maintenant l'image n'est plus un SVG
+            self.ext=self.image.format
           to_concat.image.close()
-
         else:
-          to_concat.to_square()
+          to_concat.to_square(can_strech=True,extend=to_concat.is_transparent())
           log("Collage d'une image fixe ...")
           if not self.is_animated():
             log("... sur une base fixe")
-
             to_concat_resize=to_concat.image.resize(self.image.size).convert("RGBA")
             self.image.alpha_composite(to_concat_resize)
           else:
@@ -451,7 +483,7 @@ class Sticker(Element):
     _data_to_add=self.data
     if len(self.data)>0:
       for i in range(10): #Jusqu'a 10 remplacements
-        _data_to_add=_data_to_add.replace("_idx_",str(index))
+        _data_to_add=_data_to_add.replace("__idx__",str(index))
 
       _data=loads(_data_to_add)
       if not "title" in _data:_data["title"]=""
@@ -599,13 +631,14 @@ class TextElement(Element):
 
 
 class Layer:
-  def __init__(self,name="",element=None,position=0,unique=False,indexed=True,work_dir="./temp"):
+  def __init__(self,name="",element=None,position=0,unique=False,indexed=True,scale="1,1",translation="0,0",margin="0,0",work_dir="./temp"):
     self.elements:[Element]=[]
     self.name=name if len(name)>0 else str(now())
     self.unique=unique if type(unique)!=str else False
     self.indexed=indexed if type(indexed)!=str else False
-    self.scale=(1,1)
-    self.translation=(0,0)
+    self.scale=[float(x) for x in scale.split(",")]
+    self.translation=[float(x) for x in translation.split(",")]
+    self.margin=[float(x) for x in margin.split(",")]
     self.position=position
     self.work_dir=work_dir
     if element:self.add(element)
@@ -790,13 +823,26 @@ class ArtEngine:
 
     log("Lancement de la génération de "+str(limit)+" images")
     _try=0
-    while index<limit and _try<20:
+
+    log("Génération des combinatoires")
+    sequences=[]
+    while len(sequences)<limit and _try<200:
+      seq=[]
+      for layer in self.layers:
+        elt:Sticker=None if len(layer.elements)==0 else (layer.random() if not layer.unique else layer.elements[0])
+        if elt: seq.append(elt)
+      if not seq in sequences:
+        sequences.append(seq)
+      else:
+        _try=_try+1
+
+    for seq in sequences:
       collage=Sticker("collage",dimension=(width,height),ext=ext,data=data,work_dir=self.work_dir)
 
       name=[]
       log("\nGénération du NFT "+str(index+1)+"/"+str(limit))
-      for layer in self.layers:
-        elt:Sticker=None if len(layer.elements)==0 else (layer.random() if not layer.unique else layer.elements[0])
+
+      for elt in seq:
         if elt is None:
           log("il n'y a plus assez de NFT pour respecter l'unicité")
           index=limit
@@ -805,9 +851,14 @@ class ArtEngine:
           if layer.indexed or layer.unique: name.append(elt.name)
           elt.open()
 
-          #elt.transform(layer.scale,layer.translation)
-          log("Collage de "+str(elt)+" sur "+str(collage))
-          collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)
+          elt.transform(layer.scale,layer.translation,layer.margin)
+          try:
+            log("Collage de "+str(elt)+" sur "+str(collage))
+            if not name in histo:
+              collage.fusion(elt,width/(1 if elt.text is None or elt.text["dimension"] is None else elt.text["dimension"][0]),replacements,prefix=prefix)
+          except:
+            log("Probleme de génération")
+
           if layer.unique: layer.remove(elt)
 
         elt.close()
@@ -818,7 +869,7 @@ class ArtEngine:
 
           histo.append(name)
           if len(dir)>0:
-            filename=dir+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
+            filename=dir+prefix+self.name+"_"+str(index)+"."+collage.ext if not "_idx_" in self.name else dir+self.name.replace("_idx_",str(index))+"."+collage.ext
             rc.append(filename)
             if collage.ext.lower()=="gif" or export_metadata:
               rc.append(filename+".xmp")

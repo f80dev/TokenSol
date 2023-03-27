@@ -15,11 +15,16 @@ mat-form-field:not(.mat-focused) .mat-hint {
 }
 
 
-input-elements {
+.input-elements {
   display: flex;
   flex-direction: row;
   align-content: center;
   justify-content: stretch;
-  margin: 3px;
+}
+
+.help-input {
+  opacity: 0.6;
+  font-size: xx-small;
+  margin-top: -5px;
 }
 

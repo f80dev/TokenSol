@@ -16,6 +16,7 @@ import {Configuration, Layer} from "../../create";
 import {OperationService} from "../operation.service";
 import {parse, stringify} from "yaml";
 import {DeviceService} from "../device.service";
+import {wait_message} from "../hourglass/hourglass.component";
 
 
 @Component({
@@ -26,11 +27,11 @@ import {DeviceService} from "../device.service";
 //test : http://localhost:4200/creator
 
 export class CreatorComponent implements OnInit,OnDestroy {
-  backcolor="black";
+  backcolor="lighgray";
 
   platforms=null;
-  webstorage_platform=[{label:"",value:""}]
-  sel_webstorage_platform: any;
+  //webstorage_platform=[{label:"",value:""}]
+  //sel_webstorage_platform: any;
   url_collection="";
   show_addtext:any;
   configs:Configuration[]=[];
@@ -86,7 +87,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   //   }
   // ]
 
-  sel_platform: { label:string,value:string } | undefined;
+  sel_platform: string="nftstorage";
 
   sel_config: Configuration | null=null;
   fontfiles: any;
@@ -95,6 +96,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
   message="";
   palette: any={};
   quality: number=95;
+  //networks_available:any[]=[]; //Liste des blockchaine autorisées si transfert direct vers le minage
+  stockage_available:any={};    //Stockage des documents attachés
 
   constructor(
       public network:NetworkService,
@@ -163,14 +166,15 @@ export class CreatorComponent implements OnInit,OnDestroy {
     })
 
 
-
     getParams(this.routes).then((params:any)=>{
       if(params.title_form)this.title_form=params.title_form;
+      //this.networks_available=this.network.config["NETWORKS"] || params.networks || [];
+      //this.networks_available=this.network.networks_available;
 
-      this.platforms=this.network.config["PLATFORMS"];
-      this.webstorage_platform=this.network.config["PLATFORMS"];
-      if(this.platforms)this.sel_platform=this.platforms[0];
-      this.sel_webstorage_platform=this.webstorage_platform[0];
+      //this.webstorage_platform=this.network.config["PLATFORMS"];
+      this.sel_platform=this.network.stockage_available[0];
+      //this.sel_webstorage_platform=this.webstorage_platform[0];
+      this.stockage_available=this.network.config["PLATFORMS"] || params.stockage || "infura";
 
       this.network.list_config().subscribe((r:any)=> {
         if(r){
@@ -182,7 +186,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
             this.eval_max_nft();
           }else{
             $$("Initialisation d'une nouvelle configuration")
-            this.new_conf("localConfig");
+            this.new_conf("localConfig",true);
           }
         }
       },(err)=>{showError(this,err)});
@@ -250,8 +254,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
         height:this.sel_config.height,
         indexed:true,
         position:this.sel_config!.layers.length,
-        translation: {x:0,y:0},
-        scale: {x:1,y:1}
+        translation: "0,0",
+        scale: "1,1",
+        margin: "0,0"
       }
 
 
@@ -259,7 +264,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         this.sel_config!.layers.push(new_layer)
         this.save_config();
       } else {
-        _prompt(this,"Nom du calque ?",name).then((name:string)=> {
+        _prompt(this,"Nom du calque ?",name,"","text","Valider","Annuler",false).then((name:string)=> {
           new_layer.name = name;
           if(names.indexOf(name)==-1){
             this.sel_config!.layers.push(new_layer)
@@ -276,8 +281,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
   fill_layer(i:number,w:number,h:number,preview:number,func:Function){
     if(this.sel_config){
-      this.message="Composition de " + i + " calques sur " + this.sel_config!.layers.length;
+      wait_message(this,"Composition de " + i + " calques sur " + this.sel_config!.layers.length)
       this.network.add_layer(this.sel_config!.layers[i],w,h,preview).subscribe(()=> {
+        wait_message(this);
         i = i + 1;
         if(this.sel_config && i<this.sel_config!.layers.length){
           this.fill_layer(i,w,h,preview,func);
@@ -290,12 +296,30 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
+  async ask_email_for_collection(){
+    let email=await _prompt(this,"Email de reception de la collection",this.user.profil.email,
+        "Vous recevrez le lien de téléchargement dés que la collection est disponible","text","Démarrer","Annuler",false);
+    this.generate_collection("zip_"+email,false);
+  }
 
-  generate_collection(format="zip",direct_mint=false) {
+  async ask_confirmation_for_big_collection(format="zip",direct_mint=false){
+    let conf="no";
+    if(this.sel_config!.limit>20){
+      conf=await _prompt(this,"Etes-vous sûr de lancer une génération en temps réel ?","","La génération de cette collection risque de prendre beaucoup de temps.");
+    }
+    if(this.sel_config!.limit<=20 || conf=="yes"){
+      this.generate_collection(format,direct_mint,2000000);
+    }
+  }
+
+
+  generate_collection(format="zip",direct_mint=false,timeout=200000) {
     //Format peut contenir "preview"
     if(!this.sel_config)return;
     this.url_collection="";
     this.save_config(false);
+
+
 
     //Vérification du format des datas
     if(this.sel_config!.data.properties && this.sel_config!.data.properties!=""){
@@ -308,10 +332,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
 
     let i=0;
-
-    this.message="";
+    wait_message(this,"Fabrication: chargement des images ...");
     this.network.reset_collection().subscribe(()=>{
-      this.message="Fabrication: chargement des images ..."
+
       this.fill_layer(i,this.sel_config?.width || 800,this.sel_config?.height || 800,0,()=>{
 
         if(this.sel_config && this.sel_config.data){
@@ -319,17 +342,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
           if(this.operation!.sel_ope && this.operation!.sel_ope!.nftlive){
             this.sel_config!.data.operation=this.operation.sel_ope?.id;
           }
-          if(!this.sel_config.data.creators || this.sel_config.data.creators.length==0)this.sel_config.data.creators=this.user.addr+":100%";
         }
-
 
         if(!direct_mint)showMessage(this,"L'aperçu se limite à 10 NFT maximum");
 
         this.url_collection="";
-
-
-        // @ts-ignore
-        this.message="Fabrication: Fusion des calques ..."
         let url=this.network.get_url_collection(
             Math.min(this.sel_config!.limit,format=="preview" ? 10 : 1000),
             this.filename_format,this.sel_ext.value,
@@ -337,31 +354,49 @@ export class CreatorComponent implements OnInit,OnDestroy {
             this.sel_config!.seed,
             this.quality,format,
             this.sel_config!.data,
-            this.sel_config!.data.properties,
-            this.sel_webstorage_platform.value);
-        this.url_collection=url;
+            this.sel_config!.data.properties);
 
-        this.network._get(url,"",200000).subscribe((r: any) => {
-              showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
-              //    = this.network.server_nfluent + "/api/images/" + r.archive + "?f=" + r.archive;
-              $$("Lien de téléchargement " + this.url_collection);
+        this.url_collection=url.replace("format=preview","format=zip");
 
-              this.message = "";
+        if(format.startsWith("zip_")){
+          wait_message(this);
+          this.network._post(url,"",this.sel_config!,100).subscribe((r: any) => {
+            showMessage(this,"Travail en cours ... consulter votre boite mail pour retrouver le résultat quand il sera prêt")
+          });
+        }else{
+          wait_message(this,"Fabrication: Fusion des calques ...",true,2000000);
+          this.network._get(url,"",timeout).subscribe((r: any) => {
+                showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
+                //    = this.network.server_nfluent + "/api/images/" + r.archive + "?f=" + r.archive;
+                $$("Lien de téléchargement " + this.url_collection);
 
-              if (direct_mint) {
-                showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
-                this.user.nfts_to_mint = this.previews;
-                this.router.navigate(["mint"]);
-              } else {
-                this.previews = r.preview;
-                this.show_generate = false;
-                this.show_preview = true;
-                this.show_conception = false;
+                if (direct_mint) {
+                  wait_message(this)
+                  showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
+                  this.user.nfts_to_mint = r.preview;
+                  this.router.navigate(["mint"]); //A priori les paramétres ont été intégré au lancement
+                  // this.router.navigate(["mint"],{queryParams:{param:setParams({
+                  //       toolbar: this.user.toolbar_visible,
+                  //       networks: this.networks_available,
+                  //       stockage: this.stockage_available
+                  //     })}});
+                } else {
+                  wait_message("Préparation de l'aperçu")
+                  setTimeout(()=>{
+                    this.previews = r.preview;
+                    this.show_generate = false;
+                    this.show_preview = true;
+                    this.show_conception = false;
+                    wait_message(this)
+                  },50);
+                }
               }
-            }
-        , (err) => {
-          showError(this, err);
-        })
+              , (err) => {
+                showError(this, err);
+              })
+        }
+
+
 
 
         // if(format=="upload"){
@@ -438,6 +473,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       $event.stopPropagation();
       if($event.ctrlKey){
         layer.elements.splice(pos,1);
+        this.eval_max_nft();
       }
 
       if($event.altKey){
@@ -446,6 +482,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
           this.network.wait("")
           element.image=result["image"];
           layer.elements[pos]=element;
+          this.eval_max_nft();
         },()=>{this.network.wait("");})
       }
 
@@ -462,6 +499,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         let e=layer.elements[pos-1];
         layer.elements[pos-1]=layer.elements[pos];
         layer.elements[pos]=e;
+        this.eval_max_nft();
       }
 
       this.network.update_layer(layer).subscribe((elements:any)=>{
@@ -487,6 +525,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   delete_layer(layer: Layer) {
     let pos=this.sel_config!.layers.indexOf(layer);
     this.sel_config!.layers.splice(pos,1);
+    this.eval_max_nft();
   }
 
 
@@ -529,8 +568,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
           unique:false,
           indexed:true,
           position:l.position,
-          translation:{x:0,y:0},
-          scale:{x:1,y:1}
+          margin:"0"
         }
 
         if(l["text"]){
@@ -573,33 +611,35 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
-  async update_config(sel_config:Configuration | null) {
-    let rep=await _prompt(this,"Charger une nouvelle configuration","","Remplacer votre configuration actuelle ?","","Remplacer","Annuler",true);
-    if(rep=="yes"){
-      this.sel_config=sel_config;
-      if(this.sel_config){
-        localStorage.setItem("config",stringify(sel_config))
+  update_config(sel_config:Configuration | null,no_prompt=false) {
+    //tag: load_config
+    // let rep=await _prompt(this,"Charger une nouvelle configuration","",
+    //     "Remplacer votre configuration actuelle ?","oui/non",
+    //     "Remplacer","Annuler",true, [],no_prompt);
+    // if(rep=="yes"){
+    this.sel_config=sel_config;
+    if(this.sel_config){
+      localStorage.setItem("config",stringify(sel_config))
 
-        this.sel_platform = this.sel_config.platform;
-        if(!this.sel_platform || this.sel_platform.value==""){
-          this.sel_platform=this.network.config["PLATFORMS"][isLocal(environment.appli) ? 4 : 3];
-        }
+      // this.sel_platform = this.sel_config.platform;
+      // if(!this.sel_platform || this.sel_platform.value==""){
+      //   this.sel_platform=this.network.config["PLATFORMS"][isLocal(environment.appli) ? 4 : 3];
+      // }
+      //
+      // if (this.sel_config.layers) {
+      //   for (let l of this.sel_config.layers) {
+      //     for (let e of l.elements) {
+      //       if (this.sel_platform!.value == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
+      //       if (this.sel_platform!.value == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
+      //     }
+      //   }
+      // }
+      this.previews = [];
 
-        if (this.sel_config.layers) {
-          for (let l of this.sel_config.layers) {
-            for (let e of l.elements) {
-              if (this.sel_platform!.value == "nfluent") e.image = e.image.replace("http://127.0.0.1:4242/", "https://server.nfluent.io:4242/");
-              if (this.sel_platform!.value == "nfluent local") e.image = e.image.replace("https://server.nfluent.io:4242/", "http://127.0.0.1:4242/");
-            }
-          }
-        }
-        this.previews = [];
-
-      } else {
-        this._location.replaceState("/creator");
-      }
-      this.eval_max_nft();
+    } else {
+      this._location.replaceState("/creator");
     }
+    this.eval_max_nft();
   }
 
   check_config(config:any){
@@ -637,21 +677,35 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
-  on_upload_config($event: any) {
-    let config:Configuration=parse($event.file);
-    this.configs.push(config);
-    this.update_config(config);
+  isValide(conf:Configuration){
+    if(!conf.layers || conf.layers.length==0)return false;
+    if(!conf.data)return false;
+    return true;
+  }
+
+  async on_upload_config($event: any) {
+    let r=await _prompt(this,"Effacer la configuration actuelle");
+    if(r=="yes"){
+      let config:Configuration=parse($event.file);
+      if(this.isValide(config)){
+        this.sel_config=config;
+        this.update_config(config);
+      }else{
+        showMessage(this,"Cette configuration n'est pas conforme");
+      }
+
+    }
   }
 
   add_serial(layer: Layer) {
-    _prompt(this,"Début de la série","1","","number").then((txtStart:string)=>{
-      _prompt(this,"Fin de la série","100","","number").then((txtEnd:string)=> {
+    _prompt(this,"Début de la série","1","","number","ok","Annuler",false).then((txtStart:string)=>{
+      _prompt(this,"Fin de la série","100","","number","ok","Annuler",false).then((txtEnd:string)=> {
         let modele=this.sel_config!.text.text_to_add;
-        if(modele.indexOf("_idx_")==-1)modele=modele+"_idx_";
+        if(modele.indexOf("__idx__")==-1)modele=modele+"__idx__";
         this.sel_config!.text.text_to_add="";
         let nbr_digits=txtEnd.length;
         for(let i=Number(txtStart);i<=Number(txtEnd);i++){
-          this.sel_config!.text.text_to_add=this.sel_config!.text.text_to_add+modele.replace("_idx_",i.toString().padStart(nbr_digits,'0'))+"|";
+          this.sel_config!.text.text_to_add=this.sel_config!.text.text_to_add+modele.replace("__idx__",i.toString().padStart(nbr_digits,'0'))+"|";
         }
         this.save_config();
       });
@@ -669,6 +723,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
     layer.elements=[];
     this.save_config();
+    this.eval_max_nft();
   }
 
 
@@ -732,7 +787,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
 
-  new_conf(new_name:string){
+  new_conf(new_name:string,no_prompt=false){
+    //Génération d'une nouvelle config
+    //#tag new_config newConfig
     this.update_config({
       quality: 98,
       version: 1,
@@ -740,11 +797,17 @@ export class CreatorComponent implements OnInit,OnDestroy {
       id: now("hex").toString(),
       height: 800,
       width: 800,
-      data: { description: "", files: "",
-        operation: "", properties: "",
-        symbol: "token__idx__", title: "",
-        tags:"",sequence:[],
-        creators:this.user.addr+":100%"},
+      data: {
+        description: "",
+        files: "",
+        operation: "",
+        properties: "",
+        symbol: "token__idx__",
+        title: "MonNFT",
+        tags:"",
+        sequence:[],
+        creators:""
+      },
       attributes: {},
       layers: [],
       limit: 10,
@@ -755,7 +818,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       seed: 0,
       text: {color: "#FFFFFF", fontsize: 12, position_text: {x: 10, y: 10}, text_to_add: "Texte ici",font:{name:"Corbel",file:"corbel.ttf"}},
       location: this.create_location_from_name(new_name)
-    })
+    },no_prompt)
 
     this.add_layer("fond",true);
     this.add_layer("text_logo",true);
@@ -772,7 +835,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
     if(r=="yes"){
       if(this.user.isConnected()){
-        let name=await _prompt(this,"Nom de la configuration",default_name);
+        let name=await _prompt(this,"Nom de la configuration",default_name,"","text","Commencer","Annuler",false);
         if(!this.find_config(name,"name")){
           this.new_conf(name);
           this.configs.push(this.sel_config!);
@@ -788,14 +851,17 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   async find_image() {
-    let resp=await _prompt(this,"Saisissez un mot clé (de préférence en anglais)")
+    showMessage(this,"Il est possible de faire directement glisser les images d'un site web vers le calque souhaité")
+    let resp=await _prompt(this,"Saisissez un mot clé (de préférence en anglais)",
+        "rabbit",
+        "Accéder directement à plusieurs moteurs de recherche d'image","text",
+        "Rechercher","Annuler",false)
     open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
     open("https://giphy.com/search/"+resp,"giphy")
     open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
     open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
     open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
     open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
-    open(""+resp+"/","search_pexels")
   }
 
 
@@ -815,7 +881,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     if(body.filename.endsWith("svg")){
       this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe((r:any)=>{
         for(let img of r){
-          this.network.upload(img,this.sel_platform!.value,"image/svg").subscribe((r:any)=>{
+          this.network.upload(img,this.sel_platform,"image/svg").subscribe((r:any)=>{
             layer.elements.push({"image":r.url,type:"image/svg"});
           })
         }
@@ -823,7 +889,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       })
     }else{
       this.message="Chargement des visuels";
-      this.network.upload(body,this.sel_platform!.value,"image/png","webp").subscribe((r:any)=>{
+      this.network.upload(body,this.sel_platform,"image/png","webp").subscribe((r:any)=>{
         this.message="";
         layer.elements.push({image:r.url,name:normalize(evt.filename)});
         this.eval_max_nft();
@@ -892,25 +958,20 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   miner() {
-    this.router.navigate(["miner"],{queryParams:{param:setParams({files:this.upload_files})}})
+    this.router.navigate(["miner"],{queryParams:{param:setParams({files:this.upload_files},"","")}})
   }
 
 
 
-
-  transform(layer: Layer) {
-    if(!layer.translation)layer.translation={x:0,y:0};
-    if(!layer.scale)layer.scale={x:1,y:1};
-
-    _prompt(this,"Translation (x,y) ?",layer.translation.x+","+layer.translation.y).then((translation:any)=>{
-      layer.translation.x=Number(translation.split(",")[0]);
-      layer.translation.y=Number(translation.split(",")[1]);
-
-      _prompt(this,"Echelle (x,y) ?",layer.scale.x+","+layer.scale.y).then((scale:any)=> {
-        layer.scale.x = Number(scale.split(",")[0]);
-        layer.scale.y = Number(scale.split(",")[1]);
-      });
-    })
+  async transform(layer: Layer) {
+    //if(!layer.translation)layer.translation="0,0"
+    //if(!layer.scale)layer.scale="1,1";
+    if(!layer.margin)layer.margin="0";
+    //layer.translation=await _prompt(this,"Translation (x,y) ?",layer.translation)
+    //layer.scale=await _prompt(this,"Echelle (x,y) ?",layer.scale)
+    layer.margin=await _prompt(this,"Marge (x,y) ?",layer.margin)
+    if(!layer.margin)layer.margin="0,0"
+    if(layer.margin.indexOf(",")==-1)layer.margin=layer.margin+","+layer.margin;
   }
 
 
@@ -931,7 +992,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
         operation: this.operation.sel_ope?.id,
         tags: "",
         title: "",
-        creators:this.user.addr+":100%",
+        creators:this.user.addr ? (this.user.addr+":100%") : "",
         symbol: "",
         description: "",
         sequence:[],
@@ -965,13 +1026,21 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   search_images(layer: Layer) {
-    _prompt(this,"Recherche d'images","background","Votre requête en quelques mots (ANGLAIS de préférence)","text","Rechercher","Annuler").then((query:string)=>{
+    let pos=this.sel_config?.layers.indexOf(layer) || 0;
+    let sample=(pos==0 ? "background" : "emoji");
+    _prompt(this,"Recherche d'images",sample,
+        "Votre requête en quelques mots en ANGLAIS de préférence (ajouter 'sticker' pour des images transparentes)",
+        "text",
+        "Rechercher",
+        "Annuler",false).then((query:string)=>{
+      if(pos>0 && query.indexOf("sticker")==-1){query=query+" sticker"};
       this.network.search_images(query,(layer.position>0)).subscribe((r:any)=>{
         _prompt(this,"Choisissez une ou plusieurs images","","","images","Sélectionner","Annuler",false,r.images).then((images:string)=>{
           for(let link of images){
             layer.elements.push({image:link});
           }
           this.save_config();
+          this.eval_max_nft()
         })
       })
     })
@@ -979,7 +1048,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   edit_name(layer: Layer) {
-    _prompt(this,"Changer le nom de la couche",layer.name).then((new_name:string)=>{
+    _prompt(this,"Changer le nom de la couche",layer.name,"","text","Enregistrer","Annuler",false).then((new_name:string)=>{
       layer.name=new_name;
     })
   }
@@ -988,6 +1057,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   //   let sample=this.samples[Math.trunc(Math.random()*this.samples.length)].value;
   //   this.build_sample(sample.layers,sample.data,false);
   // }
+  w_data_field: string="350px"
 
 
   publish(platform="nfluent",to_clipboard=true) {
@@ -1000,5 +1070,15 @@ export class CreatorComponent implements OnInit,OnDestroy {
         resolve(rc);
       });
     });
+  }
+
+  download_collection() {
+    showMessage(this,"Votre collection est en cours de préparation");
+    window.location.assign(this.url_collection);
+  }
+
+  show_max_item() {
+    this.sel_config!.max_items=(this.sel_config!.max_items<500 ? 500 : 15);
+    showMessage(this,"Pour repasser en vue réduite, utiliser de nouveau ce bouton");
   }
 }

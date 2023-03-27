@@ -1,15 +1,17 @@
 <app-splash *ngIf="showSplash"
-            [appname]="appname"
+            [appname]="user!.appname"
             [image]="visual"
             [description]="claim"></app-splash>
 
-<mat-toolbar class="mat-body-2" color="primary" *ngIf="toolbar_visible=='true' && !showSplash">
+<mat-toolbar class="mat-body-2" color="primary" *ngIf="user.toolbar_visible && !showSplash">
   <mat-icon (click)="drawer!.toggle()" *ngIf="device.isHandset$ | async">menu</mat-icon>
 
-  <div *ngIf="!(device.isHandset$ | async)" style="margin-left: 10px;">
-      {{network_service.config.title | async}}<br>
-      <small>v{{network_service.config.version | async}}</small>
+  <div *ngIf="!(device.isHandset$ | async) && network_service.online" style="margin-left: 10px;">
+      {{user!.appname}}<br>
+      <small *ngIf="network_service.config.version?.length>0">v{{network_service.config.version | async}}</small>
   </div>
+
+  <div *ngIf="!network_service.online">Connexion serveur interompu</div>
 
   <div *ngIf="network_service.waiting.length>0" style="display: inline-block;color:white;" class="mat-headline-6">
     <mat-spinner *ngIf="!network_service.waiting.startsWith('!')" style="display: inline-block;" color="warn" diameter="20"></mat-spinner>
@@ -21,16 +23,16 @@
 
   <div style="width: 60%;max-width:600px;display: flex;justify-content:flex-end;align-content: center;">
 
-    <app-input [value]="sel_network" style="margin: 5px;"
-               [options]="networks"
-               value_type="list" color="white"
-               (valueChange)="update_network($event)"></app-input>
+<!--    <app-input [value]="sel_network" style="margin: 5px;"-->
+<!--               [options]="networks"-->
+<!--               value_type="list" color="white"-->
+<!--               (valueChange)="update_network($event)"></app-input>-->
 
-    <app-input value_type="list" color="white" style="margin: 5px;"
-               [options]="network_service.keys" value_field="address"
-               [value]="sel_addr"
-               (valueChange)="set_key($event)">
-    </app-input>
+<!--    <app-input value_type="list" color="white" style="margin: 5px;"-->
+<!--               [options]="network_service.keys" value_field="address"-->
+<!--               [value]="sel_addr"-->
+<!--               (valueChange)="set_key($event)">-->
+<!--    </app-input>-->
 
     <div style="display: inline-block;padding: 5px;">
       <mat-icon *ngIf="!(device.isHandset$ | async)" [cdkCopyToClipboard]="user.addr"
@@ -48,7 +50,7 @@
   <mat-sidenav #drawer class="sidenav sidemenu"
                [attr.role]="(device.isHandset$ | async) ? 'dialog' : 'navigation'"
                [mode]="(device.isHandset$ | async) ? 'over' : 'side'"
-               [opened]="(device.isHandset$ | async) === false && toolbar_visible=='true'">
+               [opened]="(device.isHandset$ | async) === false && user.toolbar_visible">
 
     <app-menu [items]="items" [status]="status"
               [with_label]="full_menu"
@@ -68,7 +70,8 @@
 
 
   <mat-sidenav-content>
-    <router-outlet></router-outlet>
+    <router-outlet>
+    </router-outlet>
   </mat-sidenav-content>
 
 </mat-sidenav-container>

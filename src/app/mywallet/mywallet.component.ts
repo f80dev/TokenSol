@@ -1,6 +1,6 @@
 import {Component, Input, OnDestroy, OnInit} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, getParams, isLocal, setParams, showError, showMessage} from "../../tools";
+import {$$, getParams, isLocal, newCryptoKey, setParams, showError, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {environment} from "../../environments/environment";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -8,7 +8,7 @@ import {Observable, Subject} from "rxjs";
 import {WalletConnectProvider} from '@elrondnetwork/erdjs-wallet-connect-provider';
 import {Location} from "@angular/common";
 import {NFT} from "../../nft";
-import {Collection, Operation} from "../../operation";
+import {Collection, newCollection, Operation} from "../../operation";
 import {UserService} from "../user.service";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Socket} from "ngx-socket-io";
@@ -45,27 +45,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   token_to_send: any=null;
   addr:string="";
 
-  collections:Collection[]=[{
-    description: undefined,
-    id: "*",
-    type:"NFT",
-    owner: undefined,
-    price: undefined,
-    link:"",
-    visual: undefined,
-    name:"Toutes",
-    roles: [],
-    options: {
-      canAddSpecialRoles: true,
-      canChangeOwner: true,
-      canFreeze: true,
-      canPause: true,
-      canWipe: true,
-      canUpgrade: true,
-      canTransferNFTCreateRole: true
-    }
-
-  }];
+  collections:Collection[]=[newCollection("Toutes",newCryptoKey())];
 
   sel_collection: Collection=this.collections[0];
   image_for_token: string="";
@@ -92,7 +72,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   ngOnInit(): void {
-    getParams(this.routes,"").then((params:any)=>{
+    getParams(this.routes).then((params:any)=>{
       $$("Récupération des paramètres: ",params);
 
       let network=params["network"] || "elrond-mainnet";
@@ -125,8 +105,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   add_nfts(r:NFT[],offset:number){
     for(let nft of r){
-      let col=nft.collection;
-      if(this.sel_collection.id=="*"){
+      if(this.sel_collection.id=="*" || this.sel_collection.id.startsWith("Toutes")){
         this.nfts.push(nft);
       } else {
         if(nft.collection){
@@ -137,7 +116,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
         }
       }
       if(nft.collection){
-        if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection["id"])==-1){
+        if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection.id)==-1){
           this.collections.push(nft.collection);
         }
       }
@@ -159,13 +138,15 @@ export class MywalletComponent implements OnInit,OnDestroy {
   refresh(index:number=0) {
     $$("Refresh de l'onglet "+index);
     if(index==0 && this.nfts.length==0){
-      this.message=(this.sel_collection.name=="Toutes") ? "Chargement de tous vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
-      this.network.get_tokens_from("owner",this.addr,50,true,null,0,this.network.network).then((r:any)=>{
+      this.message=(this.sel_collection.name=="Toutes") ? "Recherches de vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
+      let with_attr=!this.network.isElrond();
+      let offset=3;
+      this.network.get_tokens_from("owner",this.addr,offset,with_attr,null,0,this.network.network).then((r:any)=>{
         this.add_nfts(r.result,r.offset);
       });
 
       setTimeout(()=>{
-        this.network.get_tokens_from("owner",this.addr,250,true,null,5,this.network.network).then((r:any)=>{
+        this.network.get_tokens_from("owner",this.addr,250,with_attr,null,offset+1,this.network.network).then((r:any)=>{
           this.message="";
           this.add_nfts(r.result,r.offset);
         }).catch(err=>{showError(this,err)});
@@ -233,27 +214,19 @@ export class MywalletComponent implements OnInit,OnDestroy {
         roles:[],
         visual: undefined,
         description: undefined,
-        owner: undefined,
+        owner: newCryptoKey(this.addr),
         price: undefined,
         type:"NFT",
         link:"",
-        options:{
-          canWipe:true,
-          canTransferNFTCreateRole:true,
-          canUpgrade:true,
-          canPause:true,
-          canFreeze:true,
-          canChangeOwner:true,
-          canAddSpecialRoles:true
-        }
+        options:[]
       };
 
       let token:NFT= {
         attributes: [],
-        tags:"",
+        tags: "",
         collection: collection,
         description: "description",
-        miner:this.sel_ope.nftlive.nft_target.miner,
+        miner: this.sel_ope.nftlive.nft_target.miner,
         files: [],
         marketplace: {quantity: 1, price: 0},
         message: undefined,
@@ -266,8 +239,10 @@ export class MywalletComponent implements OnInit,OnDestroy {
         creators: [],
         address: undefined,
         solana: undefined,
-        style: undefined
+        style: undefined,
+        links: undefined
       }
+
 
       if(token.miner){
 
@@ -373,7 +348,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   open_inspire() {
-    this.network.open_gallery(this.addr);
+    open(this.network.getExplorer(this.addr),"Explorer");
   }
 
 
