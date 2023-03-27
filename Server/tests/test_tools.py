@@ -11,7 +11,7 @@ MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt" 
 MAIN_NETWORK = "elrond-devnet"
 MAIN_MINER="bob"
 
-NETWORKS=["elrond-devnet","polygon-devnet","file-testnet","db-server-nfluent_test"]
+NETWORKS=["file-testnet","db-server-nfluent_test","elrond-devnet","polygon-devnet"]
 PLATFORMS=["db-server-nfluent_test","nftstorage","file","infura"] #ipfs
 MAIN_STORAGE_PLATFORM=PLATFORMS[0]
 

@@ -86,14 +86,19 @@ def test_api_upload_json(test_client,objs=["bonjour comment allez vous",{"key":"
 
 
 def test_send_photo_for_nftlive(test_client):
-	body={
-		"photo":IMAGES["backgrounds"][0],
-		"limit":1,
-		"dimension":500,
-		"config":RESSOURCE_TEST_DIR+"/config_certificat_photo.yaml"
-	}
-	image_to_mint= call_api(test_client, "send_photo_for_nftlive/", "", body)
-	assert len(image_to_mint["images"])>0
+	for format in ["base64","link"]:
+		body={
+			"photo":IMAGES["backgrounds"][0],
+			"limit":1,
+			"dimension":500,
+			"config":RESSOURCE_TEST_DIR+"/config_certificat_photo.yaml",
+			"format":format
+		}
+		image_to_mint= call_api(test_client, "send_photo_for_nftlive/", "", body)
+		assert len(image_to_mint["images"])>0
+		if format=="base64": assert image_to_mint["images"][0].startswith("data:")
+		if format=="link": assert image_to_mint["images"][0].startswith("http")
+
 
 
 
@@ -201,6 +206,9 @@ def test_find_collection_for_networks(test_client,networks=NETWORKS):
 		miner=MAIN_ACCOUNTS[network.split("-")[0]]
 		cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)
 		assert not cols is None
+		if len(cols)>0:
+			assert "id" in cols[0]
+
 
 def find_collection_to_mint(test_client, miner:str,network="elrond-devnet"):
 	cols = call_api(test_client, "collections/" + miner + "/", "filter_type=NonFungibleESDT&network="+network)

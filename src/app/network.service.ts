@@ -721,11 +721,12 @@ export class NetworkService implements OnInit {
         return this.httpClient.post(this.server_nfluent+"/api/generate_svg/",data);
     }
 
-    create_account(network: string, email: string,mail="mail_new_account",dictionnary={}) {
+    create_account(network: string, email: string,new_account_mail="mail_new_account",existing_account_mail="mail_existing_account",dictionnary={}) {
+        //On pourra utiliser %network% pour inserer le nom du réseau dans le nom des emails de confirmations
         let body={
             email:email,
-            mail_new_wallet:mail+"_"+network.split("-")[0],
-            mail_existing_wallet:"mail_existing_account_"+network.split("-")[0],
+            mail_new_wallet:new_account_mail.replace("%network%",network.split("-")[0]),
+            mail_existing_wallet:existing_account_mail.replace("%network%",network.split("-")[0]),
             dictionnary:dictionnary
         }
         return this.httpClient.post(this.server_nfluent+"/api/keys/?network="+network,body);

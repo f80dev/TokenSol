@@ -16,6 +16,7 @@ class Key(object):
 	def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None, encrypted=""):
 		if not obj is None and "encrypt" in obj: encrypted=obj["encrypt"]
 		if len(encrypted)>0:
+			if ":" in encrypted:encrypted=encrypted.split(":")[1]
 			decrypted=decrypt(encrypted)
 			if decrypted.startswith("{"): obj=json.loads(decrypted)
 

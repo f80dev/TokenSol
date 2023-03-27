@@ -162,6 +162,7 @@ def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_
                               mail_existing_wallet=mail_existing_wallet,
                               send_real_email=send_real_email
                               )
+  sleep(1.0)      #TODO: a voir si peut être supprimé
   return key
 
 
@@ -245,7 +246,10 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
   if len(miner.secret_key)==0: return returnError("!La clé privée du mineur est indispensable")
   if len(miner.address)>0 and not get_network_from_address(miner.address) in network.network_name: return returnError("!L'address du mineur ne correspond pas au réseau cible")
 
-  collection=nft.collection if nft.collection else {}
+  try:
+    collection=nft.collection
+  except:
+    collection={}
   #if collection_id=="": returnError("!La collection est indispensable")
 
   nft.miner=miner.address
@@ -276,22 +280,21 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
     collection_id,nonce = network.extract_from_tokenid(nft.address)
     if nonce is None:
       rc={"error":"Mint error: "+rc["error"],"hash":rc["hash"]}
-    else:
-      if miner.address!=owner:
-        sleep(2.0)
-        tx_transfer=network.transfer(nft.address,miner,owner)
-        if not tx_transfer or len(tx_transfer["error"])>0:
-          rc["error"]=tx_transfer["error"]
-          return rc
-        nft.owner=owner
 
-  if "solana" in network.network.lower():
-    #voir https://metaboss.rs/mint.html
-    #(request.args.get("sign","True")=="True" or request.args.get("sign","all")=="all")
-    if request.args.get("sign_all","False")=="True" and "result" in rc and "mint" in rc["result"]:
-      signers=[x["address"] for x in nft.creators]
-      #signers.remove(solana.find_address_from_json(keyfile))
-      network.sign(rc["result"]["mint"],signers)
+  if miner.address!=owner:
+    tx_transfer=network.transfer(nft.address,miner,owner)
+    if not tx_transfer or len(tx_transfer["error"])>0:
+      rc["error"]=tx_transfer["error"]
+      return rc
+    nft.owner=owner
+
+  # if "solana" in network.network.lower():
+  #   #voir https://metaboss.rs/mint.html
+  #   #(request.args.get("sign","True")=="True" or request.args.get("sign","all")=="all")
+  #   if request.args.get("sign_all","False")=="True" and "result" in rc and "mint" in rc["result"]:
+  #     signers=[x["address"] for x in nft.creators]
+  #     #signers.remove(solana.find_address_from_json(keyfile))
+  #     network.sign(rc["result"]["mint"],signers)
 
 
   # Transfert des NFTs vers la base de données

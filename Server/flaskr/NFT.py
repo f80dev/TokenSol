@@ -63,10 +63,10 @@ class NFT:
       self.attributes=object["attributes"] if "attributes" in object else ""
       self.network=object["network"] if "network" in object else ""
 
-      if "elrond" in self.network:
-        self.collection=object["collection"] if "collection" in object else ""
-        if not "name" in object["collection"]:object["collection"]["name"]=object["collection"]["id"]
-        if not "owner" in object["collection"]:object["collection"]["owner"]=self.miner
+
+      self.collection=object["collection"] if "collection" in object else ""
+      if not "name" in object["collection"]:object["collection"]["name"]=object["collection"]["id"]
+      if not "owner" in object["collection"]:object["collection"]["owner"]=self.miner
 
       self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1,"max_mint":1}
       self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)

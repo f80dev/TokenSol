@@ -529,7 +529,7 @@ export class MintComponent implements OnInit {
   async ask_to_add_creator(){
     let addr:string=await _prompt(this,"Adresse email ou "+this.network.network+" du créateur à ajouter","","","text","Ok","Annuler",false);
     if(isEmail(addr)){
-      this.network.create_account(this.network.network,addr,"mail_new_account_as_creator").subscribe((r:any)=>{
+      this.network.create_account(this.network.network,addr,"mail_new_account_as_creator","mail_new_account_as_creator").subscribe((r:any)=>{
         this.add_creator(addr);
       })
     }else{

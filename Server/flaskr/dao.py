@@ -1,5 +1,7 @@
 import base64
 import hashlib
+from random import randint
+
 import pymongo
 from pymongo import database
 
@@ -90,7 +92,7 @@ class DAO(Storage,Network):
 
     id="db_"+str(base64.b64encode(bytes(id,"utf8")),"utf8")
     rc={"cid":id}
-    if self.domain_server: rc["url"]=self.domain_server+"api/files/"+str(id)
+    if self.domain_server: rc["url"]=self.domain_server+"/api/files/"+str(id)
     return rc
 
   def get_unity(self):
@@ -145,6 +147,8 @@ class DAO(Storage,Network):
       key=Key(obj=obj)
       rc.append(key)
     return rc
+
+
 
 
   def get_nfts(self,addr:str=None,limit=2000,with_attr=False,offset=0,with_collection=False):
@@ -238,7 +242,7 @@ class DAO(Storage,Network):
     rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
 
-  def get_collections(self,owner:str,detail:bool=False,type_collection=""):
+  def get_collections(self,owner:str,detail:bool=False,type_collection="",special_role=""):
     rc=[]
     if "nfts" in self.db.list_collection_names():
       for nft in self.db["nfts"].find():
@@ -301,8 +305,9 @@ class DAO(Storage,Network):
     if nft:
       if nft.owner!=_from.address: raise RuntimeError(str(_from)+" n'est pas le propriétaire de "+str(nft))
       rc=self.db["nfts"].update_one({"address":nft.address},{"$set":{"owner":to_addr}})
-      return (rc.modified_count==1)
-    return False
+      if rc.modified_count==1: return self.create_transaction()
+
+    return self.create_transaction(error="transfert annulé")
 
 
   def create_account(self,email="",seed="",domain_appli="",
@@ -335,9 +340,9 @@ class DAO(Storage,Network):
         return rc.deleted_count==1
       else:
         rc=self.db["nfts"].update_one({"address":nft_addr},{"$set":{"marketplace":nft.marketplace}})
-        return rc.modified_count==1
+        if rc.modified_count==1: return self.create_transaction()
 
-    return False
+    return self.create_transaction("Probleme de burn pour "+nft.address,nft_addr=nft.address)
 
 
 
@@ -356,7 +361,7 @@ class DAO(Storage,Network):
     if not obj is None and not force:
       obj["message"]="already exists"
     else:
-      access_code=encrypt(simplify_email(email),short_code=6)
+      access_code=str(randint(100000,999999))
       obj={
         "email":encrypt(email,short_code=ENCODING_LENGTH_FOR_EMAIL),
         "alias":email.split("@")[0],

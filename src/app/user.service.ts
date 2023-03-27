@@ -14,6 +14,7 @@ export interface UserProfil {
   email:string
   alias:string
   access_code:string
+  message:string
 }
 
 @Injectable({
@@ -34,7 +35,8 @@ export class UserService {
     perms: ["reload"],
     email: "",
     alias: "anonymous",
-    access_code: ""
+    access_code: "",
+    message:""
   };
 
   // private _wallet: Wallet | undefined;
@@ -149,7 +151,7 @@ export class UserService {
   logout() {
     this.addr = "";
     this.profil = {
-      alias: "", email: "", perms: [], routes: [], access_code: ""
+      alias: "", email: "", perms: [], routes: [], access_code: "",message:""
     }
     localStorage.removeItem("access_code");
   }

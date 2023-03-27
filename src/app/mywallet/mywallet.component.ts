@@ -140,12 +140,13 @@ export class MywalletComponent implements OnInit,OnDestroy {
     if(index==0 && this.nfts.length==0){
       this.message=(this.sel_collection.name=="Toutes") ? "Recherches de vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
       let with_attr=!this.network.isElrond();
-      this.network.get_tokens_from("owner",this.addr,10,with_attr,null,0,this.network.network).then((r:any)=>{
+      let offset=3;
+      this.network.get_tokens_from("owner",this.addr,offset,with_attr,null,0,this.network.network).then((r:any)=>{
         this.add_nfts(r.result,r.offset);
       });
 
       setTimeout(()=>{
-        this.network.get_tokens_from("owner",this.addr,250,with_attr,null,10,this.network.network).then((r:any)=>{
+        this.network.get_tokens_from("owner",this.addr,250,with_attr,null,offset+1,this.network.network).then((r:any)=>{
           this.message="";
           this.add_nfts(r.result,r.offset);
         }).catch(err=>{showError(this,err)});

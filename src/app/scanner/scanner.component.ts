@@ -11,6 +11,7 @@ export class ScannerComponent implements OnInit,OnDestroy {
 
   @Input("size") size="300px";
   @Input("filter") filter="";
+  @Input() showCapture:boolean=false;
   @Input("caption") caption="Pointez vers le QRCode d'une adresse";
   @Output('flash') onflash: EventEmitter<any>=new EventEmitter();
   @Output('cancel') oncancel: EventEmitter<any>=new EventEmitter();
@@ -65,6 +66,6 @@ export class ScannerComponent implements OnInit,OnDestroy {
   }
 
   capture() {
-    this.ontouch.emit({data:this.image})
+    this.ontouch.emit({data:"data:image/jpeg;base64,"+btoa(this.image.data)})
   }
 }

@@ -86,10 +86,10 @@ class StoreFile(Network,Storage):
         if nft.miner==miner.address:
           self.content["nfts"][pos]["owner"]=to_addr
           self.write()
-          return True
+          return self.create_transaction()
         else:
           log(miner.address+" n'est pas autorisé")
-    return False
+    return self.create_transaction(error=miner.address+" n'est pas autorisé")
 
 
 
@@ -122,12 +122,15 @@ class StoreFile(Network,Storage):
     if not exists(self.filename):
       self.content={"version":"1.0","nfts":[]}
     else:
-      self.content=yaml.safe_load(open(self.filename,"r",encoding="utf8").read())
+      try:
+        self.content=yaml.safe_load(open(self.filename,"r",encoding="utf8").read())
+      except:
+        raise RuntimeError("Blockchain file corrompue")
 
   def getExplorer(self,addr="",type="address") -> str:
     return ""
 
-  def get_collections(self,addr:str,detail=False,type_collection="NonFungible"):
+  def get_collections(self,addr:str,detail=False,type_collection="NonFungible",special_role=""):
     self.read()
     rc=list()
     if "nfts" in self.content:
@@ -168,6 +171,10 @@ class StoreFile(Network,Storage):
     self.read()
     if not "accounts" in self.content: return []
     return [Key(obj=x) for x in self.content["accounts"]]
+
+
+
+
 
 
   def create_account(self,email="",seed="",domain_appli="",

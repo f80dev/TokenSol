@@ -1,5 +1,6 @@
 from os.path import exists
 from os import listdir
+from time import sleep
 
 import requests
 from eth_account import Account
@@ -50,15 +51,19 @@ class Polygon (Network):
     if not len(addr)==42: return False
     return True
 
-  def send_transaction(self,method,_account:Key) -> str:
+  def send_transaction(self,method,_account:Key) -> dict:
     gas_needed=method.estimate_gas({"from":_account.address})
     transac=method.build_transaction({"from":_account.address,"gas":gas_needed,"nonce":self.w3.eth.get_transaction_count(_account.address)})
     sign_transac=self.w3.eth.account.sign_transaction(transac,private_key=_account.secret_key)
     tx_hash =self.w3.eth.send_raw_transaction(sign_transac.rawTransaction)
-    self.w3.eth.wait_for_transaction_receipt(tx_hash)
-    log("Execution de la transaction : "+self.getExplorer(tx_hash.hex(),"tx"))
+    rc=self.w3.eth.wait_for_transaction_receipt(tx_hash).__dict__
 
-    return tx_hash.hex()
+    rc["error"]=""
+    rc["hash"]=tx_hash.hex()
+    rc["explorer"]=self.getExplorer(tx_hash.hex(),"tx")
+    log("Execution de la transaction : "+rc["explorer"])
+
+    return rc
 
 
   def toAddress(self,private_key:str):
@@ -88,7 +93,7 @@ class Polygon (Network):
     constructor_contract=self.w3.eth.contract(abi=abi,bytecode=bytecode).constructor(uri,name,symbol)
     _tx=self.send_transaction(constructor_contract,_miner)
 
-    addr=self.w3.eth.get_transaction_receipt(_tx)['contractAddress']
+    addr=self.w3.eth.get_transaction_receipt(_tx["hash"])['contractAddress']
     _contract=self.w3.eth.contract(address=addr,abi=abi)
     log("contract sur "+self.getExplorer(addr)+" deployé avec les fonctions "+str(_contract.functions.__dict__.keys()))
 
@@ -248,7 +253,7 @@ class Polygon (Network):
     owner=self.w3.to_checksum_address(owner)
     txs=self.find_all_contract_for(owner)
     for t in txs:
-      if self.w3.to_checksum_address(t["contractAddress"])==nft_addr:
+      if self.w3.to_checksum_address(t["contractAddress"])==self.w3.to_checksum_address(nft_addr):
         abi=self.init_contract_interface()["abi"]
         contrat=self.w3.eth.contract(address=nft_addr, abi=abi)
         balance = contrat.functions.balanceOf(owner).call()
@@ -382,21 +387,22 @@ class Polygon (Network):
 
     if tx is None: return returnError("Erreur de minage")
 
-    infos=self.w3.eth.get_transaction(tx)
+    infos=self.w3.eth.get_transaction(tx["hash"])
     nft_address=self.w3.to_checksum_address(infos.to)
     log("NFT disponible à l'adresse : "+self.getExplorer(contract.address,"token"))
     rc={
       "error":"",
-      "tx":tx,
-      "result":{"transaction":tx,"mint":nft_address},
+      "tx":tx["hash"],
+      "result":{"transaction":tx["hash"],"mint":nft_address},
       "balance":0,
       "link_mint":self.getExplorer(nft_address,"token"),
-      "link_transaction":self.getExplorer(tx,"tx"),
+      "link_transaction":tx["explorer"],
       "out":"",
       "cost":0,
       "unity":"MATIC",
       "command":"insert"
     }
+    sleep(5.0)        #Temporisation pour laisser le scan intégrer la requete
     return rc
 
 
@@ -478,7 +484,6 @@ class Polygon (Network):
     :return: Account, PEM,words,qrcode
     """
     log("Création d'un nouveau compte sur "+self.network)
-
     if histo:
       pubkey=histo.get_address(email,self.network)
       if pubkey:
@@ -486,24 +491,23 @@ class Polygon (Network):
         send_mail(open_html_file(mail_existing_wallet,{
           "wallet_address":pubkey,
           "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
+          "nfluent_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
           "official_wallet":"https://metamask.io/",
           "url_explorer":self.getExplorer(pubkey)
         },domain_appli=domain_appli),email,subject=subject)
         return Key(address=pubkey)
 
     words=""
-    secret_key=""
     if len(seed) == 0:
       _u:Account=self.w3.eth.account.create()
     else:
-      _u=self.w3.eth.account.create_with_mnemonic(passphrase=seed)
+      _u:Account=self.w3.eth.account.create_with_mnemonic(passphrase=seed)
       words=seed
 
     pubkey = _u.address
-    secret_key=self.w3.toHex(_u.privateKey)
+    secret_key=self.w3.to_hex(_u.key)
 
     log("Création du compte "+self.getExplorer(pubkey,"address"))
-
     if len(email)>0:
       wallet_appli=self.nfluent_wallet_url(pubkey,domain_appli)
       if send_mail(open_html_file(mail_new_wallet,{
@@ -527,9 +531,9 @@ class Polygon (Network):
       tx = {
         'nonce': nonce,
         'to': addr,
-        'value': self.w3.toWei(amount, 'ether'),
+        'value': self.w3.to_wei(amount, 'ether'),
         'gas': 200000,
-        'gasPrice': self.w3.eth.gasPrice
+        'gasPrice': self.w3.eth.gas_price
       }
       signed_tx =self.w3.eth.account.sign_transaction(tx, POLYGON_BANK_ACCOUNT["privateKey"])
       tx_hash = self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)

@@ -32,7 +32,7 @@
                 color="primary"
                 (click)="create_collection()"
                 id="cmdBuild"
-                *ngIf="user.addr && user.balance>0">
+                *ngIf="user.addr && user.balance>0 && message.length==0">
           Fabriquer
         </button>
 

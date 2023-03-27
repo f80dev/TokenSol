@@ -634,6 +634,7 @@ class Elrond(Network):
           send_mail(open_html_file(mail_existing_wallet,{
             "wallet_address":pubkey,
             "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
+            "nfluent_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
             "official_wallet":"https://xportal.com/",
             "url_explorer":url_explorer
           },domain_appli=domain_appli),email,subject=subject)
@@ -679,7 +680,7 @@ class Elrond(Network):
     return Key(secret_key.hex(),name=email.split("@")[0],address=address,seed=words)
 
 
-  def analyse_attributes(self,body,with_ipfs=True,timeout=2000) -> (list,str,str):
+  def analyse_attributes(self,body,with_ipfs=True,timeout=2) -> (list,str,str):
     """
     analyse du champs attributes des NFT elrond (qui peut contenir les données onchain ou via IPFS)
     :param body:
@@ -794,7 +795,7 @@ class Elrond(Network):
 
 
 
-  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=False,type_token="NonFungibleESDT"):
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=False,type_token="NonFungibleESDT,SemiFungibleESDT"):
     """
     https://docs.multiversx.com/tokens/nft-tokens
     voir
@@ -804,14 +805,18 @@ class Elrond(Network):
     :return:
     """
     _user=self.toAccount(_user)
+    if _user is None:return []
     rc=list()
     owner=_user.address.bech32()
 
     #nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
-    nfts:dict=api(self._proxy.url+"/accounts/"+owner+"/nfts?withSupply=true&type="+type_token+"&size="+str(limit))
-    if nfts is None:
-      log("Le compte "+owner+" n'existe pas")
-      return []
+    nfts=[]
+    for type_t in type_token.split(","):
+      result:dict=api(self._proxy.url+"/accounts/"+owner+"/nfts?withSupply=true&type="+type_token+"&size="+str(limit))
+      if result is None:
+        log("Le compte "+owner+" n'existe pas")
+        return []
+      nfts=nfts+result
 
     #nfts=list(nfts["data"]["esdts"].values())
     if len(nfts)<offset:return []
@@ -845,7 +850,7 @@ class Elrond(Network):
             creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
             address=nft["identifier"],
             royalties=int(nft["royalties"]),
-            marketplace={"quantity":1},
+            marketplace={"quantity":int(nft["supply"] if nft["type"].startswith('SemiFungible') else 1)},
             files=nft["uris"] if "uris" in nft else []
           )
           _nft.network=self.network
@@ -958,6 +963,7 @@ class Elrond(Network):
       s="metadata:"+cid["cid"]
       if len(tags)>0: s=s+"tags:"+tags
       _h=hex(hash(s) & sys.maxsize).replace("0x","")
+      if len(_h) % 2!=0: _h="0"+_h
     else:
       url_metadata=""
       s=description

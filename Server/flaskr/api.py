@@ -2053,8 +2053,6 @@ def upload():
             buffered=convert_to(body["content"],format=format,quality=95)
             body["content"]="data:image/"+format+";base64,"+str(base64.b64encode(buffered.getvalue()),"utf8")
             body["type"]="image/"+format
-
-
     else:
       body=content
 

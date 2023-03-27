@@ -87,6 +87,9 @@ class Network():
     raise NotImplementedError()
 
 
+  def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
+    return {"id":collection_name,"name":collection_name}
+
   def burn(self,addr:str,miner:Key,n_token=1):
     return True
 
@@ -95,11 +98,27 @@ class Network():
     nft=self.get_nft(nft_addr)
     return nft.owner==owner
 
+  def find_key(self,addr) -> Key:
+    for k in self.get_keys():
+      if k.address==addr: return k
+    return None
 
   def get_nfts(self,_user,limit=2000,with_attr=False,offset=0,with_collection=False):
     pass
 
-  def get_collections(self,addr:str,detail=False,type_collection="NFT"):
+  def get_collections(self,addr:str,detail=False,type_collection="NFT",special_role=""):
     return [
          {"id":self.network_name+"Collection","name":self.network_name+"colname","owner":self.network_name}
        ]
+
+
+  def create_transaction(self,error="",hash="",nft_addr=""):
+    rc={
+      "id":hash,
+      "tx":hash,
+      "error":error,
+      "hash":hash,
+      "explorer":self.getExplorer(hash,"explorer") if len(hash)>0 else ""
+    }
+    if len(nft_addr)>0:rc["nft"]=nft_addr
+    return rc

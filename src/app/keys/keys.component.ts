@@ -148,7 +148,7 @@ export class KeysComponent implements OnInit {
             "Indiquer votre mail pour recevoir la clé privée de votre wallet",
             "text","Créer la clé","Annuler",false);
         if(isEmail(email)){
-          this.network.create_account(this.network.network,email).subscribe((r:any)=>{
+          this.network.create_account(this.network.network,email,email).subscribe((r:any)=>{
             this.clipboard.copy(r.secret_key);
             showMessage(this,"Consulter votre mail pour retrouver votre compte, la clé privée est disponible dans le presse papier");
             open(r.explorer,"Explorer");

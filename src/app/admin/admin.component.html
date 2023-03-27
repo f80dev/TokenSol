@@ -1,5 +1,18 @@
 <div class="mainform" style="text-align: left;" *ngIf="server_config">
   <mat-expansion-panel>
+    <mat-expansion-panel-header>Utilisateurs</mat-expansion-panel-header>
+    <app-dbtable excludes="attributes"
+                 title="Utilisateurs"
+                 table="users"
+                 [showClear]="true"></app-dbtable>
+    <button mat-raised-button
+            style="margin: 10px;"
+            (click)="register_email()">
+      Inscrire un utilisateur
+    </button>
+  </mat-expansion-panel>
+
+    <mat-expansion-panel>
     <mat-expansion-panel-header>Tables</mat-expansion-panel-header>
 
     <table>

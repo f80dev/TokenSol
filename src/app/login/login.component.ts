@@ -62,8 +62,13 @@ export class LoginComponent implements OnInit {
 
   registration($event: { strong: boolean; nftchecked: boolean; address: string }) {
     this.network.registration($event.address).subscribe((p:UserProfil)=>{
+      if(p.message=="already exists"){
+        showMessage(this,"Ce compte est déjà inscrit, votre code d'accès a été renvoyé sur votre mail");
+      } else {
+        showMessage(this,"Consultez votre boite mail pour récupérer votre code d'accès");
+      }
       this.show_registration=false;
-      showMessage(this,"Consultez votre boite mail pour récupérer votre code d'accès");
+
     })
   }
 

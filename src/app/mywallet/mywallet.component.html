@@ -51,7 +51,11 @@
 
       <div style="width: 90%;padding:5%;overflow: hidden;">
         <div class="mat-body-2" *ngIf="nft.collection">{{nft.collection!.name}}</div>
-        <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/10+'px'">{{nft.name}}</div>
+        <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/10+'px'">
+          {{nft.name}}
+          <span *ngIf="nft.marketplace && nft.marketplace['quantity']>1">({{nft.marketplace['quantity']}})</span>
+
+        </div>
         <br>
         <div class="mat-body-2" [style.font-size]="(nft_size || 100)/15+'px'">{{nft.description}}</div><br>
         <table style="width: 100%;">

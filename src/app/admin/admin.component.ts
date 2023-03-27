@@ -6,6 +6,8 @@ import {environment} from "../../environments/environment";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {NgNavigatorShareService} from "ng-navigator-share";
 import {Router} from "@angular/router";
+import {_prompt} from "../prompt/prompt.component";
+import {MatDialog} from "@angular/material/dialog";
 
 interface ConfigServer {
   Server:string
@@ -61,6 +63,7 @@ export class AdminComponent implements OnInit {
     public user:UserService,
     public network:NetworkService,
     public clipboard:Clipboard,
+    public dialog:MatDialog,
     public ngShare:NgNavigatorShareService,
     public router:Router
   ) {
@@ -279,4 +282,12 @@ export class AdminComponent implements OnInit {
   navigate_to_key() {
     this.router.navigate(["keys"]);
   }
+
+    async register_email() {
+        let email=await _prompt(this,"Email de l'utilisateur","","Son code d'accès lui sera envoyé","text","Envoyer","Annuler",false);
+        this.network.registration(email).subscribe(()=>{
+          showMessage(this,"Code d'accès envoyé")
+          this.refresh(true);
+        })
+    }
 }

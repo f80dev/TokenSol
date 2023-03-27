@@ -387,23 +387,27 @@ def filetype(filename=""):
 
 def api(url,alternate_domain="",timeout=60000):
   log("Appel de "+url)
-  data=requests.api.get(url)
+  try:
+    data=requests.api.get(url,timeout=timeout)
+  except:
+    data=None
 
-  if data.status_code!=200:
+  if data is None:
     if len(alternate_domain)>0:
       url=url.replace(alternate_domain.split("=")[0],alternate_domain.split("=")[1])
       log("Appel de "+url)
-
-    data=requests.api.get(url,timeout=timeout)
-
-    if data.status_code!=200:
-      log("Echec de l'appel "+str(data.status_code)+" "+data.text)
+      return api(url,"",timeout=timeout)
+    else:
       return None
+  else:
+    if data.status_code!=200:
+        log("Echec de l'appel "+str(data.status_code)+" "+data.text)
+        return None
 
-  try:
-    return data.json()
-  except:
-    return data.text
+    try:
+      return data.json()
+    except:
+      return data.text
 
 
 
