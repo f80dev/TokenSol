@@ -110,7 +110,7 @@ class PrestaTools:
         creators.append({"address":creator.split("_")[0],"ratio":creator.split("_")[0]})
 
     attributes=self.desc_to_dict(_p["description"])
-    marketplace={"quantity":_p["quantity"],"price":_p["price"]}
+    marketplace={"supply":_p["quantity"],"price":_p["price"]}
 
     _nft=NFT(_p["name"],"",collection,attributes,_p["description"],visual,creators,addresses,royalties,marketplace)
     _nft.other={"miner":miner,"owner":owner}

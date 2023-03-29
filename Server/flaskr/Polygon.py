@@ -173,7 +173,7 @@ class Polygon (Network):
 
     metadata=self.get_metadata(_contract.functions.baseTokenURI().call(),timeout=metadata_timeout)
     owner=_contract.functions.ownerOf(0).call()  #0 designe le seul tokenId du smartcontrat
-    quantity=_contract.functions.totalSupply().call()
+    supply=_contract.functions.totalSupply().call()
     miner=_contract.functions.owner().call()
     symbol=_contract.functions.symbol().call()
     _nft=NFT(name=metadata["name"] if metadata else "",
@@ -185,8 +185,8 @@ class Polygon (Network):
              attributes=metadata["attributes"]  if metadata else "",
              address=addr,
              creators=metadata["creators"] if metadata and "creators" in metadata else [],
-             marketplace={"price":0,"quantity":quantity},
              royalties=100,
+             supply=supply,
              collection=metadata["collection"] if metadata else None
              )
     _nft.network=self.network
@@ -266,18 +266,27 @@ class Polygon (Network):
     addr=self.toAccount(addr).address
     abi=self.init_contract_interface()["abi"]
     txs=self.find_all_contract_for(addr)
-    for t in txs:
+    for t in txs[offset:]:
       try:
         nft_addr=self.w3.to_checksum_address(t["contractAddress"])
         contrat=self.w3.eth.contract(address=nft_addr, abi=abi)
         balance = contrat.functions.balanceOf(addr).call()
-        if balance==1:
+        if balance>=1:
           if with_attr:
-            rc.append(self.get_nft(nft_addr))
+            _nft:NFT=self.get_nft(nft_addr,metadata_timeout=3)
           else:
-            _nft=NFT(address=nft_addr,marketplace={"quantity":balance},owner=addr,name=t["tokenName"],symbol=t["tokenSymbol"])
-            _nft.network=self.network
-            rc.append(_nft)
+            metadata=self.get_metadata(contrat.functions.baseTokenURI().call(),timeout=1)
+            _nft=NFT(address=nft_addr,
+                     owner=addr,
+                     name=t["tokenName"],
+                     symbol=t["tokenSymbol"],
+                     supply=contrat.functions.totalSupply().call(),
+                     visual=metadata["image"] if metadata else None,
+                     )
+
+          _nft.balances={addr:balance}
+          _nft.network=self.network
+          rc.append(_nft)
           if len(rc)==limit: break
       except:
         log("Probleme technique de lecture des NFTs")
@@ -346,8 +355,8 @@ class Polygon (Network):
       attributes=from_nft.attributes
       visual=from_nft.visual
       tags=from_nft.tags
-      price=from_nft.marketplace["price"]
-      quantity=from_nft.marketplace["quantity"]
+      price=from_nft.marketplace["price"]  if "price" in from_nft.marketplace else 0
+      quantity=from_nft.marketplace["supply"] if "supply" in from_nft.marketplace else 1
       collection=from_nft.collection
       creators=from_nft.creators
 
@@ -423,7 +432,7 @@ class Polygon (Network):
     return True
 
 
-  def transfer(self,nft_addr:str,miner:Key,new_owner:str):
+  def transfer(self,nft_addr:str,miner:Key,new_owner:str,quantity=1):
     """
     voir https://eips.ethereum.org/EIPS/eip-721#implementations
     https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#ERC721-transferFrom-address-address-uint256-
@@ -434,18 +443,18 @@ class Polygon (Network):
 
     if not self.abi: self.abi=self.init_contract_interface()["abi"]
     contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr),abi=self.abi)
-
     owner=contract.functions.ownerOf(0).call()
     if owner!=miner.address:
       #raise RuntimeError("Probleme de propriétaire pour le transfert")
       log("Le propriétaire n'est pas le mineur")
     new_owner=self.get_key_with_name(new_owner).address
-    rc= self.send_transaction(contract.functions.transferFrom(miner.address,new_owner,0),miner)
+    for i in range(quantity):
+      rc= self.send_transaction(contract.functions.transferFrom(miner.address,new_owner,0),miner)
     return rc
 
 
-  def find_key(self,name):
-    return self.get_key_with_name(name)
+  # def find_key(self,name):
+  #   return self.get_key_with_name(name)
 
   def balance(self,account):
     return self.w3.eth.get_balance(account)/1e18
@@ -581,8 +590,15 @@ class Polygon (Network):
   #   return rc
 
 
-  def get_balance(self,address):
-    return self.get_account(address).balance
+  def get_balances(self, address, nft_addr=None):
+    rc={"matic":self.get_account(address).balance}
+    if nft_addr and nft_addr!="matic":
+      if not self.abi: self.abi=self.init_contract_interface()["abi"]
+      contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr),abi=self.abi)
+      result=contract.functions.balanceOf(address).call()
+      rc[nft_addr]=result
+    if nft_addr is None: return rc
+    return rc[nft_addr]
 
 
   def get_key_with_name(self,name="sophie"):

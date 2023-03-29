@@ -235,7 +235,7 @@ class Solana:
 
           if offchain and offchain.status_code==200:
             data=offchain.json()
-            data["marketplace"]={"quantity":int(token["account"]["data"]["parsed"]["info"]["tokenAmount"]["amount"])}
+            data["marketplace"]={"supply":int(token["account"]["data"]["parsed"]["info"]["tokenAmount"]["amount"])}
             data["mint"]=token["mint"]
             data["network"]="solana-"+self.network
             data["creators"]=data["properties"]["creators"]

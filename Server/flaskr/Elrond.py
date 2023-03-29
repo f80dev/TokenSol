@@ -103,7 +103,7 @@ class Elrond(Network):
     return private_key[0:16]
 
 
-  def canMint(self,nft_to_check:NFT,dest:str=""):
+  def canMint(self,nft_to_check:NFT,dest:str="",miner:str=""):
     """
     Vérifie si un NFT a déjà été miné ou pas
     TODO: fonction à coder
@@ -119,7 +119,7 @@ class Elrond(Network):
         if nft.collection:
           occurences[col]=occurences[col]+1 if col in occurences.keys() else 1
 
-    return nft_to_check.marketplace["quantity"]>0
+    return nft_to_check.balance[miner]>0
 
 
   def find_alias(self,addr,keys=[]):
@@ -128,7 +128,7 @@ class Elrond(Network):
       if k["address"]==addr:
         return k["name"]
 
-    result=api(self._proxy.url.replace("gateway","api")+"/accounts/"+addr)
+    result=api(self._proxy.url+"/accounts/"+addr)
 
     if "username" in result and len(result["username"])>0:
       keys.append({"address":addr,"name":result["username"]})
@@ -568,11 +568,12 @@ class Elrond(Network):
           visual=item["media"][0]["url"],
           creators=[item["creator"]],
           royalties=royalties,
-          files=item["uris"]
+          files=item["uris"],
+          supply=int(item["supply"]),
+          price=0
         )
         nft.network=self.network
         nft.address=item["identifier"]
-        nft.marketplace={"quantity":1,"price":0}
         if format=="class":
           rc.append(nft)
         else:
@@ -586,10 +587,18 @@ class Elrond(Network):
     return NfluentAccount(addr,network=self.network,balance=int(rc["balance"]),nonce=rc["nonce"],explorer=self.getExplorer(addr,"address"))
 
 
-  def get_balance(self,addr):
-    acc=self.get_account(addr)
-    if acc is None: return 0
-    return acc.balance
+  def get_balances(self, addr:str,nft_addr=None):
+    rc={"egld":int(self._proxy.get_account(Address(addr))["balance"])}
+    nfts=api(self._proxy.url+"/accounts/"+str(addr)+"/nfts?size=2000")
+    for nft in nfts:
+      rc[nft["identifier"]]=(int(nft["balance"]) if "balance" in nft else 1)
+
+    if not nft_addr is None:
+      return rc[nft_addr] if nft_addr in rc else 0
+    else:
+      return rc
+
+
 
 
   def get_pem(self,secret_key: bytes, pubkey: bytes):
@@ -723,7 +732,7 @@ class Elrond(Network):
     return [],attr,tags
 
 
-  def get_nft(self,token_id:str,attr=False,transactions=False):
+  def get_nft(self,token_id:str,attr=False,transactions=False,with_balance=None) -> NFT:
     """
     retourne un NFT complet voir https://api.elrond.com/#/nfts
     :param address:
@@ -731,32 +740,24 @@ class Elrond(Network):
     :param nonce:
     :return:
     """
-    item=api(self._proxy.url.replace("gateway","api")+"/nfts/"+token_id)
+    url=self._proxy.url+"/nfts/"+token_id
+    item=api(url)
+
 
     if item:
-      royalties=int(item["royalties"]*100) if "royalties" in item else 0
-      attributes,description,tags=self.analyse_attributes(item["attributes"],with_ipfs=attr)
-      nft=NFT(name=item["name"],
-              miner=item["creator"],
-              owner=item["owner"],
-              collection={"id":item["collection"]},
-              attributes=attributes,
-              description=description,
-              tags=tags,
-              visual=item["url"],
-              creators=[item["creator"]],
-              address=item["identifier"],
-              royalties=royalties,
-              files=item["uris"],
-              dtCreate=item["timestamp"]
-              )
-      nft.marketplace={"price":0,"quantity":int(item["supply"] if "supply" in item else 1)}
+
+      item["attributes"],item["description"],item["tags"]=self.analyse_attributes(item["attributes"],True)
+
+      nft=NFT(object=item)
       nft.network=self.network
+      if with_balance:
+        balances=api(url+"/accounts")
+        if token_id in balances: nft.balance={with_balance:balances[token_id]}
 
-      if transactions:
-        transactions=api(self._proxy.url+"/nfts/"+token_id+"/transactions","gateway=api")
+      # if transactions:
+      #   transactions=api(self._proxy.url+"/nfts/"+token_id+"/transactions","gateway=api")
 
-      return nft
+      item=nft
 
     return item
 
@@ -795,7 +796,7 @@ class Elrond(Network):
 
 
 
-  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=False,type_token="NonFungibleESDT,SemiFungibleESDT"):
+  def get_nfts(self,_user:Account,limit=2000,with_attr=False,offset=0,with_collection=False,type_token="NonFungibleESDT,SemiFungibleESDT") -> [NFT]:
     """
     https://docs.multiversx.com/tokens/nft-tokens
     voir
@@ -806,13 +807,15 @@ class Elrond(Network):
     """
     _user=self.toAccount(_user)
     if _user is None:return []
-    rc=list()
+    rc:[NFT]=[]
     owner=_user.address.bech32()
+    balances=self.get_balances(_user.address)
 
     #nfts:dict=api(self._proxy.url+"/address/"+_user.address.bech32()+"/esdt")
     nfts=[]
     for type_t in type_token.split(","):
-      result:dict=api(self._proxy.url+"/accounts/"+owner+"/nfts?withSupply=true&type="+type_token+"&size="+str(limit))
+      if not type_t.endswith("ESDT"):type_t=type_t+"ESDT"
+      result:list=api(self._proxy.url+"/accounts/"+owner+"/nfts?withSupply=true&type="+type_t+"&size="+str(limit))
       if result is None:
         log("Le compte "+owner+" n'existe pas")
         return []
@@ -821,48 +824,35 @@ class Elrond(Network):
     #nfts=list(nfts["data"]["esdts"].values())
     if len(nfts)<offset:return []
 
-    if nfts:
-      collections=dict()
-      for nft in nfts[offset:limit]:
-        if "attributes" in nft:
-          _data={}
-          nft["attributes"],nft["description"],nft["tags"]=self.analyse_attributes(nft["attributes"],with_attr)
+    collections=dict()
+    for nft in nfts[offset:limit]:
+      if "attributes" in nft:
+        _data={}
+        nft["attributes"],nft["description"],nft["tags"]=self.analyse_attributes(nft["attributes"],with_attr)
 
-          #log("Analyse de "+str(nft))
+        collection_id,nonce=self.extract_from_tokenid(nft["identifier"])
+        if not collection_id in collections.keys():
+          collections[collection_id]=self.get_collection(collection_id) if with_collection else {"id":collection_id}
 
-          collection_id,nonce=self.extract_from_tokenid(nft["identifier"])
-          if not collection_id in collections.keys():
-            collections[collection_id]=self.get_collection(collection_id) if with_collection else {"id":collection_id}
+        collection=collections[collection_id]
+        if not "royalties" in nft or nft["royalties"]=="": nft["royalties"]=0
+        nft["owner"]=_user.address.bech32()
+        _nft=NFT(
+          object=nft,
+          collection=collection,
+          creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
+        )
+        _nft.balances={_user.address.bech32():balances[_nft.address] if _nft.address in balances else 0}
+        _nft.network=self.network
 
-          collection=collections[collection_id]
-          if not "royalties" in nft or nft["royalties"]=="": nft["royalties"]=0
+        if _nft.address:      #Pas d'insertion des NFT n'ayant pas d'adresse
+          rc.insert(0,_nft)
 
-          _nft=NFT(
-            miner=nft["creator"],
-            owner=owner,
-            name=nft["name"],
-            symbol=nft["identifier"].split("-")[1],
-            collection=collection,
-            attributes=nft["attributes"] if 'attributes' in nft else [],
-            description=nft["description"] if "description" in nft else "",
-            tags=nft["tags"],
-            visual=str(base64.b64decode(nft["uris"][0]),"utf8") if "uris" in nft and len(nft["uris"])>0 else "",
-            creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
-            address=nft["identifier"],
-            royalties=int(nft["royalties"]),
-            marketplace={"quantity":int(nft["supply"] if nft["type"].startswith('SemiFungible') else 1)},
-            files=nft["uris"] if "uris" in nft else []
-          )
-          _nft.network=self.network
-          _nft.owner=_user.address.bech32()
-
-          if _nft.address:      #Pas d'insertion des NFT n'ayant pas d'adresse
-            rc.insert(0,_nft)
-
-
-          if len(rc)>limit:break
+        if len(rc)>limit:break
 
     return rc
+
+
 
   def freeze(self,_user,token_id):
     """
@@ -1175,3 +1165,14 @@ class Elrond(Network):
         return k
 
     return None
+
+  def get_owners_of_nft(self, nft_addr:str) -> [NfluentAccount]:
+    """
+    voir https://devnet-api.multiversx.com
+    :param address:
+    :return:
+    """
+    result=api(self._proxy.url+"/nfts/"+nft_addr+"/accounts")
+    rc=[NfluentAccount(address=x["address"]) for x in result]
+    return rc
+

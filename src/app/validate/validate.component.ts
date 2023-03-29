@@ -101,7 +101,7 @@ export class ValidateComponent implements OnInit {
     this.network.get_tokens_from("owner",addr,10,false,network).then((r:any)=>{
       if(this.message.length>0){
         for(let t of r.result){
-          if(t.marketplace!.quantity>0){
+          if(t.balances[address]>0){
             //Application des filtres contenu dans le fichier de configuration
             let filter_Ok=false;
             if(filters.collections){

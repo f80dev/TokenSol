@@ -56,12 +56,12 @@ export class DispenserComponent implements OnInit {
               nft.message="Déjà distribué"
             }
             nft.message=nft.owner+" - "+nft.address;
-            if(!nft.marketplace.hasOwnProperty("price"))nft.marketplace.price=0;
+            if(!nft.hasOwnProperty("price"))nft.price=0;
 
             $$("Evaluation de la possibilité d'ajouté le NFT");
             let canAdd=nft.address.startsWith("db_") || nft.address.startsWith("file_");
             if(operation.dispenser){
-              if(!canAdd)canAdd=(nft.marketplace.price==0 && nft.owner==nft.creators[0]);
+              if(!canAdd)canAdd=(nft.price==0 && nft.owner==nft.creators[0]);
               if(canAdd)canAdd=(!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1)
             }
             if(canAdd)this.nfts.push(nft);

@@ -1856,19 +1856,23 @@ def nfts(id=""):
   :return:
   """
   network=request.args.get("network","elrond-devnet")
-  account=request.args.get("account","paul")
-  with_attr=("with_attr" in request.args) and (not "with_attr=false" in request.args)
+  account=request.args.get("account","")
+
+  with_attr=(request.args.get("withAttr","false")=="true")
   limit=int(request.args.get("limit","100"))
   offset=int(request.args.get("offset","0"))
 
   log("Récupération de "+str(limit)+" nfts sur "+network+" à partir de "+str(offset))
 
-  rc=[]
   _network=get_network_instance(network)
+  key=_network.find_key(account)
+
   if id=="":
     l_nfts=_network.get_nfts(account,limit,with_attr=with_attr,offset=offset,with_collection=True)
   else:
-    l_nfts=[_network.create_nft(token_id=id, attr=True)]
+    nft=_network.get_nft(id,attr=True,metadata_timeout=3)
+    if key: nft.balances=_network.get_balances(key.address)
+    l_nfts=[nft]
 
   log(str(len(l_nfts))+" NFT identifiés")
 

@@ -64,40 +64,43 @@
   <mat-expansion-panel [expanded]="tokens.length==0">
     <mat-expansion-panel-header>Gestion des visuels</mat-expansion-panel-header>
 
-    <app-upload-file (uploaded)="onFileSelected($event)"
-                     width="180px" [maxsize]="10000000"
-                     extensions=".webp,.png,.gif,.jpeg,.jpg,.json">
-      Ajouter des NFTs
-    </app-upload-file>
+    <div class="expansion-content">
+      <app-upload-file (uploaded)="onFileSelected($event)"
+                       width="200px" [maxsize]="10000000"
+                       extensions=".webp,.png,.gif,.jpeg,.jpg,.json">
+        Ajouter des nouveaux NFTs
+      </app-upload-file>
 
-    <app-input [options]="network.stockage_available"
-               width="220px" *ngIf="user.advance_mode"
-               label="Stockage visuels & metadata"
-               [value]="sel_platform"
-               (valueChange)="sel_platform=$event"></app-input>
+      <app-input [options]="network.stockage_available"
+                 width="220px" *ngIf="user.advance_mode"
+                 label="Stockage visuels & metadata"
+                 [value]="sel_platform"
+                 (valueChange)="sel_platform=$event"></app-input>
 
-    <button type="button"
-            *ngIf="tokens.length>0"
-            mat-raised-button mat-button
-            (click)="clear()">
-      Enlever les NFTs
-    </button>
+      <button type="button"
+              *ngIf="tokens.length>0"
+              mat-raised-button mat-button
+              (click)="clear()">
+        Enlever les NFTs
+      </button>
 
-    <button type="button" *ngIf="tokens.length>0"
-            mat-raised-button mat-button
-            style="margin-left: 50px;"
-            title="Mettre les visuels en lignes (en vue du minage)"
-            (click)="upload_all_tokens()">
-      <div class="bloc-button">
-        Mettre en ligne<br>les visuels
-      </div>
-    </button>
+      <button type="button" *ngIf="tokens.length>0"
+              mat-raised-button mat-button
+              style="margin-left: 50px;"
+              title="Mettre les visuels en lignes (en vue du minage)"
+              (click)="upload_all_tokens()">
+        <div class="bloc-button">
+          Mettre en ligne<br>les visuels
+        </div>
+      </button>
 
-    <button type="button" *ngIf="tokens.length>0"
-            mat-raised-button mat-button
-            (click)="export_to_csv()">
-      Exporter sous Excel
-    </button>
+      <button type="button" *ngIf="tokens.length>0"
+              mat-raised-button mat-button
+              (click)="export_to_csv()">
+        Exporter sous Excel
+      </button>
+    </div>
+
   </mat-expansion-panel>
 
 
@@ -341,13 +344,13 @@
         <table style="text-align: center;display: inline-block;">
           <tr>
             <td>P =</td>
-            <td><input matInput type="number" style="max-width: 50px;text-align: right;" min="0" [(ngModel)]="token.marketplace!.price" ></td>
+            <td><input matInput type="number" style="max-width: 50px;text-align: right;" min="0" [(ngModel)]="token.price" ></td>
             <td>€</td>
             <td style="width: 25px"></td>
           </tr>
           <tr *ngIf="!network.isElrond() || (sel_collection?.type=='SemiFungibleESDT' || sel_collection?.type=='NFT')">
             <td>Q =</td>
-            <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" [(ngModel)]="token.marketplace!.quantity" ></td>
+            <td><input matInput type="number" style="max-width: 50px;text-align: right;"  min="0" [(ngModel)]="token.supply" ></td>
             <td style="width: 25px"></td>
           </tr>
           <tr>
@@ -390,7 +393,7 @@
                   (click)="see_in_hub(token)">visibility</mat-icon>
         <mat-icon style="cursor: pointer" (click)="remove(token)">delete</mat-icon>
         <app-upload-file title="Associer un fichier d'attributs"
-                         *ngIf="sel_key && !token.address"
+                         *ngIf="sel_key && !token.address" width="50px" style="display: inline-block;"
                          (uploaded)="onUploadXMP($event,token)"
                          extensions=".xmp" icon="note"></app-upload-file>
       </td>

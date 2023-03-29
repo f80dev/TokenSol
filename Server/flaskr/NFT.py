@@ -20,11 +20,12 @@ class NFT:
   miner:str=""
   royalties:int
   owner:str=""
-  amount:int=1
+  balance:int=1
   marketplace:dict={}
   network="elrond-devnet"
   files:list
   other:dict={}
+  balances:dict={}
 
   def __init__(self,
                name: str="",
@@ -39,66 +40,76 @@ class NFT:
                creators: list=list(),
                address: str="",
                royalties: int=0,
-               marketplace:dict={"quantity":1,"price":0},
+               price=0,
+               supply=1,
                files:list=[],
                dtCreate:int=0,
-               object=None,
-               image=None) -> object:
+               object=None) -> object:
 
     if not object is None:
       if "encrypt" in object:
         object=yaml.load(decrypt(object["encrypt"]),yaml.FullLoader)
 
-      self.name=extract_from_dict(object,["name","title"],"NFT")
-      self.dtCreate=object["dtCreate"] if "dtCreate" in object else 0
-      self.symbol=extract_from_dict(object,"symbol","")
-      self.description=extract_from_dict(object,"description","")
-      self.visual=extract_from_dict(object,"visual,image,storage","")
-      self.miner=extract_from_dict(object,"miner","")
+      name=extract_from_dict(object,["name","title"],"NFT")
+      dtCreate=object["dtCreate"] if "dtCreate" in object else 0
+      symbol=extract_from_dict(object,["symbol","identifier"],"")
+      description=extract_from_dict(object,"description","")
+      visual=extract_from_dict(object,"visual,image,storage,url","")
+
+      miner=extract_from_dict(object,["miner","creator"],"")
 
       if "properties" in object and "creators" in object["properties"]:object["creators"]=object["properties"]["creators"]
-      self.creators=extract_from_dict(object,"creators",[])
+      creators=extract_from_dict(object,"creators",[])
 
-      self.files=extract_from_dict(object,"files",[])
-      self.attributes=object["attributes"] if "attributes" in object else ""
-      self.network=object["network"] if "network" in object else ""
+      files=extract_from_dict(object,["files","uris"],[])
+      attributes=object["attributes"] if "attributes" in object else []
 
+      if "collection" in object:
+        if type(object["collection"])==str:
+          collection={"id":object["collection"]}
+        else:
+          collection=object["collection"]
+      else:
+          collection={}
 
-      self.collection=object["collection"] if "collection" in object else ""
-      if not "name" in object["collection"]:object["collection"]["name"]=object["collection"]["id"]
-      if not "owner" in object["collection"]:object["collection"]["owner"]=self.miner
+      if not "owner" in collection:collection["owner"]=miner
 
-      self.marketplace=object["marketplace"] if "marketplace" in object else {"price":0,"quantity":1,"max_mint":1}
-      self.royalties=int(object["seller_fee_basis_points"]) if "seller_fee_basis_points" in object else (object["royalties"] if "royalties" in object else 0)
-      self.address=object["address"] if "address" in object else ("db_"+str(object["_id"]) if "_id" in object else "")     #Données obligatoire
+      supply=int(extract_from_dict(object,["supply"],1))
+      price=extract_from_dict(object,"price")
 
-      self.owner=object["owner"] if "owner" in object else ""
+      royalties=extract_from_dict(object,["seller_fee_basis_points","royalties"],0)
+      address=extract_from_dict(object,["address","id","identifier"],"")
+
+      owner=object["owner"] if "owner" in object else ""
       self.other=object["other"] if "other" in object else {}
       self.tags=object["tags"] if "tags" in object else ""
-    else:
-      self.name=name
-      self.description=description
-      self.collection=collection
-      if type(attributes)==str:attributes={"value":attributes}
-      if type(attributes)==dict: attributes=[attributes]
-      self.attributes=attributes
-      self.miner=miner
-      self.owner=owner
-      self.symbol=symbol
-      self.visual=visual
-      self.creators=creators
-      self.address=address
-      self.tags=tags
-      self.royalties=royalties
-      self.marketplace=marketplace
-      try:
-        self.files=[str(base64.b64decode(uri),"utf8") for uri in files]
-      except:
-        self.files=files
-      self.dtCreate=dtCreate
 
-      if image:
-        img=Image.open(image)
+    self.name=name
+    self.description=description
+    self.collection=collection
+    if type(attributes)==str:attributes={"value":attributes}
+    if type(attributes)==dict: attributes=[attributes]
+
+    self.attributes=attributes
+    self.supply=supply
+    self.price=price
+    self.miner=miner
+    self.owner=owner
+    self.symbol=symbol
+    self.visual=visual
+    self.creators=creators
+    self.address=address
+    self.tags=tags
+    self.royalties=royalties
+
+    try:
+      self.files=[str(base64.b64decode(f),"utf8") for f in files]
+    except:
+      self.files=files
+
+    self.dtCreate=dtCreate
+    if self.visual is None or len(self.visual)==0: self.visual="https://hackernoon.imgix.net/images/0*kVvpU6Y4SzamDGVF.gif"
+
 
 
 

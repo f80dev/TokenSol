@@ -53,7 +53,7 @@
         <div class="mat-body-2" *ngIf="nft.collection">{{nft.collection!.name}}</div>
         <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/10+'px'">
           {{nft.name}}
-          <span *ngIf="nft.marketplace && nft.marketplace['quantity']>1">({{nft.marketplace['quantity']}})</span>
+          <span *ngIf="nft.balances[addr]>1">({{nft.balances[addr]}})</span>
 
         </div>
         <br>

@@ -47,9 +47,9 @@
             <tr *ngIf="nft.collection">
               <td>Collection</td><td><span [title]="nft.collection!.description">{{nft.collection!.name}}</span></td>
             </tr>
-            <tr *ngIf="nft.marketplace!.quantity>1">
+            <tr *ngIf="nft.supply>1">
               <td>Quantité<br>Price</td>
-              <td>{{nft.marketplace!.quantity}}<br>{{nft.marketplace!.price}}</td>
+              <td>{{nft.supply}}<br>{{nft.supply}}</td>
             </tr>
             <tr></tr>
             <tr *ngIf="user.advance_mode">

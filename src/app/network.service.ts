@@ -753,8 +753,8 @@ export class NetworkService implements OnInit {
         return this.httpClient.get<string>(this.server_nfluent+"/api/check_access_code/"+access_code+"?format=base64");
     }
 
-    get_nft(address: string, network: string) {
-        return this.httpClient.get<any>(this.server_nfluent+"/api/nfts/"+address+"?network="+network);
+    get_nft(address: string, network: string,owner:string="") {
+        return this.httpClient.get<any>(this.server_nfluent+"/api/nfts/"+address+"?network="+network+"&account="+owner);
     }
 
     add_user_for_nft(body:any) {

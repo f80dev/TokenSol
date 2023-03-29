@@ -1,6 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import {Clipboard} from '@angular/cdk/clipboard';
-import {$$, CryptoKey, get_nfluent_wallet_url, getParams, isEmail, setParams, showMessage} from "../../tools";
+import {
+  $$,
+  CryptoKey,
+  get_nfluent_wallet_url,
+  getParams,
+  isEmail,
+  newCryptoKey,
+  setParams,
+  showMessage
+} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
@@ -144,14 +153,14 @@ export class KeysComponent implements OnInit {
     }
 
     async create_key() {
-        let email=await _prompt(this,"Créer un nouveau wallet "+this.network.network,"@gmail.com",
+        let email=await _prompt(this,"Créer un nouveau wallet "+this.network.network,"",
             "Indiquer votre mail pour recevoir la clé privée de votre wallet",
             "text","Créer la clé","Annuler",false);
         if(isEmail(email)){
-          this.network.create_account(this.network.network,email,email).subscribe((r:any)=>{
+          this.network.create_account(this.network.network,email).subscribe((r:any)=>{
             this.clipboard.copy(r.secret_key);
             showMessage(this,"Consulter votre mail pour retrouver votre compte, la clé privée est disponible dans le presse papier");
-            open(r.explorer,"Explorer");
+            this.open_faucet(newCryptoKey(r.addr));
           })
         }
     }
