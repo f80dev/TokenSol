@@ -84,7 +84,7 @@ def test_mint(networks=NETWORKS,platform=PLATFORMS[0],miner=None,quantity=1,owne
 		if col is None or not _network.canMintOnCollection(miner.address,col,quantity):
 			col:dict=test_add_collection(network,account=miner.address,type_collection=type_collection)
 
-		nft=create_nft(collection=col,owner=miner.address,quantity=quantity)
+		nft=create_nft(collection=col,quantity=quantity)
 		rc=mint(nft,miner=miner,owner=owner,network=_network,offchaindata_platform=platform,price=0)
 		assert not rc is None
 		assert len(rc["error"])==0

@@ -208,7 +208,7 @@ def transfer(addr:str,
     if "elrond" in target_network and collection=="": collection={"id":nft.collection["id"]}
 
     rc=_target_network.mint(target_network_miner,nft.name,nft.description,collection,nft.attributes,_storage,nft.files,
-                    nft.marketplace["quantity"],nft.royalties,nft.visual,nft.tags,nft.creators)
+                    nft.supply,nft.royalties,nft.visual,nft.tags,nft.creators)
     nft.address=rc["result"]["mint"]
     get_network_instance(from_network).burn(addr,from_network_miner,1)
     return rc
@@ -264,7 +264,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
                      properties=nft.attributes,
                      files=nft.files,
                      storage=storage,
-                     quantity=nft.marketplace["quantity"],
+                     quantity=nft.supply,
                      royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
                      visual=nft.visual,
                      creators=nft.creators,

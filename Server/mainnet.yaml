@@ -1,0 +1,10 @@
+nfts: []
+storage:
+  file_7f70c5a62646fd55a41446007ee300c57519ce5bc1110cc8086c8f4f38498199: '"bonjour
+    comment allez vous"'
+  file_9724c1e20e6e3e4d7f57ed25f9d4efb006e508590d528c90da597f6a775c13e5:
+    key: value
+  file_cfc2cf63b100f1e0d649d41b8b3bb22d2ebe76d08311b02dd887cf4a33cf7162:
+    description: ma description
+    title: my title
+version: '1.0'

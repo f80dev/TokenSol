@@ -164,7 +164,7 @@ class StoreFile(Network,Storage):
   def get_unity(self):
     return "OCT"
 
-  def get_balance(self,addr:str) -> int:
+  def get_balances(self, addr:str) -> int:
     return 1e18
 
   def get_keys(self) -> [Key]:
@@ -221,7 +221,7 @@ class StoreFile(Network,Storage):
             creators=creators,
             address="",
             royalties=royalties,
-            marketplace={"quantity":quantity,"price":0},
+            marketplace={"supply":quantity,"price":0},
             files=files)
 
     if nft.address=="": nft.address=FILE_PREFIX_ID+now("hex")

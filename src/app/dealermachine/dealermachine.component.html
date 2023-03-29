@@ -33,7 +33,7 @@
 
 
     <!--    gestion de la facture -->
-    <app-input *ngIf="ope?.payment?.billing && nft.marketplace && nft.marketplace!.price>0 && address.length>0 && address.indexOf('@')==-1"
+    <app-input *ngIf="ope?.payment?.billing && nft.price>0 && address.length>0 && address.indexOf('@')==-1"
                [value]="billing_address" (valueChange)="billing_address=$event"
                value_type="text"
                label="Indiquez une adresse mail pour recevoir une facture"
@@ -41,9 +41,9 @@
 
 
     <div *ngIf="address.length>20 || (address.length>5 && address.indexOf('@')>-1)">
-      <div *ngIf="nft.marketplace!.price>0">
+      <div *ngIf="nft.price>0">
         <br>
-        Acheter maintenant ce NFT pour <strong>{{nft.marketplace!.price}}€</strong><br>
+        Acheter maintenant ce NFT pour <strong>{{nft.price}}€</strong><br>
 
 <!--        <google-pay-button-->
 <!--          environment="TEST"-->

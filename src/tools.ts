@@ -224,7 +224,7 @@ export function getParams(routes:ActivatedRoute,local_setting_params="",force_tr
         $$("!Impossible d'analyser les parametres de l'url");
         reject(err);
       })
-    },200);
+    },400);
   });
 }
 
@@ -401,7 +401,7 @@ export function canTransfer(nft:NFT,by_addr:string) : boolean {
   //canMint
   //Détermine si un NFT peut être transférer d'une blockchain à une autre
   if(nft.address && (nft.address.startsWith("db_") || nft.address.startsWith("file_"))){
-    if(nft.marketplace?.quantity==0)return false;
+    if(nft.balances[by_addr]==0)return false;
     if(nft.miner.address!="" && nft.miner.address!=by_addr)return false;
     return true;
   } else {

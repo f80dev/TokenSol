@@ -150,6 +150,7 @@ export class AppComponent implements OnInit {
     getParams(this.routes,"params",true).then((params:any)=>{
       $$("Analyse des paramètres ",params);
       this.user.appname=params["appname"] || environment.appname;
+      this.user.addr=params["addr"]
       if(params.hasOwnProperty("toolbar")){
         this.user.toolbar_visible=params["toolbar"]
       }else{
@@ -172,9 +173,6 @@ export class AppComponent implements OnInit {
       let index=find(this.networks,{value:network_name,label:network_name},"value");
       this.network_service.network=network_name;
       this.sel_network=this.networks[index];
-
-
-
 
       if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
         this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{

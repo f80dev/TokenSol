@@ -46,10 +46,14 @@ export class StoreComponent implements OnInit {
           this.network.get_tokens_to_send(ope.id,"store",50).subscribe((nfts:any) => {
             this.nfts=[];
             for(let nft of nfts){
-              nft.marketplace={price:0,quantity:1};
+              nft.price=0;
+              nft.supply=1;
               if(this.operation?.store)
                 for(let c of this.operation.store.collections || []){
-                  if(c.name==nft.collection)nft.marketplace={price:c.price,quantity:nft.balance};
+                  if(c.name==nft.collection){
+                    nft.price=c.price
+                    nft.supply=nft.supply
+                  }
                 }
               this.nfts.push(nft);
             }

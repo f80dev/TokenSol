@@ -55,7 +55,7 @@
         <tr *ngIf="network.isSolana()"><td>Mutable</td><td>{{nft.solana?.isMutable}}</td></tr>
 <!--        <tr><td>Mint authority</td><td><a [href]="getSolanaExplorer(nft.splMintInfo?.mintAuthority)" target="_blank">{{nft.splMintInfo?.mintAuthority | alias}}</a></td></tr>-->
         <tr><td>Owner</td><td><a [href]="getSolanaExplorer(nft.owner)" target="_blank">{{nft.owner | alias}}</a></td></tr>
-        <tr><td>Quantite</td><td>{{nft.marketplace?.quantity}}</td></tr>
+        <tr><td>Quantite</td><td>{{nft.supply}}</td></tr>
       </table>
 
       <button

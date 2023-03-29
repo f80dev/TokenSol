@@ -87,7 +87,7 @@ export class ManageComponent implements OnInit {
               this.nfts.push(nft);
           }
 
-          this.nfts.sort((a:NFT, b:NFT) => (a.marketplace!.quantity < b.marketplace!.quantity) ? 1 : -1)
+          this.nfts.sort((a:NFT, b:NFT) => (a.supply < b.supply) ? 1 : -1)
         }).catch(err=>{this.network.wait("");showError(this,err);});
       }
     }

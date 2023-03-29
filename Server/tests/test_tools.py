@@ -31,7 +31,7 @@ RESSOURCE_TEST_DIR="./tests/ressources/"
 
 
 
-def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,owner=MAIN_MINER,quantity=1,
+def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,quantity=1,
                visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg",
                description="ceci est la description du NFT",files=["https://nfluent.io"]) -> NFT:
   return NFT(name,
@@ -41,7 +41,8 @@ def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,owner=MAIN_
              files=files,
              description=description,
              visual=visual,
-             marketplace={"quantity":quantity,"price":0}
+             supply=quantity,
+             price=0
              )
 
 

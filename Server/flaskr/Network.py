@@ -24,7 +24,7 @@ class Network():
           name=k.name,
           address=k.address,
           network=k.network,
-          balance=self.get_balance(k.address),
+          balance=self.get_balances(k.address),
           nonce=0,
           explorer=self.getExplorer(k.address,"address"),
           unity=self.get_unity()
@@ -80,7 +80,7 @@ class Network():
     return url+setParams({"toolbar":"false","network":self.network,"addr":address})
 
 
-  def get_balance(self,address):
+  def get_balances(self, address):
     raise NotImplementedError()
 
   def get_keys(self) -> [Key]:
@@ -100,7 +100,7 @@ class Network():
 
   def find_key(self,addr) -> Key:
     for k in self.get_keys():
-      if k.address==addr: return k
+      if k.address==addr or k.name==addr: return k
     return None
 
   def get_nfts(self,_user,limit=2000,with_attr=False,offset=0,with_collection=False):

@@ -108,13 +108,13 @@ export class BuildOpeComponent implements OnInit {
       this.sources=r.sources;
       for(let _nft of r.nfts){
         let nft:NFT=_nft;
-        nft.marketplace!.price=nft.marketplace!.price  || 0;
+        nft.price=nft.price  || 0;
         if(nft.collection){
           let k=nft.collection!.id;
-          if(k && nft.marketplace!.quantity>0){
+          if(k && nft.supply>0){
             if(!this.collections.hasOwnProperty(k))this.collections[k]=0;
             if(this.collection_keys.indexOf(k)==-1)this.collection_keys.push(k);
-            this.collections[k]=this.collections[k]+nft.marketplace!.quantity;
+            this.collections[k]=this.collections[k]+nft.supply;
             this.nfts.push(nft);
           }
         } else {

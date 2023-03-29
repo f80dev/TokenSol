@@ -128,7 +128,7 @@ class DAO(Storage,Network):
     return False
 
 
-  def get_balance(self,addr:str) -> int:
+  def get_balances(self, addr:str) -> int:
     return 1e18
 
   def get_keys(self,qrcode_scale=0,with_balance=False,with_account=False,with_secretKey=False,address="") -> [Key]:
@@ -183,7 +183,7 @@ class DAO(Storage,Network):
             creators=creators,
             symbol=symbol,
             royalties=royalties,
-            marketplace={"quantity":quantity,"price":price},
+            marketplace={"supply":quantity,"price":price},
             files=files
             )
     _data=nft.__dict__

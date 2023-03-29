@@ -82,7 +82,9 @@ export class MintComponent implements OnInit {
       public clipboard:Clipboard,
       public routes:ActivatedRoute,
   ) {
-    //this.user.addr_change.subscribe((addr)=>{if(this.user.collections.length>0)this.sel_collection=this.user.collections[0];})
+    this.user.addr_change.subscribe((addr)=>{
+      if(this.user.collections.length>0)this.sel_collection=this.user.collections[0];
+    })
     this.sel_platform=this.network.config["PLATFORMS"][0];              //NFTStorage
     this.sel_platform_document=this.network.config["PLATFORMS"][3];     //Server
   }
@@ -103,6 +105,7 @@ export class MintComponent implements OnInit {
     let local_config=JSON.parse(localStorage.getItem("miner_config") || "{}")
     this.token_creators=local_config.creators || [];
     this.sel_key=local_config.key ? local_config.key : null;
+    if(this.sel_key)this.user.init(this.sel_key.address,this.network.network);
     this.set_creators();
 
     //this.targets=this.targets.filter((x)=>{return(this.user.advance_mode || !x.only_advanced)})
@@ -130,7 +133,9 @@ export class MintComponent implements OnInit {
         if (this.user.find_collection(params["collection"])) {
           this.sel_collection = params["collection"];
         } else {
-          this.sel_collection = local_config.collection || this.user.collections[0];
+          setTimeout(()=>{
+            this.sel_collection = local_config.collection || this.user.collections[0];
+          },1000)
         }
       }
 
@@ -187,8 +192,6 @@ export class MintComponent implements OnInit {
     else
       _infos["files"]=_infos["files"].split("\n");
 
-    let marketplace={price:this.price,quantity:this.quantity};
-    if(_infos.hasOwnProperty("marketplace"))marketplace=_infos.marketplace;
 
     let rc:NFT={
       collection: undefined,
@@ -199,8 +202,11 @@ export class MintComponent implements OnInit {
       creators: creators,
       description: _infos.description,
       symbol: _infos.symbol,
+      balances:{},
+      type: "NonFungibleESDT",
       files: _infos.files,
-      marketplace: marketplace,
+      supply: _infos.supply,
+      price: _infos.price,
       name: _infos.title,
       network: this.network.network,
       miner:newCryptoKey(""),
@@ -304,7 +310,8 @@ export class MintComponent implements OnInit {
     } else {
       let _t:NFT=this.tokens[index];
       if(!_t.address || _t.address==""){
-        _t.marketplace={price:this.price,quantity:this.quantity}
+        _t.price=this.price
+        _t.supply=this.quantity
         _t.message="hourglass:Minage";
         _t.creators=this.token_creators;
         wait_message(this,"Minage de "+_t.name+" ("+index+"/"+this.tokens.length+")");
@@ -448,8 +455,10 @@ export class MintComponent implements OnInit {
           //
           let target_network=this.network.network;
 
-          this.message="Minage du NFT "+token.name;
-          this.network.mint(token,this.sel_key,token.owner || "",id_operation,this.sign, this.sel_platform.value,target_network,this.mintfile,this.encrypt_nft).then((result:any)=>{
+          this.message="Minage du NFT '"+token.name+"'"
+          this.network.mint(token,this.sel_key,token.owner || "",id_operation,this.sign, this.sel_platform.value,
+              target_network,this.mintfile,
+              this.encrypt_nft).then((result:any)=>{
             this.message="";
             if(!result.error || result.error==""){
               token.address=result.result.mint;
@@ -626,11 +635,11 @@ export class MintComponent implements OnInit {
     }
   }
 
-  set_marketplace(token: NFT) {
-    if(token){
-      token.marketplace={price:this.price,quantity:this.quantity};
-    }
-  }
+  // set_marketplace(token: NFT) {
+  //   if(token){
+  //     token.marketplace={price:this.price,supply:this.quantity};
+  //   }
+  // }
 
   edit_attribute(a: { trait_type: string; value: string }) {
     this.dialog.open(PromptComponent,{
@@ -685,7 +694,8 @@ export class MintComponent implements OnInit {
 
   clone_marketplace() {
     for(let i=1;i<this.tokens.length;i++){
-      this.tokens[i].marketplace=this.tokens[0].marketplace;
+      this.tokens[i].price=this.tokens[0].price;
+      this.tokens[i].supply=this.tokens[0].supply;
       this.tokens[i].royalties=this.tokens[0].royalties;
     }
     showMessage(this,"Recopie terminée")

@@ -54,7 +54,7 @@ export class AnalyticsComponent implements OnInit {
           for(let i=0;i<this.nfts.length;i++){
             let nft=this.nfts[i];
             if(nft.address)
-              this.network.get_nft(nft.address,this.network.network).subscribe((complete_nft:NFT[])=>{
+              this.network.get_nft(nft.address,this.network.network,this.user.addr).subscribe((complete_nft:NFT[])=>{
                 this.nfts[i]=complete_nft[0];
               })
           }

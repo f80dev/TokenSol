@@ -1,4 +1,6 @@
 from flaskr.Elrond import Elrond
+from flaskr.Keys import Key
+from flaskr.NFT import NFT
 from flaskr.Tools import random_from, now
 from tests.test_tools import MAIN_ACCOUNT, create_nft, MAIN_COLLECTION
 
@@ -22,8 +24,6 @@ def test_get_collections():
 				assert "canUpdateAttributes" in role
 
 
-def test_add_role_to_nftcollection(account_to_add:str="",miner=MAIN_ACCOUNT):
-	test_add_role(account_to_add,miner,"NonFungible","ESDTTransferRole")
 
 def test_add_role(account_to_add:str="",miner=MAIN_ACCOUNT,type_collection="SemiFungible",roles_to_add="ESDTRoleNFTCreate"):
 	"""
@@ -50,7 +50,12 @@ def test_add_role(account_to_add:str="",miner=MAIN_ACCOUNT,type_collection="Semi
 
 
 
-def test_mint_sft(miner=MAIN_ACCOUNT):
+def test_add_role_to_nftcollection(account_to_add:str="",miner=MAIN_ACCOUNT):
+	test_add_role(account_to_add,miner,"NonFungible","ESDTTransferRole")
+
+
+
+def test_mint_sft(miner=MAIN_ACCOUNT,quantity=10):
 	_network=Elrond("devnet")
 	_miner=_network.get_keys(address=miner)[0]
 	cols=_network.get_collections(miner, False, type_collection="SemiFungible",special_role="canCreate")
@@ -58,7 +63,74 @@ def test_mint_sft(miner=MAIN_ACCOUNT):
 		rc=_network.add_collection(_miner,"MaCol"+now("hex"),type_collection="SemiFungible")
 		assert not rc is None
 		cols.append(rc)
-	test_mint_for_collection(miner,cols[0]["id"],2)
+	nft=test_mint_for_collection(miner,cols[0]["id"],quantity=quantity)
+	return nft
+
+
+def test_get_nfts(miner=MAIN_ACCOUNT):
+	_network=Elrond("devnet")
+	nfts=_network.get_nfts(miner,2000)
+	assert not nfts is None
+	assert len(nfts)>0
+	assert len(nfts[0].address)>0
+
+
+def test_get_sfts(miner=MAIN_ACCOUNT):
+	_network=Elrond("devnet")
+	nfts=_network.get_nfts(miner,2000,type_token="SemiFungibleESDT")
+	assert not nfts is None
+	assert len(nfts)>0
+	assert len(nfts[0].address)>0
+
+
+def test_get_owner_of_nft(miner=MAIN_ACCOUNT):
+	_network=Elrond("devnet")
+	nfts=_network.get_nfts(miner,2000,type_token="SemiFungibleESDT")
+	for nft in nfts:
+		owners=_network.get_owners_of_nft(nft.address)
+		assert len(owners)>0
+
+
+def test_get_nft(miner=MAIN_ACCOUNT):
+	_network=Elrond("devnet")
+	nfts=_network.get_nfts(miner,10)
+	for nft in nfts:
+		rc=_network.get_nft(nft.address,with_balance=miner)
+		assert not rc is None
+		assert rc.balance[miner]>0
+		assert rc.supply>0
+
+
+def test_get_balance_for_nft(miner=MAIN_ACCOUNT):
+	_network=Elrond("devnet")
+	rc=_network.get_balances(miner, "")
+
+
+
+def test_transfer_sft(miner=MAIN_ACCOUNT):
+	_network=Elrond("devnet")
+	_miner=_network.get_keys(address=miner)[0]
+	_dest:Key=random_from(_network.get_keys())
+	nfts=_network.get_nfts(_miner.address,100,type_token="SemiFungible")
+	q0=0
+	nft=None
+	balances=_network.get_balances(miner)
+	for nft in nfts:
+		q0=balances[nft.address]
+		if q0>2: break
+
+	if q0<2:
+		nft0=test_mint_sft(_miner.address,quantity=10)
+		q0=_network.get_balances(miner, nft0.address)
+	else:
+		nft0=nft
+
+	tx=_network.transfer(nft0.address,_miner,_dest.address,quantity=1)
+	assert len(tx["error"])==0,"Le transfert de "+nft0.address+" vers "+_dest.address+" n'a pas fonctionné"
+	q1=_network.get_balances(miner, nft0.address)
+	assert q0-q1==1,"Les quantités ne sont pas cohérentes"
+
+
 
 
 def test_in_collections(col:str=MAIN_COLLECTION,miner=MAIN_ACCOUNT,special_role="canCreate"):

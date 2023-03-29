@@ -137,20 +137,21 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   refresh(index:number=0) {
     $$("Refresh de l'onglet "+index);
-    if(index==0 && this.nfts.length==0){
+    if(index==0 && this.nfts.length==0 && this.addr!=""){
       this.message=(this.sel_collection.name=="Toutes") ? "Recherches de vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
-      let with_attr=!this.network.isElrond();
-      let offset=3;
+      let with_attr=!this.network.isElrond() && !this.network.isPolygon();
+      let offset=5;
+
       this.network.get_tokens_from("owner",this.addr,offset,with_attr,null,0,this.network.network).then((r:any)=>{
         this.add_nfts(r.result,r.offset);
       });
 
       setTimeout(()=>{
-        this.network.get_tokens_from("owner",this.addr,250,with_attr,null,offset+1,this.network.network).then((r:any)=>{
+        this.network.get_tokens_from("owner",this.addr,250,true,null,offset+1,this.network.network).then((r:any)=>{
           this.message="";
           this.add_nfts(r.result,r.offset);
         }).catch(err=>{showError(this,err)});
-      },1500);
+      },300);
     }
 
     if(index==2){
@@ -228,7 +229,10 @@ export class MywalletComponent implements OnInit,OnDestroy {
         description: "description",
         miner: this.sel_ope.nftlive.nft_target.miner,
         files: [],
-        marketplace: {quantity: 1, price: 0},
+        supply: 1,
+        price: 0,
+        type: "NonFungibleESDT",
+        balances:{},
         message: undefined,
         name: this.sel_ope?.nftlive!.nft_target.name,
         network: this.network.network,
@@ -355,7 +359,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   on_reverse(evt:any) {
     if(typeof(evt.data)=="string")evt.data=JSON.parse(evt.data);
     if(evt.side && evt.data.description.length==0 && (!evt.data.attributes || evt.data.attributes.length==0)){
-      this.network.get_nft(evt.data.address,this.network.network).subscribe((result:any)=>{
+      this.network.get_nft(evt.data.address,this.network.network,this.addr).subscribe((result:any)=>{
         let index=this.nfts.indexOf(evt.data);
         this.nfts[index]=result[0];
         for(let i=0;i<this.nfts[index].attributes.length;i++){
