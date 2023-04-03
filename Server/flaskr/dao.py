@@ -2,8 +2,7 @@ import base64
 import hashlib
 from random import randint
 
-import pymongo
-from pymongo import database
+from pymongo import database, MongoClient, mongo_client
 
 from flaskr.Keys import Key
 from flaskr.NFT import NFT
@@ -119,7 +118,7 @@ class DAO(Storage,Network):
     self.url=self.url.replace("rootpassword",MONGO_INITDB_ROOT_PASSWORD)
     #log("Tentative de connexion sur la base de données "+self.dbname+" sur "+self.url)
     try:
-      self.db: pymongo.mongo_client = pymongo.MongoClient(self.url)[self.dbname]
+      self.db: mongo_client = MongoClient(self.url)[self.dbname]
       return self.db.list_collections().alive
     except Exception as inst:
       log("Base de données non disponible "+str(inst.args))
