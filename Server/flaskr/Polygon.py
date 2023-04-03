@@ -3,8 +3,6 @@ from os import listdir
 from time import sleep
 
 import requests
-from eth_account import Account
-from eth_account.signers.local import LocalAccount
 from solcx import compile_source, install_solc
 from web3.contract import Contract
 from web3.middleware import geth_poa_middleware
@@ -496,7 +494,7 @@ class Polygon (Network):
     if histo:
       pubkey=histo.get_address(email,self.network)
       if pubkey:
-        _u:Account=self.w3.eth.account.create()
+        _u:eth_account.Account=self.w3.eth.account.create()
         send_mail(open_html_file(mail_existing_wallet,{
           "wallet_address":pubkey,
           "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
@@ -508,9 +506,9 @@ class Polygon (Network):
 
     words=""
     if len(seed) == 0:
-      _u:Account=self.w3.eth.account.create()
+      _u=self.w3.eth.account.create()
     else:
-      _u:Account=self.w3.eth.account.create_with_mnemonic(passphrase=seed)
+      _u=self.w3.eth.account.create_with_mnemonic(passphrase=seed)
       words=seed
 
     pubkey = _u.address
@@ -567,7 +565,7 @@ class Polygon (Network):
       if fname.endswith(".secret"): #or f.endswith(".json"):
         f=open(POLYGON_KEY_DIR+fname,"r",encoding="utf8")
         key = f.read().replace("\n","")
-        _u:LocalAccount = self.w3.eth.account.from_key(key)
+        _u = self.w3.eth.account.from_key(key)
 
         secret_key=_u._private_key.hex()
         rc.append(Key(secret_key=secret_key,
