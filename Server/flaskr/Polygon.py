@@ -13,7 +13,7 @@ from flaskr.NFluentAccount import NfluentAccount
 from flaskr.Network import Network
 from flaskr.Storage import Storage
 
-from flaskr.Tools import log, get_qrcode, send_mail, open_html_file, get_access_code_from_email, returnError
+from flaskr.Tools import log, send_mail, open_html_file, get_access_code_from_email, returnError
 from flaskr.dao import DAO
 from web3 import Web3, HTTPProvider
 
