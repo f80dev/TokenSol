@@ -20,7 +20,6 @@ class NFT:
   miner:str=""
   royalties:int
   owner:str=""
-  balance:int=1
   marketplace:dict={}
   network="elrond-devnet"
   files:list
@@ -87,6 +86,7 @@ class NFT:
     self.name=name
     self.description=description
     self.collection=collection
+    self.balances={owner:1}
     if type(attributes)==str:attributes={"value":attributes}
     if type(attributes)==dict: attributes=[attributes]
 

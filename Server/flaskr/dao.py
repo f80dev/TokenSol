@@ -182,7 +182,8 @@ class DAO(Storage,Network):
             creators=creators,
             symbol=symbol,
             royalties=royalties,
-            marketplace={"supply":quantity,"price":price},
+            supply=quantity,
+            price=price,
             files=files
             )
     _data=nft.__dict__

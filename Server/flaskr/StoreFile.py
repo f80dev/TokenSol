@@ -96,6 +96,7 @@ class StoreFile(Network,Storage):
   def get_nfts(self,owner="",limit=2000,with_attr=False,offset=0,with_collection=False):
     self.read()
     rc=list()
+    if not "nfts" in self.content: self.content["nfts"]=[]
     for nft in self.content["nfts"]:
       _nft=NFT(object=nft)
       if _nft.owner==owner or len(owner)==0:
@@ -221,7 +222,8 @@ class StoreFile(Network,Storage):
             creators=creators,
             address="",
             royalties=royalties,
-            marketplace={"supply":quantity,"price":0},
+            supply=quantity,
+            price=0,
             files=files)
 
     if nft.address=="": nft.address=FILE_PREFIX_ID+now("hex")
