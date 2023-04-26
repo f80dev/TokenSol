@@ -1,13 +1,18 @@
+import requests
+
+from flaskr import log
 from flaskr.apptools import get_storage_instance
+from tests.test_art import get_image
+from tests.test_tools import RESSOURCE_TEST_DIR
 
 DOMAIN_SERVER="http://127.0.0.1:4242/"
-platforms=[("nftstorage",""),("dao",DOMAIN_SERVER),("file-test",DOMAIN_SERVER)]
+PLATFORMS=[("githubstorage", "github-nfluentdev-storage-main"),("dao", DOMAIN_SERVER), ("file-test", DOMAIN_SERVER),("nftstorage", ""),  ]
 
 #TODO: ajouter les autres plateforms de stockage serveur, github, storej
 
-def test_add():
+def test_add_object():
 	obj={"content":"test"}
-	for name in platforms:
+	for name in PLATFORMS:
 		storage=get_storage_instance(name[0],name[1])
 		cid=storage.add(obj)
 		assert "cid" in cid
@@ -16,5 +21,36 @@ def test_add():
 		assert obj == obj_copy
 		rc=storage.rem(cid["cid"])
 		assert rc
+
+
+def test_add_file():
+	for name in PLATFORMS:
+		log("Test de la plateforme "+name[0])
+
+		with open(RESSOURCE_TEST_DIR+"/CV.docx","rb") as hFile:
+			file=hFile.read()
+
+			storage=get_storage_instance(name[0],name[1])
+			result=storage.add(file)
+			assert len(result["hash"])>0
+			assert len(result["cid"])>0
+			assert len(result["url"])>0
+
+
+
+def test_add_image():
+	img=""
+	while not img.startswith("http"):
+		img=get_image(section="backgrounds")
+
+	bytes=requests.get(img).content
+
+	for name in PLATFORMS:
+		log("Test de la plateforme "+name[0])
+		storage=get_storage_instance(name[0],name[1])
+		cid=storage.add(img)
+		result=requests.get(cid["url"]).content
+		assert result==bytes,"Les images "+img+" n'est pas bien stocké sur "+name[0]
+
 
 

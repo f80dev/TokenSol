@@ -17,7 +17,7 @@ network: elrond-devnet      #Réseau concerné par l'opération, utilisé égale
 wallet: "$nfluent_appli$/wallet"
 
 #Préférences à appliquer pour les NFT issue d'un fichier ou d'une base de données a miner
-lazy_mining:
+mining:
   metadata_storage: github/test6      #plateforme de destination des propriétés du NFT
   content_storage: NFTstorage         #plateforme de destination des images
   miner:                              #Miner en charge du minage de la collection. Si vide on utilise le propriétaire de la collection !!!!! Attention le mineur doit être propriétaire de la collection de minage
@@ -121,6 +121,7 @@ data:
     # - db-<server>-<nom_de_la_base> -> localisation (cloud:server Atlas, server: f80lab web3 (Akash network)) pour une source type base de donnée
     # - https:... pour une source contenant les NFT au format json dans un fichier en ligne
     - connexion: db-server-nfluent
+      miner:                              #Le mineur est nécéssaire pour effectué le transfert
       active: True                        #Indique si la source doit être prise en compte
       limit: 200                          #Au plus 200 NFTs seront extraits
       filter:
@@ -274,7 +275,7 @@ store:              #Cette section regroupe l'ensemble des propriétés liés à
 
   #Collection mise en vente dans le store (parmi les NFT issue de la section data/sources)
   collections:
-    - "TESTCOLF-367682"
+    - "MACOLLEC-4356f0"
 
   #Cette zone permet de ne prendre qu'une partie des NFT des collections ci-dessous
   filter:

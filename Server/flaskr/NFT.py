@@ -3,6 +3,7 @@ import json
 import yaml
 from PIL import Image
 
+from flaskr.Keys import Key
 from flaskr.Tools import extract_from_dict, decrypt
 
 
@@ -21,7 +22,7 @@ class NFT:
   royalties:int
   owner:str=""
   marketplace:dict={}
-  network="elrond-devnet"
+  network=""
   files:list
   other:dict={}
   balances:dict={}
@@ -43,6 +44,8 @@ class NFT:
                supply=1,
                files:list=[],
                dtCreate:int=0,
+               network="",
+               balances={},
                object=None) -> object:
 
     if not object is None:
@@ -51,17 +54,21 @@ class NFT:
 
       name=extract_from_dict(object,["name","title"],"NFT")
       dtCreate=object["dtCreate"] if "dtCreate" in object else 0
+
       symbol=extract_from_dict(object,["symbol","identifier"],"")
       description=extract_from_dict(object,"description","")
       visual=extract_from_dict(object,"visual,image,storage,url","")
 
       miner=extract_from_dict(object,["miner","creator"],"")
+      if type(miner)==dict: miner=Key(obj=miner).address
+      balances=object["balances"] if "balances" in object else {miner:1}
 
       if "properties" in object and "creators" in object["properties"]:object["creators"]=object["properties"]["creators"]
       creators=extract_from_dict(object,"creators",[])
 
       files=extract_from_dict(object,["files","uris"],[])
       attributes=object["attributes"] if "attributes" in object else []
+      if "network" in object: network=object["network"]
 
       if "collection" in object:
         if type(object["collection"])==str:
@@ -86,7 +93,7 @@ class NFT:
     self.name=name
     self.description=description
     self.collection=collection
-    self.balances={owner:1}
+    self.balances=balances
     if type(attributes)==str:attributes={"value":attributes}
     if type(attributes)==dict: attributes=[attributes]
 
@@ -99,6 +106,7 @@ class NFT:
     self.visual=visual
     self.creators=creators
     self.address=address
+    self.network=network
     self.tags=tags
     self.royalties=royalties
 

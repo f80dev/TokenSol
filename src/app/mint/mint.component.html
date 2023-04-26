@@ -14,13 +14,7 @@
       <div class="expansion-content">
         <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
 
-        <app-upload-file (uploaded)="batch_import($event)"
-                         width="100px"
-                         extensions=".xlsx,.xls,.csv">
-          Importer
-        </app-upload-file>
-
-        <button type="button" mat-button mat-raised-button
+        <button type="button"  mat-raised-button
                 [cdkCopyToClipboard]="nfts_to_clipboard()"
                 title="Copier la liste des NFT à miner dans le presse-papier"
                 (click)="confirm_clipboard()">
@@ -71,18 +65,19 @@
         Ajouter des nouveaux NFTs
       </app-upload-file>
 
-      <app-input [options]="network.stockage_available"
-                 width="220px" *ngIf="user.advance_mode"
-                 label="Stockage visuels & metadata"
-                 [value]="sel_platform"
-                 (valueChange)="sel_platform=$event"></app-input>
-
       <button type="button"
               *ngIf="tokens.length>0"
               mat-raised-button mat-button
               (click)="clear()">
         Enlever les NFTs
       </button>
+
+      <app-input [options]="network.stockage_available"
+                 width="220px" *ngIf="user.advance_mode"
+                 label="Stockage visuels & metadata"
+                 [value]="sel_platform"
+                 (valueChange)="sel_platform=$event"></app-input>
+
 
       <button type="button" *ngIf="tokens.length>0"
               mat-raised-button mat-button
@@ -99,6 +94,12 @@
               (click)="export_to_csv()">
         Exporter sous Excel
       </button>
+
+      <app-upload-file (uploaded)="batch_import($event)" *ngIf="tokens.length==0"
+                       width="100px" [maxsize]="100000000"
+                       extensions=".xlsx,.xls,.csv">
+        Importer Excel
+      </app-upload-file>
     </div>
 
   </mat-expansion-panel>
@@ -112,8 +113,8 @@
       <button type="button" [disabled]="mintable()==0"
               mat-raised-button *ngIf="tokens.length>0"
               color="primary" style="margin: 50px;"
-              (click)="confirm_mint()">
-        Tout miner
+              (click)="confirm_mint(0,mintable())">
+        Miner {{mintable()}} NFTs
       </button>
 
       <app-input
@@ -123,16 +124,15 @@
               [value]="network.network" value_field="value"
               (valueChange)="updateChain($event)"></app-input>
 
-
       <app-selkey *ngIf="network.network"
                   style="width: 350px;"
+                  [key]="sel_key"
                   label="Sélectionnez un mineur"
                   (onChange)="updateUser($event)"
                   [network]="network.network"></app-selkey>
 
       <div *ngIf="sel_key">
         <app-input label="Collection utilisée"
-                   *ngIf="network.network && network.isElrond()"
                    [value]="sel_collection" width="250px"
                    (valueChange)="changeCollection($event)" value_type="list"
                    [options]="user.collections">
@@ -140,7 +140,6 @@
 
         <button type="button" mat-icon-button
                 title="Créer une nouvelle collection"
-                *ngIf="network.isElrond()"
                 (click)="new_collection()">
           <mat-icon>add_circle</mat-icon>
         </button>
@@ -160,7 +159,7 @@
         </button>
 
         <app-input label="Nom de la collection"
-                   *ngIf="!network.isElrond()"
+                   *ngIf="network.isPolygon()"
                    [value]="collection_name" width="300px"
                    (valueChange)="collection_name=$event">
         </app-input>
@@ -385,7 +384,7 @@
         <mat-icon style="cursor: pointer" (click)="upload_token(token)"
                   title="upload du visuel"
                   *ngIf="token.visual.startsWith('data')">upload</mat-icon>
-        <mat-icon style="cursor: pointer" (click)="miner(token)"
+        <mat-icon style="cursor: pointer" (click)="confirm_mint(tokens.indexOf(token),1)"
                   title="minage du NFT"
                   *ngIf="isValide(token)=='' && !token.address">build</mat-icon>
         <mat-icon style="cursor: pointer" *ngIf="token.address && token.address.length>0"

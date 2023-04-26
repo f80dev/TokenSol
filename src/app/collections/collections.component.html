@@ -1,9 +1,9 @@
 <div class="mainform">
 
-  <div *ngIf="user.addr">
+
     <div class="titleform">Gestion des collections de <strong>{{user.addr | alias}}</strong> sur <strong>{{network.network}}</strong></div>
 
-    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;" *ngIf="network.isElrond()">
+    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;" *ngIf="!network.isPolygon()">
       <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
       <div style="width: fit-content;display: flex;flex-wrap:wrap;margin-left: 15px;">
         <app-input [value]="new_collection.name" (valueChange)="new_collection.name=$event"
@@ -32,7 +32,7 @@
                 color="primary"
                 (click)="create_collection()"
                 id="cmdBuild"
-                *ngIf="user.addr && user.balance>0 && message.length==0">
+                *ngIf="user.addr && message.length==0">
           Fabriquer
         </button>
 
@@ -113,10 +113,7 @@
         </td>
       </tr>
     </table>
-  </div>
-  <div *ngIf="!user.addr" class="color-warm">
-    Vous devez sélectionner un compte pour visualiser les collections
-  </div>
+
 
 
   <app-signature style="position: absolute;display: block; bottom: 5px;width: 350px;left: 5px;" faq="collections"></app-signature>

@@ -8,6 +8,7 @@
   [captureImageData]="true"
   imageType="image/jpeg"
   (click)="capture()"
+  (imageClick)="capture()"
   (initError)="webcamError()"
   (imageCapture)="handleImage($event)">
 </webcam><br>

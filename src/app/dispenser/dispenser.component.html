@@ -5,7 +5,7 @@
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0" style="width: 100%;font-size: 15px;text-align: center;">
-    <div class="mat-headline-5 color-accent">{{miner | alias}} cliquez sur le NFT à envoyer</div>
+<!--    <div class="mat-headline-5 color-accent" *ngIf="miner">{{miner.address | alias}} cliquez sur le NFT à envoyer</div>-->
     <br>
 
     <mat-expansion-panel [expanded]="false" style="max-width: 1000px;display: inline-block;" *ngIf="operation?.dispenser?.mailing_list">
@@ -36,7 +36,7 @@
       <div class="mat-body-2 color-primary" style="margin:5px;">{{nft.name}}</div>
 
       <app-reversebloc [image]="nft.visual" width="300px" height="300px" border_color="lightgray">
-        <div style="padding: 1%;color: black;" class="mat-body-1">
+        <div style="padding: 1%;color: black;overflow: hidden;" class="mat-body-1">
           <br>
           <table>
             <tr *ngIf="user.advance_mode" [cdkCopyToClipboard]="nft.address!"  style="cursor: copy;">
@@ -47,10 +47,12 @@
             <tr *ngIf="nft.collection">
               <td>Collection</td><td><span [title]="nft.collection!.description">{{nft.collection!.name}}</span></td>
             </tr>
-            <tr *ngIf="nft.supply>1">
+
+            <tr *ngIf="nft.balances[nft.miner.address]>=1">
               <td>Quantité<br>Price</td>
-              <td>{{nft.supply}}<br>{{nft.supply}}</td>
+              <td>{{nft.balances[nft.miner.address]}}<br>{{nft.price}}</td>
             </tr>
+
             <tr></tr>
             <tr *ngIf="user.advance_mode">
               <td>Mineur</td>
@@ -74,7 +76,7 @@
             <tr *ngIf="nft.creators.length>0" style="width: 100%;">
               <td>
                 Créateurs<br>
-                <table style="width: 100%;">
+                <table style="width: 90%;overflow: hidden;">
                   <tr  *ngFor="let creator of nft.creators">
                     <td>{{creator.address | alias}}</td><td style="text-align: right;">:{{creator.share}}%</td>
                   </tr>

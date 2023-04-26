@@ -9,10 +9,10 @@ from PIL import Image, ImageSequence
 from flaskr import log
 from flaskr.ArtEngine import ArtEngine, Sticker, Layer
 from flaskr.TokenForge import upload_on_platform
-from flaskr.Tools import generate_svg_from_fields, convert_image_to_animated, transfer_sequence_to_disk
+from flaskr.Tools import generate_svg_from_fields,  register_fonts
 from tests.test_tools import TEMP_TEST_DIR,RESSOURCE_TEST_DIR
 
-PLATFORM_LIST=["db-server-tokenforge","server","infura","nftstorage"] #manque "github-nfluentdev-tests"
+PLATFORM_LIST=["github-nfluentdev-storage-main","db-server-tokenforge","server","infura","nftstorage"] #manque ""
 
 IMAGES={
   "backgrounds":[
@@ -85,8 +85,10 @@ def get_image(url:str=None,section=None,index=-1) -> str:
     else:
       url=IMAGES[section][index]
 
+  log("Utilisation de "+url)
   if url.startswith("http"):return url
   if "/" in url: return url
+
   return RESSOURCE_TEST_DIR+url
 
 
@@ -199,6 +201,16 @@ def test_clone_svg(clone_filename="copie de svg.svg"):
   assert exists(TEMP_TEST_DIR+clone_filename)
 
 
+def test_paste_svg_on_jpeg():
+  clear_directory()
+  background=Sticker(image=get_image(section="backgrounds",index=0),work_dir=TEMP_TEST_DIR)
+  foreground=Sticker(image=get_image(section="svgs"),work_dir=TEMP_TEST_DIR)
+  rc=test_paste_images(background.image,foreground.image,"output.webp")
+  assert not rc is None,"Impossible de coller "+str(foreground)+" sur "+str(background)
+  assert exists(rc)
+
+
+
 def test_paste_multiple_format():
   clear_directory()
   for i in range(0,20):
@@ -211,7 +223,7 @@ def test_paste_multiple_format():
 
 
 
-def test_svg_treatment():
+def test_svg_treatment_1():
   clear_directory()
   foreground=Sticker(image=get_image(section="svgs"),work_dir=TEMP_TEST_DIR)
   rc:Image=foreground.render_svg()
@@ -219,21 +231,88 @@ def test_svg_treatment():
   rc.save(open(TEMP_TEST_DIR+"test.gif","wb"))
 
 
+def test_load_svg_from_web():
+  clear_directory()
+  svg=Sticker(image="https://nfluent.io/assets/certificat_authenticite_black.svg",work_dir=TEMP_TEST_DIR)
+  svg.render_svg(dictionnary={"title":"ceci est le titre"}).save(open(TEMP_TEST_DIR+"test.gif","wb"))
+  assert not svg is None
 
 
-def test_generate_collection(w=500,h=500,limit=3,dir=TEMP_TEST_DIR,
+def test_position_svg():
+  clear_directory()
+  svg=Sticker(image=RESSOURCE_TEST_DIR+"certificat_authenticite_black.svg",work_dir=TEMP_TEST_DIR)
+  svg.render_svg(dictionnary={"title":"ceci est le titre"}).save(open(TEMP_TEST_DIR+"test.gif","wb"))
+  assert not svg is None
+
+
+def test_register_fonts():
+  register_fonts(20)
+
+
+def test_conversion_font_svg():
+  clear_directory()
+  artEngine:ArtEngine=ArtEngine()
+  register_fonts(limit=5)
+  svg=Sticker(image=RESSOURCE_TEST_DIR+"font_test.svg",work_dir=TEMP_TEST_DIR)
+  svg.render_svg().save(open(TEMP_TEST_DIR+"test.gif","wb"))
+  assert not svg is None
+
+
+
+
+def test_svg_treatment_2():
+  clear_directory()
+  background=Sticker(image="https://images.unsplash.com/photo-1586075010923-2dd4570fb338?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDR8fHBhcGVyfGVufDB8fHx8MTY3OTA0ODczMA&ixlib=rb-4.0.3",work_dir=TEMP_TEST_DIR)
+  background.image=background.image.convert("RGBA").crop((0,0,400,400))
+  svg=Sticker(image="https://nfluent.io/assets/certificat_authenticite_black.svg",work_dir=TEMP_TEST_DIR)
+  foreground=Sticker(image=svg.render_svg(dictionnary={"title":"ceci est le titre"}))
+  background.fusion(foreground)
+  background.save(open(TEMP_TEST_DIR+"test.gif","wb"))
+
+
+
+def test_edit_serie():
+  """
+  permet de vérifier le bon fonctionnement du système de génération de série sur la base d'une suite de type a|b|c|d
+  :return:
+  """
+  clear_directory()
+  register_fonts()
+  svg=Sticker(image=RESSOURCE_TEST_DIR+"access_card.svg")
+  images=generate_svg_from_fields(svg.text["text"])
+  for i,image in enumerate(images):
+    svg=Sticker(text=image)
+    svg.render_svg().save(open(TEMP_TEST_DIR+"test"+str(i)+".png","wb"))
+
+
+
+def test_generate_collection(w=500,h=500,limit=5,dir=TEMP_TEST_DIR,
                              data={"title":"NFT de test","description":"ceci est la description"},
                              sections=["backgrounds","stickers"],
                              target_platform="server",collection_name="collection_test",seed=19):
   clear_directory(dir)
   random.seed(seed)
-  artEngine=ArtEngine(collection_name,work_dir=TEMP_TEST_DIR)
+  artEngine=ArtEngine(collection_name,work_dir=dir)
   for section in sections:
     layer=test_create_layer(section)
     artEngine.add(layer)
   rc=artEngine.generate(dir,limit,seed_generator=seed,width=w,height=h,data=data,target_platform=target_platform,export_metadata=True)
   assert not rc is None
   return rc
+
+
+def test_composition(dir=TEMP_TEST_DIR,sections=["backgrounds","stickers"],limit=4):
+  clear_directory(dir)
+  artEngine=ArtEngine("composition_test",work_dir=dir)
+  for section in sections:
+    layer=test_create_layer(section)
+    artEngine.add(layer)
+
+  seq=artEngine.generate_sequences(limit=limit)
+  for idx,s in enumerate(seq):
+    image=artEngine.compose(s)
+    image.save(dir+"file_"+str(idx)+".webp")
+
 
 
 def test_generate_with_xmp(w=500,h=500,dir=TEMP_TEST_DIR,

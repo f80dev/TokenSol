@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
-import {$$, CryptoKey, isLocal} from "../tools";
-import {WalletConnectProvider} from "@elrondnetwork/erdjs-wallet-connect-provider/out";
+import {$$, CryptoKey, detect_network, isLocal} from "../tools";
 import {NetworkService} from "./network.service";
 import {Collection} from "../operation";
 import {Subject} from "rxjs";
 import {environment} from "../environments/environment";
+import {Merchant} from "./payment/payment.component";
 
 export interface UserProfil {
   routes:string[]
@@ -17,18 +17,28 @@ export interface UserProfil {
   message:string
 }
 
+//Le user est connecté si son address blockchain est vérifiée ou si son email est vérifié
+
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  addr: string = "";
+  addr: string = "";              //Adresse sur la blockchain
 
   addr_change = new Subject<string>();
   profil_change = new Subject<UserProfil>();
 
+  buy_method: "crypto" | "fiat" | "" = "";
+
+  //Ces prix sont utilisables dans différents services: minage, signature de document, ...
+  price:number=0;
+  price_in_fiat:number=0;
+
   key: CryptoKey | undefined;
-  provider: WalletConnectProvider | undefined;
+  provider: any | undefined;
   collections: Collection[] = [];
+
+  merchant: Merchant=environment.merchant;
 
   profil: UserProfil = {
     routes: ["/help", "/about", "/"],
@@ -48,6 +58,8 @@ export class UserService {
   advance_mode: boolean = false;
   toolbar_visible: boolean = true;
   appname: string = environment.appname;
+  verified_address: Boolean=false;
+  wallet_provider: any;                   //Instance d'acces au wallet distant
 
   constructor(
       private httpClient: HttpClient,
@@ -57,13 +69,10 @@ export class UserService {
 
   }
 
-  isConnected(strong: boolean = false) {
-    let rc = this.profil.email.length > 0;
-    // if(isLocal(environment.appli)){
-    //   this.strong=true;
-    //   rc=true;
-    // }
-    return rc;
+  isConnected(_with : "wallet" | "email" | "" ="") : boolean {
+    if(_with!="wallet" && this.profil && this.profil.email.length>0 && this.verified_address)return true;
+    if(_with!="email" && this.wallet_provider!=undefined && this.addr.length>0)return true;
+    return false;
   }
 
 
@@ -103,22 +112,41 @@ export class UserService {
     });
   }
 
-  init(addr: string | undefined, network: string, with_collections = true) {
+  async init_wallet_provider(wallet_provider:any,addr:string=""){
+    if(wallet_provider!=undefined){
+      this.wallet_provider=wallet_provider;
+      let r=await this.init(
+          addr.length>0 ? addr : wallet_provider.account.address,
+          "",
+          false,
+          true
+      )
+      this.addr_change.next(this.addr);
+    }
+  }
+
+  init(addr: string, network: string="", with_collections = true,verified_address=false,email="") {
     return new Promise((resolve, reject) => {
-      if(!addr)reject()
+      if(!addr)reject();
       else{
-        this.network.get_account(addr, network).subscribe((result: any) => {
+        if(network.length==0)network=detect_network(addr!);
+        if(email.length>0)this.profil.email=email;
+        this.verified_address=verified_address;
+        this.network.get_account(addr!, network).subscribe((result: any) => {
           let r=result[0];
           this.balance = r.amount;
-          this.key = {
-            balance: r.balance,
-            encrypt: "",
-            explorer: "",
-            name: r.name,
-            privatekey: r.private_key,
-            address: r.address,
-            qrcode: "",
-            unity: r.unity
+          this.key=this.network.find_key_by_address(r.address);
+          if(!this.key){
+            this.key = {
+              balance: r.balance,
+              encrypt: "",
+              explorer: "",
+              name: r.name,
+              privatekey: r.private_key,
+              address: r.address,
+              qrcode: "",
+              unity: r.unity
+            }
           }
           this.addr = r.address;
           if (with_collections) {
@@ -221,7 +249,7 @@ export class UserService {
   }
 
   refresh_balance() {
-    return this.network.getBalance(this.addr).subscribe((balance: any) => {
+    return this.network.getBalance(this.addr,this.network.network).subscribe((balance: any) => {
       this.balance = balance
     });
   }

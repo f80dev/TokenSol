@@ -4,16 +4,16 @@
 @include mat.core();
 
 @font-face {
-        font-family: Helvetica;
-        src: url("assets/HelveticaInseratLT.ttf") format("ttf");
+  font-family: Helvetica;
+  src: url("assets/HelveticaInseratLT.ttf") format("ttf");
 }
 
 
-html {font-size: 1.2vw;}
-@media(max-width: 1500px) { html {font-size: 1.4vw;} }
+html {font-size: 1vw;}
+@media(max-width: 1500px) { html {font-size: 1.3vw;} }
 @media(max-width: 1000px) { html {font-size: 1.8vw;} }
 @media(max-width: 800px) { html {font-size: 2.2vw;} }
-@media(max-width: 400px) { html {font-size: 2.6vw;} }
+@media(max-width: 500px) { html {font-size: 3.3vw;} }
 
 //voir https://material.angular.io/guide/typography#typography-config
 /* Argument de mat.define-typography-level
@@ -30,8 +30,8 @@ $nfluent-typography: mat.define-typography-config(
         $headline-2: mat.define-typography-level(3.8rem, 3.8rem, 500, mediasans-bold),        //H2
         $headline-3: mat.define-typography-level(2.5rem, 2.5rem, 500, mediasans-regular),     //H3
         $headline-4: mat.define-typography-level(2rem, 2rem, 500,mediasans-regular),
-        $headline-5:  mat.define-typography-level(1.1rem, 1.1rem, 300, $font-family: mediasans-regular),
-        $headline-6:  mat.define-typography-level(0.9rem, 0.9rem, 300, $font-family: GilroyRegular),
+        $headline-5:  mat.define-typography-level(1.3rem, 1.3rem, 300, $font-family: mediasans-regular),
+        $headline-6:  mat.define-typography-level(1.1rem, 1.1rem, 300, $font-family: GilroyRegular),
         $subtitle-1: mat.define-typography-level(18px, 18px, 500, GilroyRegular),
         $subtitle-2: mat.define-typography-level(16px, 16px, 400, GilroyRegular),
         $body-2: mat.define-typography-level(14px, 14px, 500, $font-family: GilroyRegular,$letter-spacing: -0.03em),
@@ -39,6 +39,9 @@ $nfluent-typography: mat.define-typography-config(
         $button: mat.define-typography-level(16px, 16px, 500, GilroyRegular, $letter-spacing: -0.03em),
         $caption: mat.define-typography-level(14px, 14px, 500, GilroyRegular, $letter-spacing: -0.03em)
 );
+
+
+
 
 
 
@@ -94,12 +97,10 @@ $nfluent-green-palette :(
 );
 
 
-
 $nfluent-primary-color: mat.define-palette($nfluent-indigo-palette, 700);
 $nfluent-secondary-color: mat.define-palette($nfluent-green-palette, 700);
 $nfluent-accent-color:mat.define-palette($nfluent-green-palette, 500);
 $nfluent-warn-color:mat.define-palette(mat.$red-palette, A200, A100, A400);
-
 
 $nfluent-theme: mat.define-light-theme((
         color: (
@@ -108,8 +109,17 @@ $nfluent-theme: mat.define-light-theme((
                 accent: $nfluent-accent-color,
                 warn: $nfluent-warn-color,
         ),
-        background:$nfluent-primary-color,
         typography: $nfluent-typography,
+));
+
+$nfluent-dark-theme: mat.define-dark-theme((
+        color: (
+                primary:$nfluent-primary-color,
+                secondary:$nfluent-secondary-color,
+                accent: $nfluent-accent-color,
+                warn: $nfluent-warn-color
+        ),
+        typography: $nfluent-typography
 ));
 
 
@@ -127,8 +137,6 @@ ul li::before {
   color: #00e726;
 }
 
-
-
 .greenline {
   z-index: -1;
   width: 100%;
@@ -138,15 +146,6 @@ ul li::before {
   background-color: #00e726 !important;
 }
 
-$nfluent-dark-theme: mat.define-dark-theme((
-        color: (
-                primary:$nfluent-primary-color,
-                secondary:#ffffff,
-                accent: $nfluent-accent-color,
-                warn: $nfluent-warn-color
-        ),
-        typography: $nfluent-typography
-));
 
 
 // Emit styles for MatButton based on `$my-theme`. Because the configuration
@@ -155,28 +154,28 @@ $nfluent-dark-theme: mat.define-dark-theme((
 @include mat.all-component-themes($nfluent-theme);
 @include mat.all-component-typographies($nfluent-typography);
 
-
-
+//voir https://material.angular.io/guide/theming#application-background-color
 body,html {
-        margin: 0;
-        padding: 0;
-        color: mat.get-color-from-palette($nfluent-primary-color, 700);
+  margin: 0;
+  padding: 0;
+  color: mat.get-color-from-palette($nfluent-primary-color, 700);
+  background-color: white;
 }
 
 .color-accent {
-        color: mat.get-color-from-palette($nfluent-accent-color, 500);
+  color: mat.get-color-from-palette($nfluent-accent-color, 500);
 }
 
 .color-warm {
-        color: mat.get-color-from-palette(mat.$red-palette, 500);
+  color: mat.get-color-from-palette(mat.$red-palette, 500);
 }
 
 .color-primary {
-        color: mat.get-color-from-palette($nfluent-primary-color, 500);
+  color: mat.get-color-from-palette($nfluent-primary-color, 500);
 }
 
 .colorize-accent {
-        filter: url('#teal-lightgreen');
+  filter: url('#teal-lightgreen');
 }
 
 .sidemenu {
@@ -185,6 +184,27 @@ body,html {
 }
 
 .colorize-primary {
-        filter: url('#purple-sepioa');
+  filter: url('#purple-sepioa');
 }
+
+.blackform {
+  color: white;
+  background-color: mat.get-color-from-palette($nfluent-indigo-palette,900);
+}
+
+.titleform {
+  @extend .mat-headline-5, .color-primary;
+  margin: 20px;
+}
+
+.subtitleform {
+  @extend .mat-subtitle-1, .color-primary;
+  margin-top: -10px;
+  margin-bottom: 10px;
+}
+
+.background-component {
+  background-color: mat.get-color-from-palette(mat.$grey-palette, 800);
+}
+
 

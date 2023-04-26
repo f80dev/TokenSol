@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {UserService} from "../user.service";
-import {setParams, showError, showMessage} from "../../tools";
+import {$$, analyse_params, getParams, setParams, showError, showMessage} from "../../tools";
 import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
 import {Clipboard} from "@angular/cdk/clipboard";
@@ -8,6 +8,7 @@ import {NgNavigatorShareService} from "ng-navigator-share";
 import {Router} from "@angular/router";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
+import {MatSnackBar} from "@angular/material/snack-bar";
 
 interface ConfigServer {
   Server:string
@@ -39,28 +40,33 @@ export class AdminComponent implements OnInit {
   activity_report="";
   debug_mode: boolean=false;
   first_install:  boolean=true;
-  server_config: ConfigServer | undefined;
-  creator_title: string = "Générateur de visuels NFTs";
+  server_config: any ;
+
   code_creator: string = "";
   code_miner: string = "";
-  intro_visual: string = "https://cdn.pixabay.com/photo/2018/02/06/22/43/painting-3135875_960_720.jpg";
-  intro_claim: string = "Fabriquer vos séries NFT en quelques minutes";
-  intro_appname:string="TokenForge Design";
   networks: any;
   stockages:any;
-  sel_networks: string[]=[];
-  sel_stockage:string[]=["infura"];
-  sel_stockage_document:string[]=["infura"];
   urls: any[] = [];
   w="550px";
   max_url_len: number=0;
-  sel_key: string | undefined;
-  first_network: string="";
-  sel_col: string="";
+
+  config_appli:any={
+    intro_visual: "https://cdn.pixabay.com/photo/2018/02/06/22/43/painting-3135875_960_720.jpg",
+    intro_claim: "Fabriquer vos séries NFT en quelques minutes",
+    intro_appname:"TokenForge Design",
+    creator_title: "Générateur de visuels NFTs",
+    sel_stockage:["infura"],
+    sel_key:"",
+    sel_col:"",
+    sel_stockage_document:["infura"],
+    sel_networks:[]
+  };
+  sel_url: any=null;
 
 
   constructor(
     public user:UserService,
+    public toast:MatSnackBar,
     public network:NetworkService,
     public clipboard:Clipboard,
     public dialog:MatDialog,
@@ -73,20 +79,13 @@ export class AdminComponent implements OnInit {
   ngOnInit(): void {
 
     this.user.login("Se connecter pour accèder aux commandes d'administration");
-    this.load_values();
     this.network.info_server().subscribe((infos:any)=>{
       this.server_config=infos;
       this.networks=this.network.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
-      this.sel_networks.push(this.networks[0]);
-      this.sel_networks.push(this.networks[1]);
-      this.first_network=this.networks[0]["value"];
-      this.stockages=[
-          {label:"NFTStorage",value:"nftstorage"},
-          {label:"Infura",value:"infura"},
-          {label:"Serveur",value:"server"},
-          {label:"Database",value:"db-server-nfluent"}
-      ]
-    },(err)=>{
+      this.stockages=this.network.stockage_available;
+
+      this.load_values();
+    },(err:any)=>{
       showMessage(this,"Problème de connexion serveur")
       showError(this,err);
     })
@@ -98,21 +97,24 @@ export class AdminComponent implements OnInit {
     this.db_addr=localStorage.getItem("db_addr") || this.db_addr;
     this.db_login=localStorage.getItem("db_login") || this.db_login;
     this.db_password=localStorage.getItem("db_password") || this.db_password;
-    this.sel_key=localStorage.getItem("sel_key") || this.sel_key;
+    if(localStorage.getItem("config_appli")){
+      this.config_appli= JSON.parse(localStorage.getItem("config_appli") || "{}");
+      $$("Récupération des valeurs",this.config_appli);
+      if(!this.config_appli.sel_stockage){this.config_appli.sel_stockage=this.stockages[0];}
+      if(!this.config_appli.sel_stockage_document)this.config_appli.sel_stockage_document=this.stockages[0];
+    }
     this.refresh()
   }
 
   refresh(saveValue=true) {
+    //if(this.config_appli.appli_addr.endsWith("/"))this.config_appli.appli_addr=this.config_appli.appli_addr.substring(0,this.config_appli.appli_addr.length-1);
     if(saveValue){
       localStorage.setItem("server_addr",this.server_addr);
       localStorage.setItem("appli_addr",this.appli_addr);
       localStorage.setItem("db_addr",this.db_addr);
       localStorage.setItem("db_login",this.db_login);
       localStorage.setItem("db_password",this.db_password);
-      localStorage.setItem("networks",this.sel_networks.join(","))
-      localStorage.setItem("stockage",this.sel_stockage.join(","))
-      localStorage.setItem("sel_key",this.sel_key || "");
-      localStorage.setItem("stockage_document",this.sel_stockage_document.join(","))
+      localStorage.setItem("config_appli",JSON.stringify(this.config_appli))
     }
     this.update_code_creator()
     let port=this.server_addr.indexOf(":")>1 ? this.server_addr.split(":")[2] : "80";
@@ -159,9 +161,9 @@ export class AdminComponent implements OnInit {
 
   }
 
-  open_appli(url:any) {
-    this.copy_appli(url);
-    open(url.url,"Test application")
+  open_appli(obj:any) {
+    this.copy_appli(obj.url);
+    open(obj.url,"Test application")
   }
 
 
@@ -169,24 +171,31 @@ export class AdminComponent implements OnInit {
     this.urls=[];
     if(this.appli_addr.endsWith("/"))this.appli_addr=this.appli_addr.substring(0,this.appli_addr.length-1);
     let url_len=0;
-    if(this.sel_networks.length>0){
-      let first_network:any=this.sel_networks[0];
-      this.first_network=first_network["value"];
-    }else{
-      this.first_network="";
-    }
+    let first_network=this.network.networks_available[0];
+    if(this.config_appli.sel_networks.length>0)first_network=this.config_appli.sel_networks[0];
 
+    //let networks=this.config_appli.sel_networks.map((x:any)=>{return x.value})
 
-    let networks=this.sel_networks.map((x:any)=>{return(x.value)});
     var obj:any={
       toolbar:false,
-      title_form:this.creator_title,
-      claim:this.intro_claim,
-      visual:this.intro_visual,
-      appname:this.intro_appname,
-      networks:networks.join(","),
-      stockage:this.sel_stockage.join(","),
-      stockage_document:this.sel_stockage_document.join(",")
+      title_form:this.config_appli.creator_title,
+      claim:this.config_appli.intro_claim,
+      visual:this.config_appli.intro_visual,
+      appname:this.config_appli.intro_appname,
+      networks:this.config_appli.sel_networks.join(","),
+      stockage:this.config_appli.sel_stockage,
+      stockage_document:this.config_appli.sel_stockage_document,
+      merchant:{
+        name:this.config_appli.merchant_name,
+        currency:this.config_appli.currency,
+        country:this.config_appli.country,
+        id:this.config_appli.merchant_id,
+        wallet:{
+          address:this.config_appli.wallet.address,
+          unity:this.config_appli.wallet.unity,
+          token:this.config_appli.money,
+        }
+      }
     }
 
     var simple={
@@ -196,47 +205,59 @@ export class AdminComponent implements OnInit {
     this.urls.push({
       title:"Création des NFT avec minage",
       description: "Ouverture sur la création de NFT",
-      url:this.appli_addr+"/creator?"+setParams(simple)
+      url:this.config_appli.appli_addr+"/creator?"+setParams(simple),
+      show_key:true,
+      max_blockchain:2
     })
 
     simple.networks=[]
     this.urls.push({
       title:"Création des NFT sans minage",
       description: "Ouverture sur la création de NFT",
-      url:this.appli_addr+"/creator?"+setParams(simple)
+      url:this.config_appli.appli_addr+"/creator?"+setParams(simple),
+      show_key:false,
+      max_blockchain:0
     })
 
     this.urls.push({
       title:"Minage des NFT",
       description: "Ouverture sur le minage, Une seul plateforme de stockage",
-      url:this.appli_addr+"/mint?"+setParams(obj)
+      url:this.config_appli.appli_addr+"/mint?"+setParams(obj),
+      show_key:true,
+      max_blockchain:2
     })
     url_len=Math.max(url_len,setParams(obj).length);
 
 
     let miner=""
-    if(this.sel_key)miner=this.sel_key.indexOf(":")==-1 ? this.sel_key : this.sel_key.split(":")[1]
+    if(this.config_appli.sel_key)miner=this.config_appli.sel_key.indexOf(":")==-1 ? this.config_appli.sel_key : this.config_appli.sel_key.split(":")[1]
+    //Tokendoc
     this.urls.push({
       title:"TokenDoc",
       description:"application de tokenisation de document",
-      url:this.appli_addr+"/?"+setParams({
+      url:this.config_appli.appli_addr+"/tokendoc?"+setParams({
         stockage:obj.stockage,
         stockage_document:obj.stockage_document,
-        network:this.first_network,
+        price:this.config_appli.price,
+        fiat_price:this.config_appli.fiat_price,
+        network:first_network,
         miner: miner,
-        claim: this.intro_claim,
-        appname:this.intro_appname,
-        collection:this.sel_col
-      })
+        claim: this.config_appli.intro_claim,
+        appname:this.config_appli.intro_appname,
+        collection:this.config_appli.sel_col,
+      }),
+      max_blockchain:1,
+      show_key:true
     })
 
     delete obj.stockage;
     delete obj.stockage_document;
     obj.toolbar=true;
     this.urls.push({
-      title:this.intro_appname,
+      title:this.config_appli.intro_appname,
       description: "Application standard mais rebranding",
-      url:this.appli_addr+"/?"+setParams(obj)
+      url:this.appli_addr+"/?"+setParams(obj),
+      max_blockchain:2
     })
     url_len=Math.max(url_len,setParams(obj).length);
 
@@ -245,7 +266,7 @@ export class AdminComponent implements OnInit {
     this.urls.push({
       title:obj.appname,
       description: "Application standard",
-      url:this.appli_addr+"/?"+setParams(obj)
+      url:this.config_appli.appli_addr+"/?"+setParams(obj),
     })
     url_len=Math.max(url_len,setParams(obj).length);
 
@@ -254,12 +275,30 @@ export class AdminComponent implements OnInit {
     this.urls.push({
       title:obj.appname,
       description: "application standard limitée aux Devnet",
-      url:this.appli_addr+"/?"+setParams(obj)
+      url:this.config_appli.appli_addr+"/?"+setParams(obj),
+      show_key:false,
+      max_blockchain:2
+    })
+
+    obj.appname="NFTlive Devnet";
+    obj.networks="elrond-devnet,polygon-devnet"
+    this.urls.push({
+      title:obj.appname,
+      description: "NFTLive limitée aux Devnet",
+      url:this.config_appli.appli_addr+"/nftlive/?"+setParams(obj),
+      show_key:true,
+      max_blockchain:1
     })
     url_len=Math.max(url_len,setParams(obj).length);
 
+    for(let url of this.urls){
+      let p=url.url.split("p=")[1]
+      p=analyse_params(decodeURIComponent(p));
+      url.read_params=JSON.stringify(p);
+    }
 
     this.max_url_len=url_len;
+    if(!this.sel_url)this.sel_url=this.urls[0];
   }
 
   copy_appli(url: any) {
@@ -276,7 +315,7 @@ export class AdminComponent implements OnInit {
   }
 
   update_key($event: any) {
-    this.sel_key=$event;
+    this.config_appli.sel_key=$event;
   }
 
   navigate_to_key() {
@@ -290,4 +329,24 @@ export class AdminComponent implements OnInit {
           this.refresh(true);
         })
     }
+
+  search_intro_image() {
+    _prompt(this,"Recherche d'images","painting",
+        "Votre requête en quelques mots en ANGLAIS de préférence",
+        "text","Rechercher", "Annuler",false).then((query:string)=>{
+
+      this.network.search_images(query,false).subscribe((r:any)=>{
+        if(r){
+          _prompt(this,"Choisissez une images","","","images","Sélectionner","Annuler",false,r.images).then((images:string)=>{
+            this.config_appli.intro_visual=images[0];
+          })
+        }
+      })
+    })
+
+  }
+
+  informe_copy() {
+    showMessage(this,"Lien disponible dans le presse-papier")
+  }
 }

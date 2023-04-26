@@ -1,0 +1,21 @@
+//lire https://blog.thoughtram.io/angular/2017/05/23/custom-themes-with-angular-material.html
+//version 0.4 - mise a jour pour Angular 15 - 25/01/2023
+@use '@angular/material' as mat;
+@include mat.core();
+@import "nfluent";
+
+//voir https://material.angular.io/guide/theming#application-background-color
+body,html {
+  margin: 0;
+  padding: 0;
+  background-color: #2a2a2a;
+  color: white;
+}
+
+
+// Emit styles for MatButton based on `$my-theme`. Because the configuration
+// passed to `define-light-theme` omits typography, `button-theme` will not
+// emit any typography styles.
+@include mat.all-component-themes($nfluent-dark-theme);
+
+

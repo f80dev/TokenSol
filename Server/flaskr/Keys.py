@@ -13,9 +13,9 @@ class Key(object):
   balance=0
   explorer=""
 
-  def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None, encrypted=""):
+  def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None, encrypted="",explorer=""):
     if not obj is None and "encrypt" in obj: encrypted=obj["encrypt"]
-    if len(encrypted)>0:
+    if not encrypted is None and len(encrypted)>0:
       if ":" in encrypted:encrypted=encrypted.split(":")[1]
       decrypted=decrypt(encrypted)
       if decrypted.startswith("{"): obj=json.loads(decrypted)
@@ -35,6 +35,7 @@ class Key(object):
 
     self.name=name
     self.seed=seed
+    self.explorer=explorer
 
     if len(secret_key)>150:
       secret_key=decrypt(base64.b64decode(secret_key))

@@ -10,9 +10,9 @@ export const environment = {
   appli:"https://tokenforge.devnet.nfluent.io",
   wallet:"https://wallet.nfluent.io",
   website:"https://nfluent.io",
-  stockage: "nftstorage,infura",
-  stockage_document: "infura,server",
-  networks_available:"elrond-devnet,polygon-devnet"
+  stockage: "nftstorage,infura,github-nfluentdev-storage-main",
+  stockage_document: "github-nfluentdev-storage-main,infura,server",
+  networks_available:"elrond-devnet,polygon-devnet,db-server-nfluent"
 };
 
 //server:"https://server.f80lab.com:4242",

@@ -21,37 +21,47 @@ import {Router} from "@angular/router";
   templateUrl: './selkey.component.html',
   styleUrls: ['./selkey.component.css']
 })
-export class SelkeyComponent implements AfterViewInit {
+export class SelkeyComponent implements AfterViewInit,OnChanges {
 
   @Input("network") network:string="";
   @Input() label:string="Clés disponibles";
+  @Input("key") sel_key:CryptoKey | undefined;
   @Output("onChange") onAddrChange:EventEmitter<CryptoKey>=new EventEmitter();
 
-  sel_key: CryptoKey | undefined;
+
   constructor(public network_service:NetworkService,
               public dialog:MatDialog,
               public router:Router,
               public user:UserService) {
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if(changes["sel_key"] && changes["sel_key"].previousValue!=changes["sel_key"].currentValue){
+        let k=this.network_service.find_key_by_address(changes["sel_key"].currentValue.address)
+        if(k)this.sel_key=this.network_service.keys[this.network_service.keys.indexOf(k)];
+    }
+  }
 
+
+
+
+  isFree(){
+    return this.network.indexOf("devnet")>-1 || this.network.startsWith("db-") || this.network.startsWith("file-");
+  }
 
   ngAfterViewInit(): void {
-    setTimeout(()=>{
-      if(localStorage.getItem("key")){
-        for(let k of this.network_service.keys){
-          if(k.address==localStorage.getItem("key"))
-            this.sel_key=k;
-        }
-      }
-    },500)
+      // for(let k of this.network_service.keys){
+      //   if(k.address==localStorage.getItem("key"))
+      //     this.sel_key=k;
+      // }
     }
 
 
-  onChangeKey(k: CryptoKey) {
-    this.sel_key=k;
-    localStorage.setItem("key",this.sel_key.address);
-    this.onAddrChange.emit(k);
+  onChangeKey(new_key:any) {
+    if(new_key){
+      localStorage.setItem("key",new_key.address);
+      this.onAddrChange.emit(new_key);
+    }
   }
 
 
@@ -60,6 +70,7 @@ export class SelkeyComponent implements AfterViewInit {
     this.network_service.encrypte_key("mykey",this.network,privatekey).subscribe((r:any)=>{
       let k=newCryptoKey(r.address,"mykey",privatekey)
       this.network_service.keys.push(k)
+      this.sel_key=k;
       this.onChangeKey(k);
     })
   }

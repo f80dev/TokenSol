@@ -163,7 +163,7 @@
     </mat-expansion-panel>
 
 
-    <mat-expansion-panel *ngIf="operation.sel_ope.lazy_mining"  [expanded]="false">
+    <mat-expansion-panel *ngIf="operation.sel_ope.mining"  [expanded]="false">
       <mat-expansion-panel-header  class="color-primary">Paramètres de minage et communication</mat-expansion-panel-header>
       <table>
         <tr>
@@ -174,8 +174,8 @@
         </tr>
         <tr>
           <td>
-            Content: {{operation.sel_ope.lazy_mining.content_storage}}<br>
-            Metadata: {{operation.sel_ope.lazy_mining.metadata_storage}}<br>
+            Content: {{operation.sel_ope.mining.content_storage}}<br>
+            Metadata: {{operation.sel_ope.mining.metadata_storage}}<br>
           </td>
           <td>
             <strong>Mail envoyer pour l'ouverture d'un wallet:</strong><br>
@@ -193,7 +193,7 @@
           </td>
 
           <td>
-            <div *ngFor="let network of operation.sel_ope.lazy_mining.networks">
+            <div *ngFor="let network of operation.sel_ope.mining.networks">
               <strong>{{network.network}}:</strong>
               <ul>
                 <li>Miner: {{network.miner}}</li>
@@ -219,10 +219,10 @@
         <tr>
           <td>
             Si l'utilisateur fournit un email:<br>
-            <ul *ngIf="operation.sel_ope!.lazy_mining && operation.sel_ope!.lazy_mining!.networks!.length>0">
-              <li>Mineur: {{operation.sel_ope!.lazy_mining!.networks[0].miner}}</li>
-              <li>Network: {{operation.sel_ope!.lazy_mining!.networks[0].network}}</li>
-              <li>Collection: {{operation.sel_ope!.lazy_mining!.networks[0].collection}}</li>
+            <ul *ngIf="operation.sel_ope!.mining && operation.sel_ope!.mining!.networks!.length>0">
+              <li>Mineur: {{operation.sel_ope!.mining!.networks[0].miner}}</li>
+              <li>Network: {{operation.sel_ope!.mining!.networks[0].network}}</li>
+              <li>Collection: {{operation.sel_ope!.mining!.networks[0].collection}}</li>
             </ul>
           </td>
           <td [innerHTML]="showMessages('dispenser')"></td>
@@ -238,14 +238,14 @@
           </td>
           <td style="text-align: right;">
             <button type="button" mat-raised-button color="primary"
-                    (click)="open_appli('dispenser',{miner:user.addr,selfWalletConnexion:false})">
+                    (click)="open_appli('dispenser',{selfWalletConnexion:false})">
               Ouvrir
             </button>
 
             <br>
             <button type="button" mat-raised-button color="primary"
                     (click)="share_link(
-                        get_url_for_appli('dispenser',{miner:user.addr,selfWalletConnexion:false}),
+                        get_url_for_appli('dispenser',{selfWalletConnexion:false}),
                     'Distributeur pour '+operation.sel_ope.title,
                     'Ouvrir ce lien distribuer des NFTs')">
               Partager
@@ -328,7 +328,7 @@
           <td style="text-align: right;">
             <br>Vérifier bien que {{user.addr | alias}} dispose des droits pour distribuer les NFTs<br><br>
             <button type="button" mat-raised-button color="primary"
-                    (click)="open_appli('cm',{airdrop:false,miner:user.addr})">
+                    (click)="open_appli('cm',{airdrop:false})">
               Ouvrir
             </button>
             <br>

@@ -68,12 +68,12 @@ export class StoreComponent implements OnInit {
   }
 
   buy(nft: NFT) {
-    if(this.operation && this.operation.store && this.operation.lazy_mining){
+    if(this.operation && this.operation.store && this.operation.mining){
       let param=setParams({
         token:nft,
         ope:this.operation.id,
         selfWalletConnexion:true,
-        mining:this.operation.lazy_mining?.networks[0].miner,
+        mining:this.operation.mining?.networks[0].miner,
         section:"store"
       },"","")
       this.router.navigate(["dm"],{queryParams:{p:param}});

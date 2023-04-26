@@ -48,17 +48,17 @@
     </tr>
     <tr *ngFor="let ask of asks">
       <td *ngIf="user.advance_mode">{{ask.dtCreate*1000 | date:'dd/MM HH:mm'}} </td>
-      <td>{{ask.network}} </td>
+      <td>{{ask.target.network}} </td>
       <td>
         <ul>
           <li *ngFor="let s of ask.sources">
-            {{s.connexion}} / {{s.owner}} {{s.collections}}
+            {{s.connexion}} / {{s.miner?.address}} {{s.collections}}
           </li>
         </ul>
       </td>
       <td>{{ask.filter}}</td>
-      <td style="max-width: 200px;"><app-link [content]="ask.miner" [network]="network.network"></app-link></td>
-      <td style="max-width: 200px;">{{ask.collection_to_mint}} </td>
+      <td style="max-width: 200px;"><app-link [content]="ask.target.miner" [network]="network.network"></app-link></td>
+      <td style="max-width: 200px;">{{ask.target.collection}} </td>
       <td style="max-width: 200px;">{{ask.dest | alias | slice:0:20}} </td>
       <td>{{ask.dtStart*1000 | date:'dd/MM HH:mm'}}</td>
       <td><span *ngIf="ask.dtWork">{{ask.dtWork*1000 | date:'dd/MM HH:mm'}}</span></td>

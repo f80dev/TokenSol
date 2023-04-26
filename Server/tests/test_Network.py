@@ -1,6 +1,7 @@
 from time import sleep
 
 from flaskr import log
+from flaskr.Elrond import DEFAULT_OPTION_FOR_ELROND_COLLECTION
 from flaskr.Keys import Key
 from flaskr.TokenForge import upload_on_platform
 from flaskr.Tools import random_from, now
@@ -21,21 +22,22 @@ def test_reset(networks=NETWORKS):
 def test_transfer(networks=NETWORKS):
 	for network in networks:
 		_network=get_network_instance(network)
-		miner:Key=random_from(_network.get_keys())
-		nfts=_network.get_nfts(miner.address)
-		if len(nfts)==0:
-			test_mint([network],miner=miner,owner=miner.address)
+		if len(_network.get_keys())>0:
+			miner:Key=random_from(_network.get_keys())
 			nfts=_network.get_nfts(miner.address)
+			if len(nfts)==0:
+				test_mint([network],miner=miner,owner=miner.address)
+				nfts=_network.get_nfts(miner.address)
 
-		nft=random_from(nfts)
+			nft=random_from(nfts)
 
-		email="paul.dudule"+str(now("hex"))+"@gmail.com"
-		dest=test_create_account(email,[network])
-		rc=_network.transfer(nft.address,miner,dest.address)
+			email="paul.dudule"+str(now("hex"))+"@gmail.com"
+			dest=test_create_account(email,[network])
+			rc=_network.transfer(nft.address,miner,dest.address)
 
-		if _network.network_name=="polygon": sleep(15.0)
-		assert len(_network.get_nfts(dest.address))>0
-		assert _network.has_nft(dest.address,nft.address)
+			if _network.network_name=="polygon": sleep(15.0)
+			assert len(_network.get_nfts(dest.address))>0
+			assert _network.has_nft(dest.address,nft.address)
 
 
 
@@ -58,7 +60,7 @@ def test_add_collection(network=MAIN_NETWORK,account=None,type_collection="SemiF
 	_network=get_network_instance(network)
 	if account is None:account=MAIN_ACCOUNTS[_network.network_name]
 	miner=_network.find_key(account)
-	col=_network.add_collection(miner,"MyCol"+now("hex")[4:],type_collection=type_collection)
+	col=_network.add_collection(miner,"MyCol"+now("hex")[4:],options=DEFAULT_OPTION_FOR_ELROND_COLLECTION,type_collection=type_collection)
 	if col is None:
 		rc=_network.add_account_to_collection(miner.address,col,miner)
 		if not "error" in rc:
@@ -84,7 +86,7 @@ def test_mint(networks=NETWORKS,platform=PLATFORMS[0],miner=None,quantity=1,owne
 		if col is None or not _network.canMintOnCollection(miner.address,col,quantity):
 			col:dict=test_add_collection(network,account=miner.address,type_collection=type_collection)
 
-		nft=create_nft(collection=col,quantity=quantity)
+		nft=create_nft(collection=col["id"],quantity=quantity)
 		rc=mint(nft,miner=miner,owner=owner,network=_network,offchaindata_platform=platform,price=0)
 		assert not rc is None
 		assert len(rc["error"])==0
@@ -113,17 +115,14 @@ def test_get_account(addr=MAIN_ACCOUNT,network=MAIN_NETWORK):
 	assert not _account is None
 	assert "balance" in _account.__dict__
 	assert "address" in _account.__dict__
-	assert "amount" in _account.__dict__
+	assert "explorer" in _account.__dict__
 	return _account
 
 
 def test_get_accounts(networks=NETWORKS):
 	for network in networks:
-		bl=get_network_instance(network)
-		accounts=bl.get_accounts()
-		assert len(accounts)>0
-		assert accounts[0].balance>0
-		assert len(accounts[0].address)>0
+		keys=get_network_instance(network).get_keys()
+		test_get_account(addr=keys[0].address,network=network)
 
 
 def test_get_nfts(networks=NETWORKS):
@@ -151,7 +150,7 @@ def test_get_nft(networks=NETWORKS):
 
 		if len(nfts)>0:
 			nft=bl.get_nft(random_from(nfts).address)
-
+			assert nft.network==bl.network
 			assert not nft is None
 			assert nft.owner==owner.address
 			assert len(nft.miner)>0

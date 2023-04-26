@@ -1,0 +1,52 @@
+<div class="app-prompt modal-popup" style="padding: 5px;">
+    <div mat-dialog-title style="!important;width:100%;text-align: center;">{{data.title}}</div>
+    <div style="font-size: small;width:100%;text-align: center;color: darkgray"
+         *ngIf="data.subtitle.length>0" [innerHTML]="data.subtitle"></div>
+
+    <div mat-dialog-content style="width: 100%;margin-top: 10px;" *ngIf="buy_method.length==0">
+        <table style="width: 100%;text-align: center;">
+            <tr style="font-size:large">
+                <td style="width: 50%;">{{data.to_paid_in_fiat}} {{data.merchant.currency}}</td>
+                <td>{{data.to_paid}} {{data.merchant.wallet.unity}}</td>
+            </tr>
+            <tr>
+                <td style="width: 50%;"><button mat-raised-button color="primary" (click)="buy_method='fiat'">Payer</button></td>
+                <td><button mat-raised-button color="primary" (click)="set_payment_in_crypto()">Payer</button></td>
+            </tr>
+        </table>
+    </div>
+
+
+    <div mat-dialog-content style="text-align: center;margin: 20px;" *ngIf="buy_method.length>0">
+        <app-authent
+                *ngIf="!data.provider && buy_method=='crypto'"
+                size="250px"
+                [use_cookie]="false"
+                [showWalletConnect]="true"
+                [showWebWallet]="false"
+                [showExtensionWallet]="true"
+                (authent)="init_provider($event)"
+                style="margin-top: 10px;">
+        </app-authent>
+
+        <div class="mat-body-1" *ngIf="data.intro_payment.length>0">{{data.intro_payment}}</div><br>
+        <app-payment [merchant]="data.merchant"
+                     [user]="data.addr"
+                     [buy_method]="buy_method"
+                     [billing_to]="data.billing_to"
+                     [wallet_provider]="data.provider"
+                     [price]="data.to_paid"
+                     [title]="data.intro_payment"
+                     [fiat_price]="data.to_paid_in_fiat"
+                     (cancel)="close()"
+                     (paid)="onpaid($event)">
+        </app-payment>
+    </div>
+
+    <div mat-dialog-actions style="display: flex;justify-items: center;width: 100%;">
+        <button class="app-button" id="cmdCancel" style="display: inline-block;"
+                mat-raised-button [mat-dialog-close]="">Annuler</button>
+    </div>
+
+</div>
+

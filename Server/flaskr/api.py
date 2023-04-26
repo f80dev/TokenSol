@@ -27,8 +27,7 @@ from werkzeug.datastructures import FileStorage
 from yaml import dump, Dumper
 
 import config
-from flaskr import Keys
-from flaskr.ArtEngine import Layer, Sticker, ArtEngine
+from flaskr.ArtEngine import Layer, Sticker, ArtEngine, Element
 from flaskr.Elrond import Elrond, ELROND_KEY_DIR
 from flaskr.GitHubStorage import GithubStorage
 from flaskr.Keys import Key
@@ -42,10 +41,10 @@ from flaskr.StoreFile import StoreFile
 from flaskr.TokenForge import upload_on_platform
 from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, send, convert_to, returnError, setParams, \
   get_access_code, check_access_code, get_fonts, log, now, send_mail, open_html_file, encrypt, importer_file, \
-  idx, generate_svg_from_fields, get_filename_from_content, queryPixabay, queryUnsplash, isLocal, is_email
+  idx, generate_svg_from_fields, get_filename_from_content, queryPixabay, queryUnsplash, isLocal, is_email, get_hash, \
+  apply_replace
 from flaskr.TransactionsGraph import TransactionsGraph
-from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation, \
-  get_network_from_address, create_account
+from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation, create_account
 from flaskr.dao import DAO
 from flaskr.ipfs import IPFS
 from flaskr.secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRETS_FILE, SECRET_ACCESS_CODE, ADMIN_EMAIL, \
@@ -91,7 +90,8 @@ def api_upload_batch():
       collection=idx("collection",row,default_collection,header=header),
       tags=idx("tag,tags",row,"",header=header),
       symbol=idx("symbol,id,identifiant",row,"",header=header),
-      marketplace={"price":idx("price,prix,tarif",row,0,header=header),"quantity":idx("quantity,quantité,nombre",row,1,header=header)},
+      price=idx("price,prix,tarif",row,0,header=header),
+      supply=idx("quantity,quantité,nombre",row,1,header=header),
       royalties=idx("royalties,percent,part",row,0,header=header),
       attributes=idx("attributs,attributes,propriétés,properties,property",row,{},header=header)
     )
@@ -250,8 +250,11 @@ def layers(body=None):
             ext="image/webp"
             name=now("hex")
 
-          s=Sticker(name=name,image=elt["image"],ext=ext,work_dir=current_app.config["UPLOAD_FOLDER"],
+          try:
+            s=Sticker(name=name,image=elt["image"],ext=ext,work_dir=current_app.config["UPLOAD_FOLDER"],
                     dimension=(body["width"] if "width" in body else 500,body["height"] if "height" in body else 500))
+          except:
+            s=None
 
       if s:
         layer.add(s)
@@ -313,6 +316,130 @@ def api_get_collections(addresses:str):
   return jsonify(cols)
 
 
+@bp.route('/hashcode/',methods=["POST"])
+def get_hashcode():
+  rc=list()
+  for doc in request.json["docs"]:
+    document=None
+    if type(doc)==str:
+      document=bytes(doc,"utf8")
+      if doc.startswith("http"):
+        document=requests.get(doc).content
+
+      if doc.startswith("data:"):
+        document=base64.b64decode(doc.split("base64,")[1])
+
+    if document:
+      rc.append(get_hash(document))
+
+  return jsonify(rc)
+
+
+@bp.route('/get_sequence/',methods=["POST"])
+def get_sequence_collection():
+  work_dir=current_app.config["UPLOAD_FOLDER"]
+
+  layers=request.json["layers"]
+  seed=request.json["seed"] if "seed" in request.json else 0
+  config=None
+  if len(layers)==0:
+    if type(request.json["config"])==str:
+      confs=configs(request.json["config"],"dict")
+      config=confs[0]
+
+    if type(request.json["config"])==dict:
+      config=request.json["config"]
+
+  gen_seq=ArtEngine(name="temp_"+now("hex"),work_dir=work_dir,config=config,layers=layers)
+
+  limit=int(request.json["limit"] or 10)
+  log("Lancement de la génération de "+str(limit)+" images")
+  sequences=gen_seq.generate_sequences(limit=limit,_seed=seed)
+  return jsonify({"sequences":sequences})
+
+
+@bp.route('/get_composition/',methods=["POST"])
+def get_composition():
+
+  work_dir=current_app.config["UPLOAD_FOLDER"]
+
+  name=request.args.get("name","mycollection").replace(".png","")
+  gen=ArtEngine(name=name,
+                work_dir=current_app.config["UPLOAD_FOLDER"],
+                layers=request.json["layers"]
+                )
+  data=request.json["data"]
+  size=request.json["size"].split("x")
+  platform=request.json["platform"]
+  format=request.json["format"]
+  sequences=request.json["items"]
+  if len(sequences)==0: return returnError("Liste vide")
+  if type(sequences[0])!=list: sequences=[sequences]
+
+  log("Traitement de la data")
+  if type(data)!=dict:
+    s_data= urllib.parse.unquote(str(base64.b64decode(data), "utf8"))
+    _d=json.loads(s_data)
+  else:
+    _d=data
+
+  urls=[]
+  direct=[]
+  files=[]
+  for i,seq in enumerate(sequences):
+    image=gen.compose(seq,width=int(size[0]),height=int(size[1]),ext="webp",data=data,replacements={"__idx__":str(i)})
+    if "base64" in format:
+      b64=image.toBase64(format="webp")
+      direct.append(b64)
+
+    if "files" in format:
+      filename=image.get_filename()
+      if not exists(current_app.config["UPLOAD_FOLDER"]+filename): image.save(current_app.config["UPLOAD_FOLDER"]+filename)
+      urls.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+filename)
+      files.append(filename)
+
+  return jsonify({"images":direct,"urls":urls,"files":files})
+
+
+
+@bp.route('/create_zip/',methods=["POST"])
+def create_zip():
+
+  email=request.json["email"]
+  files=request.json["files"]
+
+  copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection","./README")
+  files.append("README")
+
+  filename="collection.7z"
+  archive_file=open(current_app.config["UPLOAD_FOLDER"]+filename,"wb") if is_email(email) else BytesIO()
+  with py7zr.SevenZipFile(archive_file, 'w') as archive:
+    for f in files:
+      if exists(current_app.config["UPLOAD_FOLDER"]+f):
+        archive.write(current_app.config["UPLOAD_FOLDER"]+f)
+
+  if is_email(email):
+    archive_file.close()
+    url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
+    send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection")
+    return jsonify({"message":"mail contenant la collection envoyé a "+email})
+  # else:
+  #   archive_file.seek(0)
+  #   return send_file(archive_file,as_attachment=True,download_name="collection.7z")
+
+
+
+
+@bp.route('/send_bill/',methods=["POST"])
+def send_bill():
+  body=request.json
+  model="mail_facture.html" if not "model" in body else body["model"]
+  replacements={"amount":body["amount"],"label":body["label"],"message":body["message"]}
+  rc=send_mail(open_html_file(model,replace=replacements,domain_appli=current_app.config["DOMAIN_APPLI"]),
+            _to=body["dest"],subject=body["subject"])
+  return jsonify({"message":"Facture envoyé"})
+
+
 
 
 @bp.route('/collection/',methods=["GET","POST"])
@@ -346,13 +473,9 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
 
   log("On détermine le nombre d'image maximum générable")
   max_item=1
-  must_register_font=False
   for layer in nft.layers:
     if layer.indexed:
       max_item=max_item*len(layer.elements)
-    for elt in layer.elements:
-      if elt.ext=="SVG":
-        must_register_font=True
 
   if type(data)!=dict:
     s_data= urllib.parse.unquote(str(base64.b64decode(data), "utf8"))
@@ -361,7 +484,6 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     _d=data
     s_data=""
 
-  if must_register_font: nft.register_fonts()
   work_dir=current_app.config["UPLOAD_FOLDER"]
 
   prefix="gen_"+now("random").replace("0x","")
@@ -376,16 +498,13 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
     ext=ext,
     attributes=json.loads(urllib.parse.unquote(str(base64.b64decode(attributes), "utf8"))) if len(attributes)>0 else [],
     prefix=prefix,
-    target_platform=target_platform if format=="upload" else "",
+    target_platform=target_platform,
     domain_server=current_app.config["DOMAIN_SERVER"]
   )
 
   if format.startswith("zip"):
-    email=format.replace("zip_","")
 
     #Ajout d'un fichier README d'explication à l'archive
-    copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection","./README")
-    files.append("./README")
 
     #Ajout du fichier de configuration
     if config:
@@ -399,21 +518,7 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
         files.append(config_filename)
         f.close()
 
-    filename="col_"+now("hex")+".zip"
-    archive_file=open(current_app.config["UPLOAD_FOLDER"]+filename,"wb") if is_email(email) else BytesIO()
-    with py7zr.SevenZipFile(archive_file, 'w') as archive:
-      for f in files:
-        archive.write(f)
-        os.remove(f)
 
-    if is_email(email):
-      archive_file.close()
-      url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
-      send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection")
-      return jsonify({"message":"mail contenant la collection envoyé a "+email})
-    else:
-      archive_file.seek(0)
-      return send_file(archive_file,as_attachment=True,download_name="collection.7z")
 
   else:
     archive_file=""
@@ -461,20 +566,26 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
 @bp.route('/send_photo_for_nftlive/',methods=['POST'])
 def send_photo_for_nftlive(conf_id:str=""):
 
-  if len(conf_id)==0: conf_id=request.json["config"]
-  config=configs(conf_id,format="dict")
-  if len(config)==0:
-    return returnError("Configuration "+conf_id+" introuvable")
-  else:
-    config=config[0]
+  if len(conf_id)==0:
+    conf=request.json["config"]
+    if type(conf)==str:
+      confs=configs(conf,format="dict",dictionnary={"DOMAIN_APPLI":current_app.config["DOMAIN_APPLI"]})
+      if len(confs)==0:
+        return returnError("Configuration "+conf_id+" introuvable")
+      else:
+        config=confs[0]
+    if type(conf)==dict: config=conf
 
-  image=request.json["photo"]
+  image=request.json["photo"] if "photo" in request.json else None
+  if type(image)==dict:
+    image=Sticker(image=image["file"],ext=image["type"],name=image["filename"])
+
   dim=request.json["dimensions"] if "dimensions" in request.json else str(config["width"])+"x"+str(config["height"])
   if not "x" in dim: dim=dim+"x"+dim
   limit=request.json["limit"] if "limit" in request.json else config["limit"]
   quality=request.json["quality"] if "quality" in request.json else 90
   data=config["data"] if "data" in config else {}
-  seq=request.json["sequence"] if "sequence" in request.json else []
+  seed=request.json["seed"] if "seed" in request.json else 0
   format=request.json["format"]
 
   dyna_fields=dict()
@@ -483,33 +594,28 @@ def send_photo_for_nftlive(conf_id:str=""):
 
   nft=ArtEngine()
   nft.reset()
-  nft.add(Layer("maphoto",position=0))
-  nft.add_image_to_layer("maphoto",image)
-  for layer in config["layers"]: layers(layer)
 
-  dir=current_app.config["UPLOAD_FOLDER"]
+  nft.add(Layer("maphoto"+now("hex")))
+  nft.add_image_to_layer("maphoto"+now("hex"),image)
 
-  files=nft.generate(
-    dir=dir,
-    limit=int(limit),
-    seed_generator=0,
-    width=int(dim.split("x")[0]),
-    height=int(dim.split("x")[1]),
-    quality=quality,
-    data=data,
-    ext="webp",
-    replacements=dyna_fields
-  )
-  if format=="link":
-    files=[current_app.config["DOMAIN_SERVER"]+x.replace(dir,"") for x in files]
-  else:
-    files=[Sticker(image=x).toBase64() for x in files]
+  for layer in config["layers"]:
+    if not "name" in layer: layer["name"]="layer_"+now("hex")
+    nft.add(Layer(object=layer,elements=layer["elements"]))
 
-  return jsonify({"images":files})
+  width=int(dim.split("x")[0])
+  height=int(dim.split("x")[1])
+  seqs=nft.generate_sequences(limit=limit,_seed=seed)
+  stickers=[]
 
+  seq_idx:[int]=request.json["sequences"] if "sequences" in request.json else range(len(seqs))
 
+  for i in seq_idx:
+    if i<len(seqs):
+      stickers.append(nft.compose(seqs[i],width=width,height=height,data=data,replacements=dyna_fields))
 
+  files=[x.toBase64(quality=quality) for x in stickers]
 
+  return jsonify({"images":files,"sequences":seqs})
 
 
 
@@ -836,19 +942,54 @@ def api_update_access_code(email:str,access_code:str,new_access_code:str):
 
 
 
+@bp.route('/tokens/<addr>/',methods=["GET"])
+def tokens(addr:str=""):
+  if request.method=="GET":
+    if len(addr)>0:
+      _network=get_network_instance(request.args.get("network"))
+      return _network.get_token(addr)
+
+
 @bp.route('/transfer/',methods=["POST"])
 def transfer_to():
+  """
+  Effectue des transfer de NFT entre blockchain
+
+  :return:
+  """
 
   nft_addr=request.json["token_id"]
+
+  from_network=get_network_instance(request.json["from_network"])
+  to_network=get_network_instance(request.json["to_network"])
+
   to=request.json["dest"]
-  owner=Key(obj=request.json["from_miner"])
-  target_miner=Key(obj=request.json["target_miner"])
+  if is_email(to):
+    key_to=to_network.create_account(to,domain_appli=current_app.config["DOMAIN_APPLI"],
+                              subject="Ouverture de votre compte pour votre NFT",
+                              mail_new_wallet=request.json["mail_content"]
+                              )
+    to=key_to.address
 
-  from_network=request.args.get("from_network","elrond-devnet")
-  to_network=request.args.get("to_network","elrond-devnet")
+  key_target_miner=request.json["target_miner"]
+
+  target_miner=to_network.find_key(key_target_miner) if type(key_target_miner)==str else Key(obj=key_target_miner)
+
+  key_from_miner=request.json["from_miner"]
+  from_miner=to_network.find_key(key_from_miner) if type(key_from_miner)==str else Key(obj=key_from_miner)
+
   _ope=get_operation(request.args.get("operation",""))
+  collection=to_network.get_collection(request.json["collection_id"])
+  if collection['owner']!=target_miner.address:
+    return returnError("La collection n'appartient pas au miner")
 
-  rc=transfer(addr=nft_addr,from_network_miner=owner,target_network_owner=to,from_network=from_network,target_network=to_network,target_network_miner=target_miner)
+  rc=transfer(addr=nft_addr,
+              from_network_miner=from_miner,
+              target_network_owner=to,
+              collection=collection,
+              from_network=from_network.network,
+              target_network=to_network.network,
+              target_network_miner=target_miner)
 
   #Création des comptes
   # if "solana" in to_network:
@@ -1117,7 +1258,7 @@ def get_tokens_to_send(ope:str):
   if _opes is None:return jsonify({"error":"operation unknown"})
 
   limit=int(request.args.get("limit","100000"))
-  nfts=get_nfts_from_src(_opes["data"]["sources"],_opes[section]["collections"])
+  nfts=get_nfts_from_src(_opes["data"]["sources"],_opes[section]["collections"],with_attributes=True)
   nfts=nfts[:limit]
 
   return jsonify([nft.__dict__ for nft in nfts])
@@ -1211,19 +1352,11 @@ def add_user_for_nft():
   """
   mintpool=Mintpool(config=current_app.config)
 
-
   _ope:dict=request.json["operation"] if "operation" in request.json else None
   sources=_ope["data"]["sources"] if _ope is not None else request.json["sources"]
 
-  # if _ope and "lazy_mining" in _ope:
-  #   #On determine le miner en fonction du réseau sélectionné
-  #   for n in _ope["lazy_mining"]["networks"]:
-  #     if n["network"]==network:
-  #       target_collection=n["collection"] if "collection" in n else None
-  #       miner=n["miner"] if "miner" in n else None
-
-  id=mintpool.add_ask(
-                      sources=request.json["sources"],
+  id=mintpool.add_ask(dest=request.json["dest"],
+                      sources=sources,
                       target=request.json["target"],
                       wallet=request.json["wallet"],
                       operation="" if _ope is None else _ope["id"]
@@ -1554,7 +1687,7 @@ def apply_filter():
 @bp.route('/configs/',methods=["GET","POST"])
 #test http://127.0.0.1:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
-def configs(location:str="",format=""):
+def configs(location:str="",format="",dictionnary={}):
   """
   Chargement de la configuration de conception des NFT
   Utilisé par load_config
@@ -1567,16 +1700,18 @@ def configs(location:str="",format=""):
   if request.method=="GET" or format=="dict":
 
     if len(format)==0: format=request.args.get("format","json")
-    if location.startswith("b64"): location=base64.b64decode(location[3:])
+    if location.startswith("b64"): location=str(base64.b64decode(location[3:]),"utf8")
 
     if location.startswith("./"):
-      rc=yaml.load(open(location,"r",encoding="utf8"),Loader=yaml.FullLoader)
+      text=open(location,"r",encoding="utf8").read()
+      rc=yaml.load(StringIO(apply_replace(text,dictionnary)),Loader=yaml.FullLoader)
       return [rc] if format=="dict" else jsonify([rc])
 
     if location.startswith("http"):
+      log("Récupération du fichier "+location)
       r=requests.get(location)
       if r.status_code==200:
-        rc=yaml.load(r.text,Loader=yaml.FullLoader)
+        rc= yaml.load(apply_replace(r.text, dictionnary), Loader=yaml.FullLoader)
         return [rc] if format=="dict" else jsonify([rc])
       else:
         raise RuntimeError("Impossible de trouver le fichier "+location)
@@ -1665,28 +1800,40 @@ def api_users(email=""):
 #test https://server.f80lab.com:4242/api/keys/
 #http://127.0.0.1:4242/api/keys/?access_code=&network=elrond-devnet&with_private=true&with_balance=false&operation=
 def keys(name:str=""):
+  """
+  Récupération d'un compte
+  get_account
+  :param name:
+  :return:
+  """
   dao=DAO(config=current_app.config)
-  _network=get_network_instance(request.args.get("network","elrond-devnet"))
+
+  network=request.args.get("network","")
+  if len(network)==0: return returnError("Le réseau doit être précisé")
+  _network=get_network_instance(network)
 
   if request.method=="GET":
     with_balance=request.args.get("with_balance","false")=="true" or "accounts" in request.path
     operation=get_operation(request.args.get("operation"))
 
+    keys=_network.get_keys() if len(name)==0 else [_network.find_key(name)]
+    items=[]
     if with_balance or "/accounts" in request.url:
-      items=_network.get_accounts() if len(name)==0 else [_network.get_account(name)]
+      for k in keys:
+        item=k.__dict__
+        item["balance"]=_network.get_balance(k.address,request.args.get("token_id",""))
+        items.append(item)
     else:
-      items=_network.get_keys() if len(name)==0 else [_network.find_key(name)]
+      items=[key.__dict__ for key in keys]
       if operation: items=items+extract_keys_from_operation(operation)
 
-    return jsonify([item.__dict__ for item in items])
+    return jsonify(items)
 
 
   if request.method=="DELETE":
-    if _network.network_name=="polygon":
-      filename=POLYGON_KEY_DIR+name+".secret"
-    # else:
-    #   filename=(SOLANA_KEY_DIR+name+".json").replace(".json.json",".json") if "solana" in _network.network_name else (ELROND_KEY_DIR+name+".pem").replace(".pem.pem",".pem")
-    os.remove(filename)
+    k=_network.find_key(name)
+    if not _network.delete_key(k): return returnError("Impossible de supprimer la clé")
+    return jsonify({"message":"Clé supprimée"})
 
 
   if request.method=="POST":
@@ -1696,11 +1843,11 @@ def keys(name:str=""):
     else:
       email=obj["email"]
 
-      key:Key=create_account(email,dao=dao,
-                                                    network=_network.network,
-                                                    domain_appli=current_app.config["DOMAIN_APPLI"],
-                                                    mail_new_wallet=obj["mail_new_wallet"] if "mail_new_wallet" in obj else None,
-                                                    mail_existing_wallet=obj["mail_existing_wallet"] if "mail_existing_wallet" in obj else None)
+      key:Key=create_account(email,dao=dao,network=_network.network,
+                              domain_appli=current_app.config["DOMAIN_APPLI"],
+                              mail_new_wallet=obj["mail_new_wallet"] if "mail_new_wallet" in obj else None,
+                              mail_existing_wallet=obj["mail_existing_wallet"] if "mail_existing_wallet" in obj else None
+                             )
 
     #dao.add_key_to_user(obj["email"],obj["access_code"],_network.network,secret_key,name)
 
@@ -2038,8 +2185,13 @@ def upload():
       for ext in ["GIF","WEBP","PNG","JPEG"]:
         if ext in content[:30]:_type="image/"+ext.lower()
 
+
     if not "base64" in content and not "<svg" in content and not _type is None:
-      content=_type+";base64,"+str(base64.b64encode(request.data),"utf8")
+      data=request.data
+      if type(content)==str and content.startswith("http"):
+        data=requests.get(content).content
+
+      content=_type+";base64,"+str(base64.b64encode(data),"utf8")
 
     if not _type is None:
       body={
@@ -2124,8 +2276,6 @@ def api_create_collection():
   """
   _data=request.json
   network=request.args.get("network","elrond-devnet")
-  if network.startswith("db-"):
-    return returnError("Impossible d'utiliser une base de données comme réseau cible d'une collection")
 
   _net=get_network_instance(network) #DAO(config=current_app.config).get_user_from_access_code(request.args.get("access_code"))
 
@@ -2381,6 +2531,9 @@ def api_mint():
     # mail_existing_wallet="" if _ope is None else _ope["transfer"]["mail"]
     # create_account(owner,network,config["DOMAIN_APPLI"],config["DB_MAIN"],mail_new_wallet,mail_existing_wallet,_nft.name)
 
+  if not _nft.visual.startswith("http"):
+    return jsonify({"error":"Vous devez uploader les images avant le minage"})
+
   try:
     rc=mint(_nft,_miner,owner,
             network=network,
@@ -2391,8 +2544,7 @@ def api_mint():
   except Exception as inst:
     return returnError(inst)
 
-  if not _nft.visual.startswith("http"):
-    return jsonify({"error":"Vous devez uploader les images avant le minage"})
+
 
   return jsonify(rc)
 
@@ -2500,7 +2652,6 @@ def update_obj():
   network=request.args.get("network")
   keyfile=request.args.get("keyfile")
   account=request.args.get("account")
-
 
   _network=get_network_instance(network)
   rc=_network.update(

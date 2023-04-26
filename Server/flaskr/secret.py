@@ -41,7 +41,12 @@ GOOGLE_ACCOUNT="nfluent@calviontherock.iam.gserviceaccount.com"
 GOOGLE_ACCESS_KEY="GOOG1EZCKSY76GLYNQRL2IYHTBJX3XYCOB3LJY6ZMGS7OZLZKNNVNCX75KODY"
 GOOGLE_SECRET_KEY="bZw6LY6t2NwPyA6AmwSwlsDO6iIg7RfmnFeoDjVa"
 
-GITHUB_TOKEN="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"
+#Obtenir un token https://github.com/settings/applications/new ou https://github.com/settings/applications/2161205
+GITHUB_CLIENT_ID="5efede032a49331cf372"
+GITHUB_SECRET_ID="37e45ea6679fdd0c87623874da835c732872a71f"
+
+#voir https://docs.github.com/fr/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
+GITHUB_TOKEN="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"
 GITHUB_ACCOUNT="nfluentdev"
 SALT='sel'
 ENCRYPTION_KEY="nfluentkey"

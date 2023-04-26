@@ -23,6 +23,7 @@ import numpy
 import numpy as np
 import pyqrcode
 import requests
+import svglib
 import unicodedata
 import xml
 import yaml
@@ -36,12 +37,12 @@ from flaskr.secret import USERNAME, PASSWORD, SALT, UNSPLASH_SETTINGS, PIXABAY_S
 from flaskr.settings import SMTP_SERVER, SIGNATURE, APPNAME, SMTP_SERVER_PORT, OPERATIONS_DIR, STATIC_RESSOURCES_DIR
 
 
-def get_hash_from_content(content):
+
+def get_hash(content):
   if type(content)==dict:
     content=json.dumps(content)
 
   if type(content)==str:
-    if "<svg" in content: ext="svg"
     content=bytes(content,"utf8")
 
   return hashlib.sha256(content).hexdigest()
@@ -51,9 +52,7 @@ def get_hash_from_content(content):
 
 def get_filename_from_content(content,prefix_name="",ext="webp") -> str:
   if "/" in ext: ext=ext.split("/")[1].split("+")[0]
-
-  hash=get_hash_from_content(content)
-
+  hash=get_hash(content)
   return prefix_name+"_"+hash+"."+ext
 
 
@@ -66,11 +65,14 @@ def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
   :param prefix_name:
   :return:
   """
+  if not "<svg" in svg_code:
+    raise RuntimeError("Fichier SVG anormal")
+
   svg_code="<svg"+svg_code.split("<svg")[1]
-  if dictionnary!={}:
-    for k in dictionnary.keys():
-      svg_code=svg_code.replace("_"+k+"_",str(dictionnary[k]))
-      svg_code=svg_code.replace("__"+k+"__",str(dictionnary[k]))
+  for k in list(dictionnary.keys()):
+    value=str(dictionnary[k])
+    if not k.startswith("__"): k="__"+k+"__"
+    svg_code=svg_code.replace(k,value)
 
   filename=get_filename_from_content(svg_code,prefix_name,ext="svg")
   with open(dir+filename,"w",encoding="utf8") as file:
@@ -80,6 +82,8 @@ def save_svg(svg_code,dir,dictionnary,prefix_name="svg") -> (str,str):
   return filename,svg_code
 
 from itertools import product
+
+
 def generate_svg_from_fields(svg_code) -> list:
   """
   génére plusieurs SVG en fonction des champs contenu dans le SVG si ces derniers contiennent des listes (format element_1|element_2|...|element_n)
@@ -88,6 +92,7 @@ def generate_svg_from_fields(svg_code) -> list:
   :return:
   """
   rc=[]
+  contents_to_remove=[]
 
   #voir https://docs.python.org/fr/3/library/xml.dom.html#dom-element-objects
   doc:xml.dom.Document=minidom.parseString(svg_code)
@@ -98,12 +103,19 @@ def generate_svg_from_fields(svg_code) -> list:
     if len(elt.childNodes)>0:
       content=elt.childNodes[0].data
       if content and "|" in content:
+        elt.childNodes[0].data=""
+        contents_to_remove.append(content)
+        #Extraction de la série
         id=elt.parentNode.getElementsByTagName("tspan")[0].attributes["id"].nodeValue
         l=[{"id":id,"value":x} for x in content.split("|")]
         master_list.append(l)
 
+
   for tuples in product(*master_list):
     new_code=svg_code
+    for elt_to_remove in contents_to_remove:
+      new_code=new_code.replace(elt_to_remove,"")
+    #TODO: ajouter l'effacement de la série
     for val in tuples:
       for elt in doc.getElementsByTagName("tspan"):
         if elt.attributes["id"].nodeValue==val["id"]:
@@ -132,23 +144,43 @@ def generate_svg_from_fields(svg_code) -> list:
     #   rc.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+master.image)
   return rc
 
+def register_fonts(filter="",limit=400):
+  log("Enregistrement des polices")
+  for font in get_fonts(limit=limit):
+    if filter=="" or font["name"]==filter:
+      log("Enregistrement de "+font["name"])
+      svglib.fonts.register_font(font["name"],"./Fonts/"+font["file"])
 
-def get_fonts(dir="./Fonts/"):
+  log("Enregistrement terminé")
+  return True
+
+
+def get_fonts(dir="./Fonts/",limit=400):
   rc=[]
-  for f in os.listdir(dir):
+  for f in os.listdir(dir)[:limit]:
     try:
-      tt = ttLib.TTFont(dir+f)
-      info=tt.get("name")
-      for name in info.names[:20]:
-        if not "copyright" in str(name).lower() and not "©" in str(name) and len(str(name))<20:
-          obj={"name":str(name),"file":f}
-          if not obj["name"] in [x["name"] for x in rc]:
-            rc.append(obj)
-            break
+      for font_number in range(2):
+        if f.endswith("ttc") or f.endswith("TTC"):
+          tt = ttLib.TTFont(dir+f,fontNumber=font_number)
+        else:
+          if f.endswith("ttf") or f.endswith("TTF"):
+            tt = ttLib.TTFont(dir+f)
           else:
             break
+
+        info=tt.get("name")
+        for name in info.names[:20]:
+          if not "copyright" in str(name).lower() and not "©" in str(name) and len(str(name))<20:
+            obj={"name":str(name),"file":f,"value":str(name)}
+            if not obj["name"] in [x["name"] for x in rc]:
+              rc.append(obj)
+              break
+            else:
+              break
+
+        if not f.endswith("ttc"): break
     except:
-      log("Traitement du fichier "+f+" problématique")
+      log("Impossible de charger "+f)
 
   return rc
 
@@ -219,6 +251,22 @@ def get_key_by_name(keys:[],name:str):
   return None
 
 
+def extract_title_from_html(name:str,replace=dict()):
+  body=requests.get(name).text
+  if not "<title>" in body: return ""
+  title=body.split("<title>")[1].split("</title>")[0]
+  for k in list(replace.keys()):
+    title=title.replace("{{"+k+"}}",str(replace.get(k)))
+  return title
+
+
+
+def apply_replace(src:str,dictionnary:dict):
+  for k in dictionnary.keys():
+    src=src.replace("{{"+k+"}}",dictionnary[k])
+  return src
+
+
 def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_RESSOURCES_DIR):
   """
   ouvre un fichier html et remplace le code avec le dictionnaire de remplacement
@@ -271,7 +319,9 @@ def open_html_file(name:str,replace=dict(),domain_appli="",directory=STATIC_RESS
   replace["appdomain"]=domain_appli
 
   for k in list(replace.keys()):
-    body=body.replace("{{"+k+"}}",str(replace.get(k)))
+    value=replace.get(k)
+    if type(value)==list: value=",".join(value)
+    body=body.replace("{{"+k+"}}",str(value))
 
   body=body.replace("</head>",style+"</head>")
 
@@ -364,7 +414,7 @@ def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io
       server.sendmail(msg=msg.as_string(), from_addr=_from, to_addrs=[_to])
       return True
     except Exception as inst:
-      log("Echec de fonctionement du mail"+str(type(inst))+str(inst.args))
+      log("Echec de fonctionement du mail "+str(type(inst))+str(inst.args))
       return False
 
 
@@ -553,7 +603,7 @@ def queryUnsplash(query,limit=10,square=False):
 def now(format="dec"):
   rc= datetime.datetime.now(tz=None).timestamp()
   if format=="hex":return hex(int(rc*10000))
-  if format=="random":return hex(int(rc*10000)+random.randint(0,1000000))
+  if format=="random" or format=="rand":return hex(int(rc*10000)+random.randint(0,1000000))
   return rc
 
 
@@ -754,6 +804,13 @@ def transfer_sequence_to_disk(img:Image,dir="./temp/"):
     i=i+1
     f.save(dir+img.name+"_seq_"+str(i)+".gif")
   return True
+
+def extract_extension(s:str) -> str:
+  if "." in s:
+    pos=s.rindex(".")
+    return s[pos+1:]
+  for k in ["jpeg","jpg","gif","png","webp"]:
+    if k in s: return k
 
 
 def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge",temp_dir="./temp"):

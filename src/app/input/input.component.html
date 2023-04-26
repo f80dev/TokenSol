@@ -51,7 +51,7 @@
     {{cancel_button}}
   </button>
 
-
+<!--options list-->
   <mat-form-field  style="width:100%;" appearance="fill"
                   *ngIf="value_type=='list' || options.length>0">
 
@@ -68,7 +68,7 @@
     <table *ngIf="label.length>0" style="width: 100%;"><tr>
       <td></td>
       <td style="text-align: left;"><span class="mat-caption">{{label}}</span></td>
-      <td style="text-align: right;" class="mat-headline-6 color-primary">{{value}}</td>
+      <td style="text-align: right;" class="mat-headline-6" [style.color]="color_value">{{value}}</td>
     </tr></table>
     <mat-slider [max]="max" [min]="min" [step]="step"
                  style="width:100%;margin-top: -15px;" *ngIf="max>min"

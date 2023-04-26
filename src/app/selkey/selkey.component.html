@@ -7,12 +7,21 @@
         <mat-icon>visibility</mat-icon>
     </button>
     <app-input value_type="list" color="white" width="170px"
-               *ngIf="network_service.keys.length>0 && network.indexOf('devnet')>-1"
+               *ngIf="network_service.keys.length>0 && isFree()"
                [label]="label"
                [value]="sel_key"
                [options]="network_service.keys"
                (valueChange)="onChangeKey($event)">
     </app-input>
+
+<!--    <mat-form-field  style="max-width:150px;width:100%;" appearance="fill">-->
+<!--        <mat-label>Clés</mat-label>-->
+<!--        <mat-select [(value)]="sel_key" class="mat-body-2" (valueChange)="onChangeKey()">-->
+<!--            <mat-option *ngFor="let key of network_service.keys" [value]="key" class="mat-body-2">-->
+<!--                {{key.name}}-->
+<!--            </mat-option>-->
+<!--        </mat-select>-->
+<!--    </mat-form-field>-->
 
     <button type="button" mat-raised-button style="margin-top: -10px;"
             title="Utiliser votre propre clé privée"

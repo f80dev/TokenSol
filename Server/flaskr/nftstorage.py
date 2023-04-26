@@ -4,6 +4,7 @@ from json import dumps
 import requests.api
 
 from flaskr.Keys import Key
+from flaskr.Tools import get_hash
 from flaskr.settings import NFT_STORAGE_KEY
 
 
@@ -37,20 +38,27 @@ class NFTStorage:
     """
     content_type="image/webp"
     if type(content)==str:
-      if "<svg" in content: content_type="image/svg"
-      if _type is None:
-        if "data:" in content:
-          _type=content.split(";base64,")[0].split("data:")[1]
-        else:
-          _type="plain/text"
-
-      if "base64," in content:
-        content=base64.b64decode(content.split(";base64,")[1])
+      if content.startswith("http"):
+        req=requests.get(content)
+        if req.status_code==200:
+          content=req.content
+          _type=req.headers["Content-Type"]
       else:
-        if not "<svg" in content:
-          content={"value":content}
+        if "<svg" in content: content_type="image/svg"
+
+        if _type is None:
+          if "data:" in content:
+            _type=content.split(";base64,")[0].split("data:")[1]
+          else:
+            _type="plain/text"
+
+        if "base64," in content:
+          content=base64.b64decode(content.split(";base64,")[1])
         else:
-          data=content
+          if not "<svg" in content:
+            content={"value":content}
+          else:
+            data=content
 
       service="upload"
 
@@ -70,4 +78,4 @@ class NFTStorage:
                              }).json()
     cid=result["value"]["cid"]
     url="https://"+cid+".ipfs.nftstorage.link"
-    return {"cid":cid,"url":url+(("?"+filename) if len(filename)>0 else "")}
+    return {"cid":cid,"url":url+(("?"+filename) if len(filename)>0 else ""),"hash":get_hash(data)}

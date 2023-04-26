@@ -12,10 +12,13 @@ interface Ask {
   dest:string
   message: string
   filter:string[]
-  network:string
-  miner:string
+
   sources:Source[],
-  collection_to_mint:string
+  target:{
+    miner:string
+    collection:string
+    network:string
+  }
 }
 
 @Component({
@@ -45,6 +48,7 @@ export class MinerpoolComponent implements OnInit {
 
   refresh(){
     this.network.get_minerpool().subscribe((r:any)=>{
+      debugger
       if(!this.showAll && r.length<10)this.showAll=true;
       this.asks=[];
       for(let ask of r){

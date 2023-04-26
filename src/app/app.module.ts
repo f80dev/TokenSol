@@ -94,6 +94,8 @@ import {MatSlideToggleModule} from "@angular/material/slide-toggle";
 import { MenuComponent } from './menu/menu.component';
 import { SettingsComponent } from './settings/settings.component';
 import { SelkeyComponent } from './selkey/selkey.component';
+import { PaymentComponent } from './payment/payment.component';
+import { AskForPaymentComponent } from './ask-for-payment/ask-for-payment.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -155,7 +157,9 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         RescuewalletComponent,
         MenuComponent,
         SettingsComponent,
-        SelkeyComponent
+        SelkeyComponent,
+        PaymentComponent,
+        AskForPaymentComponent
     ],
     imports: [
         BrowserModule,
@@ -203,10 +207,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         MatSlideToggleModule
     ],
   providers: [
-
     FilterPipe,AliasPipe,SafePipe,OrderPipe,
     {provide: MAT_DIALOG_DATA, useValue: {hasBackdrop: false}},
-
     {provide: 'SocialAuthServiceConfig',
       useValue: {
         autoLogin: false,

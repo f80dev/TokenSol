@@ -41,7 +41,7 @@ export class NetworkService implements OnInit {
     stockage_available:string[]=[];          //stockage visuel et metadata
     stockage_document_available:string[]=[]; //stockage document attaché
 
-
+    chain_id="D"                               //Chain_id du réseau elrond
 
     constructor(
         private httpClient : HttpClient
@@ -67,8 +67,12 @@ export class NetworkService implements OnInit {
 
     }
 
-
-
+    find_key_by_address(addr:string) : CryptoKey | undefined {
+        for(let k of this.keys){
+            if(k.address==addr)return k;
+        }
+        return undefined
+    }
 
 
     init_keys(network="elrond-devnet",with_balance=false,access_code:string="",operation_id:string="") {
@@ -168,21 +172,23 @@ export class NetworkService implements OnInit {
         return this._post("encrypt_key/"+network+"/","",body)
     }
 
+    //
+    // get_tokens(pubkey: PublicKey,f:Function) {
+    //     return new Promise((resolve, reject) => {
+    //         f(pubkey, {programId: TOKEN_PROGRAM_ID})
+    //             .then((r:any) => {
+    //                 let rc = [];
+    //                 for (let t of r.value) {
+    //                     rc.push(t);
+    //                 }
+    //                 resolve(rc);
+    //             }).catch((err:Error)=>{reject(err)});
+    //     });
+    // };
 
-    get_tokens(pubkey: PublicKey,f:Function) {
-        return new Promise((resolve, reject) => {
-            f(pubkey, {programId: TOKEN_PROGRAM_ID})
-                .then((r:any) => {
-                    let rc = [];
-                    for (let t of r.value) {
-                        rc.push(t);
-                    }
-                    resolve(rc);
-                }).catch((err:Error)=>{reject(err)});
-        });
-    };
-
-
+    get_token(addr:string){
+        return this._get("tokens/"+addr+"/","network="+this.network);
+    }
 
     get network(): string {
         return this._network;
@@ -190,8 +196,9 @@ export class NetworkService implements OnInit {
 
     set network(network_name: string) {
         this._network = network_name;
+        if(this.isMain())this.chain_id="T"; else this.chain_id="D";
         //this._connection=new Connection(clusterApiUrl(network_name), 'confirmed');
-        this.init_keys(network_name).then(()=>{
+        this.init_keys(network_name,true).then(()=>{
             this.network_change.next(network_name);
         })
     }
@@ -377,7 +384,7 @@ export class NetworkService implements OnInit {
         return throwError(() => new Error('Problème technique. Serveur probablement injoignable'));
     }
 
-    _get(url: string, param: string="",_timeout=2000) {
+    _get(url: string, param: string="",_timeout=30000) {
         if(!url.startsWith("http")){
             url="/api/"+url;
             url=this.server_nfluent+url.replace("//","/").replace("/api/api/","/api/")
@@ -386,7 +393,7 @@ export class NetworkService implements OnInit {
     }
 
 
-    _post(url: string, param: string="",body={},_timeout=2000) {
+    _post(url: string, param: string="",body={},_timeout=30000) {
         if(!url.startsWith("http")){
             url="/api/"+url;
             url=this.server_nfluent+url.replace("//","/").replace("/api/api/","/api/")
@@ -703,11 +710,28 @@ export class NetworkService implements OnInit {
         return this.httpClient.get<{nfts:NFT[]}>(this.server_nfluent+"/api/nfts_from_collection/"+collection_id+"/?network="+network);
     }
 
-    transfer_to(mint_addr: string, to_addr: string,owner:string,network="",mail_content="mail_new_account") {
-        if(network.length==0)network=this.network;
-        let body={token_id:mint_addr,dest:to_addr,miner:owner,mail_content:mail_content}
+    transfer_to(mint_addr: string,
+                to_addr: string,
+                from_miner:CryptoKey,
+                to_miner:CryptoKey,
+                from_network:string,
+                to_network:string,
+                collection_id:string,
+                mail_content="mail_new_account",
+                operation_id="") {
+        let body={
+            token_id:mint_addr,
+            dest:to_addr,
+            from_miner:from_miner,
+            from_network:from_network,
+            to_network:to_network,
+            target_miner: to_miner,
+            collection_id: collection_id,
+            mail_content:mail_content,
+            operation:operation_id
+        }
         return this.httpClient.post(
-            this.server_nfluent+"/api/transfer/"+encodeURIComponent(mint_addr)+"/"+encodeURIComponent(to_addr)+"/"+encodeURIComponent(owner)+"/?network="+network, body
+            this.server_nfluent+"/api/transfer/", body
         );
     }
 
@@ -871,12 +895,12 @@ export class NetworkService implements OnInit {
 
     getExplorer(addr:string | undefined,_type="address") : string {
         if(this.isElrond())
-            return "https://"+(this.isMain() ? "" : "devnet-")+"explorer.multiversx.com/"+_type+"/"+addr;
+            return "https://"+(this.isMain() ? "" : "devnet.")+"xspotlight.com/"+addr;
         if(this.isPolygon()){
             if(this.isMain()){
                 return "https://polygonscan.com/"+_type+"/"+addr;
             }else{
-                return "https://polygon.testnets-nftically.com/marketplace?search="+addr
+                return "https://polygon.testnets-nftically.com/marketplace?search="+addr+"&chain[]=80001"
                 //return "https://mumbai.polygonscan.com/"+_type+"/"+addr;
             }
         }
@@ -897,9 +921,13 @@ export class NetworkService implements OnInit {
         return this.httpClient.get(this.server_nfluent+"/api/check_private_key/"+seed+"/"+address+"/"+this.network);
     }
 
-    getBalance(addr:string,network="") {
-        if(network.length==0)network=this.network;
-        return this.httpClient.get(this.server_nfluent+"/api/keys/"+addr+"/?with_balance=true&network="+network);
+    getBalance(addr:string,network:string,token_id="") {
+        let params="with_balance=true&network="+network;
+        if(token_id.length>0)params=params+"&token_id="+token_id;
+        let keys:any=this._get("keys/"+addr+"/",params);
+        for(let k of keys){
+            if(k["address"]==addr)return k["balance"]
+        }
     }
 
 
@@ -965,5 +993,41 @@ export class NetworkService implements OnInit {
 
     check_network(router: Router) {
         if(!this.online)router.navigate(["pagenotfound"],{queryParams:{message:"Connexion au serveur impossible"}});
+    }
+
+    hashcode(doc: any[]) {
+        return this._post("hashcode/","",{docs:doc});
+    }
+
+    isBlockchain() {
+        return !(this.network.startsWith("db-") || this.network.startsWith("file-"))
+    }
+
+    get_sequence(layers: Layer[], limit: number,config:string="") {
+        return this._post("get_sequence/","",{layers:layers,limit:limit,config:config});
+    }
+
+
+    get_composition(items:any[],layers:any[],data:any,size:string="500x500",format="webp",platform="server") {
+        return this._post("get_composition/","",{format:format,size:size,data:data,items:items,layers:layers,platform:platform},200000);
+    }
+
+    create_zip(files:string[],email:string) {
+        let body={
+            email:email,
+            files:files
+        }
+        return this._post("create_zip/","",body);
+    }
+
+    send_bill(dest: string, subject: string="Votre facture",label="",message="",model="mail_facture.html") {
+        let body={
+            dest:dest,
+            label: label,
+            message: message,
+            subject:subject,
+            model:model
+        }
+        return this._post("send_bill/","",body,200000);
     }
 }

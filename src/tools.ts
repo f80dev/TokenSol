@@ -5,7 +5,7 @@ import {Clipboard} from "@angular/cdk/clipboard";
 import {NFLUENT_WALLET} from "./definitions";
 
 export interface CryptoKey {
-  name: string
+  name: string | null
   address: string
   privatekey:string | null
   encrypt:string | null
@@ -36,13 +36,13 @@ export function url_wallet(network:string) : string {
 }
 
 export function get_nfluent_wallet_url(address:string,network:string,domain_appli:string=NFLUENT_WALLET,take_photo=false,) : string {
-  let domain=domain_appli.split('//')[0]+domain_appli.split("//")[1].split("/")[0]
-  let url=domain+"/?"+setParams({
+  let url=domain_appli+"/?"+setParams({
     toolbar:false,
     address:address,
     takePhoto:take_photo,
     network:network
   })
+  url=url.replace("//?","/?");
   return url;
 }
 
@@ -120,7 +120,7 @@ export function setParams(_d:any,prefix="",param_name="p") : string {
 }
 
 
-function analyse_params(params:string):any {
+export function analyse_params(params:string):any {
   let _params=decrypt(decodeURIComponent(params)).split("&");
   $$("Les paramètres à analyser sont "+_params);
   let rc:any={};
@@ -143,11 +143,17 @@ function analyse_params(params:string):any {
   return rc;
 }
 
-export function now(format="number") : number | string {
+export function now(format="number") : any {
   let rc=new Date().getTime();
+  if(format=="date")return new Date().toLocaleDateString();
+  if(format=="time")return new Date().toLocaleTimeString();
+  if(format=="datetime")return new Date().toLocaleString();
+  if(format=="rand")return (Math.random()*10000).toString(16);
   if(format=="hex")return rc.toString(16);
+  if(format=="dec" || format=="str")return rc.toString();
   return rc
 }
+
 
 export function exportToCsv(filename: string, rows: object[]) {
   if (!rows || !rows.length) {
@@ -171,7 +177,11 @@ export function exportToCsv(filename: string, rows: object[]) {
         }).join(separator);
       }).join('\n');
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      download_file(csvContent,filename)
+}
+
+export function download_file(content:string,filename:string,_type='text/csv;charset=utf-8;'){
+  const blob = new Blob([content], { type: _type });
   const link = document.createElement('a');
   if (link.download !== undefined) {
     // Browsers that support HTML5 download attribute
@@ -183,7 +193,6 @@ export function exportToCsv(filename: string, rows: object[]) {
     link.click();
     document.body.removeChild(link);
   }
-
 }
 
 
@@ -193,38 +202,27 @@ export function getParams(routes:ActivatedRoute,local_setting_params="",force_tr
   //Version 1.0
   return new Promise((resolve, reject) => {
     setTimeout(()=>{
-      routes.queryParams.subscribe((params:any) => {
-        if(params.hasOwnProperty("p")){
-          $$("Utilisation du paramétrage via l'url");
-          let rc=analyse_params(decodeURIComponent(params["p"]));
-          if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["p"]);
-          resolve(rc);
-        } else {
-          if(local_setting_params.length>0){
-            $$("Utilisation des cookies pour les paramétrages");
-            params=localStorage.getItem(local_setting_params)
-            if(params){
-              let rc=analyse_params(params);
-              resolve(rc);
-            }
-          }
 
-          $$("Param n'est pas présent dans les parametres, on fait une analyse standard")
-          if(params){
-            resolve(params);
-          }else{
-            if(force_treatment){
-              resolve({});
-            }else{
-              reject();
-            }
+      routes.queryParams.subscribe((params:any) => {
+        if(params==null && local_setting_params.length>0)params=localStorage.getItem(local_setting_params)
+
+        if(params){
+          if(params.hasOwnProperty("p")){
+            params=analyse_params(decodeURIComponent(params["p"]));
           }
+        }
+
+        if(!params) {
+          if (force_treatment) {resolve({})}else{reject()}
+        }else{
+          if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["p"]);
+          resolve(params);
         }
       },(err)=>{
         $$("!Impossible d'analyser les parametres de l'url");
         reject(err);
       })
-    },400);
+    },200);
   });
 }
 
@@ -397,18 +395,22 @@ export function copyAchievements(clp:Clipboard,to_copy:string) {
 
 }
 
-export function canTransfer(nft:NFT,by_addr:string) : boolean {
-  //canMint
-  //Détermine si un NFT peut être transférer d'une blockchain à une autre
-  if(nft.address && (nft.address.startsWith("db_") || nft.address.startsWith("file_"))){
-    if(nft.balances[by_addr]==0)return false;
-    if(nft.miner.address!="" && nft.miner.address!=by_addr)return false;
-    return true;
-  } else {
-    if(by_addr==nft.owner)return true;
-  }
-  return false;
+export function canTransfer(nft:NFT) : boolean {
+  if(nft.balances[nft.miner.address]==0)return false;
+  return true;
 }
+
+
+export function find_miner_from_operation(operation:any,addr:string) : any {
+  let to_network=isEmail(addr) ? operation.mining?.networks[0].network : detect_network(addr);  //Si l'adresse est email on prend la première source du mining
+  for(let n of operation.mining!.networks){
+    if(to_network==n.network){
+      return n;
+    }
+  }
+  return {}
+}
+
 
 
 

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --open",
+    "start": "ng serve --open --host 0.0.0.0",
     "start_debug": "ng serve --open --live-reload --configuration debug",
     "start_intranet": "ng serve --open --live-reload",
     "start_4201": "ng serve --port 4201 --open --live-reload",
@@ -28,26 +28,29 @@
     "@angular/platform-browser-dynamic": "15.0.4",
     "@angular/router": "15.0.4",
     "@angular/service-worker": "15.0.4",
-    "@elrondnetwork/erdjs-wallet-connect-provider": "^2.0.3",
-    "@elrondnetwork/erdjs-walletcore": "^2.1.0",
-    "@elrondnetwork/erdjs-web-wallet-provider": "^2.1.1",
-
     "@fortawesome/angular-fontawesome": "^0.11.1",
     "@fortawesome/fontawesome-svg-core": "^6.2.0",
     "@fortawesome/free-brands-svg-icons": "^6.2.0",
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
-
-    "@google-pay/button-angular": "^3.0.5",
+    "@google-pay/button-angular": "^3.0.8",
     "@metaplex-foundation/mpl-token-metadata": "^2.5.2",
     "@metaplex/js": "^4.12.0",
+
+    "@multiversx/sdk-core": "^12.1.1",
+    "@multiversx/sdk-extension-provider": "^2.0.7",
+    "@multiversx/sdk-network-providers": "^1.4.0",
+    "@multiversx/sdk-wallet-connect-provider": "^3.2.1",
+    "@multiversx/sdk-web-wallet-provider": "^2.4.0",
+
     "@solana/spl-token": "^0.3.5",
     "@solana/web3.js": "1.63.1",
     "@swimlane/ngx-datatable": "^20.1.0",
+    "@walletconnect/sign-client": "^2.7.0",
     "@walletconnect/web3-provider": "^1.8.0",
+    "@web3modal/standalone": "^2.3.5",
     "cross-fetch": "^3.1.5",
     "d3": "^7.6.1",
-    "exifr": "^7.1.3",
-    "exifreader": "^4.5.0",
+    "exifreader": "^4.12.0",
     "jsqr": "^1.4.0",
     "monaco-yaml": "^4.0.3",
     "nft.storage": "^7.0.0",
@@ -65,6 +68,11 @@
     "web3": "^1.8.2",
     "yaml": "^2.2.1",
     "zone.js": "~0.11.4"
+  },
+  "overrides": {
+    "preact@10.4.1": {
+      "preact": "10.0.5"
+    }
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "15.0.4",

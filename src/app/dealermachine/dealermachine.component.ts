@@ -10,7 +10,7 @@ import {
   showError,
   showMessage,
   CryptoKey,
-  newCryptoKey
+  newCryptoKey, find_miner_from_operation
 } from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
@@ -41,7 +41,6 @@ export class DealermachineComponent implements OnInit {
   constructor(
     public routes:ActivatedRoute,
     public _location:Location,
-    public userService:UserService,
     public network:NetworkService,
     public toast:MatSnackBar,
     public router:Router,
@@ -123,75 +122,48 @@ export class DealermachineComponent implements OnInit {
     }
   }
 
-  valide(evt: { address:string }) {
+
+  valide(evt: { address:string }):boolean {
+
     let addr=evt.address;
     this.address=addr.replace("'","");
     addr=this.alias.transform(addr,"address");
-    if(this.nft && (this.nft!.address?.startsWith("db_") || this.nft!.address?.startsWith("file_"))){
-      $$("Ce token est issue d'une base de données, donc non miné");
-      if(this.ope){
-        if(!this.ope.lazy_mining){
-          $$("Section lazy_mining manquante")
-          return;
-        }
-        
+    let target:any=find_miner_from_operation(this.ope,addr);
 
-        let miner:CryptoKey=this.nft.miner;
-
-        let network:string=detect_network(miner.address)+(this.ope.network.indexOf("devnet") ? "-devnet" : "-mainnet");
-        if(isEmail(this.address)){
-            if(miner.address.length==0)miner=this.ope.lazy_mining.networks[0].miner;
-            if(network?.length==0)network=this.ope.lazy_mining.networks[0].network;
-        } else {
-          //TODO: faire le test en mettant comme destinataire une adresse polygon et elrond
-          for(let n of this.ope.lazy_mining.networks){
-            if(n.network.split("-")[0]==detect_network(this.address) && network.length==0 && miner.address.length==0){
-                network=n.network;
-                miner=n.miner;                
-            }
-          }
-        }
-
-        
-        this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
-
-        this.network.mint(this.nft,miner,this.address,this.ope.id,true,"",network).then((r:any)=>{
-          this.message="";
-          if(r.error.length>0){
-            this.message=r.error+". ";
-          } else {
-            this.win();
-          }
-        },(err:any)=>{
-          showError(this,err);
-          this.message="";
-        })
-      }
-    }else{
-      let mint_addr=this.nft!.address;
-      if(mint_addr!=""){
-        $$("Ce token est déjà miné, on se contente de le transférer");
-        this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
-        this.network.transfer_to(mint_addr!,addr,this.nft!.owner!,this.network.network,this.ope?.new_account.mail).subscribe((r:any)=>{
-          this.message="";
-          this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;
-          if(this.selfWalletConnexion){
-            this.final_message="Retrouver votre nouveau NFT dans votre wallet NFluenT";
-          } else {
-            this.final_message="Le NFT est livré à l'adresse "+addr;
-          }
-        },(err:any)=>{
-          showMessage(this,get_in(this.ope,this.section+".messages.cancel","Problème technique: Impossible d'envoyer ce NFT"));
-          this.final_message="Problème technique: Envoi du NFT annulé";
-        })
-      }
+    if(!target.miner){
+      showError(this,{error:"On n'a pas de mineur pour le réseau cible"})
+      return false;
     }
+
+    let mint_addr=this.nft!.address;
+
+    this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
+    this.network.transfer_to(
+        mint_addr!,
+        addr,
+        this.nft!.miner,
+        target.miner,
+        this.nft!.network!,
+        target.network,
+        target.collection,
+        this.ope?.new_account.mail,
+        this.ope?.id).subscribe((r:any)=>{
+      this.message="";
+      this.wallet_link=NFLUENT_WALLET+"?"+r.nfluent_wallet;
+      if(this.selfWalletConnexion){
+        this.final_message="Retrouver votre nouveau NFT dans votre wallet NFluenT";
+      } else {
+        this.final_message="Le NFT est livré à l'adresse "+addr;
+      }
+    },(err:any)=>{
+      showMessage(this,get_in(this.ope,this.section+".messages.cancel","Problème technique: Impossible d'envoyer ce NFT"));
+      this.final_message="Problème technique: Envoi du NFT annulé";
+    })
+
+    return true;
   }
 
-  onLoadPaymentData($event: any) {
-    if($event.returnValue)
-      this.valide({address:this.address});
-  }
+
 
   onflash($event: any) {
     this.address=$event.data;

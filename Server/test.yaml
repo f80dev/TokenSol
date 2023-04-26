@@ -1,3 +1,4 @@
 nfts: []
-storage: {}
+storage:
+  file_db64759d208685d9f51f6508ed02a86711aa42d3dc2be1c8e6a4b90d7895d0d3: https://img.freepik.com/free-photo/beautiful-milky-way-night-sky_53876-139825.jpg?w=1380&t=st=1670608013~exp=1670608613~hmac=b2ad049cb167a88487d282bb40d8061d98944ba401899a4354a699a0ab30363b
 version: '1.0'

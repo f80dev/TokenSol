@@ -42,7 +42,7 @@
                  [label]="intro_message"
                  label_button="Valider"
                  [placeholder]="prompt"
-                 [value]="address" (valueChange)="address=$event"
+                 [value]="address" (valueChange)="update_address($event)"
                  (validate)="validate($event)"
                  [help]="explain_message">
       </app-input>
@@ -51,7 +51,7 @@
 
 
   <button type="button" color="primary" *ngIf="showWebcam"
-          mat-raised-button mat-button
+          mat-raised-button 
           (click)="enabled_webcam=true" >
     Utiliser mon QRCode
   </button>
@@ -96,29 +96,54 @@
 
       </div>
 
-
     </div>
-
-
   </div>
 
 
-  <img [src]="qrcode" *ngIf="showWalletConnect && qrcode.length>0"
-       title="Flasher avec un wallet compatible wallet connect"
-       style="max-width: 150px;margin: 10px;" [style.width]="size">
+  <mat-card *ngIf="qrcode.length==0 && network.indexOf('elrond')>-1" style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background">
+    <mat-card-title class="multiversx-text">Réseau MultiversX</mat-card-title>
+    <button type="button" mat-raised-button class="multiversx-button"
+            *ngIf="showWalletConnect && qrcode.length==0"
+            (click)="open_wallet_connect()">
+      Wallet Connect
+    </button><br>
 
+    <button type="button" mat-raised-button class="multiversx-button"
+            *ngIf="showWebWallet"
+            (click)="open_web_wallet()">
+      Web Wallet
+    </button><br>
+
+    <button type="button" mat-raised-button class="multiversx-button"
+            *ngIf="showExtensionWallet"
+            (click)="open_extension_wallet()">
+      Extension Chrome
+    </button><br>
+
+
+  </mat-card>
+
+  <br>
+
+  <div *ngIf="showWalletConnect && qrcode.length>0" style="max-width: 250px;margin: 10px;width:100%;text-align: center;">
+    Flasher ce qrcode depuis votre wallet<br>
+    <img [src]="qrcode"
+         (click)="qrcode=''"
+         title="Flasher ce qrcode depuis votre wallet"
+         style="width:100%;" [style.width]="size">
+  </div>
 
 
   <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >
     <div *ngIf="showNetwork">
       Se connecter avec votre wallet sur<br>
-      <button type="button" mat-raised-button mat-button
+      <button type="button" mat-raised-button 
               *ngIf="api.isSolana(network) && (api.installed_wallet().indexOf('phantom')>-1 || api.installed_wallet().indexOf('solflare')>-1)"
               (click)="open_wallet()">
         Solana
       </button>
 
-      <button type="button" mat-raised-button mat-button
+      <button type="button" mat-raised-button 
               *ngIf="api.installed_wallet().indexOf('maiar')>-1"
               (click)="open_wallet()">
         Elrond
@@ -128,7 +153,7 @@
 
 
   <div id="cmdPanel" style="margin-left:10%;margin-top:20px;width: 80%;text-align: center;" *ngIf="(showAddress || showAccesCode)">
-    <button type="button" mat-raised-button mat-button
+    <button type="button" mat-raised-button 
             title="Ne pas se connecter" *ngIf="showCancel"
             (click)="oncancel.emit()">
       Annuler

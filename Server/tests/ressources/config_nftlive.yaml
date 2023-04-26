@@ -2,8 +2,8 @@ quality: 98
 version: 1
 message: ""
 id: 186ef1382f6
-height: 800
-width: 800
+height: 400
+width: 400
 data:
   description: ""
   files: ""
@@ -20,17 +20,41 @@ layers:
   - params: {}
     name: text_logo
     elements:
-      - image: https://bafkreicn3uistmaakt5ou5gah6woh72ohe5mca33i56txjrx4lzedxseme.ipfs.nftstorage.link
+      - image: "https://nfluent.io/assets/polaroid.svg"
         type: image/svg
+        name: polaroid
+
+      - image: "https://nfluent.io/assets/cadre.svg"
+        type: image/svg
+        name: cadre
+
+      - image: "https://nfluent.io/assets/cadre_rond_flou.svg"
+        type: image/svg
+        name: rond_flou
+
+      - image: "https://nfluent.io/assets/simple_blanc.svg"
+        type: image/svg
+        name: rond_flou
+
+      - image: "https://nfluent.io/assets/cadre_rond.svg"
+        type: image/svg
+        name: rond
+
+      - image: "https://nfluent.io/assets/simple.svg"
+        type: image/svg
+        name: simple
+
     text: ""
     unique: false
-    width: 800
-    height: 800
+    width: 400
+    height: 400
     indexed: true
     position: 1
     translation: 0,0
     scale: 1,1
     margin: 0,0
+
+
 limit: 1
 help: ""
 max_items: 11

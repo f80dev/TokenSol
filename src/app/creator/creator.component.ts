@@ -5,7 +5,18 @@ import {_prompt, PromptComponent} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
-import {$$, getParams, hashCode, isLocal, normalize, now, setParams, showError, showMessage} from "../../tools";
+import {
+  $$,
+  download_file,
+  getParams,
+  hashCode,
+  isLocal,
+  normalize,
+  now,
+  setParams,
+  showError,
+  showMessage
+} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {ActivatedRoute, Router} from "@angular/router";
 import {Location} from "@angular/common";
@@ -17,6 +28,7 @@ import {OperationService} from "../operation.service";
 import {parse, stringify} from "yaml";
 import {DeviceService} from "../device.service";
 import {wait_message} from "../hourglass/hourglass.component";
+import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
 
 
 @Component({
@@ -30,8 +42,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   backcolor="lighgray";
 
   platforms=null;
-  //webstorage_platform=[{label:"",value:""}]
-  //sel_webstorage_platform: any;
+
   url_collection="";
   show_addtext:any;
   configs:Configuration[]=[];
@@ -90,13 +101,12 @@ export class CreatorComponent implements OnInit,OnDestroy {
   sel_platform: string="nftstorage";
 
   sel_config: Configuration | null=null;
-  fontfiles: any;
+  fontfiles: any[]=[];
   filename_format: string ="image";
 
   message="";
   palette: any={};
   quality: number=95;
-  //networks_available:any[]=[]; //Liste des blockchaine autorisées si transfert direct vers le minage
   stockage_available:any={};    //Stockage des documents attachés
 
   constructor(
@@ -145,7 +155,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   refresh(){
-    if(this.fontfiles){
+    if(this.fontfiles.length>0){
       if(this.sel_config && this.sel_config.text && !this.sel_config!.text.font)this.sel_config!.text.font=this.fontfiles[0];
     } else {
       this.network.list_installed_fonts().subscribe((r:any)=>{
@@ -165,16 +175,18 @@ export class CreatorComponent implements OnInit,OnDestroy {
       this.sel_palette=this.palette_names[0];
     })
 
-
     getParams(this.routes).then((params:any)=>{
       if(params.title_form)this.title_form=params.title_form;
-      //this.networks_available=this.network.config["NETWORKS"] || params.networks || [];
-      //this.networks_available=this.network.networks_available;
 
-      //this.webstorage_platform=this.network.config["PLATFORMS"];
       this.sel_platform=this.network.stockage_available[0];
-      //this.sel_webstorage_platform=this.webstorage_platform[0];
-      this.stockage_available=this.network.config["PLATFORMS"] || params.stockage || "infura";
+      this.stockage_available=this.network.stockage_available || params.stockage || "infura";
+
+      for(let i=0;i<this.stockage_available.length;i++){
+        let s=this.stockage_available[i];
+        if(typeof s=="string"){
+          this.stockage_available[i]={label:s.split("-")[0],value:s}
+        }
+      }
 
       this.network.list_config().subscribe((r:any)=> {
         if(r){
@@ -279,140 +291,226 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
-  fill_layer(i:number,w:number,h:number,preview:number,func:Function){
-    if(this.sel_config){
-      wait_message(this,"Composition de " + i + " calques sur " + this.sel_config!.layers.length)
-      this.network.add_layer(this.sel_config!.layers[i],w,h,preview).subscribe(()=> {
-        wait_message(this);
-        i = i + 1;
-        if(this.sel_config && i<this.sel_config!.layers.length){
-          this.fill_layer(i,w,h,preview,func);
-        }else{
-          func();
-        }
-      },(err)=>{showError(this,err)});
-    }
-
+  fill_layer(i:number,w:number,h:number,preview:number){
+    return new Promise((resolve,reject) => {
+      if(this.sel_config){
+        wait_message(this,"Composition de " + i + " calques sur " + this.sel_config!.layers.length)
+        this.network.add_layer(this.sel_config!.layers[i],w,h,preview).subscribe(async ()=> {
+          wait_message(this);
+          i = i + 1;
+          if(this.sel_config && i<this.sel_config!.layers.length){
+            await this.fill_layer(i,w,h,preview);
+          }else{
+            resolve(true);
+          }
+        },(err)=>{showError(this,err)});
+      }
+    });
   }
 
 
   async ask_email_for_collection(){
     let email=await _prompt(this,"Email de reception de la collection",this.user.profil.email,
         "Vous recevrez le lien de téléchargement dés que la collection est disponible","text","Démarrer","Annuler",false);
-    this.generate_collection("zip_"+email,false);
+    this.generate_collection("zip_"+email);
   }
 
-  async ask_confirmation_for_big_collection(format="zip",direct_mint=false){
+  async ask_confirmation_for_big_collection(format="zip"){
     let conf="no";
     if(this.sel_config!.limit>20){
       conf=await _prompt(this,"Etes-vous sûr de lancer une génération en temps réel ?","","La génération de cette collection risque de prendre beaucoup de temps.");
     }
     if(this.sel_config!.limit<=20 || conf=="yes"){
-      this.generate_collection(format,direct_mint,2000000);
+      this.generate_collection(format);
     }
   }
 
+  preview(limit:number=0,size:string="",delay=500){
+    this.previews=[]
+    if(size.length==0)size=this.sel_config?.width+"x"+this.sel_config?.height;
+    if(limit==0)limit=this.sel_config?.limit || 1;
+    this.show_preview=true;
+    this.show_conception=false;
+    this.message_preview="Preview en cours de construction";
+    setTimeout(()=>{
+      this.network.get_sequence(this.sel_config!.layers,limit).subscribe((result:any)=>{
+        $$("Preview base sur la sequence ",result.sequences)
+        let real_limit=Math.min(limit,result.sequences.length);
+        for(let i=0;i<real_limit;i++){
+          setTimeout(()=>{
+            let seq=result.sequences[i];
+            this.network.get_composition(seq,this.sel_config!.layers,this.sel_config?.data,size,"base64").subscribe((result:any)=>{
+              $$("Récupération de "+result.images[0].substring(0,20)+"...")
+              this.add_to_preview([result.images[0]],[result.urls[0]])
 
-  generate_collection(format="zip",direct_mint=false,timeout=200000) {
-    //Format peut contenir "preview"
-    if(!this.sel_config)return;
-    this.url_collection="";
-    this.save_config(false);
+              if(this.previews.length==real_limit){
+                this.message_preview="";
+                this.show_generate=true;
+              }
+            })
+          },i*delay);
+        }
+      },(err)=>{showError(this,err)});
+    },100)
 
+  }
 
-
+  check_data() : boolean {
     //Vérification du format des datas
     if(this.sel_config!.data.properties && this.sel_config!.data.properties!=""){
       for(let line of this.sel_config!.data.properties.split("\n")){
         if(line.split("=").length!=2){
           showMessage(this,"Format des propriétés/attributs incorrect. La syntaxe doit être attribut=valeur pour chaque ligne");
-          return;
+          return false;
         }
       }
     }
 
-    let i=0;
-    wait_message(this,"Fabrication: chargement des images ...");
-    this.network.reset_collection().subscribe(()=>{
+    if(this.sel_config && this.sel_config.data){
+      this.sel_config!.data.sequence=this.sel_config?.text.text_to_add.split("|");
+      if(this.operation!.sel_ope && this.operation!.sel_ope!.nftlive){
+        this.sel_config!.data.operation=this.operation.sel_ope?.id;
+      }
+    }
 
-      this.fill_layer(i,this.sel_config?.width || 800,this.sel_config?.height || 800,0,()=>{
+    return true;
+  }
 
-        if(this.sel_config && this.sel_config.data){
-          this.sel_config!.data.sequence=this.sel_config?.text.text_to_add.split("|");
-          if(this.operation!.sel_ope && this.operation!.sel_ope!.nftlive){
-            this.sel_config!.data.operation=this.operation.sel_ope?.id;
-          }
-        }
 
-        if(!direct_mint)showMessage(this,"L'aperçu se limite à 10 NFT maximum");
+  generate_collection(format="files base64",delay=500) {
+    //Format peut contenir "preview"
+    if(!this.sel_config)return;
+    this.url_collection="";
+    this.save_config(false);
+    if(!this.check_data())return;
 
-        this.url_collection="";
-        let url=this.network.get_url_collection(
-            Math.min(this.sel_config!.limit,format=="preview" ? 10 : 1000),
-            this.filename_format,this.sel_ext.value,
-            this.sel_config!.width+","+this.sel_config!.height,
-            this.sel_config!.seed,
-            this.quality,format,
-            this.sel_config!.data,
-            this.sel_config!.data.properties);
+    this.message_preview="Avancement 0%";
+    this.show_preview=true;
 
-        this.url_collection=url.replace("format=preview","format=zip");
+    this.network.get_sequence(this.sel_config.layers,this.sel_config.limit).subscribe(async (result:any)=>{
+      let sequences=result.sequences;
 
-        if(format.startsWith("zip_")){
-          wait_message(this);
-          this.network._post(url,"",this.sel_config!,100).subscribe((r: any) => {
-            showMessage(this,"Travail en cours ... consulter votre boite mail pour retrouver le résultat quand il sera prêt")
-          });
-        }else{
-          wait_message(this,"Fabrication: Fusion des calques ...",true,2000000);
-          this.network._get(url,"",timeout).subscribe((r: any) => {
-                showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
-                //    = this.network.server_nfluent + "/api/images/" + r.archive + "?f=" + r.archive;
-                $$("Lien de téléchargement " + this.url_collection);
+      let rep:any="ok";
+      if(true || sequences.length>environment.visual_cost.quota && this.sel_config?.width!+this.sel_config?.height!>300){
+        let nb_tokens_to_generate=sequences.length;
+        rep=await _ask_for_paiement(this,"NFLUCOIN-4921ed",
+            nb_tokens_to_generate*(environment.visual_cost.price_in_fiat),
+            nb_tokens_to_generate*(environment.visual_cost.price_in_crypto),
+            this.user.merchant!,
+            this.user.wallet_provider,
+            "Confirmer la génération des visuels",
+            "",
+            "",
+            this.user.profil.email,
+            this.user.buy_method)
+      }
 
-                if (direct_mint) {
-                  wait_message(this)
-                  showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
-                  this.user.nfts_to_mint = r.preview;
-                  this.router.navigate(["mint"]); //A priori les paramétres ont été intégré au lancement
-                  // this.router.navigate(["mint"],{queryParams:{param:setParams({
-                  //       toolbar: this.user.toolbar_visible,
-                  //       networks: this.networks_available,
-                  //       stockage: this.stockage_available
-                  //     })}});
-                } else {
-                  wait_message("Préparation de l'aperçu")
-                  setTimeout(()=>{
-                    this.previews = r.preview;
-                    this.show_generate = false;
-                    this.show_preview = true;
-                    this.show_conception = false;
-                    wait_message(this)
-                  },50);
+      if(rep){
+        this.user.nfts_to_mint=[];
+        let step=Math.max(sequences.length/10,3);
+
+        this.previews=[];
+        this.message_preview="Avancement "+Number(100*step/sequences.length)+"%";
+
+        $$("Démarage du traitement")
+        for(let i=0;i<sequences.length;i=i+step){
+          setTimeout(()=>{
+            let seq=sequences.slice(i,i+step);
+
+            this.network.get_composition(
+                seq,
+                this.sel_config?.layers!,
+                this.sel_config!.data,
+                this.sel_config?.width+"x"+this.sel_config?.height,
+                format).subscribe((result:any)=>{
+
+              this.add_to_preview(result.urls,result.urls);
+
+              if(this.previews.length==sequences.length){
+                this.message_preview="";
+                if(format.indexOf("mint")>-1)this.router.navigate(["mint"])
+                if(format.indexOf("zip")>-1){
+                  this.network.create_zip(result.files,this.user.profil.email).subscribe(()=>{
+                    showMessage(this, "Travail en cours ... consulter votre boite mail pour retrouver votre collection de visuels")
+                  })
                 }
+              }else{
+                this.message_preview="Avancement "+Math.round(Number(100*i/sequences.length))+"%";
               }
-              , (err) => {
-                showError(this, err);
-              })
+
+              if(format.indexOf("mint")>-1){
+                for(let image of result.urls)
+                  if(this.sel_platform && this.sel_platform.length>0 && !this.sel_platform.startsWith("server")){
+                    this.network.upload(image,this.sel_platform,"image/webp").subscribe((result:any)=>{
+                      this.user.nfts_to_mint.push({file:result.url,filename:result.url,type:"image/webp"})
+                    })
+                  } else {
+                    this.user.nfts_to_mint.push({file:image,filename:image,type:"image/webp"})
+                  }
+              }
+
+
+            })
+          },i*delay);
         }
+      } else {
+        showMessage(this,"Annulation du processus");
+      }
 
 
+      // this.network.reset_collection().subscribe(async ()=>{
+      //
+      //   await this.fill_layer(i,this.sel_config?.width || 800,this.sel_config?.height || 800,0);
+      //
+        // let url=this.network.get_url_collection(
+        //     Math.min(this.sel_config!.limit,format=="preview" ? 10 : 1000),
+        //     this.filename_format,this.sel_ext.value,
+        //     this.sel_config!.width+","+this.sel_config!.height,
+        //     this.sel_config!.seed,
+        //     this.quality,format,
+        //     this.sel_config!.data,
+        //     this.sel_config!.data.properties,
+        //     this.sel_platform);
+        //
+        // this.url_collection=url.replace("format=preview","format=zip");
 
+        //
+        // }else{
+        //   wait_message(this,"Fabrication: Fusion des calques ...",true,2000000);
+        //   this.network._get(url,"",timeout).subscribe((r: any) => {
+        //         showMessage(this, "Télécharger sur le lien pour démarrer la fabrication et le téléchargement de la collection")
+        //         //    = this.network.server_nfluent + "/api/images/" + r.archive + "?f=" + r.archive;
+        //         $$("Lien de téléchargement " + this.url_collection);
+        //
+        //         if (direct_mint) {
+        //           wait_message(this)
+        //           showMessage(this, "L'ensemble des liens vers les images est disponibles dans votre presse-papier")
+        //           this.user.nfts_to_mint = r.preview;
+        //           this.router.navigate(["mint"]); //A priori les paramétres ont été intégré au lancement
+        //           // this.router.navigate(["mint"],{queryParams:{param:setParams({
+        //           //       toolbar: this.user.toolbar_visible,
+        //           //       networks: this.networks_available,
+        //           //       stockage: this.stockage_available
+        //           //     })}});
+        //         } else {
+        //           wait_message("Préparation de l'aperçu")
+        //           setTimeout(()=>{
+        //             this.previews = r.preview;
+        //             this.show_generate = false;
+        //             this.show_preview = true;
+        //             this.show_conception = false;
+        //             wait_message(this)
+        //           },50);
+        //         }
+        //       }
+        //       , (err) => {
+        //         showError(this, err);
+        //       })
+      //   }
+      //
+      // });
 
-        // if(format=="upload"){
-        //   this.network.wait("");
-        //   this.network.get_collection(Math.min(this.sel_config.limit,50),this.filename_format,this.sel_ext,this.sel_config!.width+","+this.sel_config!.height,this.sel_config.seed,this.quality,"upload",this.sel_config!.data,this.sel_platform).subscribe((r:any) => {
-        //     this.upload_files=[];
-        //     for(let item of r){
-        //       // @ts-ignore
-        //       this.upload_files.push(item['url']);
-        //     }
-        //   });
-        // }
-
-
-      });
-    },(err)=>{showError(this,err);})
+    })
   }
 
   attributes(arg0: number, filename_format: string, value: string, arg3: string, seed: number, quality: number | undefined, format: string, data: { title: string; symbol: string; description: string; properties: string; files: string; operation: string | undefined; tags: string; sequence: string[] | undefined; }, attributes: any) {
@@ -453,9 +551,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       this.network.update_layer(l,20).subscribe((r:any)=>{
         this.message="";
         l.elements=r.elements;
-      },(err)=>{
-        showError(this,err);
-      });
+      },(err)=>{showError(this,err);});
     }
 
   }
@@ -502,9 +598,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
         this.eval_max_nft();
       }
 
-      this.network.update_layer(layer).subscribe((elements:any)=>{
-        showMessage(this,"Mise a jour");
-      });
+      this.save_config();
+
+      // this.network.update_layer(layer).subscribe((elements:any)=>{
+      //   showMessage(this,"Mise a jour");
+      // });
     }
   }
 
@@ -718,7 +816,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     for(let f of layer.elements){
       if(f.image.indexOf("/api/images/")>-1){
         let id=f.image.split("/api/images/")[1].split("?")[0];
-        this.network.remove_image(id).subscribe(()=>{});
+        //this.network.remove_image(id).subscribe(()=>{});
       }
     }
     layer.elements=[];
@@ -848,6 +946,19 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
   }
 
+  upload_image_in_correct_order(idx=0,l_images:string[],layer:Layer) : Promise<Layer>{
+    return new Promise((resolve) => {
+      let img = l_images[idx];
+      this.network.upload(img, this.sel_platform, "image/svg").subscribe((r: any) => {
+        layer.elements.push({"image": r.url, type: "image/svg","name":"svg_"+layer.name+"_"+idx});
+        if (l_images.length == idx + 1) {
+          resolve(layer)
+        } else {
+          this.upload_image_in_correct_order(idx + 1, l_images, layer)
+        }
+      })
+    })
+  }
 
 
   async find_image() {
@@ -864,7 +975,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
     open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
   }
 
-
   //add_image_to_layer ajouter une image
   //tag upload_file
   title_form="Générateur de visuels NFTs";
@@ -879,12 +989,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
 
     if(body.filename.endsWith("svg")){
-      this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe((r:any)=>{
-        for(let img of r){
-          this.network.upload(img,this.sel_platform,"image/svg").subscribe((r:any)=>{
-            layer.elements.push({"image":r.url,type:"image/svg"});
-          })
-        }
+      this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe(async (r:any)=>{
+        layer=await this.upload_image_in_correct_order(0,r,layer)
         this.eval_max_nft();
       })
     }else{
@@ -969,19 +1075,16 @@ export class CreatorComponent implements OnInit,OnDestroy {
     if(!layer.margin)layer.margin="0";
     //layer.translation=await _prompt(this,"Translation (x,y) ?",layer.translation)
     //layer.scale=await _prompt(this,"Echelle (x,y) ?",layer.scale)
-    layer.margin=await _prompt(this,"Marge (x,y) ?",layer.margin)
+    layer.margin=await _prompt(this,"Largeur du cadre ?",layer.margin,"Largeur en pixel sur horizontal,vertical ou juste la largeur")
     if(!layer.margin)layer.margin="0,0"
     if(layer.margin.indexOf(",")==-1)layer.margin=layer.margin+","+layer.margin;
   }
 
-
-
-  on_upload_attributs($event: any) {
-    this.fill_layer(0,200,200,0,()=>{
-      this.network.upload_attributes(this.sel_config!.label,$event.file.split("base64,")[1]).subscribe((resp:any)=>{
-        showMessage(this,"Fichier d'attributs associés")
-        this.save_config();
-      })
+  async on_upload_attributs($event: any) {
+    //await this.fill_layer(0,200,200,0);
+    this.network.upload_attributes(this.sel_config!.label,$event.file.split("base64,")[1]).subscribe((resp:any)=>{
+      showMessage(this,"Fichier d'attributs associés")
+      this.save_config();
     });
   }
 
@@ -1036,8 +1139,10 @@ export class CreatorComponent implements OnInit,OnDestroy {
       if(pos>0 && query.indexOf("sticker")==-1){query=query+" sticker"};
       this.network.search_images(query,(layer.position>0)).subscribe((r:any)=>{
         _prompt(this,"Choisissez une ou plusieurs images","","","images","Sélectionner","Annuler",false,r.images).then((images:string)=>{
+          let idx=0
           for(let link of images){
-            layer.elements.push({image:link});
+            layer.elements.push({image:link,name:"bank_"+now("rand")+"_"+idx,ext:"image/jpg"});
+            idx=idx+1
           }
           this.save_config();
           this.eval_max_nft()
@@ -1058,6 +1163,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
   //   this.build_sample(sample.layers,sample.data,false);
   // }
   w_data_field: string="350px"
+  sel_font: any;
+  message_preview: string = "";
 
 
   publish(platform="nfluent",to_clipboard=true) {
@@ -1072,7 +1179,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
     });
   }
 
-  download_collection() {
+  download_collection(format="zip") {
     showMessage(this,"Votre collection est en cours de préparation");
     window.location.assign(this.url_collection);
   }
@@ -1080,5 +1187,26 @@ export class CreatorComponent implements OnInit,OnDestroy {
   show_max_item() {
     this.sel_config!.max_items=(this.sel_config!.max_items<500 ? 500 : 15);
     showMessage(this,"Pour repasser en vue réduite, utiliser de nouveau ce bouton");
+  }
+
+  select_file(img: any) {
+    let idx=this.previews.indexOf(img);
+    img.selected=!img.selected;
+    if(img.selected){
+      img.style["opacity"]="1.0"
+    }else{
+      img.style["opacity"]="0.3"
+    }
+    this.previews[idx]=img;
+  }
+
+  add_to_preview(images:any[],urls:any[]) {
+    for(let i=0;i<images.length;i++){
+      this.previews.push({src:images[i],url:urls[i],selected:true,style:{width: "100px","margin-left":"5px"}});
+    }
+  }
+
+  save_file(img: any) {
+    download_file(img.src,img.filename,"image/webp");
   }
 }

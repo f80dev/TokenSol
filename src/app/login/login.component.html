@@ -1,7 +1,8 @@
 <div class="mainform">
   <div class="titleform">{{title}}</div>
-  <div *ngIf="!show_registration" style="width: 100%;text-align: center;">
+  <div *ngIf="!show_registration && !show_wallet_authent" style="width: 100%;text-align: center;">
     <p>Déjà inscrit ?<br><br>
+
       <app-input label="Votre email" width="300px" style="display: inline-block;"
                  [value]="email" (valueChange)="email=$event"></app-input>
       <br>
@@ -15,10 +16,12 @@
 
 
     <br>    <br>    <br>
+
     <button type="button"  mat-raised-button color="primary" [disabled]="email=='' || access_code==''"
             (click)="authent()">
       Se connecter
     </button>
+
     <br><br>
 
     <span (click)="resend_code()" style="cursor: pointer;font-style: oblique;">
@@ -26,9 +29,14 @@
     </span>
     <br><br>
 
-    <button type="button" mat-button mat-raised-button
+    <button type="button"  mat-raised-button
             (click)="show_registration=true">
       S'inscrire
+    </button>
+
+    <button type="button"  mat-raised-button
+            (click)="show_wallet_authent=true">
+      Utiliser votre Wallet
     </button>
 
 
@@ -41,5 +49,16 @@
                [showGoogle]="true" [showCancel]="true"
                (cancel)="show_registration=false"
                (authent)="registration($event)"></app-authent>
+
+  <app-authent [showExtensionWallet]="true"
+               [showWalletConnect]="true"
+               style="max-width: 700px;width: 80%;display: inline-block;"
+               intro_message="Indiquer votre mail pour recevoir votre code d'accès"
+               *ngIf="show_wallet_authent"
+               [showCancel]="true"
+               (cancel)="show_wallet_authent=false"
+               (authent)="login_with_wallet($event)"></app-authent>
+
+
 
 </div>

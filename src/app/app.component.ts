@@ -57,7 +57,12 @@ export class AppComponent implements OnInit {
   ) {
 
 
-    this.user.profil_change.subscribe(()=>{this.update_menu();})
+    this.user.profil_change.subscribe(()=>{
+      this.update_menu();
+    })
+    this.user.addr_change.subscribe(()=>{
+      this.update_menu();
+    })
 
     this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.user.toolbar_visible)this.drawer.toggle();})
     this.device.smallScreen.subscribe((r:boolean)=>{this.full_menu=!r;})
@@ -88,18 +93,15 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    setTimeout(()=>{this.showSplash=false;},2000);
     if(getBrowserName()=="firefox"){
       showMessage(this,"Le fonctionnement de TokenForge est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement",8000,()=>{},"Ok");
     }
-    setTimeout(()=>{
-      this.init_form();
-    },200)
+    this.init_form();
   }
 
 
   update_menu(){
-    let connected=this.user.isConnected(true);
+    let connected=this.user.isConnected();
     this.items["settings"].actif=connected;
     this.items["keys"].actif=connected && (this.network_service.network!="");
     this.items["build"].actif=connected;
@@ -148,9 +150,8 @@ export class AppComponent implements OnInit {
 
   init_form(){
     getParams(this.routes,"params",true).then((params:any)=>{
-      $$("Analyse des paramètres ",params);
+      $$("Analyse des paramètres par la fenetre principale ",params);
       this.user.appname=params["appname"] || environment.appname;
-      this.user.addr=params["addr"]
       if(params.hasOwnProperty("toolbar")){
         this.user.toolbar_visible=params["toolbar"]
       }else{
@@ -162,6 +163,7 @@ export class AppComponent implements OnInit {
       this.network_service.server_nfluent=params["server"] || environment.server;
 
       this.user.advance_mode=params["server"] || false;
+      this.user.merchant=params["merchant"] || environment.merchant;
 
       $$("Préparation des réseaux disponibles")
       this.network_service.networks_available=params["networks"] ? params["networks"].split(",") : environment.networks_available.split(",");
@@ -169,17 +171,23 @@ export class AppComponent implements OnInit {
       this.network_service.stockage_document_available=params["stockage_document"] ? params["stockage_document"].split(",") : environment.stockage_document.split(",");
 
       this.networks=this.network_service.networks_available.map((x:any)=>{return {label:x,value:x}});
-      let network_name=this.networks[0].value;
+      let network_name=params["network"]
+      if(this.network_service.networks_available.indexOf(network_name)==-1)network_name=this.networks[0].value;
       let index=find(this.networks,{value:network_name,label:network_name},"value");
       this.network_service.network=network_name;
       this.sel_network=this.networks[index];
 
       if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
         this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{
-          this.network_service.init_keys(this.network_service.network);
+          this.network_service.init_keys(this.network_service.network).then(()=>{
+            this.showSplash=false;
+          });
         });
+      } else {
+        this.showSplash=false;
       }
 
+      this.user.addr=params["addr"]
       this.network_service.version=params["version"] || "main";
 
       // if(!params.hasOwnProperty("appname") && !params.hasOwnProperty("toolbar")){

@@ -119,7 +119,7 @@
             <br>
 
             <br>
-            Fonte:
+            Fontes:
             <mat-select [(ngModel)]="sel_config!.text.font">
               <mat-option *ngFor="let f of fontfiles" [value]="f">{{f.name}}</mat-option>
             </mat-select>
@@ -152,8 +152,8 @@
         <button type="button" mat-raised-button mat-button
                 color="primary" *ngIf="total_picture()>1"
                 title="Voir un aperçu des 10 premiers NFT"
-                (click)="generate_collection('preview')">
-          Aperçu
+                (click)="preview(20,'75x75',100)">
+          Aperçu rapide
         </button>
 
         <button type="button" mat-raised-button mat-button
@@ -176,7 +176,7 @@
 
         <app-input label="Stockage visuels et metadata" *ngIf="user.advance_mode"
                    [value]="sel_platform" value_field="value"
-                   [options]="network.stockage_available"
+                   [options]="stockage_available"
                    (valueChange)="sel_platform=$event"></app-input>
 
       </div>
@@ -196,7 +196,7 @@
         <tr *ngFor="let layer of sel_config!.layers"
             style="text-align: center;vertical-align: middle">
 
-          <td style="width:fit-content;"
+          <td style="width:50px;"
               (click)="edit_name(layer)" *ngIf="!(device.isHandset$ | async) && user.advance_mode"
               title="Cliquer pour rappeler les paramètres de fabrication">
             {{layer.name}}<br>
@@ -217,7 +217,7 @@
                 <mat-icon style="cursor: pointer;" (click)="apply_filter(layer)" title="Appliquer des filtres">filter</mat-icon>
                 <mat-icon style="cursor: pointer;" (click)="paste_picture(layer)" title="Coller une image contenu dans le presse-papier">content_paste</mat-icon>
                 <mat-icon style="cursor: pointer;" (click)="generate_with_color(layer)" title="Générer des copies par variation de couleurs">palette</mat-icon>
-                <mat-icon style="cursor: pointer;" (click)="transform(layer)" [title]="'Marge '+layer.margin">edit</mat-icon>
+                <mat-icon style="cursor: pointer;" (click)="transform(layer)" [title]="'Bordure (px) '+layer.margin">edit</mat-icon>
               </div>
               <mat-icon style="cursor: pointer;" *ngIf="layer.position>0" (click)="update_position(layer,-1)">arrow_circle_up</mat-icon>
               <mat-icon style="cursor: pointer;" *ngIf="layer.position<sel_config!.layers.length-1"  (click)="update_position(layer,+1)">arrow_circle_down</mat-icon>
@@ -228,8 +228,14 @@
             </div>
 
             <div style="line-height: 75%;">
-              <mat-checkbox  [(ngModel)]="layer.indexed" (ngModelChange)="eval_max_nft()">Dans l'unicité</mat-checkbox><br>
-              <mat-checkbox style="margin-top: -10px;" [(ngModel)]="layer.unique" (ngModelChange)="eval_max_nft()">Usage unique</mat-checkbox>
+              <mat-checkbox  [(ngModel)]="layer.indexed"
+                             title="Signifie que les images de ce calque compte pour définir le caractère unique de chaque NFT"
+                             (ngModelChange)="eval_max_nft()">Dans l'unicité</mat-checkbox><br>
+              <mat-checkbox style="margin-top: -10px;" [(ngModel)]="layer.unique"
+                            title="Signifie que chaque image ne peut être utilisé qu'une seul fois pour les NFTs à produire"
+                            (ngModelChange)="eval_max_nft()">
+                Usage unique
+              </mat-checkbox>
             </div>
 
 
@@ -241,7 +247,7 @@
               title="Faites glisser une image pour l'ajouter au calque">
 
             <div *ngFor="let elt of layer.elements?.slice(0,sel_config.max_items)"
-                 title="Cliquer pour voir à l'échelle 1:1"
+                 [title]="elt.name+'\n'+elt.image.substring(0,100)+'\n\nCliquer pour voir à échelle 1:1'"
                  style="display: inline-block;margin: 5px;max-width: 100px;max-height: 100px;cursor: pointer;width:20%;height:100%;">
               <img *ngIf="elt?.image?.length>0"
                    [src]="elt.image"
@@ -262,6 +268,37 @@
 
     <!--  preview-->
 
+    <mat-expansion-panel [expanded]="show_preview">
+      <mat-expansion-panel-header>Résultats / Prévisualisation</mat-expansion-panel-header>
+      <app-hourglass [message]="message_preview"></app-hourglass><br>
+      <button (click)="download_collection()" mat-raised-button
+              *ngIf="url_collection.length>0"
+              title="Télécharger l'ensemble des visuels dans un fichier zip"
+              style="display:inline-block;height:60px;margin: 10px;">
+        <mat-icon>download</mat-icon>
+        <div style="display: inline-block;">Télécharger la collection</div>
+      </button>
+      <br>
+      <br>
+
+      <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
+        <img [src]="img.src" [ngStyle]="img.style"
+             [title]="img.url"
+             (dblclick)="save_file(img)"
+             (click)="select_file(img)">
+      </div>
+
+      <div *ngIf="previews.length>0">
+        <br>
+        Cliquer sur une image pour la voir en taille standard
+      </div>
+
+
+    </mat-expansion-panel>
+
+
+
+
     <mat-expansion-panel [(expanded)]="show_generate">
       <mat-expansion-panel-header>Génération</mat-expansion-panel-header>
 
@@ -279,10 +316,10 @@
           <mat-card-content>
 
             <div *ngIf="user.advance_mode">
-              <app-input label="Longeur" help="en pixels" [max]="2000" [min]="0"
+              <app-input label="Longeur" help="en pixels" [max]="2000" [min]="200"
                          value_type="number" [value]="sel_config.width" (valueChange)="sel_config.width=$event"></app-input>
 
-              <app-input label="Hauteur" value_type="number" help="en pixels" [max]="2000" [min]="0"
+              <app-input label="Hauteur" value_type="number" help="en pixels" [max]="2000" [min]="200"
                          [value]="sel_config.height" (valueChange)="sel_config.height=$event"></app-input>
 
               <app-input label="Qualité" [min]="0" [max]="100"
@@ -295,7 +332,7 @@
             </div>
 
             <div *ngIf="!user.advance_mode" style="width: 100%;">
-              <app-input label="Dimension" value_type="slider" help="en pixels" [max]="2000" [min]="0" width="250px"
+              <app-input label="Dimension du visuel (en pixels)" value_type="slider" [max]="2000" [min]="200" width="250px"
                          [value]="sel_config.height" (valueChange)="sel_config.height=$event;sel_config.width=$event"></app-input>
 
             </div>
@@ -307,31 +344,37 @@
 
         <mat-card *ngIf="user.advance_mode">
           <mat-card-title>Options avancées</mat-card-title>
-          <mat-card-content>
+          <mat-card-content class="expansion-content">
 
             <app-input class="input-number" label="Série aléatoire" value_type="number" [min]="0" [max]="100000"
                        title="La séquence aléatoire de NFT généré sera toujours la même pour un nombre donnée"
                        [value]="sel_config.seed" (valueChange)="sel_config.seed=$event">
             </app-input>
 
-<!--            <app-input [options]="webstorage_platform" width="100%"-->
-<!--                       [value]="sel_webstorage_platform" (valueChange)="sel_webstorage_platform=$event"-->
-<!--                       help="Désigne la plateforme qui va héberger les visuels des NFT"-->
-<!--                       label="Hébergement des visuels">-->
-<!--            </app-input>-->
           </mat-card-content>
 
         </mat-card>
-        <mat-card appearance="outlined" style="width: 250px;">
+        <mat-card appearance="outlined" style="width: 250px;" *ngIf="message_preview==''">
           <mat-card-title>Fabrication</mat-card-title>
           <mat-card-content>
-            <button type="button" mat-raised-button
-                    style="width: 100%;"
-                    (click)="generate_collection('preview')">
-              Aperçu
+
+            <button (click)="generate_collection('files')" mat-raised-button
+                    title="Télécharger l'ensemble des visuels dans un fichier zip"
+                    style="width: 100%">
+              Générer
             </button>
 
+            <button (click)="generate_collection('files zip');" mat-raised-button
+                    *ngIf="user.profil?.email"
+                    title="Télécharger l'ensemble des visuels dans un fichier zip"
+                    style="width: 100%">
+             Télécharger
+            </button>
+
+
+
             <br>
+
 
 <!--            <app-input *ngIf="user.advance_mode" label="Nom des fichiers téléchargés"-->
 <!--                       [value]="filename_format" (valueChange)="filename_format=$event"></app-input>-->
@@ -339,17 +382,16 @@
             <button type="button" mat-raised-button color="primary" style="width: 100%;"
                     title="Déclenche la génération, la mise en ligne des visuels et bascule dans la fenêtre de minage"
                     *ngIf="network.networks_available.length>0"
-                    (click)="ask_confirmation_for_big_collection('upload',true)">
+                    (click)="ask_confirmation_for_big_collection('files mint')">
               Générer & Miner
             </button>
 
             <br>
-            <button type="button" mat-raised-button style="width: 100%;"
-                    title="Fabrique la collection et envoi un mail dans le fichier est disponible"
-                    *ngIf="sel_config.limit>10"
-                    (click)="ask_email_for_collection()">
-              Récupérer par mail<br>la collection
-            </button>
+<!--            <button type="button" mat-raised-button style="width: 100%;"-->
+<!--                    title="Fabrique la collection et envoi un mail dans le fichier est disponible"-->
+<!--                    (click)="ask_email_for_collection()">-->
+<!--              Récupérer par mail<br>la collection-->
+<!--            </button>-->
 
           </mat-card-content>
         </mat-card>
@@ -365,32 +407,7 @@
       </div>
     </mat-expansion-panel>
 
-    <mat-expansion-panel [expanded]="previews && previews.length>0">
-      <mat-expansion-panel-header>Résultats / Prévisualisation</mat-expansion-panel-header>
-      <button (click)="download_collection()" mat-raised-button
-         *ngIf="url_collection.length>0"
-         title="Télécharger l'ensemble des visuels dans un fichier zip"
-         style="display:inline-block;height:60px;margin: 10px;">
-            <mat-icon>download</mat-icon>
-            <div style="display: inline-block;">Télécharger la collection</div>
-      </button>
-      <br>
-      <br>
 
-      <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
-        <img [src]="img.src"
-             [title]="img.filename"
-             style="width: 100px;margin-left:5px;"
-             (click)="open_file({image:img.src})">
-      </div>
-
-      <div *ngIf="previews.length>0">
-        <br>
-        Cliquer sur une image pour la voir en taille standard
-      </div>
-
-
-    </mat-expansion-panel>
 
     <mat-expansion-panel >
       <mat-expansion-panel-header>Attributs des NFTs</mat-expansion-panel-header>
@@ -482,29 +499,31 @@
   <!--  Options avancées-->
   <mat-expansion-panel *ngIf="user.advance_mode">
     <mat-expansion-panel-header>Options avancées</mat-expansion-panel-header>
+      <div class="expansion-content">
+        <mat-form-field style="fontsize:small">
+          <mat-label>Palette</mat-label>
+          <mat-select [(value)]="sel_palette" (selectionChange)="change_palette($event)">
+            <mat-option *ngFor="let k of palette_names" [value]="palette[k]">
+              {{k}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div id="showPalette">
+          <div style="width: 20px;height:20px;display: inline-block" *ngFor="let color of sel_colors" [style.background-color]="color" ></div>
+        </div>
 
-    <table>
-      <tr>
-        <td>
-          <mat-form-field style="fontsize:small">
-            <mat-label>Palette</mat-label>
-            <mat-select [(value)]="sel_palette" (selectionChange)="change_palette($event)">
-              <mat-option *ngFor="let k of palette_names" [value]="palette[k]">
-                {{k}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </td>
-        <td>
-          <div id="showPalette">
-            <div style="width: 20px;height:20px;display: inline-block" *ngFor="let color of sel_colors" [style.background-color]="color" ></div>
-          </div>
-        </td>
-        <td>
-          <mat-checkbox [(ngModel)]="config_with_image">Inclure les images</mat-checkbox>
-        </td>
-      </tr>
-    </table>
+        <mat-checkbox [(ngModel)]="config_with_image">Inclure les images</mat-checkbox>
+
+
+        <!--     https://material.angular.io/components/list/overview       -->
+        <app-input [options]="fontfiles" label="Liste des fontes disponibles"
+                   [value]="sel_font" (valueChange)="sel_font=$event"
+                   value_field="value" value_type="list"></app-input>
+
+        <div [style.font-family]="sel_font">Voici un exemple d'utilisation de la fonte</div>
+
+      </div>
+
   </mat-expansion-panel>
 
 </div>

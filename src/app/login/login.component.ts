@@ -17,6 +17,7 @@ export class LoginComponent implements OnInit {
   show_registration: boolean=false;
   access_code: string="";
   email: any="";
+  show_wallet_authent: boolean=false;
 
 
   constructor(
@@ -44,11 +45,10 @@ export class LoginComponent implements OnInit {
       this.user.setProfil(this.email,this.access_code).then(()=>{
         localStorage.setItem("access_code",encrypt(this.access_code));
         localStorage.setItem("email",encrypt(this.email));
-        //if(this.title.length>0){
-          this._location.back()
-        // }else{
-        //   this.router.navigate(["settings"]);
-        // }
+        this.user.profil.email=this.email;
+        this.user.strong=true;
+        this.user.verified_address=true;
+        this._location.back()
       },(err:any)=>{
         showMessage(this,err.error);
         this.show_registration=false;
@@ -80,5 +80,11 @@ export class LoginComponent implements OnInit {
     this.network.registration(this.email).subscribe(()=>{
       showMessage(this,"Consulter votre boite mail pour retrouver votre code d'accès à TokenForge")
     })
+  }
+
+  login_with_wallet($event: { strong: boolean; nftchecked: boolean; address: string; provider: any }) {
+    this.user.init_wallet_provider($event.provider,$event.address)
+    this.show_wallet_authent=false;
+    this._location.back()
   }
 }

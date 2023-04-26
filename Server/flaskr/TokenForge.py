@@ -16,7 +16,7 @@ from flaskr.secret import GITHUB_TOKEN
 from flaskr.settings import IPFS_SERVER
 
 
-def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",domain_server="",github_token=GITHUB_TOKEN) -> dict:
+def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server="") -> dict:
   """
   Charge une image sur une platforme
   :param data:
@@ -76,7 +76,7 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",dom
       }
 
 
-  if platform=="server" or platform.startswith("nfluent") or platform=="file":
+  if platform.startswith("server") or platform.startswith("nfluent") or platform=="file":
     if b and type(data)==dict and "content" in data:
       #Encodage du nom du fichier
       filename_encoded=str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "filename" in data and not "image" in data["type"] else ""
@@ -93,7 +93,7 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",dom
       #     img.save(TEMP_DIR+filename,save_all=True)
 
     else:
-      return StoreFile(domain_server=domain_server).add(data)
+      return StoreFile(domain_server=domain_server).add(data.__dict__)
 
 
   if platform=="nftstorage":
@@ -111,15 +111,11 @@ def upload_on_platform(data,platform="ipfs",id=None,options={},upload_dir="",dom
 
   if platform.startswith("github"):
     try:
-      repo=extract_from_dict(options,"repository",platform.split("-")[2].strip())
-      github_account=extract_from_dict(options,"account",platform.split("-")[1].strip())
-      branch=extract_from_dict(options,"branch","main")
+      github_storage=GithubStorage(platform=platform)
     except:
       log("La syntaxe doit être github-<account>-<repository>")
       return None
-
     try:
-      github_storage=GithubStorage(repo,branch,github_account,github_token)
       rc=github_storage.add(data,id,overwrite=True)
     except:
       log("Impossible de pousser le contenu. Pour obtenir un token valide voir https://github.com/settings/tokens et accorder les propriétés admin:org et repo")

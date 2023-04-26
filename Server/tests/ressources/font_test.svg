@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1500"
+   height="1500"
+   viewBox="0 0 396.87501 396.87501"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="font_test.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.23716796"
+     inkscape:cx="-307.79874"
+     inkscape:cy="1148.9748"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     units="px"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       position="200.36654,415.01844"
+       orientation="1,0"
+       id="guide881" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <rect
+       x="61.11993"
+       y="137.14716"
+       width="487.46872"
+       height="101.36964"
+       id="rect17795" />
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Drop Shadow"
+       id="filter1722"
+       x="-0.3805802"
+       y="-0.39211299"
+       width="1.8277618"
+       height="1.8855216">
+      <feFlood
+         flood-opacity="0.945098"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood1712" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite1714" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="14.9701"
+         result="blur"
+         id="feGaussianBlur1716" />
+      <feOffset
+         dx="6.28743"
+         dy="9.28144"
+         result="offset"
+         id="feOffset1718" />
+      <feComposite
+         in="offset"
+         in2="SourceGraphic"
+         operator="out"
+         result="composite2"
+         id="feComposite1720" />
+    </filter>
+  </defs>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:49.1412px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="23.120029"
+       y="51.947849"
+       id="text14047"><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:49.1412px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="23.120029"
+         y="51.947849"
+         id="tspan14049">Arial</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;line-height:1.25;font-family:'Agency FB';-inkscape-font-specification:'Agency FB, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264582"
+       x="19.759136"
+       y="104.58259"
+       id="text14385"><tspan
+         sodipodi:role="line"
+         id="tspan14383"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;font-family:'Agency FB';-inkscape-font-specification:'Agency FB, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264582"
+         x="19.759136"
+         y="104.58259">Agency FB</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:50.4548px;line-height:1.25;font-family:ALIBI;-inkscape-font-specification:'ALIBI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="22.512039"
+       y="173.43169"
+       id="text19273"><tspan
+         sodipodi:role="line"
+         id="tspan19271"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:50.4548px;font-family:ALIBI;-inkscape-font-specification:'ALIBI, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="22.512039"
+         y="173.43169">Alibi</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30.8271px;line-height:1.25;font-family:'AvantGarde CE';-inkscape-font-specification:'AvantGarde CE, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="15.619984"
+       y="220.87843"
+       id="text19753"><tspan
+         sodipodi:role="line"
+         id="tspan19751"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30.8271px;font-family:'AvantGarde CE';-inkscape-font-specification:'AvantGarde CE, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="15.619984"
+         y="220.87843">Avant Garde CE</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:56.324px;line-height:1.25;font-family:'Banshee Std';-inkscape-font-specification:'Banshee Std, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="17.299568"
+       y="279.84241"
+       id="text19979"><tspan
+         sodipodi:role="line"
+         id="tspan19977"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:56.324px;font-family:'Banshee Std';-inkscape-font-specification:'Banshee Std, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="17.299568"
+         y="279.84241">Banshee</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:27.6795px;line-height:1.25;font-family:'Brush Script Std';-inkscape-font-specification:'Brush Script Std, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264582"
+       x="20.308336"
+       y="322.82578"
+       id="text21915"><tspan
+         sodipodi:role="line"
+         id="tspan21913"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:27.6795px;font-family:'Brush Script Std';-inkscape-font-specification:'Brush Script Std, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264582"
+         x="20.308336"
+         y="322.82578">Brush Script Std</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:50.4548px;line-height:1.25;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="187.62006"
+       y="49.600674"
+       id="text843"><tspan
+         sodipodi:role="line"
+         id="tspan841"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:50.4548px;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="187.62006"
+         y="49.600674">Bauhaus</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;line-height:1.25;font-family:'Curlz MT';-inkscape-font-specification:'Curlz MT, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264582"
+       x="211.64143"
+       y="104.58259"
+       id="text845"><tspan
+         sodipodi:role="line"
+         id="tspan843"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;font-family:'Curlz MT';-inkscape-font-specification:'Curlz MT, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264582"
+         x="211.64143"
+         y="104.58259">Curlz</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;line-height:1.25;font-family:'Ink Free';-inkscape-font-specification:'Ink Free, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264582"
+       x="202.71666"
+       y="157.01555"
+       id="text1819"><tspan
+         sodipodi:role="line"
+         id="tspan1817"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;font-family:'Ink Free';-inkscape-font-specification:'Ink Free, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264582"
+         x="202.71666"
+         y="157.01555">Ink Free</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;line-height:1.25;font-family:Ravie;-inkscape-font-specification:'Ravie, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264582"
+       x="206.06345"
+       y="267.45944"
+       id="text3377"><tspan
+         sodipodi:role="line"
+         id="tspan3375"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:46.2073px;font-family:Ravie;-inkscape-font-specification:'Ravie, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264582"
+         x="206.06345"
+         y="267.45944">Ravie</tspan></text>
+  </g>
+</svg>

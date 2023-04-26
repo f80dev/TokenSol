@@ -1,8 +1,9 @@
 from time import sleep
 
-from flaskr.Elrond import Elrond
+from flaskr.Elrond import Elrond, DEFAULT_OPTION_FOR_ELROND_COLLECTION
 from flaskr.Keys import Key
 from flaskr.Tools import random_from, now
+from flaskr.apptools import get_storage_instance
 from tests.test_tools import MAIN_ACCOUNT, create_nft, MAIN_COLLECTION
 
 
@@ -26,6 +27,29 @@ def test_get_collections():
 
 
 
+def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1):
+  _network=Elrond("devnet")
+  nft=create_nft(collection=col)
+  _miner=_network.get_keys(address=miner)[0]
+
+  test_in_collections(col,miner)
+
+  rc=_network.mint(miner=_miner,
+                   title="TestNFT",
+                   description=nft.description,
+                   collection={"id":col},
+                   properties=[],
+                   storage=get_storage_instance("nftstorage"),
+                   files=[],
+                   quantity=quantity,
+                   visual=nft.visual)
+  assert not rc is None
+  assert len(rc["error"])==0,rc["error"]
+  assert len(rc["result"]["transaction"])>0
+  return rc["result"]["mint"]
+
+
+
 def test_add_role(account_to_add:str="",miner=MAIN_ACCOUNT,type_collection="SemiFungible",roles_to_add=None):
   """
   liste des roles : https://docs.multiversx.com/tokens/nft-tokens/#roles
@@ -44,6 +68,7 @@ def test_add_role(account_to_add:str="",miner=MAIN_ACCOUNT,type_collection="Semi
   while account_to_add==miner.address:
     account_to_add: str=random_from(_net.get_keys()).address
 
+  #voir https://docs.multiversx.com/tokens/nft-tokens/#roles
   if not roles_to_add: roles_to_add=random_from(["ESDTRoleNFTBurn","ESDTRoleNFTUpdateAttributes","ESDTRoleNFTAddURI","ESDTTransferRole"])
   col=random_from(_net.get_collections(miner.address, type_collection=type_collection))
 
@@ -65,12 +90,12 @@ def test_add_role_to_nftcollection(account_to_add:str="",miner=MAIN_ACCOUNT):
 def test_mint_sft(miner=MAIN_ACCOUNT,quantity=10):
   _network=Elrond("devnet")
   _miner=_network.get_keys(address=miner)[0]
-  cols=_network.get_collections(miner, False, type_collection="SemiFungible",special_role="canCreate")
+  cols=_network.get_collections(miner, False, type_collection="SemiFungible",special_role="canCreate,canBurn,canAddQuantity")
   if len(cols)==0:
-    rc=_network.add_collection(_miner,"MaCol"+now("hex"),type_collection="SemiFungible")
+    rc=_network.add_collection(_miner,"MaCol"+now("hex"),options=DEFAULT_OPTION_FOR_ELROND_COLLECTION,type_collection="SemiFungible")
     assert not rc is None
     cols.append(rc)
-  nft=test_mint_for_collection(miner,cols[0]["id"],quantity=quantity)
+  nft=test_mint_for_collection(miner,col=cols[0]["id"],quantity=quantity)
   return nft
 
 
@@ -102,7 +127,7 @@ def test_get_nft(miner=MAIN_ACCOUNT):
   _network=Elrond("devnet")
   nfts=_network.get_nfts(miner,10)
   for nft in nfts:
-    rc=_network.get_nft(nft.address,with_balance=miner,timeout=1)
+    rc=_network.get_nft(nft.address,with_balance=miner)
     assert not rc is None
     assert rc.balances[miner]>0
     assert rc.supply>0
@@ -110,8 +135,8 @@ def test_get_nft(miner=MAIN_ACCOUNT):
 
 def test_get_balance_for_nft(miner=MAIN_ACCOUNT):
   _network=Elrond("devnet")
-  rc=_network.get_balances(miner, "")
-
+  rc=_network.get_balances(miner)
+  assert not rc is None
 
 
 def test_transfer_sft(miner=MAIN_ACCOUNT):
@@ -149,28 +174,19 @@ def test_in_collections(col:str=MAIN_COLLECTION,miner=MAIN_ACCOUNT,special_role=
 def test_add_sft_collection(miner=MAIN_ACCOUNT):
   _network=Elrond("devnet")
   _miner=_network.get_keys(address=miner)[0]
-  rc=_network.add_collection(_miner,"MaCol"+now("hex"),type_collection="SemiFungible")
+  rc=_network.add_collection(_miner,"MaCol"+now("hex"),options=DEFAULT_OPTION_FOR_ELROND_COLLECTION,type_collection="SemiFungible")
   test_in_collections(rc["id"],miner)
 
 
-def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1):
+
+def test_account_storage(miner=MAIN_ACCOUNT):
   _network=Elrond("devnet")
-  nft=create_nft(collection=col)
-  _miner=_network.get_keys(address=miner)[0]
-
-  test_in_collections(col,miner)
-
-  rc=_network.mint(miner=_miner,
-                   title="TestNFT",
-                   description=nft.description,
-                   collection={"id":col},
-                   properties=[],
-                   storage="nftstorage",
-                   files=[],
-                   quantity=quantity)
-  assert not rc is None
-  assert len(rc["error"])==0,rc["error"]
-  assert len(rc["result"]["transaction"])>0
-  return rc["result"]["mint"]
-
-
+  data={"email":"paul.dudule@gmail.com"}
+  _miner=_network.find_key(miner)
+  #t=_network.save_data_to_account(_miner,data)
+  # assert not t is None
+  # assert len(t["error"])==0,"Erreur sur la mise a jour "+t["error"]
+  rc=_network.get_data_from_account(_miner.address)
+  for k in data.keys():
+    assert k in rc
+    assert rc[k]==data[k]

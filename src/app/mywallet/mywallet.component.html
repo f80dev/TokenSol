@@ -25,9 +25,9 @@
         </mat-slider>
 
 
-        <app-input [options]="collections"
-                   label="Collections"
-                   *ngIf="nfts.length>3 || sel_collection.id!='*'"
+        <app-input [options]="options"
+                   label="Collections" value_field="value"
+                   *ngIf="nfts.length>3 || sel_collection!='*'"
                    [value]="sel_collection" (valueChange)="force_refresh($event)">
         </app-input>
 
@@ -47,25 +47,26 @@
                      [style]="{backgroundColor:'0xFEFEFE',border: '1px solid lightgray'}"
                      [width]="nft_size+'px'" [height]="nft_size+'px'"
                      [data]="nft"
+                     (mouseenter)="analyse_metadata(nft)"
                      (onreverse)="on_reverse($event)">
 
-      <div style="width: 90%;padding:5%;overflow: hidden;">
+      <div style="width: 90%;padding-left:2%;overflow: hidden;">
         <div class="mat-body-2" *ngIf="nft.collection">{{nft.collection!.name}}</div>
-        <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/10+'px'">
+        <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/15+'px'">
           {{nft.name}}
           <span *ngIf="nft.balances[addr]>1">({{nft.balances[addr]}})</span>
 
         </div>
         <br>
-        <div class="mat-body-2" [style.font-size]="(nft_size || 100)/15+'px'">{{nft.description}}</div><br>
-        <table style="width: 100%;">
-          <tr *ngFor="let attr of nft.attributes" class="mat-body-2">
+        <div class="mat-body-2" [style.font-size]="(nft_size || 100)/20+'px'">{{nft.description}}</div><br>
+        <table style="width: 100%;height: 80%;overflow: hidden;">
+          <tr *ngFor="let attr of nft.attributes" class="mat-body-1">
             <td>{{attr.trait_type}}</td>
             <td>{{attr.value}}</td>
           </tr>
         </table>
 
-        <div style="position: absolute;display: block;width:100%;left:5%;bottom:5%;">
+        <div style="position: absolute;display: block;width:100%;left:5%;bottom: 2%;">
           <table>
             <tr>
               <td>Liens:</td>

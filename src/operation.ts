@@ -29,7 +29,7 @@ export interface Source {
   type: "database" | "network" | "file"
   connexion: string
   filter: any | null
-  owner: string | null
+  miner: CryptoKey | null
   dbname: string | null
   collections: string[] | null
 }
@@ -94,7 +94,7 @@ export interface Operation {
     sources: Source[]
   }
 
-  lazy_mining :{
+  mining :{
     metadata_storage: string
     content_storage: string
     networks:[{
@@ -330,7 +330,7 @@ export interface Operation {
 
 }
 
-export function newCollection(name:string,owner:CryptoKey,id="") : Collection {
+export function newCollection(name:string,owner:CryptoKey,id="",type_collection="SemiFungible") : Collection {
   if(id.length==0)id=name;
   return {
     description: "",
@@ -341,7 +341,7 @@ export function newCollection(name:string,owner:CryptoKey,id="") : Collection {
     owner: owner,
     price: 0,
     roles: undefined,
-    type: undefined,
+    type: type_collection,
     visual: undefined
   }
 }

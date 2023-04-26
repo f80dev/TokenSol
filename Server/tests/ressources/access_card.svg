@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1500"
+   height="1500"
+   viewBox="0 0 396.87501 396.87501"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="access card.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.33540615"
+     inkscape:cx="268.33139"
+     inkscape:cy="913.81747"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     units="px"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <sodipodi:guide
+       position="200.36654,415.01844"
+       orientation="1,0"
+       id="guide881" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <rect
+       x="61.11993"
+       y="137.14716"
+       width="487.46872"
+       height="101.36964"
+       id="rect17795" />
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Drop Shadow"
+       id="filter1722"
+       x="-0.3805802"
+       y="-0.39211299"
+       width="1.8277618"
+       height="1.8855216">
+      <feFlood
+         flood-opacity="0.945098"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood1712" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite1714" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="14.9701"
+         result="blur"
+         id="feGaussianBlur1716" />
+      <feOffset
+         dx="6.28743"
+         dy="9.28144"
+         result="offset"
+         id="feOffset1718" />
+      <feComposite
+         in="offset"
+         in2="SourceGraphic"
+         operator="out"
+         result="composite2"
+         id="feComposite1720" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter5796"
+       x="-0.024170405"
+       y="-0.054396062"
+       width="1.0483408"
+       height="1.1087921">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="2.2683112"
+         id="feGaussianBlur5798" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter6412"
+       x="-0.032200598"
+       y="-0.17436326"
+       width="1.0644012"
+       height="1.3487265">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="1.148333"
+         id="feGaussianBlur6414" />
+    </filter>
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter6416"
+       x="-0.007912814"
+       y="-0.12943736"
+       width="1.0158256"
+       height="1.2588747">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="0.85301936"
+         id="feGaussianBlur6418" />
+    </filter>
+  </defs>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:21.3528px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;inline-size:262.892;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.952;stroke-miterlimit:4;stroke-dasharray:none;filter:url(#filter6416)"
+       x="10.963223"
+       y="160.63841"
+       id="text3026"
+       transform="matrix(1.4529883,0,0,1.4149064,-7.523266,163.02756)"><tspan
+         x="10.963223"
+         y="160.63841"
+         id="tspan6445">NFLUENT ACCESS CARD</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:143.031px;line-height:1.25;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;filter:url(#filter5796);opacity:0.78980892"
+       x="200.19267"
+       y="160.80495"
+       id="text4129"
+       transform="scale(1.0039386,0.99607685)"><desc
+         id="desc12914">000|001|002|003|004|005|006|007|008|009|010|011|012|013|014|015</desc><tspan
+         sodipodi:role="line"
+         id="tspan4127"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:143.03099823px;font-family:'Bauhaus 93';-inkscape-font-specification:'Bauhaus 93, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle;stroke:none;stroke-width:0.264583"
+         x="200.19267"
+         y="160.80495">005</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:21.3528px;line-height:1.25;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;inline-size:137.395;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.09309;stroke-miterlimit:4;stroke-dasharray:none;filter:url(#filter6412)"
+       x="10.963223"
+       y="160.63841"
+       id="text868"
+       transform="matrix(1.2944318,0,0,1.2046742,129.5901,-142.81277)"><tspan
+         x="10.963223"
+         y="160.63841"
+         id="tspan6447">CARD ID</tspan></text>
+  </g>
+</svg>

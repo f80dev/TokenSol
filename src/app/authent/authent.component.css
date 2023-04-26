@@ -1,5 +1,19 @@
 button {
   margin: 10px;
+  width: 150px
+}
+
+.multiversx-button {
+  background-color: #44f8e2;
+}
+
+.multiversx-text {
+  color: #44f8e2;
+}
+
+.multiverx-background {
+  background-color: #343a40;
+  padding: 20px;
 }
 
 

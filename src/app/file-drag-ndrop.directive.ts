@@ -6,7 +6,6 @@ import {Directive, HostBinding, HostListener, Output,EventEmitter} from '@angula
   selector: '[appFileDragNDrop]'
 })
 
-
 export class FileDragNDropDirective {
   @Output() filesChangeEmiter : EventEmitter<File[]> = new EventEmitter();
 

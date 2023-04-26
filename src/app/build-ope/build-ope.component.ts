@@ -38,7 +38,6 @@ export class BuildOpeComponent implements OnInit {
   warning="";
   ope_model: Operation | any;
 
-
   constructor(
     public network:NetworkService,
     public routes:ActivatedRoute,
@@ -150,9 +149,7 @@ export class BuildOpeComponent implements OnInit {
         // }
 
         this.candymachine_qrcode=this.network.server_nfluent+"/api/qrcode/?code="+encodeURIComponent(this.get_url_for_appli("cm",{airdrop:false}))+"&scale=13";
-
       }
-
 
     },(err:any)=>{
       this.network.wait();
@@ -224,15 +221,14 @@ export class BuildOpeComponent implements OnInit {
       });
   }
 
+
   get_url_for_appli(appli:string,_d:any={}):string {
     if(!this.operation.sel_ope)return "";
-
     _d.toolbar=false
     _d.ope=this.operation.sel_ope.id;
     _d.visual=get_in(this.operation.sel_ope,"branding.splash_visual",null);
     _d.claim=get_in(this.operation.sel_ope,"branding.claim",null);
     _d.appname=get_in(this.operation.sel_ope,"branding.appname",null);
-
     return environment.appli+"/"+appli+"?"+setParams(_d);
   }
 

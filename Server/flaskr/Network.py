@@ -20,16 +20,11 @@ class Network():
     rc=[]
     for k in self.get_keys():
       if not k.address is None and len(k.address)>0:
-        rc.append(NfluentAccount(
-          name=k.name,
-          address=k.address,
-          network=k.network,
-          balance=self.get_balances(k.address),
-          nonce=0,
-          explorer=self.getExplorer(k.address,"address"),
-          unity=self.get_unity()
-        ))
+        rc.append(self.get_account(k.address))
     return rc
+
+  def get_token(self,addr):
+    raise NotImplementedError()
 
   def add_keys(self,operation=None,user=None):
     if operation:
@@ -39,6 +34,9 @@ class Network():
     if user:
       self.keys=self.keys+user["keys"]
 
+  def delete_key(self,key):
+    return False     #Pour La plupart des blockchains on ne peut pas supprimer les clés
+
 
   def __str__(self):
     return self.network
@@ -46,7 +44,7 @@ class Network():
   def reset(self,item:str="all"):
     return True
 
-  def get_account(self,addr:str,solde:int=10) -> NfluentAccount:
+  def get_account(self,addr:str) -> NfluentAccount:
     return NfluentAccount(address=addr,network=self.network,balance=100e18,nonce=0,unity="",explorer="")
 
   def can_mint(self,nft_to_mint,dest:str):
@@ -74,18 +72,29 @@ class Network():
     return email,"","",""
 
 
+  def get_balance(self,address,token_id=""):
+    raise NotImplementedError()
+
   def nfluent_wallet_url(self,address:str,domain_appli=""):
     if type(address)!=str: address=address.address.bech32()
     url=domain_appli+"/wallet/?" if "localhost" in domain_appli or "127.0.0.1" in domain_appli else "https://wallet.nfluent.io/?"
     return url+setParams({"toolbar":"false","network":self.network,"addr":address})
 
 
-  def get_balances(self, address):
-    raise NotImplementedError()
+  def get_balances(self, address,nft_addr=None):
+    """
+    retourne la balance des NFTS
+    :param address:
+    :return:
+    """
+    acc=self.get_account(address)
+    return acc.nfts_balances[nft_addr] if nft_addr in acc.nfts_balances else 0
 
   def get_keys(self) -> [Key]:
     raise NotImplementedError()
 
+  def balance(self,owner:str):
+    return 1
 
   def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
     return {"id":collection_name,"name":collection_name}
@@ -118,7 +127,7 @@ class Network():
       "tx":hash,
       "error":error,
       "hash":hash,
-      "explorer":self.getExplorer(hash,"explorer") if len(hash)>0 else ""
+      "explorer":self.getExplorer(hash,"transaction") if len(hash)>0 else ""
     }
     if len(nft_addr)>0:rc["nft"]=nft_addr
     return rc

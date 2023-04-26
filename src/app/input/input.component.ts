@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
+import {Component, DoCheck, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges} from '@angular/core';
 //version 1.0 3/3/23
 
 @Component({
@@ -17,9 +17,10 @@ export class InputComponent implements OnChanges,OnInit {
   @Input() maxlength:string=""
   @Input() width:string="100%";
   @Input() maxwidth:string="100%";
+  @Input() color_value="darkgray";
 
 
-  @Input() options:any[]=[];
+  @Input() options:any=[];
   @Input() value_field="";          //Value_field permet de ne mettre dans la value de la liste qu'un seul champ d'un dictionnaire
   @Input() placeholder:string="";
 
@@ -67,6 +68,9 @@ export class InputComponent implements OnChanges,OnInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    if(typeof(changes["options"])=="string"){ // @ts-ignore
+      changes["options"]=changes["options"].split(",")
+    }
     if(changes["options"] && changes["options"].previousValue!=changes["options"].currentValue){
       this.options=[];
       for(let option of changes["options"].currentValue){
@@ -86,6 +90,7 @@ export class InputComponent implements OnChanges,OnInit {
   }
 
   ngOnInit(): void {
+    if(typeof(this.options)=="string")this.options=this.options.split(",")
     if(this.options.length>0){this.value_type="list";}
     if(this.rows>0 && this.cols==0)this.cols=10;
   }

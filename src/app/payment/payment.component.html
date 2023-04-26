@@ -1,0 +1,58 @@
+<div *ngIf="show_buy_token" class="mat-headline-6">
+    Solde insuffisant
+</div>
+
+
+<div *ngIf="buy_method=='crypto'">
+    <div *ngIf="money" style="font-size: large;margin: 15px;">
+        <div style="margin: 15px;" class="mat-subheading-1">{{price}} {{money!.unity}} + Frais de service</div>
+        <span *ngIf="balance>=0">Vous disposez actuellement de {{balance/1e18}} {{money!.unity}}</span>
+    </div>
+
+    <button type="button"  mat-raised-button color="primary" style="margin: 20px;"
+            (click)="start_payment(price)">
+        Payer {{price}} {{money!.unity}}
+    </button>
+</div>
+
+
+<div *ngIf="buy_method=='fiat' && merchant">
+    <div style="margin: 15px;" class="mat-subheading-1">
+        {{fiat_price}} {{merchant!.currency}}
+    </div>
+
+    <google-pay-button
+            environment="TEST"
+            buttonType="buy"
+            buttonColor="black"
+            [paymentRequest]="{
+    apiVersion: 2,
+    apiVersionMinor: 0,
+    allowedPaymentMethods: [
+      {
+        type: 'CARD',
+        parameters: {allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],allowedCardNetworks: ['VISA', 'MASTERCARD']},
+        tokenizationSpecification: {
+          type: 'PAYMENT_GATEWAY',
+          parameters: {gateway: 'example',gatewayMerchantId: 'exampleGatewayMerchantId'}
+        }
+      }
+    ],
+    merchantInfo: {merchantId: merchant.id,merchantName: merchant.name},
+    transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: fiat_price.toString(5),currencyCode: merchant.currency,countryCode: merchant.country}}"
+            (loadeddata)="onLoadPaymentData($event)">
+    </google-pay-button>
+</div>
+
+<div *ngIf="billing_to.length>0">
+    Facture envoyée à {{billing_to}}
+    <mat-icon (click)="change_billing_address()">edit</mat-icon>
+</div>
+<button type="button" mat-raised-button
+        style="margin-top: 20px;"
+        *ngIf="billing_to.length==0"
+        (click)="change_billing_address()">
+    Recevoir une facture
+</button>
+
+

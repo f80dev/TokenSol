@@ -120,9 +120,10 @@ export class ManageComponent implements OnInit {
   transfer_all() {
     this.mass_treatment((nft:NFT)=>{
       if(nft.address && this.user.key){
-        this.network.transfer_to(nft.address,this.user.key.address,this.address,this.network.network).subscribe(()=>{
-          showMessage(this,nft.address+" transféré");
-        })
+        //TODO: a retravailler
+        // this.network.transfer_to(nft.address,this.user.key.address,this.address,this.network.network).subscribe(()=>{
+        //   showMessage(this,nft.address+" transféré");
+        // })
       }
     },5)
   }

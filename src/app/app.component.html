@@ -38,7 +38,6 @@
       <mat-icon *ngIf="!(device.isHandset$ | async)" [cdkCopyToClipboard]="user.addr"
                 title="Copier l'adresse publique"
                 (click)="informe_copy()" style="font-size: x-large;">content_copy</mat-icon>
-      <br>
       <mat-icon  *ngIf="!(device.isHandset$ | async)" style="font-size: x-large;" (click)="open_wallet()">local_atm</mat-icon>
     </div>
 

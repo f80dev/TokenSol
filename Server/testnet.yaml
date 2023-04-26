@@ -6,4 +6,35 @@ accounts:
   network: file
   secret_key: myprivatekey_file_9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
   unity: DBC
+- address: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  amount: 100
+  balance: 1.0e+20
+  name: sophie.dudule
+  network: file
+  secret_key: myprivatekey_file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  unity: DBC
+nfts:
+- address: file_0xf4c09c0078b
+  attributes:
+  - birthday: 04/02/1971
+  balances: {}
+  collection:
+    id:
+      id: MACOLLEC
+      owner: ''
+  creators: []
+  description: ceci est la description du NFT
+  dtCreate: 1681925551.092346
+  files:
+  - https://nfluent.io
+  miner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  name: test_0xf4c09bffc95
+  network: ''
+  owner: file_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  price: 0
+  royalties: 0
+  supply: 1
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
 version: '1.0'

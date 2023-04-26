@@ -42,41 +42,40 @@ export class KeysComponent implements OnInit {
     public _location:Location,
     public routes:ActivatedRoute
   ) {
-    this.network.network_change.subscribe(()=>{this.refresh();})
-    this.operation.sel_ope_change.subscribe(()=>{this.refresh()});
+
   }
 
   ngOnInit(): void {
-    getParams(this.routes).then((params:any)=>{
-      if(params.hasOwnProperty("network"))this.network.network=params["network"];
-      if(this.user.isConnected(true)){
-          this.refresh();
+      if(this.user.isConnected()){
+
       } else {
         this.user.login("Se connecter pour gérer les clés de l'application");
       }
-    })
   }
 
   refresh(){
     this.user.connect().then((profil)=> {
-      this.network.init_keys(
-          this.network.network,
-          true,
-          this.user.profil.access_code,
-          this.operation.sel_ope!.id
-      ).then(()=>{
-        this.network.wait();
+
+      let op_id= this.operation.sel_ope ? this.operation.sel_ope.id : "";
+
+      this.network.init_keys(this.network.network, true,this.user.profil.access_code, op_id).then(()=>{
+
+          this.network.wait();
+          // this.network.network_change.subscribe(()=>{this.refresh();})
+          // this.operation.sel_ope_change.subscribe(()=>{this.refresh()});
       });
     });
   }
 
 
-  del_key(name: string) {
-    _prompt(this,"Supprimer une clé","","Etes vous sur de vouloir détruire la clé "+name,"","Je suis sûr","Annuler",true).then(()=>{
-      this.network.del_key(name).subscribe(()=>{
-        setTimeout(()=>{this.refresh();},1000);
-      });
-    })
+  del_key(name: string | null) {
+    if(name){
+      _prompt(this,"Supprimer une clé","","Etes vous sur de vouloir détruire la clé "+name,"","Je suis sûr","Annuler",true).then(()=>{
+        this.network.del_key(name).subscribe(()=>{
+          setTimeout(()=>{this.refresh();},1000);
+        });
+      })
+    }
   }
 
   encrypt(key: any) {
@@ -125,7 +124,7 @@ export class KeysComponent implements OnInit {
   }
 
   open_collections(key: CryptoKey,tools="nfluent") {
-    if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.address}});
+    if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.network.network}});
     if(tools=="inspire")open(this.network.getExplorer(key.address),"Explorer");
     if(tools=="opensea")open(this.network.getExplorer(key.address),"Explorer");
   }
@@ -153,7 +152,7 @@ export class KeysComponent implements OnInit {
     }
 
     async create_key() {
-        let email=await _prompt(this,"Créer un nouveau wallet "+this.network.network,"",
+        let email=await _prompt(this,"Créer un nouveau wallet "+this.network.network,this.user.profil.email,
             "Indiquer votre mail pour recevoir la clé privée de votre wallet",
             "text","Créer la clé","Annuler",false);
         if(isEmail(email)){
@@ -167,6 +166,7 @@ export class KeysComponent implements OnInit {
 
   updateNetwork($event: any) {
     this.network.network=$event;
+    this._location.replaceState("keys","network="+this.network.network)
   }
 
     async open_nfluent_wallet() {

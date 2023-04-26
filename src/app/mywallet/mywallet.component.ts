@@ -1,11 +1,10 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
 import {NetworkService} from "../network.service";
 import {$$, getParams, isLocal, newCryptoKey, setParams, showError, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {environment} from "../../environments/environment";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Observable, Subject} from "rxjs";
-import {WalletConnectProvider} from '@elrondnetwork/erdjs-wallet-connect-provider';
 import {Location} from "@angular/common";
 import {NFT} from "../../nft";
 import {Collection, newCollection, Operation} from "../../operation";
@@ -32,7 +31,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   photos_to_send: string[]=[];
   qrcode:string="";
   qrcode_addr:string="";
-  provider:WalletConnectProvider | null=null;
+  provider:any | null=null;
   private hAccessCode: any;
   access_code: any;
   message:string="";
@@ -45,12 +44,14 @@ export class MywalletComponent implements OnInit,OnDestroy {
   token_to_send: any=null;
   addr:string="";
 
-  collections:Collection[]=[newCollection("Toutes",newCryptoKey())];
+  collections:Collection[]=[];
 
-  sel_collection: Collection=this.collections[0];
   image_for_token: string="";
   secret: string="";
   strong: boolean=false;
+
+  sel_collection: string="*";
+  options: any[]=[{label:"Toutes",value:"*"}];
 
   constructor(public routes:ActivatedRoute,
               public toast:MatSnackBar,
@@ -70,6 +71,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
       this.access_code=r.access_code;
     });
   }
+
 
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
@@ -96,20 +98,22 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
 
+
   force_refresh(col:Collection | null=null){
     this.nfts=[];
-    if(col)this.sel_collection=col;
+    if(col)this.sel_collection=col.id;
     this.refresh(0);
   }
 
 
+
   add_nfts(r:NFT[],offset:number){
     for(let nft of r){
-      if(this.sel_collection.id=="*" || this.sel_collection.id.startsWith("Toutes")){
+      if(this.sel_collection=="*"){
         this.nfts.push(nft);
       } else {
         if(nft.collection){
-          if(nft.collection.id==this.sel_collection.id){
+          if(nft.collection.id==this.sel_collection){
             this.message="";
             this.nfts.push(nft);
           }
@@ -117,7 +121,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
       }
       if(nft.collection){
         if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection.id)==-1){
-          this.collections.push(nft.collection);
+          let name=nft.collection.name ? nft.collection.name : nft.collection.id;
+          this.collections.push(newCollection(name,nft.collection.owner,nft.collection.id));
+          this.options.push({label:name,value:nft.collection.id}); //=this.collections.map((x:Collection)=>{return {label:x.name,value:x.id}})
         }
       }
     }
@@ -138,7 +144,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   refresh(index:number=0) {
     $$("Refresh de l'onglet "+index);
     if(index==0 && this.nfts.length==0 && this.addr!=""){
-      this.message=(this.sel_collection.name=="Toutes") ? "Recherches de vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection.name;
+      this.message=(this.sel_collection=="*") ? "Recherches de vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection;
       let with_attr=!this.network.isElrond() && !this.network.isPolygon();
       let offset=5;
 
@@ -357,20 +363,26 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
   on_reverse(evt:any) {
-    if(typeof(evt.data)=="string")evt.data=JSON.parse(evt.data);
-    if(evt.side && evt.data.description.length==0 && (!evt.data.attributes || evt.data.attributes.length==0)){
-      this.network.get_nft(evt.data.address,this.network.network,this.addr).subscribe((result:any)=>{
-        let index=this.nfts.indexOf(evt.data);
-        this.nfts[index]=result[0];
-        for(let i=0;i<this.nfts[index].attributes.length;i++){
-          let a=this.nfts[index].attributes[i];
-          if(a.trait_type=="lazymint")this.nfts[index].attributes.splice(i,1);
-        }
-     })
-    }
+
   }
 
   on_rescue($event: any) {
     showMessage(this,$event);
+  }
+
+  analyse_metadata(nft: NFT) {
+    let index=this.nfts.indexOf(nft)
+    if(nft.attributes.length==1 && nft.attributes[0].value.indexOf("metadata:")>-1 && nft.address){
+      this.network.get_nft(nft.address,this.network.network,this.addr).subscribe((result:any)=>{
+        if(result.length>0){
+          nft=result[0]
+          for(let i=0;i<nft.attributes.length;i++){
+            let a=nft.attributes[i];
+            if(a.trait_type=="lazymint")nft.attributes.splice(i,1);
+          }
+          this.nfts[index]=nft;
+        }
+      })
+    }
   }
 }

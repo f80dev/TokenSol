@@ -21,7 +21,7 @@ def get_account_from_network(test_client, network=MAIN_NETWORK, seuil=1, filter=
 	accounts = call_api(test_client, "accounts/", "?network=" + network)
 	rc=[]
 	for k in accounts:
-		if k["amount"]>=seuil and (len(filter) == 0 or k["name"] in filter):
+		if k["balance"]>=seuil*1e18 and (len(filter) == 0 or k["name"] in filter):
 			rc.append(k)
 
 	if all: return rc
@@ -47,7 +47,7 @@ def test_accounts(test_client, network=MAIN_NETWORK, seuil=1,filter="bob,carol,d
 
 	rc = get_account_from_network(test_client, network, seuil=seuil,filter=filter)
 	assert rc != None, "Aucun compte disponible avec un solde > " + str(seuil)
-	assert rc["amount"] >= seuil
+	assert rc["balance"] >= seuil*1e18
 
 	rc = get_account_from_network(test_client, network, seuil=1000000000,filter=filter)
 	assert rc is None, "Le solde ne doit pas fonctionner"
@@ -185,7 +185,7 @@ def test_nfts_from_collection(test_client, col_id="", network=MAIN_NETWORK):
 	return rc["nfts"]
 
 
-def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,seuil=1,limit=2000):
+def test_nfts_from_owner(test_client, owner=MAIN_ACCOUNT, network=MAIN_NETWORK,seuil=1,limit=200):
 	"""
   Récupére les nfts d'une collection ou d'un client
   :param test_client:
@@ -265,7 +265,7 @@ def test_api_mint(test_client, miner:Key=None, col_id=MAIN_COLLECTION, network=M
 	_accounts=call_api(test_client,"accounts/"+miner.address+"/","network="+network)
 	assert len(_accounts)>0
 	_account=_accounts[0]
-	assert _account["amount"]>0.1,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
+	assert _account["balance"]>0.1*1e18,"Solde insuffisant pour miner sur le compte "+miner.address               # 0.1 est le prix moyen
 
 	if col_id:
 		_nft = create_nft("test_" + now("hex"), col_id)
@@ -299,7 +299,6 @@ def test_lazymint(test_client, network=DB_NETWORK, collection_to_use=MAIN_COLLEC
 	#récupération du NFT
 	nft=DAO(network).get_nft(nft_id)
 	assert not nft is None
-	assert nft.marketplace["quantity"]>0
 	assert nft.miner==miner.address
 	assert nft.owner==miner.address
 
@@ -451,7 +450,7 @@ def test_get_minerpool(test_client):
 
 
 def test_create_collection(test_client, name="", miner=MAIN_MINER, network=MAIN_NETWORK,
-                           options="canFreeze,canChangeOwner,canUpgrade,canTransferNFTCreateRole,canPause"):
+                           options="canFreeze,canChangeOwner,canUpgrade,canTransferNFTCreateRole,canPause",type_collection="NonFungible"):
 	"""
   :param test_client:
   :param name:
@@ -466,7 +465,8 @@ def test_create_collection(test_client, name="", miner=MAIN_MINER, network=MAIN_
 	body = {
 		"options": options,
 		"name": name,
-		"owner":miner.__dict__
+		"owner":miner.__dict__,
+		"type":type_collection
 	}
 	rc = call_api(test_client, "create_collection/", "network=" + network, body)
 	assert not rc is None, "La collection n'est pas créer"

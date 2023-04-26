@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import {$$, canTransfer, getParams, setParams, showMessage} from "../../tools";
+import {$$, canTransfer, CryptoKey, getParams, newCryptoKey, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {MatDialog} from "@angular/material/dialog";
@@ -22,8 +22,6 @@ export class DispenserComponent implements OnInit {
   message="";
   operation: Operation | undefined;
   dest="";          //Destinataire
-  miner="";
-
 
   constructor(
     public network:NetworkService,
@@ -38,18 +36,20 @@ export class DispenserComponent implements OnInit {
 
   //test: http://127.0.0.1:4200/dispenser?ope=calvi22_devnet&toolbar=false/dispenser?ope=calvi22_devnet
   ngOnInit(): void {
-    let limit=Number(this.routes.snapshot.queryParamMap.get("limit") || "1000") ;
     getParams(this.routes).then((params:any)=>{
+      let limit=Number(params["limit"] || "1000") ;
       this.message="Préparation de la page";
       this.network.get_operations(params["ope"]).subscribe((operation:Operation)=>{
         this.operation=operation;
-        this.miner=params.hasOwnProperty("miner") ? params["miner"] : operation.lazy_mining?.networks[0].miner;
+        //this.miner=operation.mining?.networks[0].miner;
         this.message="Chargement des NFTs";
         this.network.get_tokens_to_send(operation.id,"dispenser",limit).subscribe((nfts:any) => {
           this.nfts=[];
           this.message="";
           for(let nft of nfts){
-            if(canTransfer(nft,this.miner)){
+            debugger
+            nft.miner=newCryptoKey(nft.miner)
+            if(canTransfer(nft)){
               nft.style={opacity:1};
             } else {
               nft.style={opacity:0.3,cursor:"not-allowed",pointerEvents:"none"};
@@ -65,7 +65,6 @@ export class DispenserComponent implements OnInit {
               if(canAdd)canAdd=(!operation.dispenser.collections || operation.dispenser.collections.length==0 || operation.dispenser.collections.indexOf(nft.collection["id"])>-1)
             }
             if(canAdd)this.nfts.push(nft);
-
           }
         });
       })
@@ -80,8 +79,8 @@ export class DispenserComponent implements OnInit {
         section: "dispenser",
         ope: this.operation.id,
         selfWalletConnexion: this.operation.dispenser?.selfWalletConnection,
-        mining: this.operation.lazy_mining
-      });
+        mining: this.operation.mining
+      },"","");
     return null;
   }
 
@@ -95,7 +94,7 @@ export class DispenserComponent implements OnInit {
 
     nft.price=0;
     if(this.operation){
-      this.router.navigate(["dm"],{queryParams:{param:this.get_nft_link(nft)}})
+      this.router.navigate(["dm"],{queryParams:{p:this.get_nft_link(nft)}})
     }
 
 

@@ -1,9 +1,11 @@
 import base64
 import json
+from datetime import timedelta
 from os import listdir
 from time import sleep
 
 from flaskr import GitHubStorage
+from flaskr.GitHubStorage import GithubStorage
 from flaskr.Keys import Key
 from flaskr.Network import Network
 from flaskr.Polygon import Polygon
@@ -17,7 +19,7 @@ from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
 
 
-from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt
+from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt, is_email
 
 from flaskr.dao import DAO
 from flaskr.infura import Infura
@@ -112,6 +114,7 @@ def extract_keys_from_operation(ope):
   return rc
 
 def get_network_instance(network:str):
+  if type(network)==Network: return network
   _network=None
   if not "-" in network: network=network+"-mainnet"
   if "elrond" in network:_network=Elrond(network)
@@ -144,25 +147,26 @@ def get_network_from_address(addr:str):
 
 def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4242/"):
   name=platform.lower().split("-")[0]
-  if name=="file": return StoreFile(network=platform,domain_server=domain_server)
-  if name=="github": return GitHubStorage(platform)
-  if name=="dao" or name=="db": return DAO(network=platform,domain_server=domain_server)
-  if name=="infura":return Infura()
-  if name=="ipfs":return IPFS(IPFS_SERVER)
+  if name.startswith("file"): return StoreFile(network=platform,domain_server=domain_server)
+  if name.startswith("github"): return GithubStorage(platform=domain_server)
+  if name.startswith("dao") or name=="db": return DAO(network=platform,domain_server=domain_server)
+  if name.startswith("infura"):return Infura()
+  if name.startswith("ipfs"):return IPFS(IPFS_SERVER)
   return NFTStorage()
 
 
-def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,nft_name="",send_real_email=True) -> Key:
+def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True) -> Key:
   _network=get_network_instance(network)
+  if _network.is_blockchain() and not is_email(email): return Key(address=email)
   key=_network.create_account(email=email,
                               histo=dao,
-                              subject="Votre NFT '"+nft_name+"' est disponible",
                               domain_appli=domain_appli,
                               mail_new_wallet=mail_new_wallet,
                               mail_existing_wallet=mail_existing_wallet,
-                              send_real_email=send_real_email
+                              send_real_email=send_real_email,
+                              dictionnary=dictionnary
                               )
-  sleep(1.0)      #TODO: a voir si peut être supprimé
+  #TODO: a voir si peut être supprimé
   return key
 
 
@@ -172,7 +176,8 @@ def transfer(addr:str,
              from_network:str,
              target_network_miner:Key=None,
              target_network_owner:str=None,
-             target_network:str=None,collection:str=None,
+             target_network:str=None,
+             collection:dict=None,
              metadata_storage_platform="nftstorage"):
   """
   Transfer un NFT d'un réseau à un autre
@@ -194,23 +199,21 @@ def transfer(addr:str,
       raise RuntimeError("Il manque le miner du réseau cible")
 
   if get_network_from_address(addr) not in from_network: return returnError("!Le NFT ne fait pas partie de la blockchain d'origine")
-  if get_network_from_address(target_network_owner) not in target_network: return returnError("!Le nouveau propriétaire ne fait pas partie de la blockchain finale")
+  #if get_network_from_address(target_network_owner) not in target_network: return returnError("!Le nouveau propriétaire ne fait pas partie de la blockchain finale")
   if get_network_from_address(from_network_miner.address) not in from_network: return returnError("!Le mineur ne fait pas partie de la blockchain finale")
 
   log("Tranfert de "+addr+" du réseau "+from_network+" vers le réseau "+target_network+" pour le compte de "+target_network_owner)
   nft:NFT=get_network_instance(from_network).get_nft(addr,attr=True)
-  # if (nft.address.startswith(DB_PREFIX_ID) or nft.address.startswith(FILE_PREFIX_ID)) and nft.marketplace["quantity"]==0:
-  #   returnError("!Ce NFT n'est plus disponible")
 
 
   if from_network!=target_network:
     _storage=get_storage_instance(metadata_storage_platform)
-    if "elrond" in target_network and collection=="": collection={"id":nft.collection["id"]}
 
     rc=_target_network.mint(target_network_miner,nft.name,nft.description,collection,nft.attributes,_storage,nft.files,
                     nft.supply,nft.royalties,nft.visual,nft.tags,nft.creators)
-    nft.address=rc["result"]["mint"]
-    get_network_instance(from_network).burn(addr,from_network_miner,1)
+    if rc["error"]=="":
+      nft.address=rc["result"]["mint"]
+      get_network_instance(from_network).burn(addr,from_network_miner,1)
     return rc
   else:
     rc=_target_network.transfer(addr,from_network_miner,target_network_owner)
@@ -329,7 +332,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
 
 
 
-def activity_report_sender(config,event:str="CR d'activité"):
+def activity_report_sender(config,event:str="CR d'activité",sender="support@nfluent.io"):
   """
   Envoi un mail sur l'activité du serveur
   :param activity_report_dest:
@@ -341,13 +344,22 @@ def activity_report_sender(config,event:str="CR d'activité"):
   domain_appli=config["DOMAIN_APPLI"]
   dest=config["ACTIVITY_REPORT"]
   log(event)
-  if not "localhost" in domain_server and not "127.0.0.1" in domain_server:
-    mail=open_html_file(config["STATIC_FOLDER"]+"mail_activity_report",{
-      "DOMAIN_SERVER":domain_server,
-      "DOMAIN_APPLI":domain_appli,
-      "event":event
-    })
-    send_mail(mail,_to=dest,subject="ACTIVITY REPORT de "+domain_server+" - "+event[:60])
+
+  temp_config=dict()
+  for k in config.keys():
+    if not k.startswith("JWT") and not k=="socket" and not type(config[k])==timedelta: temp_config[k]=config[k]
+
+  mail=open_html_file("mail_activity_report",{
+    "DOMAIN_SERVER":domain_server,
+    "DOMAIN_APPLI":domain_appli,
+    "event":event,
+    "config":json.dumps(temp_config,allow_nan=False,sort_keys=True,indent=4,ensure_ascii=False).replace("\n","<br>")
+  })
+  if mail:
+    return send_mail(mail,_from=sender,_to=dest,subject="ACTIVITY REPORT de "+domain_server+" - "+event[:60])
+
+  return False
+
 
 
 

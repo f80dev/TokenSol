@@ -6,6 +6,14 @@ import {environment} from "../../environments/environment";
 import {getParams} from "../../tools";
 
 
+export interface FAQ {
+  title: string
+  format: "html" | "text"
+  content: string
+  index: string
+  visible: boolean
+}
+
 @Component({
   selector: 'app-faqs',
   templateUrl: './faqs.component.html',
@@ -13,7 +21,9 @@ import {getParams} from "../../tools";
 })
 export class FaqsComponent implements AfterContentInit {
 
-  faqs:any[]=[];
+
+
+  faqs:FAQ[]=[];
   @Input() filter="";
   @Input() title="Questions fréquentes";
 
@@ -23,8 +33,8 @@ export class FaqsComponent implements AfterContentInit {
   }
 
   ngAfterContentInit(): void {
-    this.network.getfaqs().subscribe((rc:any)=>{
-      getParams(this.route).then((params:any)=>{
+    getParams(this.route).then((params:any)=>{
+      this.network.getfaqs().subscribe((rc:any)=>{
         this.faqs=[];
 
         for(let faq of rc.content) {

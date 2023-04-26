@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {$$, getParams, showError, showMessage} from "../../tools";
+import {$$, find_miner_from_operation, getParams, isEmail, showError, showMessage} from "../../tools";
 import {Collection, Operation} from "../../operation";
 import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
@@ -18,7 +18,6 @@ export class CandymachineComponent implements OnInit {
   operation: Operation | null=null;
   showEnd: boolean=false;
   collections: Collection[]=[];
-  miner="";
   is_email=false;
   airdrop: boolean=false;
   addresses="";
@@ -42,9 +41,8 @@ export class CandymachineComponent implements OnInit {
         this.operation=operation;
         if(this.operation?.branding)this._style=this.operation.branding.style;
         if(this.operation?.candymachine.messages.title)this.title=this.operation.candymachine.messages.title;
-        this.miner=(params.hasOwnProperty('miner') ? params["miner"] : operation.lazy_mining.miner)
+        // this.miner=(params.hasOwnProperty('miner') ? params["miner"] : operation.mining.miner)
 
-        $$("Le miner de la transaction est "+this.miner);
         if(operation.collections){
           for(let col of operation.collections){
             if(((operation.candymachine.collections.length==0 || operation.candymachine.collections.indexOf(col.id)>-1) && !this.airdrop)
@@ -64,13 +62,16 @@ export class CandymachineComponent implements OnInit {
 
   authent($event:any) {
     if(this.operation?.network){
-      this.is_email=$event.address.indexOf("@")>-1;
+      this.is_email=isEmail($event.address);
+
+      let target=find_miner_from_operation(this.operation,$event.address);
       let body={
-        owner:$event.address,
-        network:this.operation?.network,
-        miner: this.miner,
+        dest:$event.address,
+        sources: this.operation.data.sources,
+        target: target,
+        miner: target.miner,
         operation:this.operation,
-        collections:this.operation.candymachine.collections,
+        collections:target.collection,
         wallet:environment.wallet
       }
       $$("Ajout de la demande de minage ",body)
@@ -91,12 +92,13 @@ export class CandymachineComponent implements OnInit {
   start_airdrop() {
     let l_addresses=this.addresses.split("\n");
     _prompt(this,"Envoyer des NFTs de la collection à "+l_addresses.length+" personnes ?","","","text","ok","Annuler",true).then(()=>{
+      let target=find_miner_from_operation(this.operation,l_addresses[0])
       let body={
         owner:l_addresses,
-        network:this.operation?.network,
-        miner: this.miner,
+        network:target.network,
+        miner: target.miner,
         operation:this.operation,
-        collections:this.operation!.airdrop!.collections,
+        collections:target.collection,
         wallet:environment.wallet
       }
 

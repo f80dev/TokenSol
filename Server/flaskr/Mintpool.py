@@ -1,7 +1,8 @@
 from bson import ObjectId
 from flaskr import DAO
 from flaskr.Keys import Key
-from flaskr.Tools import now, log, get_operation, random_from, is_email, send
+from flaskr.NFT import NFT
+from flaskr.Tools import now, log, get_operation, random_from, is_email, send, send_mail
 from flaskr.apptools import get_nfts_from_src, get_network_instance, transfer
 
 
@@ -16,7 +17,7 @@ class Mintpool:
 		return list(self.pool.find())
 
 
-	def add_ask(self,sources:[dict],target:dict,wallet,operation,dtStart=now()):
+	def add_ask(self,dest:str,sources:[dict],target:dict,wallet,operation,dtStart=now()):
 		"""
 		Ajouter une tache dans la pool de mining
 		:param sources: doit contenir le network et le mineur a utiliser
@@ -30,11 +31,13 @@ class Mintpool:
 		"""
 
 		for src in sources:
-			if not "miner" in src or not "network" in src: raise RuntimeError("Sources incomplete")
+			if src["active"] and (not "miner" in src or not "connexion" in src): raise RuntimeError("Sources incomplete")
+
 		if not "miner" in target or not "network" in target: raise RuntimeError("Target incomplete")
 
 		obj={
 			"dtCreate":now(),
+			"dest":dest,
 			"dtStart":dtStart,
 			"dtWork":None,
 			"operation":operation,
@@ -148,16 +151,28 @@ class Mintpool:
 					src=random_from(ask["sources"])
 					nfts=get_nfts_from_src([src],False)
 					_ope=get_operation(ask["operation"])
+					dest=ask["dest"]
 		
 					nft_to_mint=None
 					_target_network=get_network_instance(ask["target"]["network"])
-					_target_miner:Key=Key(obj=ask["target"]["miner"])
-					_from_miner:Key=Key(obj=src["miner"])
+					_target_miner=_target_network.find_key(ask["target"]["miner"]) if type(ask["target"]["miner"])==str else Key(obj=ask["target"]["miner"])
+
+					_from_network=get_network_instance(src["connexion"])
+					_from_miner:Key=_from_network.find_key(src["miner"]) if type(src["miner"])==str else Key(obj=src["miner"])
 		
 					if len(nfts)>0:
 						log("Tirage au sort d'un NFT parmis la liste de "+str(len(nfts)))
 		
-						nft_to_mint=random_from(nfts)
+						for _try in range(20):
+							nft_to_mint:NFT=random_from(nfts)
+							if nft_to_mint.balances[_from_miner.address]>0: break
+
+						if nft_to_mint.balances[_from_miner.address]==0:
+
+							if is_email(dest):
+								send_mail("Désolé la collection est épuisée",dest,subject="Collection épuisée")
+								return 0
+
 		
 						# if nft_to_mint.owner=="":
 						#   if nft_to_mint.collection is None:
@@ -184,24 +199,22 @@ class Mintpool:
 						#       #activity_report_sender(message)
 		
 						if message=="":
-							log("Ajout de l'attribut lazymint pour ne pas risquer de re-minté")
-							nft_to_mint.attributes.append({"trait_type":"lazymint","value":nft_to_mint.address})
-							dest=ask["target"]["owner"]
 							if is_email(dest):
 								dest=_target_network.create_account( dest,
 								                              mail_new_wallet=_ope["new_account"]["mail"] if not _ope is None else "",
 								                              mail_existing_wallet=_ope["transfer"]["mail"] if not _ope is None else ""
 								                              )
+
 							rc=transfer(addr=nft_to_mint.address,
 							            from_network_miner=_from_miner,
 							            target_network_miner=_target_miner,
-							            from_network=src["network"],
-							            target_network=ask["target"]["network"],
-							            target_network_owner=dest,
+							            from_network=_from_network.network,
+							            target_network=_target_network.network,
+							            target_network_owner=dest.address,
 							            collection={"id":ask["target"]["collection"]})
 
 							if not rc or rc["error"]!="":
-								log("Problème de minage voir "+rc["hash"])
+								log("Problème de minage")
 								message="Error"+rc["error"]+" voir "+_target_network.getExplorer(rc["hash"])
 							else:
 								message="Ok voir "+_target_network.getExplorer(rc["result"]["mint"])

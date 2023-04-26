@@ -5,6 +5,7 @@ from ipfshttpclient import Client
 from multiaddr import Multiaddr
 
 from flaskr.Storage import Storage
+from flaskr.Tools import get_hash
 
 """
 voir https://docs.ipfs.tech/how-to/run-ipfs-inside-docker/
@@ -59,16 +60,18 @@ class IPFS(Storage):
           if "content" in body and "base64" in body["content"]:
             body=base64.b64decode(body["content"].split(";base64,")[1])
           else:
-            cid={"Hash":self.client.add_json(body)}
+            cid={"cid":self.client.add_json(body)}
 
         if type(body)==bytes:
-          cid={"Hash":self.client.add_bytes(body)}
+          cid={"cid":self.client.add_bytes(body)}
 
         if type(body)==str:
-          cid={"Hash":self.client.add_str(body)}
+          cid={"cid":self.client.add_str(body)}
 
         if removeFile and f: del f
-        cid["url"]=self.domain_server+cid["Hash"]
+        cid["url"]=self.domain_server+cid["cid"]
+        cid["hash"]=get_hash(body)
+
         if type(body)==dict and "filename" in body: cid["filename"]=body["filename"]
 
         return cid

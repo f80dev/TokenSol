@@ -49,6 +49,9 @@ class Polygon (Network):
     if not len(addr)==42: return False
     return True
 
+
+
+
   def send_transaction(self,method,_account:Key) -> dict:
     gas_needed=method.estimate_gas({"from":_account.address})
     transac=method.build_transaction({"from":_account.address,"gas":gas_needed,"nonce":self.w3.eth.get_transaction_count(_account.address)})
@@ -161,16 +164,21 @@ class Polygon (Network):
     return None
 
 
+  def get_token(self,addr):
+    if not self.abi: self.abi=self.init_contract_interface()["abi"]
+    _contract=self.w3.eth.contract(address=self.w3.to_checksum_address(addr),abi=self.abi)
+    return _contract
 
   def get_nft(self,addr,metadata_timeout=2,attr=True):
     contract_addr=addr.split("-")[0]
+    index=int(addr.split("-")[1])
     log("Récupération du contract "+self.getExplorer(contract_addr))
 
     if not self.abi: self.abi=self.init_contract_interface()["abi"]
     _contract=self.w3.eth.contract(address=self.w3.to_checksum_address(contract_addr),abi=self.abi)
 
     metadata=self.get_metadata(_contract.functions.baseTokenURI().call(),timeout=metadata_timeout)
-    owner=_contract.functions.ownerOf(0).call()  #0 designe le seul tokenId du smartcontrat
+    owner=_contract.functions.ownerOf(index).call()  #0 designe le seul tokenId du smartcontrat
     supply=_contract.functions.totalSupply().call()
     miner=_contract.functions.owner().call()
     symbol=_contract.functions.symbol().call()
@@ -200,14 +208,19 @@ class Polygon (Network):
     return addr
 
 
+  def get_balance(self,addr):
+    return self.w3.eth.get_balance(addr)
+
   def get_account(self,addr) -> NfluentAccount:
     if addr is None: return None
     if type(addr)==int: addr=hex(addr)
     if addr.startswith("0x"): addr=self.toEtherAddress(addr)
 
     return NfluentAccount(address=addr,
-                          balance=self.w3.eth.get_balance(addr),
-                          unity="MATIC",
+                          balance=self.get_balance(addr),
+                          unity=self.get_unity(),
+                          nonce=0,
+                          network=self.network,
                           explorer=self.getExplorer(addr,"address"))
 
 
@@ -266,10 +279,11 @@ class Polygon (Network):
     txs=self.find_all_contract_for(addr)
     for t in txs[offset:]:
       try:
-        nft_addr=self.w3.to_checksum_address(t["contractAddress"])
-        contrat=self.w3.eth.contract(address=nft_addr, abi=abi)
+        sc_addr=self.w3.to_checksum_address(t["contractAddress"])
+        contrat=self.w3.eth.contract(address=sc_addr, abi=abi)
         balance = contrat.functions.balanceOf(addr).call()
-        if balance>=1:
+        for idx in range(balance):
+          nft_addr=sc_addr+"-"+str(contrat.functions.tokenOfOwnerByIndex(addr,idx).call())
           if with_attr:
             _nft:NFT=self.get_nft(nft_addr,metadata_timeout=3)
           else:
@@ -282,10 +296,10 @@ class Polygon (Network):
                      visual=metadata["image"] if metadata else None,
                      )
 
-          _nft.balances={addr:balance}
+          _nft.balances={addr:1}
           _nft.network=self.network
           rc.append(_nft)
-          if len(rc)==limit: break
+          if len(rc)==limit: return rc
       except:
         log("Probleme technique de lecture des NFTs")
     return rc
@@ -374,7 +388,7 @@ class Polygon (Network):
     return rc
 
   def get_unity(self):
-    return "MATIC"
+    return "matic"
 
   def mint(self, miner:Key, title:str,
            description:str="", collection:dict={},
@@ -404,6 +418,7 @@ class Polygon (Network):
       "balance":0,
       "link_mint":self.getExplorer(nft_address,"token"),
       "link_transaction":tx["explorer"],
+      "link_gallery":self.getGallery(miner.address),
       "out":"",
       "cost":0,
       "unity":"MATIC",
@@ -430,7 +445,7 @@ class Polygon (Network):
     return True
 
 
-  def transfer(self,nft_addr:str,miner:Key,new_owner:str,quantity=1):
+  def transfer(self,nft_addr:str,owner:Key,new_owner:str,quantity=1):
     """
     voir https://eips.ethereum.org/EIPS/eip-721#implementations
     https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#ERC721-transferFrom-address-address-uint256-
@@ -440,19 +455,12 @@ class Polygon (Network):
     """
 
     if not self.abi: self.abi=self.init_contract_interface()["abi"]
-    contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr),abi=self.abi)
-    owner=contract.functions.ownerOf(0).call()
-    if owner!=miner.address:
-      #raise RuntimeError("Probleme de propriétaire pour le transfert")
-      log("Le propriétaire n'est pas le mineur")
-    new_owner=self.get_key_with_name(new_owner).address
-    for i in range(quantity):
-      rc= self.send_transaction(contract.functions.transferFrom(miner.address,new_owner,0),miner)
+    contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr.split("-")[0]),abi=self.abi)
+    new_owner=self.find_key(new_owner).address
+    rc= self.send_transaction(contract.functions.transferFrom(owner.address,new_owner,int(nft_addr.split("-")[1])),owner)
     return rc
 
 
-  # def find_key(self,name):
-  #   return self.get_key_with_name(name)
 
   def balance(self,account):
     return self.w3.eth.get_balance(account)/1e18
@@ -482,7 +490,7 @@ class Polygon (Network):
 
 
   def create_account(self,email="",seed="",domain_appli="",
-                         subject="Votre compte Polygon est disponible",histo:DAO=None,
+                         subject="Votre compte Polygon est disponible",histo:DAO=None,dictionnary={},
                      mail_new_wallet="",mail_existing_wallet="",send_qrcode_with_mail=True,send_real_email=True) -> Key:
     """
     :param fund:
@@ -497,6 +505,7 @@ class Polygon (Network):
         _u:eth_account.Account=self.w3.eth.account.create()
         send_mail(open_html_file(mail_existing_wallet,{
           "wallet_address":pubkey,
+          "blockchain_name":"Polygon",
           "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
           "nfluent_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
           "official_wallet":"https://metamask.io/",
@@ -520,6 +529,7 @@ class Polygon (Network):
       if send_mail(open_html_file(mail_new_wallet,{
         "wallet_address":pubkey,
         "mini_wallet":wallet_appli,
+        "blockchain_name":"Polygon",
         "url_wallet":self.getExplorer(pubkey),
         "url_explorer":self.getExplorer(pubkey),
         "other_wallet":"https://metamask.io/",
@@ -570,6 +580,7 @@ class Polygon (Network):
         secret_key=_u._private_key.hex()
         rc.append(Key(secret_key=secret_key,
                       name=fname.replace(".secret",""),
+                      explorer=self.getExplorer(_u.address,"accounts"),
                       address=_u.address,
                       network="polygon"))
 
@@ -588,18 +599,19 @@ class Polygon (Network):
   #   return rc
 
 
-  def get_balances(self, address, nft_addr=None):
-    rc={"matic":self.get_account(address).balance}
-    if nft_addr and nft_addr!="matic":
+  def get_balances(self, address,nft_addr=None) -> dict:
+    rc=dict()
+    if nft_addr:
       if not self.abi: self.abi=self.init_contract_interface()["abi"]
-      contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr),abi=self.abi)
+      contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr.split("-")[0]),abi=self.abi)
       result=contract.functions.balanceOf(address).call()
-      rc[nft_addr]=result
-    if nft_addr is None: return rc
-    return rc[nft_addr]
+      rc={nft_addr.split("-")[0]:result}
+
+    return rc
 
 
-  def get_key_with_name(self,name="sophie"):
+
+  def find_key(self, name="sophie"):
     if name.startswith("0x"): return Key(address=name)
     for k in self.get_keys():
       if k.name==name:
@@ -614,10 +626,15 @@ class Polygon (Network):
     :return:
     """
     if not addr.startswith("0x"):
-      k=self.get_key_with_name(addr)
+      k=self.find_key(addr)
       if k is None: return None
       addr=k.address
     addr=self.w3.to_checksum_address(addr)
     return self.w3.eth.contract(address=addr)
+
+  def getGallery(self, address):
+    url= "https://polygon.testnets-nftically.com/marketplace?search="+address+"&chain[]=80001"
+    if self.network_type=="mainnet": url=url.replace("testnets-","")
+    return url
 
 

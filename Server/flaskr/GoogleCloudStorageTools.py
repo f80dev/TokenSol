@@ -1,9 +1,10 @@
 import os
 #from google.cloud import storage
-from flaskr.Tools import now
+from flaskr.Storage import Storage
+from flaskr.Tools import now, get_hash
 
 
-class GoogleCloudStorageTools:
+class GoogleCloudStorageTools(Storage):
   """
   Voir l'authentification
   voir https://console.cloud.google.com/storage/browser/calviontherock
@@ -23,7 +24,7 @@ class GoogleCloudStorageTools:
     # blob.upload_from_string(dumps(data),content_type="application/json")
     blob.make_public()
 
-    return {"cid":id,"url":blob.public_url}
+    return {"cid":id,"url":blob.public_url,"hash":get_hash(blob)}
 
 
 

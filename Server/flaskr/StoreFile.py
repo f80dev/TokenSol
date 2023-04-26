@@ -10,7 +10,7 @@ from flaskr.Network import Network
 from flaskr.Storage import Storage
 
 from flaskr.NFT import NFT
-from flaskr.Tools import now, get_hash_from_content, log
+from flaskr.Tools import now, get_hash, log
 from flaskr.secret import PASSWORD
 
 FILE_PREFIX_ID="file_"
@@ -131,6 +131,15 @@ class StoreFile(Network,Storage):
   def getExplorer(self,addr="",type="address") -> str:
     return ""
 
+  def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
+    self.read()
+    if not "collections" in self.content: self.content["collections"]=[]
+    col={"owner":owner.address,"name":collection_name,"type":type_collection}
+    col["id"]=now("rand")
+    self.content["collections"].append(col)
+    self.write()
+    return col
+
   def get_collections(self,addr:str,detail=False,type_collection="NonFungible",special_role=""):
     self.read()
     rc=list()
@@ -163,10 +172,9 @@ class StoreFile(Network,Storage):
 
 
   def get_unity(self):
-    return "OCT"
+    return "storecoin"
 
-  def get_balances(self, addr:str) -> int:
-    return 1e18
+
 
   def get_keys(self) -> [Key]:
     self.read()
@@ -179,13 +187,13 @@ class StoreFile(Network,Storage):
 
 
   def create_account(self,email="",seed="",domain_appli="",
-                     subject="Votre nouveau wallet est disponible",
+                     subject="",
                      mail_new_wallet="",mail_existing_wallet="",
                      send_qrcode_with_mail=True,
                      histo=None,send_real_email=True,solde=100) -> Key:
     self.read()
 
-    addr=FILE_PREFIX_ID+get_hash_from_content(email)
+    addr= FILE_PREFIX_ID + get_hash(email)
     if not "accounts" in self.content:self.content["accounts"]=[]
 
     if addr not in [x["address"] for x in self.content["accounts"]]:
@@ -206,7 +214,7 @@ class StoreFile(Network,Storage):
     return Key(obj["secret_key"],obj["name"],address=obj["address"],network="file")
 
 
-  def mint(self, miner:Key, title, description, collection, properties: list,
+  def mint(self, miner:Key, title:str, description:str, collection:str, properties: list,
            storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
            domain_server="",price=0,symbol="NFluentToken"):
     self.read()

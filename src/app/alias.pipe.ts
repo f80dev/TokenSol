@@ -21,9 +21,9 @@ export class AliasPipe implements PipeTransform {
     try{
       for(let k of this.network.keys){
         if(args.length>0 && args[0]=="address"){
-          if(k.name.toLowerCase()==comp_value)return k.address;
+          if(k.name && k.name.toLowerCase()==comp_value)return k.address;
         }else{
-          if(k.address.toLowerCase()==comp_value)return k.name;
+          if(k.name && k.address.toLowerCase()==comp_value)return k.name;
         }
       }
     } catch (e) {

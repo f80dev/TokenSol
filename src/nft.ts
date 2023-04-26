@@ -65,7 +65,6 @@ export interface Search {
 }
 
 
-
 export interface NFT {
   collection:Collection | undefined
   symbol:string

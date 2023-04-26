@@ -34,7 +34,7 @@ class Config:
     {"label":"Infura (IPFS)","value":"infura"},
     {"label":"nFluent Server","value":"nfluent"},
     {"label":"nFluent Local Server","value":"nfluent_local"},
-    {"label":"Github","value":"github-nfluent-storage"},
+    {"label":"Github","value":"github-nfluentdev-storage-main"},
     {"label":"Base NFluent","value":"db-server-nfluent"}
   ]
   NETWORKS=[

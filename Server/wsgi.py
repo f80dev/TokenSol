@@ -8,7 +8,7 @@ from flask_socketio import SocketIO
 
 from flaskr import create_app
 from flaskr.Mintpool import Mintpool
-from flaskr.Tools import log, send
+from flaskr.Tools import log, send, register_fonts
 from flaskr.apptools import activity_report_sender
 
 
@@ -25,10 +25,12 @@ if __name__=="__main__":
   socketio = SocketIO(app,cors_allowed_origins="*",logger=True,engineio_logger=True,manage_session=True)
   app.config["socket"]=socketio
   socketio.on_event("disconnect",receive(app))
-
   log("Initialisation de la websocket")
 
+
+
   jwt = JWTManager(app)
+
 
   scheduler.add_job(func=mintpool.async_mint, trigger="interval", seconds=30,max_instances=1,args=(3,""))
   scheduler.add_job(func=activity_report_sender, trigger="interval", seconds=3600*24,max_instances=1,args=(app.config,"CR nfluent"))
@@ -43,6 +45,7 @@ if __name__=="__main__":
   debug_mode=app.config["DEBUG"]
   domain_server=app.config["DOMAIN_SERVER"]
 
+  register_fonts(limit=1000 if not debug_mode else 5)
   log("Working directory : "+os.getcwd())
 
   if not "127.0.0.1" in domain_server and not "localhost" in domain_server:

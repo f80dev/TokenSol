@@ -95,7 +95,9 @@ RUN pip3 -v install py-solc-x
 RUN pip3 -v install web3
 RUN pip3 -v install pandas
 RUN pip3 -v install rembg
-RUN pip3 -v install erdpy==4.0.0
+RUN pip3 -v install multiversx-sdk-core
+RUN pip3 -v install multiversx-sdk-wallet
+RUN pip3 -v install multiversx-sdk-network-providers
 RUN pip3 -v install pyopenssl
 
 WORKDIR /
