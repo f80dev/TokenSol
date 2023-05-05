@@ -19,8 +19,8 @@ export const environment = {
   networks_available:"elrond-devnet,polygon-devnet,db-server-nfluent_local",
 
   mint_cost:{
-    price_to_mint_one_token_in_crypto:0.1,
-    price_to_mint_one_token_in_fiat:0.01
+    price_to_mint_one_token_in_crypto:0.5,
+    price_to_mint_one_token_in_fiat:0.1
   },
   collection_cost:{
     price_in_fiat: 1,

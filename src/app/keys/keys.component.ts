@@ -58,7 +58,7 @@ export class KeysComponent implements OnInit {
 
       let op_id= this.operation.sel_ope ? this.operation.sel_ope.id : "";
 
-      this.network.init_keys(this.network.network, true,this.user.profil.access_code, op_id).then(()=>{
+      this.network.init_keys( true,this.user.profil.access_code, op_id).then(()=>{
 
           this.network.wait();
           // this.network.network_change.subscribe(()=>{this.refresh();})

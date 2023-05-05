@@ -20,7 +20,7 @@ class Storj(Storage):
 
 
 
-	def add(self,content) -> dict:
+	def add(self,content,overwrite=False) -> dict:
 		"""
 		voir https://storj-thirdparty.github.io/uplink-python/uplink_python.uplink.html
 		:param content:

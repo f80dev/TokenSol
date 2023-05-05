@@ -171,7 +171,7 @@ class Polygon (Network):
 
   def get_nft(self,addr,metadata_timeout=2,attr=True):
     contract_addr=addr.split("-")[0]
-    index=int(addr.split("-")[1])
+    index=int(addr.split("-")[1]) if "-" in addr else 0
     log("Récupération du contract "+self.getExplorer(contract_addr))
 
     if not self.abi: self.abi=self.init_contract_interface()["abi"]
@@ -456,8 +456,9 @@ class Polygon (Network):
 
     if not self.abi: self.abi=self.init_contract_interface()["abi"]
     contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr.split("-")[0]),abi=self.abi)
-    new_owner=self.find_key(new_owner).address
-    rc= self.send_transaction(contract.functions.transferFrom(owner.address,new_owner,int(nft_addr.split("-")[1])),owner)
+    if not new_owner.startswith("0x"): new_owner=self.find_key(new_owner)
+    index=int(nft_addr.split("-")[1]) if "-" in nft_addr else 0
+    rc= self.send_transaction(contract.functions.transferFrom(owner.address,new_owner.address,index),owner)
     return rc
 
 

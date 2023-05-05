@@ -125,6 +125,7 @@ def test_paste_fixe_to_animated():
 
 def test_load(section="animated"):
   for url in IMAGES[section]:
+    log("Test de "+url)
     url=get_image(url)
     ext=url[url.rindex(".")+1:]
     if ext and len(ext)>0:

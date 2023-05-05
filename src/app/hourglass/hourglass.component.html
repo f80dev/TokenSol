@@ -19,6 +19,9 @@
       <td [ngStyle]="{'text-align': 'left','font-size':fontsize}">
         {{message}}
       </td>
+      <td *ngIf="link.length>0">
+        <mat-icon (click)="open_link()">explorer</mat-icon>
+      </td>
 
       <td *ngIf="canCancel" style="text-align: right;cursor: pointer;">
         <mat-icon (click)="oncancel.emit()">cancel</mat-icon>

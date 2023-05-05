@@ -31,6 +31,7 @@ class GithubStorage(Storage):
 
     try:
       self.api = Github(self.token).get_user(self.login).get_repo(self.repo)
+      log("Stockage github activé : voir le dépôt https://github.com/"+self.login+"/"+self.repo)
     except Exception as inst:
       log("Probleme de connexion avec "+self.token+" pour "+self.login + "/"+ self.repo+" : "+str(inst))
 

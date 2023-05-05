@@ -75,10 +75,10 @@ export class NetworkService implements OnInit {
     }
 
 
-    init_keys(network="elrond-devnet",with_balance=false,access_code:string="",operation_id:string="") {
+    init_keys(with_balance=false,access_code:string="",operation_id:string="") {
         return new Promise((resolve, reject) => {
             this.wait("Chargement des clés");
-            this.httpClient.get<CryptoKey[]>(this.server_nfluent + "/api/keys/?access_code="+access_code+"&network=" + network + "&with_private=true&with_balance="+with_balance+"&operation="+operation_id,).subscribe((r: CryptoKey[]) => {
+            this.httpClient.get<CryptoKey[]>(this.server_nfluent + "/api/keys/?access_code="+access_code+"&network=" + this.network + "&with_private=true&with_balance="+with_balance+"&operation="+operation_id,).subscribe((r: CryptoKey[]) => {
                 this.keys = r;
                 this.wait();
                 resolve(r);
@@ -186,8 +186,8 @@ export class NetworkService implements OnInit {
     //     });
     // };
 
-    get_token(addr:string){
-        return this._get("tokens/"+addr+"/","network="+this.network);
+    get_token(addr:string,network:string){
+        return this._get("tokens/"+addr+"/","network="+network);
     }
 
     get network(): string {
@@ -195,12 +195,22 @@ export class NetworkService implements OnInit {
     }
 
     set network(network_name: string) {
-        this._network = network_name;
-        if(this.isMain())this.chain_id="T"; else this.chain_id="D";
-        //this._connection=new Connection(clusterApiUrl(network_name), 'confirmed');
-        this.init_keys(network_name,true).then(()=>{
-            this.network_change.next(network_name);
-        })
+        this.init_network(network_name)
+    }
+
+    init_network(network:string) : Promise<any>{
+        return new Promise((resolve) => {
+            if(this._network==network && this.keys.length>0){
+                resolve(this.keys)
+            } else {
+                this._network=network;
+                if(this.isMain())this.chain_id="T"; else this.chain_id="D";
+                this.init_keys(true).then(()=>{
+                    this.network_change.next(network);
+                    resolve(this.keys);
+                }).catch(()=>{resolve(null)})
+            }
+        });
     }
 
     get connection(): Connection {
@@ -809,9 +819,11 @@ export class NetworkService implements OnInit {
     }
 
 
-    mint(token:NFT, miner:CryptoKey, owner:string,operation:string,sign=false, platform:string="nftstorage", network="",storage_file="",encrypt_nft=false){
+    mint(token:NFT, miner:CryptoKey, owner:string,operation:string,sign=false,
+         platform:string="nftstorage", network="",
+         storage_file="",encrypt_nft=false) : Promise<any> {
         return new Promise((resolve, reject) => {
-            let param="storage_file="+storage_file+"&keyfile="+miner+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network+"&operation="+operation
+            let param="storage_file="+storage_file+"&keyfile="+miner.encrypt+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network+"&operation="+operation
             param=param+"&encrypt_nft="+encrypt_nft;
             this.httpClient.post(this.server_nfluent+"/api/mint/?"+param,{nft:token,miner:miner}).subscribe((r)=>{
                 resolve(r);
@@ -821,6 +833,7 @@ export class NetworkService implements OnInit {
             })
         });
     }
+
 
     save_privacy(addr: string, secret: string) {
         return this.httpClient.post(this.server_nfluent+"/api/save_privacy/",{addr:addr,secret:encrypt(secret)});
@@ -924,10 +937,7 @@ export class NetworkService implements OnInit {
     getBalance(addr:string,network:string,token_id="") {
         let params="with_balance=true&network="+network;
         if(token_id.length>0)params=params+"&token_id="+token_id;
-        let keys:any=this._get("keys/"+addr+"/",params);
-        for(let k of keys){
-            if(k["address"]==addr)return k["balance"]
-        }
+        return this._get("keys/"+addr+"/",params)
     }
 
 
@@ -1020,13 +1030,22 @@ export class NetworkService implements OnInit {
         return this._post("create_zip/","",body);
     }
 
-    send_bill(dest: string, subject: string="Votre facture",label="",message="",model="mail_facture.html") {
+    send_bill(dest: string,amount:string,
+              subject: string="Votre facture",
+              reference="",
+              message="",
+              description="",
+              contact="support@nfluent.io",
+              model="mail_facture.html") {
         let body={
             dest:dest,
-            label: label,
+            reference: reference,
             message: message,
             subject:subject,
-            model:model
+            model:model,
+            amount:amount,
+            contact:contact,
+            description:description
         }
         return this._post("send_bill/","",body,200000);
     }

@@ -7,7 +7,24 @@
 <body>
     <br>Bonjour,<br><br>
 
-    Votre facture {{label}} pour l'ussage de <a href="{{appdomain}}">{{appname}}</a>,<br><br>
+    Voici votre facture <a href="{{appdomain}}">{{appname}}</a>,<br><br> pour {{description}}
+
+    <table>
+        <tr>
+            <td>Facture</td>
+            <td>{{label}}</td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td>Montant réglé</td>
+            <td>{{amount}}</td>
+        </tr>
+        <tr></tr>
+        <tr>
+            <td>Total</td>
+            <td>{{amount}}</td>
+        </tr>
+    </table>
 
     Montant {{amount}}<br><br>
 

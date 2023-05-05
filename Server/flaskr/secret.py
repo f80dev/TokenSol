@@ -46,7 +46,9 @@ GITHUB_CLIENT_ID="5efede032a49331cf372"
 GITHUB_SECRET_ID="37e45ea6679fdd0c87623874da835c732872a71f"
 
 #voir https://docs.github.com/fr/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
-GITHUB_TOKEN="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"
+#procédure : https://github.com/settings/tokens/new et accorder toutes les permissions du repo
+#Accorder les permissions
+GITHUB_TOKEN="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"
 GITHUB_ACCOUNT="nfluentdev"
 SALT='sel'
 ENCRYPTION_KEY="nfluentkey"

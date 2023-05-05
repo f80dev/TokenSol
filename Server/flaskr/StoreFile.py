@@ -47,7 +47,7 @@ class StoreFile(Network,Storage):
     return False
 
 
-  def add(self,content,domain_server=None):
+  def add(self,content,domain_server=None,overwrite=False):
     self.read()
 
     content_for_key=json.dumps(content) if type(content)==dict else content

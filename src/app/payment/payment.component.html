@@ -1,15 +1,31 @@
-<div *ngIf="show_buy_token" class="mat-headline-6">
-    Solde insuffisant
-</div>
 
 
-<div *ngIf="buy_method=='crypto'">
+<div *ngIf="buy_method=='crypto' && money && wallet_provider">
     <div *ngIf="money" style="font-size: large;margin: 15px;">
         <div style="margin: 15px;" class="mat-subheading-1">{{price}} {{money!.unity}} + Frais de service</div>
         <span *ngIf="balance>=0">Vous disposez actuellement de {{balance/1e18}} {{money!.unity}}</span>
     </div>
 
-    <button type="button"  mat-raised-button color="primary" style="margin: 20px;"
+    <div *ngIf="qrcode_buy_token.length>0" style="margin-top: 20px;">
+        <div class="color-accent">Votre solde est insuffisant</div>
+        <div class="mat-body-2">
+            Recevoir des {{money.unity}} sur votre adresse
+        </div>
+        <img style="width: 150px" [src]="qrcode_buy_token"
+             [cdkCopyToClipboard]="user" [title]="'Recevoir des '+money.unity" >
+        <br>
+        <button mat-icon-button
+                style="margin: 20px;"
+                (click)="refresh_solde()">
+            Rafraichir le solde
+        </button>
+    </div>
+
+
+
+    <button type="button" mat-raised-button color="primary"
+            *ngIf="qrcode_buy_token.length==0"
+            style="margin: 20px;"
             (click)="start_payment(price)">
         Payer {{price}} {{money!.unity}}
     </button>
@@ -25,34 +41,36 @@
             environment="TEST"
             buttonType="buy"
             buttonColor="black"
-            [paymentRequest]="{
-    apiVersion: 2,
-    apiVersionMinor: 0,
-    allowedPaymentMethods: [
-      {
-        type: 'CARD',
-        parameters: {allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],allowedCardNetworks: ['VISA', 'MASTERCARD']},
-        tokenizationSpecification: {
-          type: 'PAYMENT_GATEWAY',
-          parameters: {gateway: 'example',gatewayMerchantId: 'exampleGatewayMerchantId'}
-        }
-      }
-    ],
-    merchantInfo: {merchantId: merchant.id,merchantName: merchant.name},
-    transactionInfo: {totalPriceStatus: 'FINAL',totalPriceLabel: 'Total',totalPrice: fiat_price.toString(5),currencyCode: merchant.currency,countryCode: merchant.country}}"
-            (loadeddata)="onLoadPaymentData($event)">
+            [existingPaymentMethodRequired]="false"
+            [paymentRequest]="payment_request"
+            [clickCallback]="onClickPreventDefault"
+            [loadPaymentDataCallback]="onLoadPaymentData"
+            [readyToPayChangeCallback]="onReadyToPayChange"
+            (cancel)="cancel_fiat_payment()"
+            (error)="error_fiat_event($event)"
+    >
     </google-pay-button>
 </div>
 
-<div *ngIf="billing_to.length>0">
-    Facture envoyée à {{billing_to}}
-    <mat-icon (click)="change_billing_address()">edit</mat-icon>
+<div *ngIf="qrcode_buy_token.length==0">
+    <div *ngIf="billing_to.length>0">
+        Facture envoyée à {{billing_to}}
+        <mat-icon style="font-size: xx-small" (click)="change_billing_address()">edit</mat-icon>
+    </div>
+    <button type="button" mat-raised-button
+            style="margin-top: 20px;"
+            *ngIf="billing_to.length==0"
+            (click)="change_billing_address()">
+        Recevoir une facture
+    </button>
+
+    <button type="button" mat-raised-button
+            style="margin-top: 20px;"
+            *ngIf="billing_to.length==0"
+            (click)="change_payment_mode()">
+        Autre mode de paiement
+    </button>
 </div>
-<button type="button" mat-raised-button
-        style="margin-top: 20px;"
-        *ngIf="billing_to.length==0"
-        (click)="change_billing_address()">
-    Recevoir une facture
-</button>
+
 
 

@@ -103,6 +103,7 @@ export class CollectionsComponent implements OnInit {
         "",
         "",
         this.user.profil.email,
+        {contact: "contact@nfluent.io", description: "Création d'une collection NFT pour "+this.network.network.split("-")[0], subject: "Création d'une nouvelle collection"},
         this.user.buy_method)
 
     if(rep){

@@ -17,7 +17,7 @@ class GoogleCloudStorageTools(Storage):
 #    self.bucket.make_public()
 
 
-  def add(self,data:dict,id=None):
+  def add(self,data:dict,id=None,overwrite=False):
     if id is None: id=data["symbol"]+"_"+str(int(now()))
 
     blob = self.bucket.blob(id)

@@ -179,7 +179,7 @@ export class AppComponent implements OnInit {
 
       if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
         this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{
-          this.network_service.init_keys(this.network_service.network).then(()=>{
+          this.network_service.init_keys().then(()=>{
             this.showSplash=false;
           });
         });

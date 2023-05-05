@@ -129,7 +129,7 @@ def test_get_nft(miner=MAIN_ACCOUNT):
   for nft in nfts:
     rc=_network.get_nft(nft.address,with_balance=miner)
     assert not rc is None
-    assert rc.balances[miner]>0
+    assert _network.get_balances(miner,nft.address)[nft.address]>0
     assert rc.supply>0
 
 
@@ -153,13 +153,13 @@ def test_transfer_sft(miner=MAIN_ACCOUNT):
 
   if q0<2:
     nft0=test_mint_sft(_miner.address,quantity=10)
-    q0=_network.get_balances(miner, nft0.address)
+    q0=_network.get_balances(miner, nft0.address)[nft0.address]
   else:
     nft0=nft
 
   tx=_network.transfer(nft0.address,_miner,_dest.address,quantity=1)
   assert len(tx["error"])==0,"Le transfert de "+nft0.address+" vers "+_dest.address+" n'a pas fonctionné"
-  q1=_network.get_balances(miner, nft0.address)
+  q1=_network.get_balances(miner, nft0.address)[nft0.address]
   assert q0-q1==1,"Les quantités ne sont pas cohérentes"
 
 

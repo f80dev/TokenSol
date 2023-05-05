@@ -1522,10 +1522,10 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "6.2.0"
 
-"@google-pay/button-angular@^3.0.8":
-  version "3.0.8"
-  resolved "https://registry.yarnpkg.com/@google-pay/button-angular/-/button-angular-3.0.8.tgz#3fe996eeab0f2d4bcaf17a6365112e6290fecf3f"
-  integrity sha512-+sikQhocRN8a7+BM+bwm49aFIUz5nG7Oe5CM+EdKBaSrAcsCT4GQrb22szXOd9R3bQotn/o1nMwkVjRsAJ51Tg==
+"@google-pay/button-angular@^3.0.9":
+  version "3.0.9"
+  resolved "https://registry.yarnpkg.com/@google-pay/button-angular/-/button-angular-3.0.9.tgz#c89bc1dc9e4d99e548f12d37eaec1549ae127525"
+  integrity sha512-50VwILy4qztEa7YfCURXLpbD//TxyD3bPHjTxlSNrf9a/TC+AdGpsZecT345a2OyTJYu4gvIsYMidGSte9TVJA==
   dependencies:
     "@types/googlepay" "^0.7.0"
     tslib "^2.3.0"

@@ -336,7 +336,6 @@ class Elrond(Network):
     _signer=UserSigner(UserSecretKey(bytes.fromhex(_sign.secret_key)))
     t.signature=_signer.sign(t)
 
-
     try:
       hash = self._proxy.send_transaction(t)
       delay=0
@@ -361,9 +360,9 @@ class Elrond(Network):
       log("Exception d'execution de la requete " + mess)
       if mess.startswith("{"):
         mess=(mess.split("}")[0]+"}").replace("'","\"").replace("None","\"\"")
-        return {"error":json.loads(mess)}
+        return {"error":json.loads(mess),"status":"error"}
 
-      return {"error":mess}
+      return {"error":mess,"status":"error"}
 
 
 
@@ -694,7 +693,7 @@ class Elrond(Network):
       for nft in nfts:
         rc[nft["identifier"]]=(int(nft["balance"]) if "balance" in nft else 1)
 
-    return rc if nft_addr is None else rc[nft_addr]
+    return rc
 
 
 
@@ -1123,9 +1122,9 @@ class Elrond(Network):
 
     if t["status"]!="success":
       return {
-               "error":"invalid",
-               "tx":t["hash"],
-                "explorer":self.getExplorer(t["hash"])
+              "error":"invalid",
+              "tx":t["hash"],
+              "explorer":self.getExplorer(t["hash"])
              }
 
 

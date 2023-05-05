@@ -32,7 +32,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.2.0",
     "@fortawesome/free-brands-svg-icons": "^6.2.0",
     "@fortawesome/free-solid-svg-icons": "^6.2.0",
-    "@google-pay/button-angular": "^3.0.8",
+    "@google-pay/button-angular": "^3.0.9",
     "@metaplex-foundation/mpl-token-metadata": "^2.5.2",
     "@metaplex/js": "^4.12.0",
 

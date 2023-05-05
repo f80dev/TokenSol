@@ -26,6 +26,7 @@ import {wait_message} from "../hourglass/hourglass.component";
 import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
 
 
+
 @Component({
   selector: 'app-mint',
   templateUrl: './mint.component.html',
@@ -71,6 +72,8 @@ export class MintComponent implements OnInit {
   message: string="";
   collection_name: string = "";
   show_mint_section: boolean=false;
+  miner_balance=0;
+  collections: Collection[]=[]
 
   constructor(
       public toast:MatSnackBar,
@@ -83,17 +86,17 @@ export class MintComponent implements OnInit {
       public clipboard:Clipboard,
       public routes:ActivatedRoute,
   ) {
-    this.user.addr_change.subscribe((addr)=>{
-      if(this.user.collections.length>0)this.sel_collection=this.user.collections[0];
-    })
+    // this.user.addr_change.subscribe((addr)=>{
+    //   if(this.user.collections.length>0)this.sel_collection=this.user.collections[0];
+    // })
+
   }
 
 
   ngOnInit(): void {
     setTimeout(()=>{
       this.init_form();
-    },500)
-
+    },2500)
   }
 
   set_creators(){
@@ -109,12 +112,10 @@ export class MintComponent implements OnInit {
     this.token_creators=local_config.creators || [];
 
     this.networks=this.network.networks_available.map((x:any)=>{return {label:x,value:x}});
-    let network=local_config.network || this.networks[0].value;
-    await this.network.init_keys(network);
-    this.network.network=network;
-
-    this.sel_key=local_config.key ? this.network.find_key_by_address(local_config.key.address) : this.network.keys[0];
-    if(this.sel_key)await this.user.init(this.sel_key.address,this.network.network);
+    let keys=await this.network.init_network(local_config.network || this.networks[0].value);
+    if(keys.length>0){
+      this.update_miner(local_config.key ? this.network.find_key_by_address(local_config.key.address) : keys[0])
+    }
 
     this.sel_platform=this.network.config["PLATFORMS"][0];              //NFTStorage
     this.sel_platform_document=this.network.config["PLATFORMS"][3];     //Server
@@ -136,15 +137,15 @@ export class MintComponent implements OnInit {
 
     //Récupération d'une collection en particulier
 
-    if (params.hasOwnProperty("collection")) {
-      if (this.user.find_collection(params["collection"])) {
-        this.sel_collection = params["collection"];
-      } else {
-        setTimeout(()=>{
-          this.sel_collection = local_config.collection || this.user.collections[0];
-        },1000)
-      }
-    }
+    // if (params.hasOwnProperty("collection")) {
+    //   if (this.user.find_collection(params["collection"])) {
+    //     this.sel_collection = params["collection"];
+    //   } else {
+    //     setTimeout(()=>{
+    //       this.sel_collection = local_config.collection || this.user.collections[0];
+    //     },1000)
+    //   }
+    // }
 
     if (params.hasOwnProperty("files")) {
       let files = [];
@@ -304,6 +305,7 @@ export class MintComponent implements OnInit {
         "de "+nb_tokens_to_mint+" NFTs sur le réseau "+this.network.network+"<br>par le compte <strong>"+this.sel_key?.name+"</strong> dans la collection "+this.sel_collection?.name +" ?",
         "",
         this.user.profil.email,
+        {contact: "contact@nfluent.io", subject: "Votre facture de minage", description:"Minage de "+nb_tokens_to_mint+" NFT"},
         this.user.buy_method)
 
     if(rep){
@@ -313,6 +315,9 @@ export class MintComponent implements OnInit {
       this.mintfile="sf_"+now()+".yaml";
       this.content_for_clipboard="";
       this.mint(start,nb_tokens_to_mint);
+    } else {
+      this.user.buy_method="";
+      this.user.wallet_provider=undefined;
     }
   }
 
@@ -590,6 +595,7 @@ export class MintComponent implements OnInit {
 
   isValide(token: any):string {
     //vérifie la possibilité de miner les tokens
+    if(this.sel_key?.balance==0)return "Le mineur ne dispose pas des fonds nécéssaires au minage"
     if(token.address && token.address.length>0)return "Ce token a déjà une adresse"
     if(token.properties){
       for(let f of token.properties.files){
@@ -831,6 +837,7 @@ export class MintComponent implements OnInit {
 
 
   updateChain($event:any) {
+    //updatenetwork update_network
     this.network.network=$event;
     let param="network="+this.network.network
     if(this.sel_collection)param=param+"&collection="+this.sel_collection.id;
@@ -849,10 +856,13 @@ export class MintComponent implements OnInit {
     // }
   }
 
-  async updateUser($event: any) {
-    //this.sel_key=this.network.find_key_by_address($event.address);
-    let r=await this.user.init($event.address,this.network.network,!this.network.isPolygon());
-    this.local_save();
+  async update_miner($event: any) {
+    this.sel_key=$event;
+    this.network.get_collections($event.address,this.network.network,false).subscribe((cols)=>{
+      this.collections=cols;
+      if(cols.length>0)this.changeCollection(this.collections[0]);
+      this.local_save();
+    })
   }
 
   changeCollection($event: any) {

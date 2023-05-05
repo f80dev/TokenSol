@@ -81,8 +81,7 @@ def test_transfer(addr:str="admin"):
 	nfts=_polygon.get_nfts(key.address,with_attr=False,limit=5)
 	nft=random_from(nfts)
 	_polygon.transfer(nft.address,key,dest.address,1)
-	balances=_polygon.get_balances(dest.address, nft.address)
-	assert balances[nft.address] >= 1
+	assert _polygon.get_balances(dest.address, nft.address)[nft.address] >= 1
 
 
 

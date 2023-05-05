@@ -62,7 +62,7 @@
       <app-upload-file (uploaded)="onFileSelected($event)"
                        width="200px" [maxsize]="10000000"
                        extensions=".webp,.png,.gif,.jpeg,.jpg,.json">
-        Ajouter des nouveaux NFTs
+        Ajouter des<br>nouveaux NFTs
       </app-upload-file>
 
       <button type="button"
@@ -118,7 +118,8 @@
       </button>
 
       <app-input
-              label="Cible"
+              label="Blockchain"
+              title="Désigne la blockchain recevant les NFTs minés (Devnet signifie qu'il s'agit du réseau de test)"
               [options]="networks" width="200px"
               value_type="list" color="white"
               [value]="network.network" value_field="value"
@@ -128,14 +129,14 @@
                   style="width: 350px;"
                   [key]="sel_key"
                   label="Sélectionnez un mineur"
-                  (onChange)="updateUser($event)"
+                  (onChange)="update_miner($event)"
                   [network]="network.network"></app-selkey>
 
       <div *ngIf="sel_key">
         <app-input label="Collection utilisée"
                    [value]="sel_collection" width="250px"
                    (valueChange)="changeCollection($event)" value_type="list"
-                   [options]="user.collections">
+                   [options]="collections">
         </app-input>
 
         <button type="button" mat-icon-button
@@ -163,8 +164,8 @@
                    [value]="collection_name" width="300px"
                    (valueChange)="collection_name=$event">
         </app-input>
-        <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"
-                     [if]="network.isElrond() && !sel_collection"></app-warning>
+<!--        <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"-->
+<!--                     [if]="network.isElrond() && !sel_collection"></app-warning>-->
 
       </div>
     </div>
@@ -359,8 +360,8 @@
               %
             </td>
             <td style="width: 25px">
-              <app-warning help="En l'état les créateurs ne reçoivent aucune royalties"
-                           [if]="token.creators.length>0 && token.royalties==0"></app-warning>
+<!--              <app-warning help="En l'état les créateurs ne reçoivent aucune royalties"-->
+<!--                           [if]="token.creators.length>0 && token.royalties==0"></app-warning>-->
             </td>
           </tr>
         </table>

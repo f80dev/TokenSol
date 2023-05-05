@@ -5,10 +5,12 @@
 
     <div mat-dialog-content style="width: 100%;margin-top: 10px;" *ngIf="buy_method.length==0">
         <table style="width: 100%;text-align: center;">
+<!--            Affichage des frais et devises-->
             <tr style="font-size:large">
                 <td style="width: 50%;">{{data.to_paid_in_fiat}} {{data.merchant.currency}}</td>
                 <td>{{data.to_paid}} {{data.merchant.wallet.unity}}</td>
             </tr>
+<!--            Affichage des boutons de paiement-->
             <tr>
                 <td style="width: 50%;"><button mat-raised-button color="primary" (click)="buy_method='fiat'">Payer</button></td>
                 <td><button mat-raised-button color="primary" (click)="set_payment_in_crypto()">Payer</button></td>
@@ -38,7 +40,7 @@
                      [price]="data.to_paid"
                      [title]="data.intro_payment"
                      [fiat_price]="data.to_paid_in_fiat"
-                     (cancel)="close()"
+                     (cancel)="cancel()"
                      (paid)="onpaid($event)">
         </app-payment>
     </div>

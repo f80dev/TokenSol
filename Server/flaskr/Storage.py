@@ -5,7 +5,7 @@ class Storage:
 	def __init__(self,domain_server=""):
 		self.domain_server=domain_server
 
-	def add(self,content):
+	def add(self,content,overwrite=False):
 		pass
 
 	def get(self,key):

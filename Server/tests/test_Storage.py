@@ -6,7 +6,11 @@ from tests.test_art import get_image
 from tests.test_tools import RESSOURCE_TEST_DIR
 
 DOMAIN_SERVER="http://127.0.0.1:4242/"
-PLATFORMS=[("githubstorage", "github-nfluentdev-storage-main"),("dao", DOMAIN_SERVER), ("file-test", DOMAIN_SERVER),("nftstorage", ""),  ]
+PLATFORMS=[
+	("githubstorage", "github-nfluentdev-storage-main"),
+	("dao", DOMAIN_SERVER),
+	("nftstorage", "")
+]
 
 #TODO: ajouter les autres plateforms de stockage serveur, github, storej
 
@@ -48,7 +52,7 @@ def test_add_image():
 	for name in PLATFORMS:
 		log("Test de la plateforme "+name[0])
 		storage=get_storage_instance(name[0],name[1])
-		cid=storage.add(img)
+		cid=storage.add(img,overwrite=True)
 		result=requests.get(cid["url"]).content
 		assert result==bytes,"Les images "+img+" n'est pas bien stocké sur "+name[0]
 

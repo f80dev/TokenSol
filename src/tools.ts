@@ -139,6 +139,13 @@ export function analyse_params(params:string):any {
     if (value == "false") value = false;
     if (value == "true") value = true;
     rc[key] = value;
+
+    if(key=="params_file"){
+      fetch(environment.server+"/api/yaml/?file="+value).then((content:any)=>{
+        debugger
+      })
+    }
+
   }
   return rc;
 }

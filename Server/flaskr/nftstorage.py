@@ -29,7 +29,7 @@ class NFTStorage:
     return True
 
 
-  def add(self,content,_type=None,filename=""):
+  def add(self,content,_type=None,filename="",overwrite=False):
     """
     voir https://nft.storage/api-docs/
     :param content:

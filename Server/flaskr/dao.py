@@ -10,7 +10,7 @@ from flaskr.NFT import NFT
 from flaskr.NFluentAccount import NfluentAccount
 from flaskr.Network import Network
 from flaskr.Storage import Storage
-from flaskr.Tools import log, now, get_hash, encrypt, simplify_email
+from flaskr.Tools import log, now, get_hash, encrypt, simplify_email, is_email
 from flaskr.secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING, MONGO_WEB3_CONNECTION_STRING
 
 #Voir les infos de connections du cloud sur
@@ -81,7 +81,7 @@ class DAO(Storage,Network):
     return ""
 
 
-  def add(self,content) -> dict:
+  def add(self,content,overwrite=True) -> dict:
     if type(content)==str:
       if content.startswith("http"):
         content=requests.get(content).content
@@ -94,7 +94,7 @@ class DAO(Storage,Network):
 
     id="db_"+str(base64.b64encode(bytes(id,"utf8")),"utf8")
     rc={"cid":id,"hash":get_hash(content)}
-    if self.domain_server: rc["url"]=self.domain_server+"/api/files/"+str(id)
+    if self.domain_server: rc["url"]=self.domain_server+"api/files/"+str(id)
     return rc
 
   def get_unity(self):
@@ -297,6 +297,7 @@ class DAO(Storage,Network):
       })
 
   def get_account(self,addr:str) -> NfluentAccount:
+    if is_email(addr): addr=DB_PREFIX_ID + get_hash(addr)
     obj=self.db["accounts"].find_one({"address":addr})
     if obj is None: return None
     return NfluentAccount(obj=obj)
@@ -343,21 +344,19 @@ class DAO(Storage,Network):
                      histo=None,send_real_email=True,solde=100) -> Key:
     name=email.split("@")[0]
     addr= DB_PREFIX_ID + get_hash(email)
-    obj=self.db["keys"].find_one({"address":addr})
-
-    for i in range(5):
-      seed=seed+str(now("hex"))+" "
-
-    if obj is None:
-      k=Key("privatekey_"+addr,name,addr,"db-"+self.domain+"-"+self.dbname,seed)
-      self.db["keys"].insert_one(k.__dict__) #Dans le cas d'une simulation de blockchain, la
-
-      acc=NfluentAccount(address=k.address,network=self.network,balance=solde)
-      self.db["accounts"].insert_one(acc.__dict__) #Dans le cas d'une simulation de blockchain, la
+    key=self.db["keys"].find_one({"address":addr})
+    if key is None:
+      for i in range(12): seed=seed+str(now("hex"))+" "
+      key=Key("privatekey_"+addr,name,addr,"db-"+self.domain+"-"+self.dbname,seed)
+      self.db["keys"].insert_one(key.__dict__) #Dans le cas d'une simulation de blockchain, la
     else:
-      k=Key(obj=obj)
+      key=Key(obj=key)
 
-    return k
+    if self.get_account(key.address) is None:
+      acc=NfluentAccount(address=key.address,network=self.network,balance=solde)
+      self.db["accounts"].insert_one(acc.__dict__) #Dans le cas d'une simulation de blockchain, la
+
+    return key
 
 
 
@@ -365,13 +364,12 @@ class DAO(Storage,Network):
     _miner=self.get_account(miner.address)
     if _miner is None: return False
 
-    nft=self.get_nft(nft_addr,True)
-    if miner.address in nft.balances:
-      nft.balances[miner.address]=nft.balances[miner.address]-occ
-    else:
-      nft.balances[miner.address]=0
+    if not nft_addr in _miner.nfts_balances or _miner.nfts_balances[nft_addr]<occ:
+      return self.create_transaction(error="Quantité insuffisante",hash="db_"+now("hex"),nft_addr=nft_addr)
 
-    self.save_nft(nft)
+    _miner.nfts_balances[nft_addr]=_miner.nfts_balances[nft_addr]-occ
+
+    self.save_account(_miner)
 
     return self.create_transaction(error="",hash="db_"+now("hex"),nft_addr=nft_addr)
 

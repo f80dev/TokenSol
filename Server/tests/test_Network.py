@@ -19,27 +19,6 @@ def test_reset(networks=NETWORKS):
 
 
 
-def test_transfer(networks=NETWORKS):
-	for network in networks:
-		_network=get_network_instance(network)
-		if len(_network.get_keys())>0:
-			miner:Key=random_from(_network.get_keys())
-			nfts=_network.get_nfts(miner.address)
-			if len(nfts)==0:
-				test_mint([network],miner=miner,owner=miner.address)
-				nfts=_network.get_nfts(miner.address)
-
-			nft=random_from(nfts)
-
-			email="paul.dudule"+str(now("hex"))+"@gmail.com"
-			dest=test_create_account(email,[network])
-			rc=_network.transfer(nft.address,miner,dest.address)
-
-			if _network.network_name=="polygon": sleep(15.0)
-			assert len(_network.get_nfts(dest.address))>0
-			assert _network.has_nft(dest.address,nft.address)
-
-
 
 
 def test_create_account(email=MAIN_EMAIL,networks=NETWORKS,domain_appli=DEFAULT_DOMAIN_APPLI):
@@ -170,6 +149,28 @@ def test_get_collection(networks=NETWORKS):
 
 
 
+def test_transfer(networks=NETWORKS):
+	for network in networks:
+		_network=get_network_instance(network)
+		if len(_network.get_keys())>0:
+			miner:Key=random_from(_network.get_keys())
+			nfts=_network.get_nfts(miner.address)
+			if len(nfts)==0:
+				test_mint([network],miner=miner,owner=miner.address)
+				nfts=_network.get_nfts(miner.address)
+
+			nft=random_from(nfts)
+
+			email="paul.dudule"+str(now("hex"))+"@gmail.com"
+			dest=test_create_account(email,[network])
+			rc=_network.transfer(nft.address,miner,dest.address)
+
+			if _network.network_name=="polygon": sleep(15.0)
+			assert len(_network.get_nfts(dest.address))>0
+			assert _network.has_nft(dest.address,nft.address)
+
+
+
 
 
 
@@ -180,4 +181,7 @@ def test_all_platform_with_json(platforms=PLATFORM_LIST):
 		rc=upload_on_platform(doc,platform,domain_server=DEFAULT_DOMAIN_SERVER)
 		assert len(rc["url"])>0
 		assert len(rc["cid"])>0
+
+
+
 

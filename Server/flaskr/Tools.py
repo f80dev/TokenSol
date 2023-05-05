@@ -813,7 +813,7 @@ def extract_extension(s:str) -> str:
     if k in s: return k
 
 
-def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge",temp_dir="./temp"):
+def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge",temp_dir="./temp/"):
   filename=temp_dir+prefix_for_temp_file+"_"+now("hex")+".gif"
   wr=imageio.get_writer(filename,mode="I")
 

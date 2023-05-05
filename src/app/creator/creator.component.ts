@@ -402,6 +402,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
             "",
             "",
             this.user.profil.email,
+            {contact: "contact@nfluent.io", description: "Génération de "+nb_tokens_to_generate+" visuels", subject: ""},
             this.user.buy_method)
       }
 

@@ -434,7 +434,13 @@ def create_zip():
 def send_bill():
   body=request.json
   model="mail_facture.html" if not "model" in body else body["model"]
-  replacements={"amount":body["amount"],"label":body["label"],"message":body["message"]}
+  replacements={
+    "amount":body["amount"],
+    "reference":body["reference"],
+    "message":body["message"],
+    "description":body["description"],
+    "contact":body["contact"]
+  }
   rc=send_mail(open_html_file(model,replace=replacements,domain_appli=current_app.config["DOMAIN_APPLI"]),
             _to=body["dest"],subject=body["subject"])
   return jsonify({"message":"Facture envoyé"})
@@ -1139,6 +1145,17 @@ def analyse_operation(ope):
         if account.balance<0.1: ope["warning"]="Balance du miner très faible"
 
   return ope
+
+
+@bp.route('/yaml/',methods=["GET"])
+def api_get_yaml():
+  url=request.args.get("file")
+  req=requests.get(url)
+  if req.status_code==200:
+    return jsonify(yaml.load(req.text,Loader=yaml.FullLoader))
+  else:
+    return returnError("Fichier "+url+" introuvable")
+
 
 
 @bp.route('/operations/',methods=["GET","POST"])
@@ -1913,12 +1930,17 @@ def get_image(cid:str=""):
       if cid.startswith("db_"):
         r=DAO(cid=cid).get(cid)
         if not r is None:
-          if "content" in r and "base64," in r["content"]:
-            data=r["content"]
-            format=data.split("base64,")[0].replace("data:","")
-            f=BytesIO(base64.b64decode(data.split("base64,")[1]))
+          if type(r)==dict:
+            if "content" in r and "base64," in r["content"]:
+              data=r["content"]
+              format=data.split("base64,")[0].replace("data:","")
+              f=BytesIO(base64.b64decode(data.split("base64,")[1]))
+            else:
+              return jsonify(r)
           else:
-            return jsonify(r)
+            f=BytesIO(r)
+            format="application/octet"
+
         else:
           return returnError("Image introuvable")
       else:

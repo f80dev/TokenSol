@@ -17,7 +17,7 @@ class Infura(Storage):
     Storage.__init__(self,"https://ipfs.io/ipfs/")
     self.upload_dir=upload_dir
 
-  def add(self,body,removeFile=True,format=""):
+  def add(self,body,removeFile=True,format="",overwrite=False):
     if type(body)!=dict: body={"value":body}
 
     f=BytesIO()
