@@ -35,7 +35,7 @@ def test_add_file():
 			file=hFile.read()
 
 			storage=get_storage_instance(name[0],name[1])
-			result=storage.add(file)
+			result=storage.add(file,overwrite=True)
 			assert len(result["hash"])>0
 			assert len(result["cid"])>0
 			assert len(result["url"])>0

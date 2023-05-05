@@ -99,6 +99,7 @@ RUN pip3 -v install multiversx-sdk-core
 RUN pip3 -v install multiversx-sdk-wallet
 RUN pip3 -v install multiversx-sdk-network-providers
 RUN pip3 -v install pyopenssl
+RUN pip3 -v install openpyxl
 
 WORKDIR /
 RUN mkdir Solana

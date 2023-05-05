@@ -897,7 +897,8 @@ def importer_file(file):
   if type(data)==bytes:
     res = read_excel(data)
   else:
-    if data.endswith("xlsx"):
+    if data.endswith("xlsx") or data.endswith("xls"):
+      #voir https://openpyxl.readthedocs.io/en/stable/
       res = read_excel(data)
     else:
       delimiter = ";"

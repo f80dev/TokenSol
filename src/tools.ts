@@ -203,6 +203,45 @@ export function download_file(content:string,filename:string,_type='text/csv;cha
 }
 
 
+function drawRotated(canvas:any, image:any, degrees:any) {
+  var ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(degrees * Math.PI / 180);
+  ctx.drawImage(image, -image.width / 2, -image.height / 2);
+  ctx.restore();
+}
+
+
+
+/**
+ *
+ * @param src
+ * @param angle
+ * @param quality
+ * @param func
+ */
+export function rotate(src: string, angle: number, quality: number=1) : Promise<string> {
+  return new Promise((resolve) => {
+    if (angle == 0)
+      resolve(src);
+    else {
+      var img = new Image();
+      img.onload = function() {
+        var canvas:any = document.createElement('canvas');
+        canvas.width = img.height;
+        canvas.height = img.width;
+        drawRotated(canvas, this, angle);
+        var rc = canvas.toDataURL("image/jpeg", quality);
+        resolve(rc);
+      };
+      img.src = src;
+    }
+  });
+
+}
+
 
 export function getParams(routes:ActivatedRoute,local_setting_params="",force_treatment=false) {
   //Decryptage des parametres de l'url

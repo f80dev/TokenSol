@@ -815,7 +815,7 @@ export class NetworkService implements OnInit {
         body["quality"]=quality
         body["dynamic_fields"]=dynamic_fields
         body["format"]=format
-        return this.httpClient.post(this.server_nfluent+"/api/send_photo_for_nftlive/",body)
+        return this._post("send_photo_for_nftlive/","",body,60000)
     }
 
 
@@ -961,6 +961,10 @@ export class NetworkService implements OnInit {
 
     upload_batch(content:any) {
         return this.httpClient.post<NFT[]>(this.server_nfluent+"/api/upload_batch/",content);
+    }
+
+    upload_excel_file(content:any) {
+        return this.httpClient.post<any[]>(this.server_nfluent+"/api/upload_excel/",content);
     }
 
     get_account(addr: string, network: string) {

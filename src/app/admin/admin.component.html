@@ -168,20 +168,50 @@
 
   <mat-expansion-panel>
     <mat-expansion-panel-header>Déploiement de l'application</mat-expansion-panel-header>
-    Longueur maximum : {{100*max_url_len/2000 | number: '1.0-0'}}%<br><br>
+
+    <app-upload-file (uploaded)="batch_import($event)"
+                     width="100px" [maxsize]="100000000"
+                     extensions=".xlsx,.xls,.csv">
+      Importer Excel
+    </app-upload-file>
 
     <div class="expansion-content">
 
-        <app-input [options]="urls" [value]="sel_url" width="300px"
-                   label="Application"
-                   (valueChange)="sel_url=$event"></app-input>
+        <table class="table-elevation">
+          <tr>
+            <th>Nom de l'application</th>
+            <th>Description</th>
+            <th>Message intro</th>
+            <th>Visuel d'intro</th>
+            <th>Commandes</th>
+          </tr>
+          <tr *ngFor="let row of rows">
+            <td>{{row.appname}}</td>
+            <td>{{row.comment}}</td>
+            <td>{{row.claim}}</td>
+            <td><a [href]="row.visual"><img style="width:100px;" [src]="row.visual"></a></td>
+            <td>
+              <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>
+              <button mat-icon-button (click)="open_appli(row,'local')" title="Ouvrir l'application en local"><mat-icon>home</mat-icon></button>
+              <button mat-icon-button (click)="share_appli(row)" title="Partagé le lien"><mat-icon>share</mat-icon></button>
+              <button mat-icon-button [cdkCopyToClipboard]="row.url"
+                      (click)="informe_copy()" [title]="row.read_params"><mat-icon>info</mat-icon></button>
+            </td>
+          </tr>
+        </table>
 
-      <div>{{sel_url.description}}</div>
+<!--        <app-input [options]="urls" [value]="sel_url" width="300px"-->
+<!--                   label="Application"-->
+<!--                   (valueChange)="sel_url=$event"></app-input>-->
 
-      <button mat-icon-button (click)="open_appli(sel_url)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>
-      <button mat-icon-button (click)="share_appli(sel_url)" title="Partagé le lien"><mat-icon>share</mat-icon></button>
-      <button mat-icon-button [cdkCopyToClipboard]="sel_url.url"
-              (click)="informe_copy()" [title]="sel_url.read_params"><mat-icon>info</mat-icon></button>
+<!--      <div>{{sel_url.description}}</div>-->
+
+<!--      <button mat-icon-button (click)="open_appli(sel_url)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>-->
+<!--      <button mat-icon-button (click)="share_appli(sel_url)" title="Partagé le lien"><mat-icon>share</mat-icon></button>-->
+<!--      <button mat-icon-button [cdkCopyToClipboard]="sel_url.url"-->
+<!--              (click)="informe_copy()" [title]="sel_url.read_params"><mat-icon>info</mat-icon></button>-->
+<!--      <button mat-icon-button (click)="raz_save_local()" title="Effacer le cookie de la config"><mat-icon>clear</mat-icon></button>-->
+
 
     </div>
     <br>
@@ -189,103 +219,122 @@
       <br>
 
       <div class="expansion-content" style="max-width: 800px;justify-content: flex-start;display: inline-flex;margin-top: 20px;" *ngIf="sel_url">
-        <app-input [maxwidth]="w" [value]="config_appli.creator_title"
-                   label="Titre de la fenêtre principale" (valueChange)="config_appli.creator_title=$event;refresh();"></app-input>
-
-        <app-input [maxwidth]="w" [value]="config_appli.appli_addr"
-                   label="Domaine de l'application" (valueChange)="config_appli.appli_addr=$event;refresh();"></app-input>
-
-        <div style="width:100%;max-width:600px;display: inline-flex;align-items: flex-start;margin:10px;">
-          <img *ngIf="config_appli.intro_visual.length>0"
-               (click)="search_intro_image()"
-               [src]="config_appli.intro_visual"
-               style="height: 55px;margin-right: 5px;">
-
-          <app-input width="80%" [value]="config_appli.intro_visual"
-                     label="Visuel d'introduction"
-                     (valueChange)="config_appli.intro_visual=$event;refresh();"></app-input>
-
-        </div>
 
 
 
-        <app-input [maxwidth]="w" [value]="config_appli.intro_claim"
-                   label="Phrase d'introduction" (valueChange)="config_appli.intro_claim=$event;refresh();"></app-input>
+<!--        <app-input [maxwidth]="w" [value]="config_appli.creator_title"-->
+<!--                   label="Titre de la fenêtre principale" (valueChange)="config_appli.creator_title=$event;refresh();"></app-input>-->
 
-        <app-input [maxwidth]="w" [value]="config_appli.intro_appname"
-                   label="Nom de l'application" (valueChange)="config_appli.intro_appname=$event;refresh();"></app-input>
+<!--        <app-input [maxwidth]="w" [value]="config_appli.appli_addr"-->
+<!--                   label="Domaine de l'application" (valueChange)="config_appli.appli_addr=$event;refresh();"></app-input>-->
 
-        <br>
-        <app-input [maxwidth]="w" [value]="config_appli.sel_stockage" [options]="stockages" [multiselect]="true"
-                   label="Stockage offline visuel et metadata" value_field="value"
-                   (valueChange)="config_appli.sel_stockage=$event;refresh();"></app-input>
+<!--        <div style="width:100%;max-width:600px;display: inline-flex;align-items: flex-start;margin:10px;">-->
+<!--          <img *ngIf="config_appli.intro_visual.length>0"-->
+<!--               (click)="search_intro_image()"-->
+<!--               [src]="config_appli.intro_visual"-->
+<!--               style="height: 55px;margin-right: 5px;">-->
 
-        <app-input [maxwidth]="w" [value]="config_appli.sel_stockage_document" [options]="stockages" [multiselect]="true"
-                   label="Stockage documents attachés" value_field="value"
-                   (valueChange)="config_appli.sel_stockage_document=$event;refresh();"></app-input>
+<!--          <app-input width="80%" [value]="config_appli.intro_visual"-->
+<!--                     label="Visuel d'introduction"-->
+<!--                     (valueChange)="config_appli.intro_visual=$event;refresh();"></app-input>-->
 
-        <br>
-        <app-input width="100%" [maxwidth]="w" [value]="config_appli.sel_networks"
-                   *ngIf="sel_url.max_blockchain>0"
-                   [multiselect]="true" [options]="networks" value_field="value"
-                   label="Blockchains disponibles"
-                   (valueChange)="config_appli.sel_networks=$event;refresh();"></app-input>
+<!--        </div>-->
 
 
-        <app-input [value]="config_appli.sel_key" value_type="text"
-                   width="100%" [maxwidth]="w" *ngIf="sel_url.show_key"
-                   label="Clé à utiliser"
-                   (valueChange)="config_appli.sel_key=$event;refresh();"></app-input>
 
-        <app-input [value]="config_appli.sel_col" value_type="text"
-                   width="100%" [maxwidth]="w" *ngIf="sel_url.max_blockchain>0"
-                   label="Identifiant de la collection à utiliser"
-                   (valueChange)="config_appli.sel_col=$event;refresh();"></app-input>
+<!--        <app-input [maxwidth]="w" [value]="config_appli.intro_claim"-->
+<!--                   label="Phrase d'introduction" (valueChange)="config_appli.intro_claim=$event;refresh();"></app-input>-->
 
-        <button mat-raised-button *ngIf="sel_url.show_key && sel_url.max_blockchain>0"
-                (click)="navigate_to_key()">
-          Encrypter une clé
-        </button>
+<!--        <app-input [maxwidth]="w" [value]="config_appli.intro_appname"-->
+<!--                   label="Nom de l'application" (valueChange)="config_appli.intro_appname=$event;refresh();"></app-input>-->
 
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>Paiement des services</mat-expansion-panel-header>
+<!--        <br>-->
+<!--        <app-input [maxwidth]="w" [value]="config_appli.sel_stockage" [options]="stockages" [multiselect]="true"-->
+<!--                   label="Stockage offline visuel et metadata" value_field="value"-->
+<!--                   (valueChange)="config_appli.sel_stockage=$event;refresh();"></app-input>-->
 
-          <app-input width="100%" [maxwidth]="w" [value]="config_appli.merchant_name"
-                     label="Nom du commerçant"
-                     (valueChange)="config_appli.merchant_name=$event;refresh();"></app-input>
+<!--        <app-input [maxwidth]="w" [value]="config_appli.sel_stockage_document" [options]="stockages" [multiselect]="true"-->
+<!--                   label="Stockage documents attachés" value_field="value"-->
+<!--                   (valueChange)="config_appli.sel_stockage_document=$event;refresh();"></app-input>-->
 
-          <app-input width="100%" [maxwidth]="w" [value]="config_appli.merchant_id"
-                     label="Identifiant GooglePay du projet"
-                     (valueChange)="config_appli.merchant_id=$event;refresh();"></app-input>
-
-          <app-input width="100%" [maxwidth]="w" [value]="config_appli.price"
-                     value_type="number" label="Prix"
-                     (valueChange)="config_appli.price=$event;refresh();"></app-input>
-
-          <app-input width="100%" [maxwidth]="w" [value]="config_appli.fiat_price"
-                     value_type="number" label="Prix en Fiat"
-                     (valueChange)="config_appli.price=$event;refresh();"></app-input>
-
-          <app-input width="100%" [maxwidth]="w" [value]="config_appli.currency" options="EUR,US"
-                     label="Quelle monnaie"
-                     (valueChange)="config_appli.currency=$event;refresh();"></app-input>
-
-          <app-input width="100%" [maxwidth]="w" [value]="config_appli.country"
-                     label="Quel pays"
-                     (valueChange)="config_appli.country=$event;refresh();"></app-input>
-
-          <app-input width="100%" [maxwidth]="w" [value]="config_appli.money"
-                     value_type="text" label="Monnaie utilisée"
-                     (valueChange)="config_appli.money=$event;refresh();"></app-input>
-
-        </mat-expansion-panel>
+<!--        <br>-->
+<!--        <app-input width="100%" [maxwidth]="w" [value]="config_appli.sel_networks"-->
+<!--                   *ngIf="sel_url.max_blockchain>0"-->
+<!--                   [multiselect]="true" [options]="networks" value_field="value"-->
+<!--                   label="Blockchains disponibles"-->
+<!--                   (valueChange)="config_appli.sel_networks=$event;refresh();"></app-input>-->
 
 
-<!--        <app-selkey *ngIf="first_network.length>0"-->
-<!--                    [network]="first_network"-->
-<!--                    style="width: 350px;"-->
-<!--                    label="Sélectionnez un mineur"-->
-<!--                    (onChange)="update_key($event)"></app-selkey>-->
+<!--        <app-input [value]="config_appli.sel_key" value_type="text"-->
+<!--                   width="100%" [maxwidth]="w" *ngIf="sel_url.show_key"-->
+<!--                   label="Clé du mineur"-->
+<!--                   (valueChange)="config_appli.sel_key=$event;refresh();"></app-input>-->
+
+<!--        <app-input [value]="config_appli.sel_col" value_type="text"-->
+<!--                   width="100%" [maxwidth]="w" *ngIf="sel_url.max_blockchain>0"-->
+<!--                   label="Identifiant de la collection à utiliser"-->
+<!--                   (valueChange)="config_appli.sel_col=$event;refresh();"></app-input>-->
+
+<!--        <button mat-raised-button *ngIf="sel_url.show_key && sel_url.max_blockchain>0"-->
+<!--                (click)="navigate_to_key()">-->
+<!--          Encrypter une clé-->
+<!--        </button>-->
+
+<!--        <mat-expansion-panel>-->
+<!--          <mat-expansion-panel-header>Paiement des services</mat-expansion-panel-header>-->
+
+<!--          <app-input width="100%" [maxwidth]="w"-->
+<!--                     [value]="config_appli.merchant_name"-->
+<!--                     label="Nom du commerçant"-->
+<!--                     (valueChange)="config_appli.merchant_name=$event;refresh();"></app-input>-->
+
+<!--          <app-input width="100%" [maxwidth]="w"-->
+<!--                     [value]="config_appli.merchant_id"-->
+<!--                     label="Identifiant GooglePay du projet"-->
+<!--                     (valueChange)="config_appli.merchant_id=$event;refresh();"></app-input>-->
+
+<!--          <h3>Réglement en Fiat</h3>-->
+
+<!--          <app-input width="100%" [maxwidth]="w" [value]="config_appli.fiat_price"-->
+<!--                     value_type="number" label="Prix en Fiat"-->
+<!--                     (valueChange)="config_appli.fiat_price=$event;refresh();"></app-input>-->
+
+<!--          <app-input width="100%" maxwidth="200px" [value]="config_appli.currency" [options]="['EUR','US']"-->
+<!--                     label="Quelle monnaie"-->
+<!--                     (valueChange)="config_appli.currency=$event;refresh();"></app-input>-->
+
+<!--          <app-input width="100%" maxwidth="150px" [value]="config_appli.country"-->
+<!--                     label="Quel pays"-->
+<!--                     (valueChange)="config_appli.country=$event;refresh();"></app-input>-->
+
+<!--          <h3>Réglement en crypto</h3>-->
+
+<!--          <app-input width="100%" [maxwidth]="w"-->
+<!--                     [value]="config_appli.price"-->
+<!--                     value_type="number" label="Prix en crypto"-->
+<!--                     (valueChange)="config_appli.price=$event;refresh();"></app-input>-->
+
+<!--          <app-input width="100%" [maxwidth]="w" [value]="config_appli.wallet.token"-->
+<!--                     value_type="text" label="Crypto utilisée"-->
+<!--                     (valueChange)="config_appli.wallet.token=$event;refresh();"></app-input>-->
+
+<!--          <app-input width="100%" [maxwidth]="w" [value]="config_appli.wallet.unity"-->
+<!--                     value_type="text" label="Nom de la crypto"-->
+<!--                     (valueChange)="config_appli.wallet.token=$event;refresh();"></app-input>-->
+
+<!--          <app-input width="100%" [maxwidth]="w" [value]="config_appli.wallet.address"-->
+<!--                     value_type="text" label="Wallet du receveur"-->
+<!--                     (valueChange)="config_appli.wallet.address=$event;refresh();"></app-input>-->
+
+
+<!--        </mat-expansion-panel>-->
+
+
+<!--&lt;!&ndash;        <app-selkey *ngIf="first_network.length>0"&ndash;&gt;-->
+<!--&lt;!&ndash;                    [network]="first_network"&ndash;&gt;-->
+<!--&lt;!&ndash;                    style="width: 350px;"&ndash;&gt;-->
+<!--&lt;!&ndash;                    label="Sélectionnez un mineur"&ndash;&gt;-->
+<!--&lt;!&ndash;                    (onChange)="update_key($event)"></app-selkey>&ndash;&gt;-->
       </div>
 
 

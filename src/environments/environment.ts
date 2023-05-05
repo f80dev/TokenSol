@@ -18,6 +18,14 @@ export const environment = {
   stockage_document: "server-nfluent,github-nfluentdev-storage-main,infura,server",
   networks_available:"elrond-devnet,polygon-devnet,db-server-nfluent_local",
 
+  admin:{
+    default_miner:"dudule: Z0FBQUFBQmtWUUdEa2FCdHdVeHRnaFlsRDVlMUJHbDlEWi0tVlVjMGF4Qmk2VWpjbXd1LW1JQ3poQzMtbFN2YzdtT3BLSk9PY2gxRElBLTFXYlZ0NTdvakI3NXVJUjN3SUVxS0N3Q3lQa1F5eks4VmhNZ0p2QWJmN3Y3bV9lVXViRmdXSFJTWjBQN0pWOV9vWHNUWGNoN0lMRFB1dDI3TFB3OHp1dzAxWmphSnhXLUFRa2pGX3VYMHlPMTR0TTZ3MXFYcVJDakVxenJGbGlZYm05MndPVXo5Q2w0U05qdGM5S29xMWdyRmtIWlFoQ3hKTEYtMVdfTk85M2NsV2NKWlRVWkFIeEJNdWkwSGFnaGpZVVBBTFNXMmlBeWhPXzVHT3hTVUYzRkIxQVlYQkxyaFcxUUpIQkdlSzlVekg4QjIwWWNDSkVLZUlKU2NFVnVmdHdsMjREMlVpOVpUWE91SHFOc2hIUndiSUtUQVBXRDJhNXEwdmFjbC1CcE90VVlYUzVrelRHbzlCTmZvdTVhTHMwQS1DOGtvdGhJRVE5ckRRX1liRHpYMEZSNzktdFZKeENJamtSdTBmNTh6OVVTSVdYUEtYcXk2UGVuUA==",
+    default_collection: "MACOL0XF-f53101",
+    default_networks:"elrond-devnet,polygon-devnet",
+    default_price:1,
+    default_fiat_price:0.1
+  },
+
   mint_cost:{
     price_to_mint_one_token_in_crypto:0.5,
     price_to_mint_one_token_in_fiat:0.1

@@ -23,6 +23,7 @@ from PIL.Image import Image
 from bson import ObjectId
 from flask import request, jsonify, send_file, make_response, Blueprint, current_app
 from flask_jwt_extended import create_access_token
+from numpy import isnan
 from werkzeug.datastructures import FileStorage
 from yaml import dump, Dumper
 
@@ -67,6 +68,41 @@ def update():
 def get_palettes():
   palette=json.load(open("./palettes.json","r"))
   return jsonify(palette)
+
+
+def create_sublevel(obj:dict,fields:str,value:str):
+  if fields.startswith("."):fields=fields[1:]
+  for k in fields.split("."):
+    if fields.endswith(k):    #on est sur la feuille
+      obj[k]=value
+      return obj
+    else:
+      if not k in obj: obj[k]=dict()
+      obj=create_sublevel(obj[k],fields.replace(k,"").replace("..","."),value)
+
+
+
+@bp.route('/upload_excel/',methods=["POST"])
+#http://127.0.0.1:4242/api/upload_batch/
+def api_upload_excel_file():
+  data=request.json["content"]
+  rows,n_rows=importer_file(data)
+  rc=list()
+  header=rows[0]
+  for row in rows[1:]:
+    obj=dict()
+
+    for j in range(len(header)):
+      if str(row[j])!="nan":
+        if row[j]=="oui":row[j]=True
+        if row[j]=="non":row[j]=False
+        k=header[j]
+        if not k.startswith("Unnamed"):
+          obj[k]=row[j]
+
+    rc.append(obj)
+
+  return jsonify(rc)
 
 
 
