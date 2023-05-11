@@ -199,7 +199,7 @@ export class PaymentComponent implements AfterContentInit {
       let unity="EUR"
       if(this.wallet_provider){
         unity=this.money!.unity
-        let sender_addr=this.wallet_provider.address;
+        let sender_addr=this.wallet_provider.address || this.wallet_provider.account.address;
         $$("Paiement avec l'adresse "+sender_addr)
         //voir https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-cookbook/
         let payment={

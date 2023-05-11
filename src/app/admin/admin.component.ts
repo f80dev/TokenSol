@@ -175,7 +175,7 @@ export class AdminComponent implements OnInit {
   open_appli(obj:any,mode="standard") {
     if(mode=="local"){
       let domain=obj.url.split("://")[1].split("/")[0].split("?")[0]
-      obj.url=obj.url.replace("https://"+domain,"http://localhost:4200/")
+      obj.url=obj.url.replace("https://"+domain,"http://localhost:4200")
     }
     this.copy_appli(obj.url);
     open(obj.url,"Test application")
@@ -380,7 +380,7 @@ export class AdminComponent implements OnInit {
             let obj={...r}
             obj["comment"]=null
             r.read_params=JSON.stringify(obj)
-            r.url=r.url+"?"+setParams(obj)
+            r.url=r.url+"/?"+setParams(obj)
             r.param_len=100*(2000/setParams(obj).length)+"%";
             this.rows.push(r)
           }

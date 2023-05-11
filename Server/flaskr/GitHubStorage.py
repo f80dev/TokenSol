@@ -70,6 +70,7 @@ class GithubStorage(Storage):
       if "content" in data and "filename" in data:
         id=hashlib.sha256(bytes(data["content"],"utf8")).hexdigest()+"__"+data["filename"]
         ext=data["filename"][data["filename"].rindex(".")+1:]
+        if len(ext)>4:ext=""
         data=data["content"]
       else:
         ext="json"

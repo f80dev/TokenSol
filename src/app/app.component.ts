@@ -141,13 +141,6 @@ export class AppComponent implements OnInit {
   }
 
 
-  // set_key($event: string) {
-  //   this.user.init($event,this.network_service.network).then(()=>{
-  //     localStorage.setItem("key",this.user.key?.address!);
-  //   })
-  // }
-
-
   init_form(){
     getParams(this.routes,"params",true).then((params:any)=>{
       $$("Analyse des paramètres par la fenetre principale ",params);

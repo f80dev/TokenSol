@@ -181,7 +181,7 @@
           <tr>
             <th>Nom de l'application</th>
             <th>Description</th>
-            <th>Message intro</th>
+            <th>Blockchain</th>
             <th>Visuel d'intro</th>
             <th>Commandes</th>
             <th>% max</th>
@@ -189,7 +189,7 @@
           <tr *ngFor="let row of rows">
             <td>{{row.appname}}</td>
             <td>{{row.comment}}</td>
-            <td>{{row.claim}}</td>
+            <td>{{row.networks}}</td>
             <td><a [href]="row.visual"><img style="width:100px;" [src]="row.visual"></a></td>
             <td>
               <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>

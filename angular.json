@@ -75,6 +75,27 @@
               ],
               "outputHashing": "all"
             },
+            "akash": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "50000kb",
+                  "maximumError": "200mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "400kb",
+                  "maximumError": "1020kb"
+                }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.akash.ts"
+                }
+              ],
+              "outputHashing": "all"
+            },
             "debug": {
               "budgets": [
                 {
