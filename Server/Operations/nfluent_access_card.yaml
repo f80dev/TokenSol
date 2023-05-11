@@ -120,7 +120,7 @@ validate:
     google: False
     address: False
     email: False
-    nfluent_wallet_connect: False
+    nfluent_wallet_connect: True
 
   support:
     #message affiché aux validateurs pour la détection du wallet
@@ -192,14 +192,14 @@ candymachine:
   visible: True
 
   connexion:
-    wallet_connect: False          #Permet de se connecter à la candy machine via wallet connect
+    wallet_connect: True          #Permet de se connecter à la candy machine via wallet connect
     nfluent_wallet_connect: False
     webcam: False
     network: False
     email: True
     address: True
     on_device: False
-    google: True
+    google: False
 
   collections: []                 #Liste les collections disponibles via la candy machine
 

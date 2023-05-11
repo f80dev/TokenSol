@@ -16,7 +16,7 @@ from flaskr.secret import GITHUB_TOKEN
 from flaskr.settings import IPFS_SERVER
 
 
-def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server="") -> dict:
+def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server="",api_key="") -> dict:
   """
   Charge une image sur une platforme
   :param data:
@@ -111,7 +111,7 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
 
   if platform.startswith("github"):
     try:
-      github_storage=GithubStorage(platform=platform)
+      github_storage=GithubStorage(platform=platform,token=api_key)
     except:
       log("La syntaxe doit être github-<account>-<repository>")
       return None

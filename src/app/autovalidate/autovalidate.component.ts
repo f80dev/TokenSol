@@ -16,6 +16,7 @@ export class AutovalidateComponent implements OnInit {
   validator_name: any;
   authentification: Connexion | undefined;
   collections:string[]=[];
+  network_name="";
 
   constructor(
     public routes:ActivatedRoute,
@@ -27,14 +28,18 @@ export class AutovalidateComponent implements OnInit {
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
       this.validator_name=params["validator_name"]
-      this.authentification=params["authentification"];
-      if(params.hasOwnProperty("collections"))this.collections=params["collections"].split(",");
-      if(params.hasOwnProperty("ope"))this.network.get_operations(params["ope"]).subscribe((ope)=>{this.operation=ope;})
+      this.authentification=params["authentification"] || {wallet_connect:true};
+      this.network_name=params["network"]
+      if(params.hasOwnProperty("collections")){
+        this.collections=params["collections"];
+        if(typeof params["collections"]=="string")this.collections=params["collections"].split(",");
+      }
+      //if(params.hasOwnProperty("ope"))this.network.get_operations(params["ope"]).subscribe((ope)=>{this.operation=ope;})
     })
   }
 
 
-  on_authent($event: { address:string,strong:boolean,nftchecked:boolean}) {
+  on_authent($event: { address:string,strong:boolean}) {
     if($event.strong){
       this.message=this.operation?.validate?.actions.success.message;
     } else {
@@ -50,5 +55,13 @@ export class AutovalidateComponent implements OnInit {
 
   on_invalid() {
     showMessage(this,"NFT requis pour l'accès non présents")
+  }
+
+  success(addr:string) {
+    showMessage(this,"L'utilisateur  "+addr+" possède bien le NFT requis")
+  }
+
+  fail(addr:string){
+    showMessage(this,"L'utilisateur "+addr+" ne possède pas le NFT requis")
   }
 }

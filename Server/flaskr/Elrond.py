@@ -4,11 +4,13 @@ from pathlib import Path
 
 import requests
 from multiversx_sdk_core import Transaction, Address, TransactionPayload, TokenPayment
+from multiversx_sdk_core.transaction_builders import DefaultTransactionBuildersConfiguration, EGLDTransferBuilder, \
+  ESDTTransferBuilder
 from multiversx_sdk_network_providers.accounts import AccountOnNetwork
 from multiversx_sdk_network_providers.network_config import NetworkConfig
 from multiversx_sdk_wallet import UserPEM, UserSigner, UserSecretKey, Mnemonic
 from multiversx_sdk_wallet.core import derive_keys
-from multiversx_sdk_network_providers import ProxyNetworkProvider, config
+from multiversx_sdk_network_providers import ProxyNetworkProvider
 
 from flaskr.Keys import Key
 from flaskr.NFluentAccount import NfluentAccount
@@ -298,11 +300,11 @@ class Elrond(Network):
 
 
   def send_transaction(self, _sender: Key,
-                       _receiver: AccountOnNetwork or Address,
+                       _receiver: AccountOnNetwork or Address or str,
                        _sign: Key,
-                       data: str,
-                       value=0,
-                       gas_limit=LIMIT_GAS, timeout=120):
+                       data: str=None,
+                       value=None,transaction=None,
+                       gas_limit=LIMIT_GAS, timeout=120,simulation=False,delay_between_check=1.0):
     """
     Envoi d'une transaction signée
     voir https://docs.multiversx.com/sdk-and-tools/sdk-py/sdk-py-cookbook#egld--esdt-transfers
@@ -316,32 +318,46 @@ class Elrond(Network):
     _sender=self.toAccount(_sender)
     config:NetworkConfig=self._proxy.get_network_config()
 
-    if type(_receiver)==str: _receiver=self.toAccount(_receiver)
-    if type(_receiver)==AccountOnNetwork: _receiver=_receiver.address
+    if transaction is None:
 
-    t = Transaction(
-      nonce=_sender.nonce,
-      sender=_sender.address,
-      receiver=_receiver,
-      gas_limit=gas_limit,
-      value=TokenPayment.egld_from_amount(str(value)),
-      gas_price=config.min_gas_price,
-      chain_id=config.chain_id,
-      version=1
-    )
+      if type(_receiver)==str: _receiver=self.toAccount(_receiver)
+      if type(_receiver)==AccountOnNetwork: _receiver=_receiver.address
+      if value is None:value=0
+      if type(value)==int: value=TokenPayment.egld_from_amount(str(value))
 
-    t.data = TransactionPayload.from_str(data)
+      transaction = Transaction(
+        nonce=_sender.nonce,
+        sender=_sender.address,
+        receiver=_receiver,
+        gas_limit=gas_limit,
+        value=value,
+        gas_price=config.min_gas_price,
+        chain_id=config.chain_id,
+        version=1
+      )
 
-    log("On signe la transaction avec le compte " + self.getExplorer(_sign.address,"address"))
-    _signer=UserSigner(UserSecretKey(bytes.fromhex(_sign.secret_key)))
-    t.signature=_signer.sign(t)
+    if not data is None:
+      transaction.data = TransactionPayload.from_str(data)
+    else:
+      data=""
+
+    if transaction.signature is None or transaction.signature==bytes(0):
+      log("On signe la transaction avec le compte " + self.getExplorer(_sign.address,"address"))
+      _signer=UserSigner(UserSecretKey(bytes.fromhex(_sign.secret_key)))
+      transaction.signature=_signer.sign(transaction)
 
     try:
-      hash = self._proxy.send_transaction(t)
-      delay=0
+      if not simulation:
+        hash = self._proxy.send_transaction(transaction)
+      else:
+        tx=self._proxy.simulate_transaction(transaction).raw["result"]
+        tx["error"]=tx["failReason"]
+        if len(tx["error"])>0: log("Probleme avec la simulation de la transaction "+tx["error"])
+        return tx
+
       start=now()
       while now()-start<timeout:
-        sleep(1.0)
+        sleep(delay_between_check)
         d=self._proxy.get_transaction(hash)
         if d.is_completed: break
 
@@ -476,6 +492,43 @@ class Elrond(Network):
     }
 
 
+  def transfer_money(self,nft_addr:str,miner:Key,to_addr:str,quantity=1,data=""):
+    """
+    voir https://docs.multiversx.com/sdk-and-tools/sdk-py/sdk-py-cookbook/#egld--esdt-transfers
+    :param nft_addr:
+    :param miner:
+    :param to_addr:
+    :param quantity:
+    :return:
+    """
+    config = DefaultTransactionBuildersConfiguration(chain_id=self._proxy.get_network_config().chain_id)
+    miner_address=self.toAccount(miner).address
+    if nft_addr=="egld":
+      payment = TokenPayment.egld_from_amount(str(quantity))
+      builder = EGLDTransferBuilder(
+        config=config,
+        sender=miner_address,
+        receiver=Address.from_bech32(to_addr),
+        payment=payment,
+        data=data,
+        nonce=self.toAccount(miner).nonce #TODO : a revoir
+      )
+    else:
+      payment = TokenPayment.fungible_from_amount(nft_addr,str(quantity),18)
+      builder = ESDTTransferBuilder(
+        config=config,
+        sender=miner_address,
+        receiver=Address.from_bech32(to_addr),
+        payment=payment,
+        nonce=self.toAccount(miner).nonce #TODO : a revoir
+      )
+    transaction=builder.build()
+    rc=self.send_transaction(_sender=miner,_receiver=to_addr,_sign=miner,transaction=transaction,timeout=120,delay_between_check=2)
+    return rc
+
+
+
+
 
   def transfer(self,nft_addr:str,miner:Key,to_addr:str,quantity=1):
     """
@@ -562,7 +615,7 @@ class Elrond(Network):
 
 
 
-  def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
+  def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible",simulation=False) -> (dict):
     """
     gestion des collections sur Elrond
     voir https://docs.elrond.com/tokens/nft-tokens/
@@ -605,7 +658,7 @@ class Elrond(Network):
                                 contract,
                                 owner,
                                 data=data,
-                                value=PRICE_FOR_STANDARD_NFT
+                                value=PRICE_FOR_STANDARD_NFT,simulation=simulation
                                 )
 
       if "error" in t and len(t["error"])>0:
@@ -1031,7 +1084,7 @@ class Elrond(Network):
 
   def mint(self, miner:Key, title, description, collection:dict, properties: list,
            storage:Storage, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
-           domain_server="",price=0,symbol="NFluentToken"):
+           domain_server="",price=0,symbol="NFluentToken",simulation=False):
     """
     Fabriquer un NFT au standard elrond
     https://docs.elrond.com/tokens/nft-tokens/#nftsft-fields
@@ -1086,7 +1139,7 @@ class Elrond(Network):
     #ESDTNFTCreate@4d41434f4c4c4543542d323565666366@01@4d6f6e546f6b656e@09c4@516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252@746167733a3b6d657461646174613a516d5947397a6e724c7a735252594d436d6e52444a7931436f7478676e4a384b6a5668746870485a553775436d59@68747470733a2f2f697066732e696f2f697066732f516d63636265345a78434b72706471587772784841377979347473635563465a4a6931724c69414d624d6a643252
 
     log("Tentative de création de NFT par "+self.getExplorer(miner.address)+" sur la collection "+self.getExplorer(collection["id"],"collections"))
-    method="ESDTNFTCreate" #if quantity==1 else "ESDTSFTCreate"
+    method="ESDTNFTCreate"
     data = method \
            + "@" + str_to_hex(collection["id"],False) \
            + "@" + int_to_hex(quantity,6) \
@@ -1116,7 +1169,7 @@ class Elrond(Network):
       #         data = data + str_to_hex(k + ":" + properties[k] + ",", False)
       # data = data + "@" + str_to_hex(visual, False)
 
-    t = self.send_transaction(miner, miner, miner, data=data)
+    t = self.send_transaction(miner, miner, miner, data=data,simulation=simulation)
     if "error" in t and len(t["error"])>0:
       return {"error":t["error"],"hash":""}
 
@@ -1181,6 +1234,9 @@ class Elrond(Network):
       user=self.find_key(user)
 
     if type(user)==Key:
+      if user.address=="":
+        user.address=UserSecretKey(bytes.fromhex(user.secret_key)).generate_public_key().to_address("erd").bech32()
+
       _user=self._proxy.get_account(address=Address.from_bech32(user.address))
       _user.secret_key=user.secret_key
       return _user

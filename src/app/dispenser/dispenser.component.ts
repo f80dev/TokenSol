@@ -47,7 +47,6 @@ export class DispenserComponent implements OnInit {
           this.nfts=[];
           this.message="";
           for(let nft of nfts){
-            debugger
             nft.miner=newCryptoKey(nft.miner)
             if(canTransfer(nft)){
               nft.style={opacity:1};

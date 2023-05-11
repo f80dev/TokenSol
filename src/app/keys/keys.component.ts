@@ -80,7 +80,7 @@ export class KeysComponent implements OnInit {
 
   encrypt(key: any) {
     this.network.encrypte_key(key.name,this.network.network,this.privateKey).subscribe((r:any)=>{
-      this.clipboard.copy(key.name+": "+r.encrypt);
+      this.clipboard.copy(key.name+": "+r.private_key);
       showMessage(this,"La clé est disponible dans le presse papier")
     });
   }
@@ -138,7 +138,7 @@ export class KeysComponent implements OnInit {
   open_faucet(key: CryptoKey) {
     showMessage(this,"L'adresse du compte est dans le presse-papier")
     if(this.network.isElrond()){
-      debugger
+      open("https://devnet-wallet.multiversx.com/unlock/pem","faucet")
       //TODO ici ajouter l'ouverture du rechargement
     }
     if(this.network.isPolygon()){

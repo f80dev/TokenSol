@@ -17,8 +17,11 @@ class Key(object):
     if not obj is None and "encrypt" in obj: encrypted=obj["encrypt"]
     if not encrypted is None and len(encrypted)>0:
       if ":" in encrypted:encrypted=encrypted.split(":")[1]
-      decrypted=decrypt(encrypted)
-      if decrypted.startswith("{"): obj=json.loads(decrypted)
+      decrypted=decrypt(encrypted.strip())
+      if decrypted.startswith("{"):
+        obj=json.loads(decrypted)
+      else:
+        secret_key=decrypted
 
     if not obj is None:
       if "name" in obj: name=obj["name"]
@@ -36,10 +39,7 @@ class Key(object):
     self.name=name
     self.seed=seed
     self.explorer=explorer
-
-    if len(secret_key)>150:
-      secret_key=decrypt(base64.b64decode(secret_key))
-    self.secret_key=secret_key
+    self.secret_key=secret_key if len(secret_key)<150 else decrypt(base64.b64decode(secret_key))
 
     if network=="":
       if secret_key.startswith("0x"):network="polygon"
@@ -55,7 +55,10 @@ class Key(object):
 
 
   def __str__(self):
-    return self.address+" ("+self.name+")"
+    if self.address=="" and self.name=="":
+      return self.secret_key[:10]+".."
+    else:
+      return self.address+" ("+self.name+")"
 
 
   def toJson(self):

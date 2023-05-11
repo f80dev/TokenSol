@@ -637,8 +637,9 @@ def send_photo_for_nftlive(conf_id:str=""):
   nft=ArtEngine()
   nft.reset()
 
-  nft.add(Layer("maphoto"+now("hex")))
-  nft.add_image_to_layer("maphoto"+now("hex"),image)
+  layer_name="maphoto"+now("hex")
+  nft.add(Layer(layer_name))
+  nft.add_image_to_layer(layer_name,image)
 
   for layer in config["layers"]:
     if not "name" in layer: layer["name"]="layer_"+now("hex")
@@ -747,6 +748,17 @@ def get_nft_from_db():
 #http://127.0.0.1:4242/api/test
 def test():
   pass
+
+
+
+@bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
+def api_refund(address:str,amount:str="1",token="egld"):
+  _network=get_network_instance(request.json["network"])
+  _miner=Key(encrypted=request.json["bank"]["privatekey"])
+  rc=_network.transfer_money(token,_miner,address,int(amount),data=request.json["data"])
+  return jsonify(rc)
+
+
 
 
 
@@ -1862,7 +1874,7 @@ def keys(name:str=""):
   dao=DAO(config=current_app.config)
 
   network=request.args.get("network","")
-  if len(network)==0: return returnError("Le réseau doit être précisé")
+  if network=="undefined" or len(network)==0: return returnError("Le réseau doit être précisé")
   _network=get_network_instance(network)
 
   if request.method=="GET":
@@ -2281,8 +2293,6 @@ def upload():
     body["type"]="image/png"
 
 
-
-
   #TODO: probablement a revoir
   # if body["type"].startswith("image/zip"):
   #   rc=[]
@@ -2296,6 +2306,7 @@ def upload():
   #       },platform))
 
   rc=upload_on_platform(body,platform,
+                        api_key=request.args.get("api_key",""),
                         domain_server=current_app.config["DOMAIN_SERVER"],
                         upload_dir=current_app.config["UPLOAD_FOLDER"])
 
@@ -2334,13 +2345,14 @@ def api_create_collection():
   """
   _data=request.json
   network=request.args.get("network","elrond-devnet")
+  simulation=(request.args.get("simulation","false")=="true")
 
   _net=get_network_instance(network) #DAO(config=current_app.config).get_user_from_access_code(request.args.get("access_code"))
 
   miner=Key(obj=_data["owner"])
 
   solde=_net.balance(miner.address)
-  collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"])
+  collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"],simulation=simulation)
   if collection is None:
     return returnError("Cette collection existe déjà")
 
@@ -2597,7 +2609,7 @@ def api_mint():
             network=network,
             offchaindata_platform=offchaindata_platform,
             domain_server=current_app.config["DOMAIN_SERVER"],
-            dao=dao,
+            dao=dao,simulation=(request.args.get("simulation","false")=="true"),
             encrypt_nft=(request.args.get("encrypt_nft")=="true"))
   except Exception as inst:
     return returnError(inst)
@@ -2794,8 +2806,8 @@ def validators(validator=""):
       owners=[x.owner for x in nfts]
     else:
       log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
-      elrond=Elrond(request.json["network"])
-      owners=list(set([x.owner for x in elrond.get_nfts_from_collections(ask_for.split(","))]))
+      _network=get_network_instance(request.json["network"])
+      owners=list(set([x.owner for x in _network.get_nfts_from_collections(ask_for.split(","))]))
 
     return jsonify({
       "access_code":access_code,

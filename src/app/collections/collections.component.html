@@ -1,11 +1,11 @@
 <div class="mainform">
 
 
-    <div class="titleform">Gestion des collections de <strong>{{user.addr | alias}}</strong> sur <strong>{{network.network}}</strong></div>
+    <div class="titleform">Gestion des collections de <strong>{{addr | alias}}</strong> sur <strong>{{network.network}}</strong></div>
 
     <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;" *ngIf="!network.isPolygon()">
       <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
-      <div style="width: fit-content;display: flex;flex-wrap:wrap;margin-left: 15px;">
+      <div class="expansion-content">
         <app-input [value]="new_collection.name" (valueChange)="new_collection.name=$event"
                    id="txtCollectionName" style="max-width: 200px"
                    label="Nom de la collection" maxlength="20"
@@ -23,7 +23,7 @@
 <!--          {{collection_option.label}}-->
 <!--        </mat-checkbox>-->
 
-        <div *ngIf="user.balance==0">
+        <div *ngIf="miner && miner.balance==0">
           Vous devez abonder le compte pour créer une collection
         </div>
 
@@ -32,14 +32,16 @@
                 color="primary"
                 (click)="create_collection()"
                 id="cmdBuild"
-                *ngIf="user.addr && message.length==0">
+                *ngIf="user && message.length==0">
           Fabriquer
         </button>
+
+        avec {{miner.address | alias}} ({{miner.balance/1e18 | number}} Egld)
 
       </div>
     </mat-expansion-panel>
 
-    <button type="button" mat-raised-button (click)="open_inspire()" [disabled]="!user.addr" *ngIf="network.isElrond()">
+    <button type="button" mat-raised-button (click)="open_inspire()" [disabled]="!addr" *ngIf="network.isElrond()">
       Inspire.ART
     </button>
 
@@ -48,7 +50,7 @@
       le wallet natif
     </button>
 
-    <button type="button" mat-raised-button (click)="refresh(user.addr,network.network)">
+    <button type="button" mat-raised-button (click)="refresh(addr,network.network)">
       Actualiser
     </button>
 
@@ -67,7 +69,7 @@
         <th>Actions</th>
       </tr>
 
-      <tr *ngFor="let col of user.collections">
+      <tr *ngFor="let col of collections">
         <td style="width: 50px;" title="Nom de la collection">{{col.name}}</td>
         <td style="width: 50px;overflow: hidden;" title="Identifiant"><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
         <td style="width: 20px;"><mat-icon *ngIf="col.type?.startsWith('SemiFungible')">checkmark</mat-icon></td>

@@ -376,10 +376,12 @@ export class AdminComponent implements OnInit {
           this.rows=[]
           for(let r of rows){
             r.title=r.appname
-            r.read_params=JSON.stringify(r)
+
             let obj={...r}
             obj["comment"]=null
+            r.read_params=JSON.stringify(obj)
             r.url=r.url+"?"+setParams(obj)
+            r.param_len=100*(2000/setParams(obj).length)+"%";
             this.rows.push(r)
           }
           showMessage(this,"Fichier importé");

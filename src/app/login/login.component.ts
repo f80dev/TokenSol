@@ -60,7 +60,7 @@ export class LoginComponent implements OnInit {
   }
 
 
-  registration($event: { strong: boolean; nftchecked: boolean; address: string }) {
+  registration($event: { strong: boolean; address: string }) {
     this.network.registration($event.address).subscribe((p:UserProfil)=>{
       if(p.message=="already exists"){
         showMessage(this,"Ce compte est déjà inscrit, votre code d'accès a été renvoyé sur votre mail");
@@ -82,7 +82,7 @@ export class LoginComponent implements OnInit {
     })
   }
 
-  login_with_wallet($event: { strong: boolean; nftchecked: boolean; address: string; provider: any }) {
+  login_with_wallet($event: { strong: boolean; address: string; provider: any }) {
     this.user.init_wallet_provider($event.provider,$event.address)
     this.show_wallet_authent=false;
     this._location.back()

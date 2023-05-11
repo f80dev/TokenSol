@@ -109,7 +109,7 @@ $nfluent-theme: mat.define-light-theme((
                 accent: $nfluent-accent-color,
                 warn: $nfluent-warn-color,
         ),
-        typography: $nfluent-typography,
+        typography: $nfluent-typography
 ));
 
 $nfluent-dark-theme: mat.define-dark-theme((

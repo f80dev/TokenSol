@@ -96,6 +96,8 @@ import { SettingsComponent } from './settings/settings.component';
 import { SelkeyComponent } from './selkey/selkey.component';
 import { PaymentComponent } from './payment/payment.component';
 import { AskForPaymentComponent } from './ask-for-payment/ask-for-payment.component';
+import { JaugeComponent } from './jauge/jauge.component';
+import { AutovalidatorComponent } from './autovalidator/autovalidator.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -159,7 +161,9 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         SettingsComponent,
         SelkeyComponent,
         PaymentComponent,
-        AskForPaymentComponent
+        AskForPaymentComponent,
+        JaugeComponent,
+        AutovalidatorComponent
     ],
     imports: [
         BrowserModule,

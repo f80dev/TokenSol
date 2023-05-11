@@ -627,3 +627,13 @@ def test_transfer_all_networks(test_client, networks=NETWORKS):
 def test_mint_polygon(test_client,network="polygon-devnet"):
 	miner=random_from(get_network_instance(network).get_keys())
 	test_api_mint(test_client,miner=miner,col_id="",network=network)
+
+
+def test_api_refund(test_client,network=MAIN_NETWORK,token=NFLUCOIN,amount=2):
+	_network=get_network_instance(network)
+	miner=_network.find_key("nfluent")
+	dest=_network.find_key("paul")
+	solde0=_network.get_balance(dest.address,token_id=token)
+	rc=call_api(test_client,"refund/"+dest.address+"/"+str(amount)+"/"+token+"/","",{"bank":miner.encrypt(True),"network":network,"data":"Payment de test"})
+	solde1=_network.get_balance(dest.address,token_id=token)
+	assert solde1-solde0==amount*1e18

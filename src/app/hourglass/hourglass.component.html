@@ -19,7 +19,8 @@
       <td [ngStyle]="{'text-align': 'left','font-size':fontsize}">
         {{message}}
       </td>
-      <td *ngIf="link.length>0">
+
+      <td *ngIf="link.length>0" style="font-size: small">
         <mat-icon (click)="open_link()">explorer</mat-icon>
       </td>
 

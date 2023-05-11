@@ -69,6 +69,7 @@ export class CandymachineComponent implements OnInit {
         dest:$event.address,
         sources: this.operation.data.sources,
         target: target,
+        network: this.operation.network,
         miner: target.miner,
         operation:this.operation,
         collections:target.collection,

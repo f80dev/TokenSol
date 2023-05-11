@@ -109,11 +109,14 @@ class NFT:
     self.network=network
     self.tags=tags
     self.royalties=royalties
+    self.files=files
 
-    try:
-      self.files=[str(base64.b64decode(f),"utf8") for f in files]
-    except:
-      self.files=files
+    for i,f in enumerate(self.files):
+      if type(f)==dict:
+        if "file" in f: self.files[i]=f["file"]
+        if "url" in f:self.files[i]=f["url"]
+      if type(self.files[i])==str:
+        if "base64" in f: self.files[i]=str(base64.b64decode(self.files[i]),"utf8")
 
     self.dtCreate=dtCreate
     if self.visual is None or len(self.visual)==0: self.visual="https://hackernoon.imgix.net/images/0*kVvpU6Y4SzamDGVF.gif"

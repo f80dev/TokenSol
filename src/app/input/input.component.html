@@ -1,7 +1,7 @@
 <div class="input-elements" [style.width]="width" [style.max-width]="maxwidth">
 
   <!-- input standard -->
-  <mat-form-field appearance="fill" class="mat-body-2" [title]="help_input" style="width: 100%;"
+  <mat-form-field appearance="fill" class="mat-body-2" [title]="help_input" style="width: 100%;padding: 0;"
                   *ngIf="value_type!='slider' && value_type!='list' && options.length==0 && cols==0 && rows==0">
     <mat-label *ngIf="label.length>0" class="mat-caption">{{label}}</mat-label>
 
@@ -39,6 +39,8 @@
 
   <button mat-raised-button mat-button
           *ngIf="label_button.length>0"
+          style="height: 40px;"
+          [disabled]="value.length==0"
           [title]="help_button"
           (click)="on_validate()">
     {{label_button}}

@@ -37,8 +37,29 @@ export interface Merchant {
     network:string,
     address:string,
     token:string,
-    unity:string
+    unity:string,
+    bank: string
   } | undefined
+}
+
+export function extract_merchant_from_param(params:any) : Merchant | undefined {
+  if(params["merchant.name"]){
+    return {
+      contact: params["merchant.contact"],
+      country: params["merchant.country"],
+      currency: params["merchant.currency"],
+      id: params["merchant.id"],
+      name: params["merchant.name"],
+      wallet: {
+        network:params["merchant.wallet.network"],
+        address:params["merchant.wallet.address"],
+        token:params["merchant.wallet.token"],
+        unity:params["merchant.wallet.unity"],
+        bank:params["merchant.wallet.bank"],
+      }
+    }
+  } else return undefined;
+
 }
 
 @Component({
@@ -178,7 +199,7 @@ export class PaymentComponent implements AfterContentInit {
       let unity="EUR"
       if(this.wallet_provider){
         unity=this.money!.unity
-        let sender_addr=this.wallet_provider.account.address;
+        let sender_addr=this.wallet_provider.address;
         $$("Paiement avec l'adresse "+sender_addr)
         //voir https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-cookbook/
         let payment={

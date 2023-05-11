@@ -54,7 +54,7 @@ class Network():
     return not self.network is None and not self.network.startswith("file-") and not self.network.startswith("db-")
 
 
-  def mint(self, miner:Key, title,description, collection:dict, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken"):
+  def mint(self, miner:Key, title,description, collection:dict, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken",simulation=False):
     raise NotImplementedError()
 
 

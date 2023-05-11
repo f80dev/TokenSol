@@ -68,7 +68,7 @@ class GithubStorage(Storage):
     if type(data)==dict:
       if "filename" in data and "file" in data: data["content"]=data["file"]
       if "content" in data and "filename" in data:
-        id=now("random")[5:8]+"_"+data["filename"]
+        id=hashlib.sha256(bytes(data["content"],"utf8")).hexdigest()+"__"+data["filename"]
         ext=data["filename"][data["filename"].rindex(".")+1:]
         data=data["content"]
       else:

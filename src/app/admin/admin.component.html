@@ -184,6 +184,7 @@
             <th>Message intro</th>
             <th>Visuel d'intro</th>
             <th>Commandes</th>
+            <th>% max</th>
           </tr>
           <tr *ngFor="let row of rows">
             <td>{{row.appname}}</td>
@@ -197,6 +198,7 @@
               <button mat-icon-button [cdkCopyToClipboard]="row.url"
                       (click)="informe_copy()" [title]="row.read_params"><mat-icon>info</mat-icon></button>
             </td>
+            <td>{{row.param_len}}</td>
           </tr>
         </table>
 

@@ -226,7 +226,7 @@ def transfer(addr:str,
 def mint(nft:NFT,miner:Key,owner,network:Network,
          offchaindata_platform:str="IPFS",
          domain_server=None,
-         operation=None,
+         operation=None,simulation=False,
          dao=None,encrypt_nft=False,price=0):
   """
   minage du NFT
@@ -272,6 +272,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
                      visual=nft.visual,
                      creators=nft.creators,
                      domain_server=domain_server,
+                  simulation=simulation,
                     price=price,
                     symbol=nft.symbol)
 

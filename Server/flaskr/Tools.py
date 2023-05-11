@@ -924,7 +924,7 @@ def importer_file(file):
     return None,0
   else:
     d.append(list(res))
-    for k in range(1, len(res)):
+    for k in range(0, len(res)):
       d.append(list(res.loc[k]))
     total_record = len(d) - 1
     log("Nombre d'enregistrements identifié " + str(total_record))

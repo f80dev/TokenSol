@@ -27,7 +27,7 @@ def test_get_collections():
 
 
 
-def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1):
+def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1,simulation=False):
   _network=Elrond("devnet")
   nft=create_nft(collection=col)
   _miner=_network.get_keys(address=miner)[0]
@@ -42,11 +42,16 @@ def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1):
                    storage=get_storage_instance("nftstorage"),
                    files=[],
                    quantity=quantity,
-                   visual=nft.visual)
+                   visual=nft.visual,
+                   simulation=simulation)
   assert not rc is None
   assert len(rc["error"])==0,rc["error"]
   assert len(rc["result"]["transaction"])>0
   return rc["result"]["mint"]
+
+
+def test_mint_simulation():
+  test_mint_for_collection(simulation=True)
 
 
 
@@ -59,7 +64,6 @@ def test_add_role(account_to_add:str="",miner=MAIN_ACCOUNT,type_collection="Semi
   :param roles_to_add:
   :return:
   """
-
 
   _net=Elrond("devnet")
   if len(account_to_add)==0: account_to_add=random_from(_net.get_keys()).address

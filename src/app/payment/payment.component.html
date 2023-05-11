@@ -3,7 +3,7 @@
 <div *ngIf="buy_method=='crypto' && money && wallet_provider">
     <div *ngIf="money" style="font-size: large;margin: 15px;">
         <div style="margin: 15px;" class="mat-subheading-1">{{price}} {{money!.unity}} + Frais de service</div>
-        <span *ngIf="balance>=0">Vous disposez actuellement de {{balance/1e18}} {{money!.unity}}</span>
+        <div *ngIf="balance>=0">Vous disposez actuellement de {{balance/1e18 | number:"1.0-1"}} {{money!.unity}}</div>
     </div>
 
     <div *ngIf="qrcode_buy_token.length>0" style="margin-top: 20px;">
@@ -61,14 +61,14 @@
             style="margin-top: 20px;"
             *ngIf="billing_to.length==0"
             (click)="change_billing_address()">
-        Recevoir une facture
+        Recevoir<br>une facture
     </button>
 
     <button type="button" mat-raised-button
             style="margin-top: 20px;"
             *ngIf="billing_to.length==0"
             (click)="change_payment_mode()">
-        Autre mode de paiement
+        Autre mode<br>de paiement
     </button>
 </div>
 

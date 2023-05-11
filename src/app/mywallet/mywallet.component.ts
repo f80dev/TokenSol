@@ -81,7 +81,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
       if(network=="db")network="db-server-nfluent";
       this.network.network=network;
 
-      this.addr=params["addr"];
+      this.addr=params["addr"] || params["address"];
       this.showDetail=params["show_detail"] || false;
 
       this.generate_qrcode();

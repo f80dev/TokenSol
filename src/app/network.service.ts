@@ -78,15 +78,20 @@ export class NetworkService implements OnInit {
     init_keys(with_balance=false,access_code:string="",operation_id:string="") {
         return new Promise((resolve, reject) => {
             this.wait("Chargement des clés");
-            this.httpClient.get<CryptoKey[]>(this.server_nfluent + "/api/keys/?access_code="+access_code+"&network=" + this.network + "&with_private=true&with_balance="+with_balance+"&operation="+operation_id,).subscribe((r: CryptoKey[]) => {
-                this.keys = r;
-                this.wait();
-                resolve(r);
-            },(err:any)=>{
-                this.wait("!Probléme de chargement");
-                $$("Probleme de chargement");
+            if(this.network){
+                this.httpClient.get<CryptoKey[]>(this.server_nfluent + "/api/keys/?access_code="+access_code+"&network=" + this.network + "&with_private=true&with_balance="+with_balance+"&operation="+operation_id,).subscribe((r: CryptoKey[]) => {
+                    this.keys = r;
+                    this.wait();
+                    resolve(r);
+                },(err:any)=>{
+                    this.wait("!Probléme de chargement");
+                    $$("Probleme de chargement");
+                    reject();
+                });
+            } else {
                 reject();
-            });
+            }
+
         });
     }
 
@@ -374,7 +379,13 @@ export class NetworkService implements OnInit {
 
 
     isMain() {
-        return this._network.indexOf("mainnet")>-1;
+        if(this._network){
+            return this._network.indexOf("mainnet")>-1;
+        }else{
+            return false;
+        }
+
+
     }
 
 
@@ -575,11 +586,11 @@ export class NetworkService implements OnInit {
     }
 
     //recoit un objet aux propriétés filename & content
-    upload(file: any ,platform:string="nftstorage",type="image/png",convert=""){
+    upload(file: any ,platform:string="nftstorage",type="image/png",convert="",api_key=""){
         if(platform!="nfluent"){
-            return this.httpClient.post(this.server_nfluent+"/api/upload/?convert="+convert+"&platform="+platform+"&type="+type,file);
+            return this.httpClient.post(this.server_nfluent+"/api/upload/?convert="+convert+"&platform="+platform+"&type="+type+"&api_key="+api_key,file);
         }else{
-            return this.httpClient.post(environment.server+"/api/upload/?convert="+convert+"&platform="+platform+"&type="+type,file);
+            return this.httpClient.post(environment.server+"/api/upload/?convert="+convert+"&platform="+platform+"&type="+type+"&api_key="+api_key,file);
         }
     }
 
@@ -829,18 +840,24 @@ export class NetworkService implements OnInit {
                 resolve(r);
             },(err)=>{
                 this.wait();
-                reject(err);
+                resolve(err);
             })
         });
     }
-
 
     save_privacy(addr: string, secret: string) {
         return this.httpClient.post(this.server_nfluent+"/api/save_privacy/",{addr:addr,secret:encrypt(secret)});
     }
 
     extract_zip(file:any) {
-        return this.httpClient.post(this.server_nfluent+"/api/extract_zip/",file);
+        return this._post("extract_zip/","",file);
+    }
+
+
+    refund(_from:CryptoKey,dest:string,token_id: string="egld",amount:number=1.0,comment="",network="elrond-devnet") {
+        //@bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
+        let body={bank:_from,data:comment,network:network}
+        return this._post("refund/"+dest+"/"+amount+"/"+token_id+"/","",body,120000);
     }
 
     get_collections(owners_or_collections: string,network="",detail=false) {
@@ -849,8 +866,8 @@ export class NetworkService implements OnInit {
         return this.httpClient.get<Collection[]>(url);
     }
 
-    create_collection(new_collection: Collection) {
-        return this.httpClient.post(this.server_nfluent+"/api/create_collection/?network="+this.network,new_collection);
+    create_collection(new_collection: Collection,simulation=false) {
+        return this.httpClient.post(this.server_nfluent+"/api/create_collection/?network="+this.network+"&simulation="+simulation,new_collection);
     }
 
     get_minerpool() {
@@ -976,6 +993,7 @@ export class NetworkService implements OnInit {
     }
 
     isDevnet() {
+        if(!this.network)return false;
         if(this.network.indexOf("devnet")>-1)return true;
         return false;
     }

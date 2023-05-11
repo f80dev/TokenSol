@@ -1,15 +1,10 @@
 <div style="width: 100%;text-align: center;position: relative;">
-  <div *ngIf="collections.length>0">
-    Pour vous authentifier vous devez posséder un NFT de la collection
-    <span *ngFor="let col of collections">
-      <a [href]="col.link" target="_blank">{{col.name}}</a>,
-    </span>
-  </div>
+
 
   <br>
 
+<!--  Permet l'authentification force par code d'accés ou directement seed phrase-->
   <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
-
     <app-input *ngIf="showAccesCode"
                [value]="access_code"
                (valueChange)="access_code=$event"
@@ -23,22 +18,23 @@
                help="Cette phrase vous a été envoyé dans le mail de création"
                label="Votre phrase secrete">
     </app-input>
-
   </div>
 
 
   <br>
 
-  <div style="display: flex;flex-wrap: wrap;width:90%;justify-content: center;align-items: center;">
+<!--  https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
+  <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
 
 <!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
       <asl-google-signin-button  *ngIf="showGoogle"
-                                 [type]="(device.isHandset$ | async) ? 'standard' : 'icon'" size="medium"
+                                 style="height: 50px;"
+                                 [type]="(device.isHandset$ | async) ? 'icon' : 'standard'" size="medium"
                                  title="Authentification simplifiée pour les utisateurs de gmail">
       </asl-google-signin-button>
 
       <app-input *ngIf="showAddress || showEmail"
-                 maxwidth="350px" width="100%"
+                 width="350px"
                  [label]="intro_message"
                  label_button="Valider"
                  [placeholder]="prompt"
@@ -47,8 +43,6 @@
                  [help]="explain_message">
       </app-input>
   </div>
-
-
 
   <button type="button" color="primary" *ngIf="showWebcam"
           mat-raised-button 
@@ -79,14 +73,15 @@
 
   <!--  Le validator est un qrcode équivalent à wallet connect mais destiné à nfluent wallet-->
   <div style="width: 100%;text-align: center">
-    <div style="width: fit-content;display: inline-block;margin:20px;" *ngIf="showNfluentWalletConnect">
+    <div style="width: fit-content;display: inline-block;margin:20px;" *ngIf="showNfluentWalletConnect && qrcode.length==0">
       <button type="button" mat-raised-button color="primary"
               *ngIf="!directShowQRCode"
               (click)="directShowQRCode=true">
         Utiliser le Wallet Nfluent
       </button>
 
-      <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && directShowQRCode" [style.opacity]="qrcode_enabled ? 1 : 0.5" >
+      <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && directShowQRCode"
+           [style.opacity]="qrcode_enabled ? 1 : 0.5" >
         <img
           title="Flasher avec votre wallet nfluent"
           [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
@@ -125,7 +120,8 @@
 
   <br>
 
-  <div *ngIf="showWalletConnect && qrcode.length>0" style="max-width: 250px;margin: 10px;width:100%;text-align: center;">
+  <div *ngIf="showWalletConnect && qrcode.length>0"
+       style="max-width: 450px;margin: 10px;width:100%;text-align: center;display: inline-block;">
     Flasher ce qrcode depuis votre wallet<br>
     <img [src]="qrcode"
          (click)="qrcode=''"

@@ -38,12 +38,7 @@
       <br><br>
       <h3>{{operation.candymachine.messages.question}}</h3>
       <app-authent
-        [showGoogle]="operation.candymachine.connexion.google"
-        [showWebcam]="operation.candymachine.connexion.webcam"
-        [showWalletConnect]="operation.candymachine.connexion.wallet_connect"
-        [showNfluentWalletConnect]="operation.candymachine.connexion.nfluent_wallet_connect"
-        [showNetwork]="operation.candymachine.connexion.on_device"
-        [showAddress]="operation.candymachine.connexion.address"
+        [connexion]="operation.candymachine.connexion"
         (invalid)="invalid()"
         (authent)="authent($event)">
       </app-authent>
