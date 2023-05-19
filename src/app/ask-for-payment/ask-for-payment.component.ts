@@ -1,7 +1,7 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {Merchant} from "../payment/payment.component";
-import {showMessage} from "../../tools";
+import {Bank, showMessage} from "../../tools";
 import {UserService} from "../user.service";
 import {NetworkService} from "../network.service";
 
@@ -14,30 +14,36 @@ export function _ask_for_paiement(vm:any,token_id:string,to_paid:number,to_paid_
                                   intro_payment="Coût de l'opération",
                                   billing_address="",
                                   bill_content:{description:string,subject:string,contact:string},
-                                  buy_method="")  {
+                                  buy_method="",
+                                  bank:Bank | undefined=undefined)  {
     return new Promise((resolve, reject) => {
-        vm.dialog.open(AskForPaymentComponent,{
-            width: '450px',height:"auto",
-            data:
-                {
-                    to_paid:to_paid,
-                    to_paid_in_fiat:to_paid_in_fiat,
-                    title: title,
-                    billing_to:billing_address,
-                    buy_method:buy_method,
-                    subtitle:subtitle,
-                    provider:provider,
-                    intro_payment:intro_payment,
-                    merchant:merchant,
-                    bill:bill_content
+        if(to_paid==0 || to_paid_in_fiat==0){
+            resolve({})
+        }else{
+            vm.dialog.open(AskForPaymentComponent,{
+                width: '450px',height:"auto",
+                data:
+                    {
+                        to_paid:to_paid,
+                        to_paid_in_fiat:to_paid_in_fiat,
+                        title: title,
+                        bank:bank,
+                        billing_to:billing_address,
+                        buy_method:buy_method,
+                        subtitle:subtitle,
+                        provider:provider,
+                        intro_payment:intro_payment,
+                        merchant:merchant,
+                        bill:bill_content
+                    }
+            }).afterClosed().subscribe((resp:any) => {
+                if(resp) {
+                    resolve(resp);
+                } else {
+                    resolve(null)
                 }
-        }).afterClosed().subscribe((resp:any) => {
-            if(resp) {
-                resolve(resp);
-            } else {
-                resolve(null)
-            }
-        },(err:any)=>{reject(err)});
+            },(err:any)=>{reject(err)});
+        }
     });
 }
 
@@ -50,6 +56,7 @@ export function _ask_for_paiement(vm:any,token_id:string,to_paid:number,to_paid_
 export class AskForPaymentComponent implements OnInit {
 
     buy_method: "fiat" | "crypto" | "" = "";
+    nb_payment=0;
 
     constructor(public dialogRef: MatDialogRef<AskForPaymentComponent>,
                 public user:UserService,
@@ -58,8 +65,15 @@ export class AskForPaymentComponent implements OnInit {
 
     ngOnInit(): void {
         this.buy_method=this.data.buy_method;
+        if(!this.data.merchant || (!this.data.merchant.currency && (!this.data.merchant.wallet && !this.data.merchant.wallet.token))){
+            this.dialogRef.close(true);
+        }
+        if(this.data.merchant!.wallet!.token)this.nb_payment=this.nb_payment+1;
+        if(this.data.merchant!.id)this.nb_payment=this.nb_payment+1;
+
         if(this.data.merchant.currency=="")this.buy_method="crypto";
         if(!this.data.merchant.wallet)this.buy_method="fiat";
+
     }
 
     onpaid($event: any) {
@@ -98,6 +112,8 @@ export class AskForPaymentComponent implements OnInit {
     init_provider($event:any) {
         this.data.provider=$event.provider;
         this.data.addr=$event.address
-        this.user.init($event.address,this.data.wallet.network,false,true,this.user.profil.email)
+        if(this.data.merchant.wallet){
+            this.user.init($event.address,this.data.merchant.wallet.network,false,true,this.user.profil.email)
+        }
     }
 }

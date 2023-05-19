@@ -1,6 +1,9 @@
 //Description d'une collection
 import {CryptoKey} from "./tools";
 
+
+
+
 export interface Collection {
   name:string
   id: string

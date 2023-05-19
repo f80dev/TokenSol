@@ -36,8 +36,16 @@ export const environment = {
   },
   visual_cost:{
     quota: 20,
-    price_in_fiat: 0.001,
-    price_in_crypto: 0.01
+    price_in_fiat: 0,
+    price_in_crypto: 0
+  },
+
+  bank:{
+    miner: "nfluent: Z0FBQUFBQmtYUjJVbS1Uc0lpa2FTR2F0SnF4LW1HUHIzbHFKN2hCVmRPN3NRR1R3Wk4tUnhfcUxqUE9IQVdObzMxMHgtazhrT1hpWXVndENZallGNnI1Q2RTLVQ1N2d0TEQ2dHNmVlByV3B0RlR3SUMxejhKMHZUeVJ3NHl6dnNFNEIyZWk2eGZsS1hWU2FuQnljcGRDUEh4WFhSMTBRTFFLdHkxeTJuUjZxYWRRc1dVN2FqYlZzPQ==",
+    title:"Bienvenu a la banque des NFluCoin",
+    refund:5,
+    token:"NFLUCOIN-4921ed",
+    network:"elrond-devnet"
   },
 
   merchant:{
@@ -46,13 +54,13 @@ export const environment = {
     currency:"EUR",
     country:"FR",
     contact:"contact@nfluent.io",
+
     wallet:
         {
           token:"NFLUCOIN-4921ed",
           address:"erd1gkd6f8wm79v3fsyyklp2qkhq0eek28cnr4jhj9h87zwqxwdz7uwstdzj3m",
           network:"elrond-devnet",
           unity: "NfluCoin",
-          bank: "nfluent: Z0FBQUFBQmtXblgwRGxBQ21NdXFVdHFIVlZNcUN3elpKc2xmem5WNHFrZVRYSEhXZWdJSGZzeENQY2xFY0N6a0dUaDM3SU5zYjRIQmpLak12ZWxRZkJrNU4tMmtaTkVOZlhIbF9NTlNoV1FkYlUtakxyR0cyQXRJNk9JcmpUWm5rSnNJSEZTS3dMV3NGSmgtZ1lsZG5OYkJVOEZ5UU"
         }
 
   }

@@ -80,12 +80,12 @@
 
         <td style="max-width: 350px;overflow: hidden;font-size: x-small;" *ngIf="user.advance_mode">
           <app-dbtable [dictionnary]="{
-          canAddQuantity:'i_add_circle|ajouter des quantité',
-          canAddUri:'i_link|ajouter des liens',
-          canBurn:'i_delete_forever|brulé',
-          canCreate:'i_build|Miner',
-          canUpdateAttributes: 'i_edit|Mettre a jour les attributs'
-        }" [source]="col.roles">
+            canAddQuantity:'i_add_circle|ajouter des quantités',
+            canAddUri:'i_link|ajouter des liens',
+            canBurn:'i_delete_forever|bruler',
+            canTransfer:'i_swap_horiz|Transferer',
+            canCreate:'i_build|Miner',
+            canUpdateAttributes: 'i_edit|Mettre a jour les attributs'}" [source]="col.roles">
           </app-dbtable>
         </td>
 

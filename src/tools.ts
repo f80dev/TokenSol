@@ -3,6 +3,7 @@ import {ActivatedRoute} from "@angular/router";
 import {NFT} from "./nft";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {NFLUENT_WALLET} from "./definitions";
+import {ImageItem} from "ng-gallery";
 
 export interface CryptoKey {
   name: string | null
@@ -15,13 +16,13 @@ export interface CryptoKey {
   unity:string | null
 }
 
-export function newCryptoKey(address="",name="",privateKey="") : CryptoKey {
+export function newCryptoKey(address="",name="",privateKey="",encrypted=null) : CryptoKey {
   let rc:CryptoKey= {
     explorer:null, qrcode: "", unity: "",
     name:name,
     address:address,
     privatekey:privateKey,
-    encrypt:null,
+    encrypt:encrypted,
     balance:null
   }
   return rc
@@ -187,7 +188,13 @@ export function exportToCsv(filename: string, rows: object[]) {
       download_file(csvContent,filename)
 }
 
+export function init_visuels(images:any[]){
+  return(images.map((x:any)=>{
+    return new ImageItem({src:x,thumb:x});
+  }));
+}
 
+//tag #save_file save local
 export function download_file(content:string,filename:string,_type='text/csv;charset=utf-8;'){
   const blob = new Blob([content], { type: _type });
   const link = document.createElement('a');
@@ -502,3 +509,27 @@ export function isEmail(addr="") {
   return expression.test(addr);
 }
 
+
+
+export interface Bank {
+  miner:string
+  refund: number
+  title: string
+  network: string
+  token: string
+}
+
+
+export function extract_bank_from_param(params:any) : Bank | undefined {
+  if(params && params["bank.miner"] && params["bank.token"]){
+    return {
+      miner: params["bank.miner"],
+      network: params["bank.network"],
+      refund: params["bank.refund"],
+      title: params["bank.title"],
+      token: params["bank.token"]
+    }
+  }
+
+  return undefined;
+}

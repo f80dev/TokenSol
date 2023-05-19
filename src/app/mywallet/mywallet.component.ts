@@ -30,6 +30,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   private nextWebcam: Subject<boolean|string> = new Subject<boolean|string>();
   photos_to_send: string[]=[];
   qrcode:string="";
+  network:string=""
   qrcode_addr:string="";
   provider:any | null=null;
   private hAccessCode: any;
@@ -60,13 +61,13 @@ export class MywalletComponent implements OnInit,OnDestroy {
               public user:UserService,
               public socket:Socket,
               public _location:Location,
-              public network:NetworkService) {
+              public api:NetworkService) {
     this.version=environment.version;
   }
 
 
   generate_qrcode(){
-    this.network.get_access_code(this.addr).subscribe((r:any)=>{
+    this.api.get_access_code(this.addr).subscribe((r:any)=>{
       this.url_key=r.image;
       this.access_code=r.access_code;
     });
@@ -77,11 +78,12 @@ export class MywalletComponent implements OnInit,OnDestroy {
     getParams(this.routes).then((params:any)=>{
       $$("Récupération des paramètres: ",params);
 
-      let network=params["network"] || "elrond-mainnet";
+      let network=params["network"] || "elrond-devnet";
       if(network=="db")network="db-server-nfluent";
-      this.network.network=network;
+      this.network=network;
+      this.addr=params["addr"] || params["address"] || "";
 
-      this.addr=params["addr"] || params["address"];
+      this.refresh_balance();
       this.showDetail=params["show_detail"] || false;
 
       this.generate_qrcode();
@@ -99,9 +101,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
 
-  force_refresh(col:Collection | null=null){
+  force_refresh(col:string | null=null){
     this.nfts=[];
-    if(col)this.sel_collection=col.id;
+    if(col)this.sel_collection=col;
     this.refresh(0);
   }
 
@@ -143,21 +145,27 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   refresh(index:number=0) {
     $$("Refresh de l'onglet "+index);
+    if(index!=2 && this.addr==""){
+      showMessage(this,"Authentification requise");
+      this.indexTab=2;
+      return;
+    }
     if(index==0 && this.nfts.length==0 && this.addr!=""){
       this.message=(this.sel_collection=="*") ? "Recherches de vos NFTs" : "Chargement de vos NFTs de la collection "+this.sel_collection;
-      let with_attr=!this.network.isElrond() && !this.network.isPolygon();
-      let offset=5;
+      let offset=12;
 
-      this.network.get_tokens_from("owner",this.addr,offset,with_attr,null,0,this.network.network).then((r:any)=>{
+      this.api.get_tokens_from("owner",this.addr,offset,true,null,0,this.network).then((r:any)=>{
         this.add_nfts(r.result,r.offset);
+      },(err)=>{
+        showError(this,err);
       });
 
       setTimeout(()=>{
-        this.network.get_tokens_from("owner",this.addr,250,true,null,offset+1,this.network.network).then((r:any)=>{
+        this.api.get_tokens_from("owner",this.addr,250,true,null,offset+1,this.network).then((r:any)=>{
           this.message="";
           this.add_nfts(r.result,r.offset);
         }).catch(err=>{showError(this,err)});
-      },300);
+      },1500);
     }
 
     if(index==2){
@@ -180,7 +188,8 @@ export class MywalletComponent implements OnInit,OnDestroy {
   showScanner: boolean=false;
   accescode_scan: string="";
   version: any;
-  nft_size: number | null=250;
+  nft_size: number=350;
+  balance: number=0
 
   handleImage(event: any) {
     let rc=event;
@@ -190,7 +199,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
     this.message="Fabrication des modèles sur la base de l'image suivante";
     setTimeout(()=>{
       if(this.sel_ope && this.sel_ope.nftlive){
-        this.network.send_photo_for_nftlive(
+        this.api.send_photo_for_nftlive(
           this.sel_ope?.nftlive.limit,
           this.sel_ope?.nftlive?.nft_target.configuration,
           this.sel_ope.nftlive.nft_target.dimensions,
@@ -200,7 +209,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
           {photo:rc}).subscribe((r:any)=>{
           this.message="";
           this.image_for_token="";
-          this.photos_to_send=r.images.map((x:string)=>{return this.network.server_nfluent+"/api/images/"+x});
+          this.photos_to_send=r.images.map((x:string)=>{return this.api.server_nfluent+"/api/images/"+x});
         },(err)=>{showError(this)});
       }
     },50);
@@ -241,7 +250,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
         balances:{},
         message: undefined,
         name: this.sel_ope?.nftlive!.nft_target.name,
-        network: this.network.network,
+        network: this.network,
         owner: this.addr,
         royalties: this.sel_ope.nftlive.nft_target.royalties,
         visual: image,
@@ -259,7 +268,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
         if(!this.owner)this.owner=this.addr;
 
         this.message="Minage en cours";
-        this.network.mint(token,token.miner,this.owner,this.sel_ope.id,false,"nftstorage",this.network.network).then((r:any)=>{
+        this.api.mint(token,token.miner,this.owner,this.sel_ope.id,false,"nftstorage",this.network).then((r:any)=>{
           this.message="";
           showMessage(this,"Votre NFT est miné et envoyé. Vous pouvez en miner un autre");
           this.token_to_send=null;
@@ -278,7 +287,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   show_elrond_addr() {
     showMessage(this,"Votre adresse est disponible dans le presse-papier");
     this.clipboard.copy(this.addr);
-    this.network.qrcode(this.addr,"json").subscribe((result:any)=>{
+    this.api.qrcode(this.addr,"json").subscribe((result:any)=>{
       this.qrcode_addr=result.qrcode;
     })
 
@@ -286,7 +295,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
   open_nftlive() {
-    this.network.nftlive_access(this.addr,this.network.network).subscribe((r:any)=>{
+    this.api.nftlive_access(this.addr,this.network).subscribe((r:any)=>{
       this.opes=r;
       if(r.length==1)this.sel_ope=r[0];
     })
@@ -311,22 +320,25 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   save_privacy() {
-    this.network.save_privacy(this.addr,this.secret).subscribe(()=>{
+    this.api.save_privacy(this.addr,this.secret).subscribe(()=>{
       this.strong=false;
     })
+  }
+
+  refresh_balance(){
+    if(this.addr!="")this.api.getBalance(this.addr,this.network).subscribe((res)=>{
+      this.balance=res[0].balance/1e18
+    });
   }
 
   on_authent($event: any) {
     //Cette fonction est déclenché dans le cadre du nfluent_wallet_connect
     this.strong=$event.strong;
     if($event.strong){
-      if(this.addr=="")this.addr=$event.address;
-      if(this.addr==$event.address){
-        showMessage(this,"Vous êtes maintenant pleinement connecté à votre wallet");
-      }else{
-        showMessage(this,"Ce wallet ne correspond pas à votre wallet actuelle");
-        this.strong=false;
-      }
+      this.addr=$event.address;
+      this.refresh_balance();
+      showMessage(this,"Vous êtes maintenant pleinement connecté à votre wallet");
+      setTimeout(()=>{this.indexTab=0;},1500);
     }
   }
 
@@ -339,7 +351,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
     //Déclenché par le scanner en mode nfluent wallet connect
     this.showScanner=false;
     $$("Analyse de "+$event.data);
-    this.network.scan_for_access($event.data,this.addr).subscribe((result:any)=>{
+    this.api.scan_for_access($event.data,this.addr).subscribe((result:any)=>{
       showMessage(this,"Vérification de détention des NFT")
     },(err:any)=>{
       showError(this,err);
@@ -358,7 +370,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   open_inspire() {
-    open(this.network.getExplorer(this.addr),"Explorer");
+    open(this.api.getExplorer(this.addr),"Explorer");
   }
 
 
@@ -373,7 +385,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   analyse_metadata(nft: NFT) {
     let index=this.nfts.indexOf(nft)
     if(nft.attributes.length==1 && nft.attributes[0].value.indexOf("metadata:")>-1 && nft.address){
-      this.network.get_nft(nft.address,this.network.network,this.addr).subscribe((result:any)=>{
+      this.api.get_nft(nft.address,this.network,this.addr).subscribe((result:any)=>{
         if(result.length>0){
           nft=result[0]
           for(let i=0;i<nft.attributes.length;i++){

@@ -12,6 +12,7 @@ class Mintpool:
 	def __init__(self,config=None):
 		self.config=config
 		self.pool=DAO(config=config).db["mintpool"]
+		log("Mise en place de la mintPool sur "+str(config))
 
 	def get_mintpool(self):
 		return list(self.pool.find())

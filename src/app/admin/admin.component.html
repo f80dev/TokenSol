@@ -163,17 +163,28 @@
       Valeurs enregistrées
     </button>
 
+
+
   </mat-expansion-panel>
 
 
   <mat-expansion-panel>
     <mat-expansion-panel-header>Déploiement de l'application</mat-expansion-panel-header>
 
-    <app-upload-file (uploaded)="batch_import($event)"
-                     width="100px" [maxsize]="100000000"
-                     extensions=".xlsx,.xls,.csv">
-      Importer Excel
-    </app-upload-file>
+    <div class="expansion-content">
+      <app-upload-file (uploaded)="batch_import($event)"
+                       width="100px" [maxsize]="100000000"
+                       extensions=".xlsx,.xls,.csv">
+        Importer Excel
+      </app-upload-file>
+
+      <button mat-raised-button
+              title="Voir les applis par défaut"
+              (click)="default_appli_list()">
+        Applis par défaut
+      </button>
+    </div>
+
 
     <div class="expansion-content">
 
@@ -195,6 +206,7 @@
               <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>
               <button mat-icon-button (click)="open_appli(row,'local')" title="Ouvrir l'application en local"><mat-icon>home</mat-icon></button>
               <button mat-icon-button (click)="share_appli(row)" title="Partagé le lien"><mat-icon>share</mat-icon></button>
+              <button mat-icon-button [cdkCopyToClipboard]="row.url" (click)="shorter(row)" title="Raccourcir le lien"><mat-icon>content_cut</mat-icon></button>
               <button mat-icon-button [cdkCopyToClipboard]="row.url"
                       (click)="informe_copy()" [title]="row.read_params"><mat-icon>info</mat-icon></button>
             </td>

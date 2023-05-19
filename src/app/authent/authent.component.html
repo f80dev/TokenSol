@@ -94,25 +94,33 @@
     </div>
   </div>
 
+  <mat-card *ngIf="qrcode.length==0 && network.indexOf('polygon')>-1" style="text-align: center;width: fit-content;display: inline-block;" class="polygon-background">
+    <mat-card-title class="polygon-text">Utiliser Polygon</mat-card-title>
+    <button type="button" mat-raised-button class="polygon-button"
+            *ngIf="showWalletConnect && qrcode.length==0"
+            (click)="open_polygon_extension_wallet()">
+      Extension Chrome
+    </button><br>
+  </mat-card>
 
   <mat-card *ngIf="qrcode.length==0 && network.indexOf('elrond')>-1" style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background">
-    <mat-card-title class="multiversx-text">Réseau MultiversX</mat-card-title>
+    <mat-card-title class="multiversx-text">S'authentifier sur MultiversX via</mat-card-title>
     <button type="button" mat-raised-button class="multiversx-button"
             *ngIf="showWalletConnect && qrcode.length==0"
             (click)="open_wallet_connect()">
-      Wallet Connect
+      L'application xPortal
     </button><br>
 
     <button type="button" mat-raised-button class="multiversx-button"
             *ngIf="showWebWallet"
             (click)="open_web_wallet()">
-      Web Wallet
+      Le wallet du Web
     </button><br>
 
     <button type="button" mat-raised-button class="multiversx-button"
             *ngIf="showExtensionWallet"
             (click)="open_extension_wallet()">
-      Extension Chrome
+      L'extension Chrome
     </button><br>
 
 
@@ -121,12 +129,14 @@
   <br>
 
   <div *ngIf="showWalletConnect && qrcode.length>0"
-       style="max-width: 450px;margin: 10px;width:100%;text-align: center;display: inline-block;">
+       style="max-width: 450px;margin-left: -10px;width:100%;text-align: center;display: inline-block;">
     Flasher ce qrcode depuis votre wallet<br>
     <img [src]="qrcode"
          (click)="qrcode=''"
          title="Flasher ce qrcode depuis votre wallet"
-         style="width:100%;" [style.width]="size">
+         style="width:90%;margin:5px;max-width: 300px;" [style.width]="size">
+    <br>
+    <a [href]="url_xportal_direct_connect" *ngIf="device.isHandset$ | async">Ouvrir sur cet appareil</a>
   </div>
 
 

@@ -1,7 +1,7 @@
 //Version 0.1
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, isEmail, isLocal, showError, showMessage} from "../../tools";
+import {$$, isEmail, isLocal, setParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {environment} from "../../environments/environment";
 import {Location} from "@angular/common";
@@ -78,6 +78,7 @@ export class AuthentComponent implements OnInit {
 
   relayUrl:string = "wss://relay.walletconnect.com";
   qrcode_enabled: boolean = true;
+  url_xportal_direct_connect: string="";
 
 
   constructor(
@@ -238,6 +239,7 @@ export class AuthentComponent implements OnInit {
   validate(address="") {
     if(address.length>0){
       this.address=address;
+      this._location.replaceState("/?"+setParams({toolbar:false,address:this.address,network:this.network}))
       if(this.use_cookie)localStorage.setItem("authent_address",address);
     }
 
@@ -356,8 +358,13 @@ export class AuthentComponent implements OnInit {
       this.provider=ExtensionProvider.getInstance();
       let rc=await this.provider.init();
       let address=await this.provider.login();
-      this.strong=true;
-      this.validate(address);
+      if(address.length>0){
+        this.strong=true;
+        this.validate(address);
+      } else {
+        this.strong=false;
+        this.oninvalid.emit(false);
+      }
 
       //this.init_wallet.emit({provider:this.provider,address:this.address});
   }
@@ -367,23 +374,31 @@ export class AuthentComponent implements OnInit {
     this.provider=new WalletProvider(this.network.indexOf("devnet")>-1 ? WALLET_PROVIDER_DEVNET : WALLET_PROVIDER_MAINNET)
     const callback_url = encodeURIComponent(environment.appli);
     try{
-      let rc=await this.provider.login({callback_url})
-      debugger
-      this.strong=true;
-      this.validate(this.provider.account.address);
+      let address=await this.provider.login({callback_url})
+      this.strong=address.length>0;
+      if(this.strong){
+        this.validate(address);
+      } else {
+        this.oninvalid.emit(false);
+      }
 
-      //this.init_wallet.emit({provider:this.provider,address:this.address});
-      $$("Connexion web wallet ok "+rc)
+      //this.validate(this.provider.account.address);
+
+      $$("Connexion web wallet ok "+address)
 
     } catch (e) {
       this.strong=false;
+      this.oninvalid.emit(false)
     }
   }
 
   async open_wallet_connect() {
     //https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-signing-providers/#the-wallet-connect-provider
+    await this.provider.init()
     const { uri, approval } = await this.provider.connect();
     this.qrcode=this.api.server_nfluent+"/api/qrcode/"+encodeURIComponent(uri);
+    this.url_xportal_direct_connect="https://xportal.com/?wallet-connect="+uri; //"+this.provider.?relay-protocol%3Dirn&symKey=2a0e80dd8b982dac05eef5ce071fbe541d390fc302666d09856ae379416bfa6e"
+    this.url_xportal_direct_connect="https://maiar.page.link/?apn=com.elrond.maiar.wallet&isi=1519405832&ibi=com.elrond.maiar.wallet&link="+encodeURIComponent(this.url_xportal_direct_connect);
     let address=await this.provider.login({approval});
     if(address){
       //this.init_wallet.emit({provider:this.provider,address:this.address});
@@ -395,4 +410,7 @@ export class AuthentComponent implements OnInit {
   }
 
 
+    open_polygon_extension_wallet() {
+
+    }
 }

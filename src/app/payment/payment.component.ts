@@ -2,11 +2,8 @@ import {
   AfterContentInit,
   Component,
   EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChanges
+  Input, OnDestroy,
+  Output
 } from '@angular/core';
 import {
   Transaction,
@@ -17,15 +14,25 @@ import {
 } from "@multiversx/sdk-core/out";
 import {WalletConnectV2Provider} from "@multiversx/sdk-wallet-connect-provider/out";
 import {NetworkService} from "../network.service";
-import {$$, CryptoKey, now, showMessage} from "../../tools";
+import {$$, Bank, CryptoKey, now, setParams, showMessage} from "../../tools";
 import { Account } from "@multiversx/sdk-core";
 import { ProxyNetworkProvider } from "@multiversx/sdk-network-providers";
 import {_prompt} from "../prompt/prompt.component";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {MatDialog} from "@angular/material/dialog";
 import {ReadyToPayChangeResponse} from "@google-pay/button-angular";
+import {wait_message} from "../hourglass/hourglass.component";
 
-export interface PaymentTransaction {transaction:string ,price:number,ts:string,address:string,billing_to:string,unity:string};
+export interface PaymentTransaction {
+  transaction:string ,
+  price:number,
+  ts:string,
+  address:string,
+  billing_to:string,
+  unity:string,
+  provider:any
+}
+
 //Interface incluant le paiement en fiat et le paiement crypto
 export interface Merchant {
   id:string
@@ -37,8 +44,7 @@ export interface Merchant {
     network:string,
     address:string,
     token:string,
-    unity:string,
-    bank: string
+    unity:string
   } | undefined
 }
 
@@ -54,8 +60,7 @@ export function extract_merchant_from_param(params:any) : Merchant | undefined {
         network:params["merchant.wallet.network"],
         address:params["merchant.wallet.address"],
         token:params["merchant.wallet.token"],
-        unity:params["merchant.wallet.unity"],
-        bank:params["merchant.wallet.bank"],
+        unity:params["merchant.wallet.unity"]
       }
     }
   } else return undefined;
@@ -67,12 +72,14 @@ export function extract_merchant_from_param(params:any) : Merchant | undefined {
   templateUrl: './payment.component.html',
   styleUrls: ['./payment.component.css']
 })
-export class PaymentComponent implements AfterContentInit {
+export class PaymentComponent implements AfterContentInit,OnDestroy {
   payment_request: any;
+
   money: { name: string, supply: number, id: string, unity: string } | undefined;
   @Input() price: number = 0
   @Input() fiat_price: number=0;
   @Input() billing_to: string="";
+  @Input() bank:Bank | undefined;
   @Input() merchant: Merchant | undefined
   @Output('paid') onpaid: EventEmitter<PaymentTransaction>=new EventEmitter();
   @Output('cancel') oncancel: EventEmitter<any> =new EventEmitter();
@@ -83,7 +90,7 @@ export class PaymentComponent implements AfterContentInit {
   qrcode: string="";
   balance: number=-1;
   qrcode_buy_token: string = "";
-
+  handle: NodeJS.Timeout | undefined
 
   constructor(
       public networkService: NetworkService,
@@ -92,6 +99,10 @@ export class PaymentComponent implements AfterContentInit {
   ) {
   }
 
+  ngOnDestroy(): void {
+        if(this.handle)clearInterval(this.handle);
+    }
+
   ngAfterContentInit(): void {
     this.refresh();
   }
@@ -99,13 +110,13 @@ export class PaymentComponent implements AfterContentInit {
   refresh(){
     let network=this.merchant?.wallet!.network!
     let token=this.merchant?.wallet?.token || "egld"
-      this.networkService.get_token(token,network).subscribe(async (money)=>{
-        this.money=money
-        if(this.wallet_provider && this.wallet_provider.account){
-          this.user=this.wallet_provider.account.address;
-          this.show_user_balance(this.user,token,network)
-        }
-      });
+    this.networkService.get_token(token,network).subscribe(async (money)=>{
+      this.money=money
+      if(this.wallet_provider && this.wallet_provider.account){
+        this.user=this.wallet_provider.account.address;
+        this.show_user_balance(this.user,token,network)
+      }
+    });
 
     if(this.merchant) {
       this.payment_request = {
@@ -137,6 +148,9 @@ export class PaymentComponent implements AfterContentInit {
         this.networkService.qrcode(addr,"json").subscribe((r:any)=>{
           this.qrcode_buy_token=r.qrcode;
         })
+      }else{
+        if(this.handle)clearInterval(this.handle);
+        this.qrcode_buy_token="";
       }
     }catch (e){
       showMessage(this,"Impossible de récupérer votre encours");
@@ -165,7 +179,8 @@ export class PaymentComponent implements AfterContentInit {
       address:event.paymentMethodData.description || "",
       price:0,
       ts:now("str"),
-      billing_to:this.billing_to
+      billing_to:this.billing_to,
+      provider:null
     }
     this.onpaid.emit(rc);
   };
@@ -176,7 +191,8 @@ export class PaymentComponent implements AfterContentInit {
   //     transactionState: 'SUCCESS',
   //   };
   // };
-
+  message="";
+  modal=true;
 
 
 
@@ -220,6 +236,7 @@ export class PaymentComponent implements AfterContentInit {
           }
           t=new Transaction(opt);
         }else{
+          wait_message(this,"Initialisation du paiement",true)
           const factory = new TransferTransactionsFactory(new GasEstimator());
           //voir https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-cookbook#token-transfers
           t=factory.createESDTTransfer({
@@ -235,10 +252,21 @@ export class PaymentComponent implements AfterContentInit {
         }
 
         try {
+          wait_message(this,"En attente de validation sur votre wallet",true)
           let sign_transaction=await this.wallet_provider.signTransaction(t);
+          wait_message(this,"Envoi de la transaction")
           let hash=await proxyNetworkProvider.sendTransaction(sign_transaction);
-          resolve({transaction:hash,price:this.price,ts:now("str"),address:sender_addr,billing_to:this.billing_to,unity:unity});
+          wait_message(this);
+          resolve({
+            transaction:hash,
+            price:this.price,
+            ts:now("str"),
+            address:sender_addr,
+            billing_to:this.billing_to,
+            unity:unity,
+            provider:this.wallet_provider});
         } catch(error) {
+          wait_message(this);
           $$("Error",error)
           reject(error)
         }
@@ -251,14 +279,14 @@ export class PaymentComponent implements AfterContentInit {
 
   async get_balance(addr:string,token_id:string,network:string) : Promise<number> {
     return new Promise((resolve,reject) => {
-        if(addr.length>0 && network.length>0 && token_id.length>0){
-          this.networkService.getBalance(addr,network,token_id).subscribe((r:any)=>{
-            for(let owner of r){
-              if(owner.address==addr)resolve(owner.balance);
-            }
-            resolve(0);
-          },(err:any)=>{reject();})
-        }
+      if(addr.length>0 && network.length>0 && token_id.length>0){
+        this.networkService.getBalance(addr,network,token_id).subscribe((r:any)=>{
+          for(let owner of r){
+            if(owner.address==addr)resolve(owner.balance);
+          }
+          resolve(0);
+        },(err:any)=>{reject();})
+      }
     });
   }
 
@@ -275,13 +303,31 @@ export class PaymentComponent implements AfterContentInit {
     this.oncancel.emit(null);
   }
 
-  refresh_solde() {
-    this.show_user_balance(this.wallet_provider.account.address,this.money!.id,this.merchant?.wallet?.network!)
+
+  get_address(){
+    return this.wallet_provider.address || this.wallet_provider.account.address;
   }
 
-    cancel_fiat_payment() {
-      this.change_payment_mode();
-    }
+
+  refresh_solde() {
+    this.show_user_balance(this.get_address(),this.money!.id,this.merchant?.wallet?.network!)
+
+  }
 
 
+  cancel_fiat_payment() {
+    this.change_payment_mode();
+  }
+
+  open_bank() {
+    let url="https://tokenforge.nfluent.io/bank?";
+    url=url+setParams({
+      address :this.get_address(),
+      merchant:this.merchant,
+      bank:this.bank,
+      toolbar :false
+    })
+    open(url,"bank")
+    this.handle=setInterval(()=>{this.refresh_solde()},20000);
+  }
 }

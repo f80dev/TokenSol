@@ -117,6 +117,7 @@ export class AdminComponent implements OnInit {
     this.refresh()
   }
 
+
   refresh(saveValue=true) {
     //if(this.config_appli.appli_addr.endsWith("/"))this.config_appli.appli_addr=this.config_appli.appli_addr.substring(0,this.config_appli.appli_addr.length-1);
     if(saveValue){
@@ -127,7 +128,7 @@ export class AdminComponent implements OnInit {
       localStorage.setItem("db_password",this.db_password);
       localStorage.setItem("config_appli",JSON.stringify(this.config_appli))
     }
-    this.update_code_creator()
+    //this.update_code_creator()
     let port=this.server_addr.indexOf(":")>1 ? this.server_addr.split(":")[2] : "80";
     let s="firewall-cmd --permanent --zone=public --add-port="+port+"/tcp<br><br>";
 
@@ -156,7 +157,7 @@ export class AdminComponent implements OnInit {
     this.setup_server=s;
 
     this.setup_client=this.appli_addr+"/?"+setParams({server:this.server_addr});
-    this.update_code_creator();
+    //this.update_code_creator();
   }
 
   reset() {
@@ -369,6 +370,7 @@ export class AdminComponent implements OnInit {
 
 
   batch_import(files: any) {
+    //Chargement du fichier excel
     if (files.hasOwnProperty("filename")) files = [files]
     for (let f of files) {
       if (f.filename.endsWith("xlsx")) {
@@ -380,7 +382,16 @@ export class AdminComponent implements OnInit {
             let obj={...r}
             obj["comment"]=null
             r.read_params=JSON.stringify(obj)
-            r.url=r.url+"/?"+setParams(obj)
+            if(r.url.indexOf("?")>-1){
+              r.url=r.url+"&"+setParams(obj)
+            }else{
+              if(r.url.endsWith("/")){
+                r.url=r.url+"?"+setParams(obj)
+              }else{
+                r.url=r.url+"/?"+setParams(obj)
+              }
+
+            }
             r.param_len=100*(2000/setParams(obj).length)+"%";
             this.rows.push(r)
           }
@@ -391,6 +402,12 @@ export class AdminComponent implements OnInit {
   }
 
 
+  shorter(row: any) {
+    open("https://tinyurl.com/app/?long-url="+encodeURIComponent(row.url),"shortener")
+  }
 
-
+  default_appli_list() {
+    let url="https://github.com/f80dev/TokenSol/raw/master/Parametres%20des%20applications.xlsx";
+    this.batch_import([{filename:url,file:url}]);
+  }
 }

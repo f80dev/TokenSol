@@ -19,8 +19,6 @@ MONGO_CLUSTER_CONNECTION_STRING= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.m
 MONGO_WEB3_CONNECTION_STRING="mongodb://root:rootpassword@provider.bdl.computer:32754/"
 MONGO_SERVER_CONNECTION_STRING="mongodb://root:rootpassword@109.205.183.200:27017/"
 
-GITHUB_TOKEN=""
-
 
 USERNAME="contact@nfluent.io"
 PASSWORD="hh42714271!!"
@@ -48,7 +46,7 @@ GITHUB_SECRET_ID="37e45ea6679fdd0c87623874da835c732872a71f"
 #voir https://docs.github.com/fr/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 #procédure : https://github.com/settings/tokens/new et accorder toutes les permissions du repo
 #Accorder les permissions
-GITHUB_TOKEN="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"
+GITHUB_TOKEN="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"
 #GITHUB_TOKEN="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" #obtenu sur https://github.com/settings/tokens?type=beta
 
 GITHUB_ACCOUNT="nfluentdev"

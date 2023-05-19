@@ -17,3 +17,17 @@ button {
 }
 
 
+.polygon-button {
+  background-color: #8044df;
+}
+
+.polygon-text {
+  color: #8044df;
+}
+
+.polygon-background {
+  background-color: black;
+  padding: 20px;
+}
+
+

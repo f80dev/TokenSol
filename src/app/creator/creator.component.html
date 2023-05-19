@@ -2,6 +2,8 @@
 
 <div class="mainform" style="margin:0px;">
   <div class="titleform">{{title_form}}</div>
+  <div class="subtitleform">{{claim}}</div>
+
   <div class="subtitleform" *ngIf="sel_config && sel_config.message && sel_config.message!.length>0">
     {{sel_config!.message}}
     <a *ngIf="sel_config && sel_config.help && sel_config.help.length>0" [href]="sel_config!.help"><mat-icon>help</mat-icon></a>
@@ -358,7 +360,7 @@
           <mat-card-title>Fabrication</mat-card-title>
           <mat-card-content>
 
-            <button (click)="generate_collection('files')" mat-raised-button
+            <button (click)="generate_collection('zip')" mat-raised-button
                     title="Télécharger l'ensemble des visuels dans un fichier zip"
                     style="width: 100%">
               Générer

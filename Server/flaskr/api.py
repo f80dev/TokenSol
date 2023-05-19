@@ -428,7 +428,7 @@ def get_composition():
       b64=image.toBase64(format="webp")
       direct.append(b64)
 
-    if "files" in format:
+    if "files" in format or "zip" in format:
       filename=image.get_filename()
       if not exists(current_app.config["UPLOAD_FOLDER"]+filename): image.save(current_app.config["UPLOAD_FOLDER"]+filename)
       urls.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+filename)
@@ -439,8 +439,7 @@ def get_composition():
 
 
 @bp.route('/create_zip/',methods=["POST"])
-def create_zip():
-
+def api_create_zip():
   email=request.json["email"]
   files=request.json["files"]
 
@@ -454,20 +453,20 @@ def create_zip():
       if exists(current_app.config["UPLOAD_FOLDER"]+f):
         archive.write(current_app.config["UPLOAD_FOLDER"]+f)
 
+  archive_file.close()
+  url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
+
   if is_email(email):
-    archive_file.close()
-    url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
     send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection")
     return jsonify({"message":"mail contenant la collection envoyé a "+email})
-  # else:
-  #   archive_file.seek(0)
-  #   return send_file(archive_file,as_attachment=True,download_name="collection.7z")
+  else:
+    return jsonify({"zipfile":url_file})
 
 
 
 
 @bp.route('/send_bill/',methods=["POST"])
-def send_bill():
+def api_send_bill():
   body=request.json
   model="mail_facture.html" if not "model" in body else body["model"]
   replacements={
@@ -604,19 +603,18 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
 
 
 
-@bp.route('/send_photo_for_nftlive/<conf_id>/',methods=['POST'])
+
 @bp.route('/send_photo_for_nftlive/',methods=['POST'])
 def send_photo_for_nftlive(conf_id:str=""):
-
-  if len(conf_id)==0:
-    conf=request.json["config"]
-    if type(conf)==str:
-      confs=configs(conf,format="dict",dictionnary={"DOMAIN_APPLI":current_app.config["DOMAIN_APPLI"]})
-      if len(confs)==0:
-        return returnError("Configuration "+conf_id+" introuvable")
-      else:
-        config=confs[0]
-    if type(conf)==dict: config=conf
+  conf=request.json["config"]
+  log("Chargement de la configuration"+str(conf))
+  if type(conf)==str:
+    confs=configs(conf,format="dict",dictionnary={"DOMAIN_APPLI":current_app.config["DOMAIN_APPLI"]})
+    if len(confs)==0:
+      return returnError("Configuration "+conf+" introuvable")
+    else:
+      config=confs[0]
+  if type(conf)==dict: config=conf
 
   image=request.json["photo"] if "photo" in request.json else None
   if type(image)==dict:
@@ -637,6 +635,7 @@ def send_photo_for_nftlive(conf_id:str=""):
   nft=ArtEngine()
   nft.reset()
 
+  log("Création de la config")
   layer_name="maphoto"+now("hex")
   nft.add(Layer(layer_name))
   nft.add_image_to_layer(layer_name,image)
@@ -645,6 +644,7 @@ def send_photo_for_nftlive(conf_id:str=""):
     if not "name" in layer: layer["name"]="layer_"+now("hex")
     nft.add(Layer(object=layer,elements=layer["elements"]))
 
+  log("Génération des séquences")
   width=int(dim.split("x")[0])
   height=int(dim.split("x")[1])
   seqs=nft.generate_sequences(limit=limit,_seed=seed)
@@ -652,6 +652,7 @@ def send_photo_for_nftlive(conf_id:str=""):
 
   seq_idx:[int]=request.json["sequences"] if "sequences" in request.json else range(len(seqs))
 
+  log("Préparation de la réponse")
   for i in seq_idx:
     if i<len(seqs):
       stickers.append(nft.compose(seqs[i],width=width,height=height,data=data,replacements=dyna_fields))
@@ -706,6 +707,8 @@ def appli_configs():
 
 
 @bp.route('/infos/')
+@bp.route('/info/')
+@bp.route('/info_server/')
 #test http://127.0.0.1:4242/api/infos/
 #test http://75.119.159.46:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
@@ -754,8 +757,18 @@ def test():
 @bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
 def api_refund(address:str,amount:str="1",token="egld"):
   _network=get_network_instance(request.json["network"])
-  _miner=Key(encrypted=request.json["bank"]["privatekey"])
+  _miner=Key(encrypted=request.json["bank"]["privatekey"] if type(request.json["bank"])==dict else request.json["bank"])
+  if is_email(address):
+    _token=_network.get_token(token)
+    key=_network.create_account(address,domain_appli=current_app.config["DOMAIN_APPLI"],
+                                 subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account")
+    address=key.address
   rc=_network.transfer_money(token,_miner,address,int(amount),data=request.json["data"])
+
+  #Si le client n'a aucun egld on lui en envoi afin de payer les frais de réseau
+  if _network.get_account(address).balance<_network.get_min_gas_for_transaction(3):
+    _network.transfer_money("egld",_miner,address,_network.get_min_gas_for_transaction(4),"Dons en Egld pour paiement des frais de gaz")
+
   return jsonify(rc)
 
 
@@ -1887,6 +1900,7 @@ def keys(name:str=""):
       for k in keys:
         item=k.__dict__
         item["balance"]=_network.get_balance(k.address,request.args.get("token_id",""))
+        if item["balance"] is None:item["balance"]=0
         items.append(item)
     else:
       items=[key.__dict__ for key in keys]
@@ -2354,7 +2368,9 @@ def api_create_collection():
   solde=_net.balance(miner.address)
   collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"],simulation=simulation)
   if collection is None:
-    return returnError("Cette collection existe déjà")
+    return returnError("Probleme technique pour la création de la collection "+_data["name"])
+
+  if simulation: return jsonify({"simulation":"ok"})
 
   new_collection=_net.get_collection(collection["id"])
   new_solde=_net.balance(miner.address)

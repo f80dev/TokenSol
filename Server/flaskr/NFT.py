@@ -4,7 +4,7 @@ import yaml
 from PIL import Image
 
 from flaskr.Keys import Key
-from flaskr.Tools import extract_from_dict, decrypt
+from flaskr.Tools import extract_from_dict, decrypt, hex_to_str
 
 
 class NFT:
@@ -57,7 +57,7 @@ class NFT:
 
       symbol=extract_from_dict(object,["symbol","identifier"],"")
       description=extract_from_dict(object,"description","")
-      visual=extract_from_dict(object,"visual,image,storage,url","")
+      visual=extract_from_dict(object,"url,visual,image,storage","")
 
       miner=extract_from_dict(object,["miner","creator"],"")
       if type(miner)==dict: miner=Key(obj=miner).address
@@ -113,10 +113,19 @@ class NFT:
 
     for i,f in enumerate(self.files):
       if type(f)==dict:
-        if "file" in f: self.files[i]=f["file"]
-        if "url" in f:self.files[i]=f["url"]
-      if type(self.files[i])==str:
-        if "base64" in f: self.files[i]=str(base64.b64decode(self.files[i]),"utf8")
+        if "file" in f: f=f["file"]
+        if "url" in f:f=f["url"]
+      if type(f)==str:
+        if not f.startswith("http"):
+          try:
+            f=str(base64.b64decode(self.files[i]),"utf8")
+          except:
+            try:
+              f=hex_to_str(f)
+            except:
+              pass
+
+      self.files[i]=f
 
     self.dtCreate=dtCreate
     if self.visual is None or len(self.visual)==0: self.visual="https://hackernoon.imgix.net/images/0*kVvpU6Y4SzamDGVF.gif"

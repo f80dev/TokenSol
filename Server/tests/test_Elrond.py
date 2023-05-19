@@ -91,16 +91,20 @@ def test_add_role_to_nftcollection(account_to_add:str="",miner=MAIN_ACCOUNT):
 
 
 
-def test_mint_sft(miner=MAIN_ACCOUNT,quantity=10):
+def test_mint_sft(miner=MAIN_ACCOUNT,quantity=10,force_create_collection=False):
   _network=Elrond("devnet")
   _miner=_network.get_keys(address=miner)[0]
-  cols=_network.get_collections(miner, False, type_collection="SemiFungible",special_role="canCreate,canBurn,canAddQuantity")
+  cols=_network.get_collections(miner, False, type_collection="SemiFungible",special_role="canCreate,canBurn,canAddQuantity") if not force_create_collection else []
   if len(cols)==0:
     rc=_network.add_collection(_miner,"MaCol"+now("hex"),options=DEFAULT_OPTION_FOR_ELROND_COLLECTION,type_collection="SemiFungible")
     assert not rc is None
     cols.append(rc)
   nft=test_mint_for_collection(miner,col=cols[0]["id"],quantity=quantity)
   return nft
+
+
+def test_create_SFTCollection_and_mint():
+  test_mint_sft(force_create_collection=True)
 
 
 def test_get_nfts(miner=MAIN_ACCOUNT):

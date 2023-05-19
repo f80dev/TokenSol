@@ -72,7 +72,6 @@ export class MintComponent implements OnInit {
   message: string="";
   collection_name: string = "";
   show_mint_section: boolean=false;
-  miner_balance=0;
   collections: Collection[]=[]
 
   constructor(
@@ -727,7 +726,7 @@ export class MintComponent implements OnInit {
         this.network.upload_batch({content:f.file}).subscribe((rows:NFT[])=>{
           this.tokens=rows;
           showMessage(this,"Fichier importé");
-        })
+        },(err)=>{showError(this,err)})
       }
     }
   }

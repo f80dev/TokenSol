@@ -37,6 +37,7 @@ export class AppComponent implements OnInit {
     rescue:{label:"Restauration",title:"",actif:false,icon:"build_circle",queryParam:{}}, // & {'ope':operation!.sel_ope!.id,'network':network_service!.network}
     _logout:{label:"Déconnexion",title:"",actif:false,icon:"logout",queryParam:{}},
     login:{label:"Se connecter",title:"",actif:true,icon:"login",queryParam:{}},
+    bank:{label:"Banque / Faucet",title:"",actif:true,icon:"account_balance",queryParam:{}},
     settings:{label:"Préférences",title:"Gérer ses préférences",actif:true,icon:"lock",queryParam:{}},
     admin:{label:"Administration",title:"",actif:true,icon:"lock",queryParam:{}},
     faqs:{label:"Questions",title:"",actif:true,icon:"quiz",queryParam:{}},

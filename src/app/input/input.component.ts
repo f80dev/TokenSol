@@ -49,6 +49,9 @@ export class InputComponent implements OnChanges,OnInit {
 
   on_clear() {
     this.value=null;
+    if(this.value_type=="text")this.value="";
+    this.valueChange.emit(this.value);
+    this.on_validate();
   }
 
   on_validate() {
@@ -97,6 +100,14 @@ export class InputComponent implements OnChanges,OnInit {
 
   on_cancel() {
     this.cancel.emit();
+  }
+
+  direct_change_slider() {
+    if(this.value_type=="slider"){
+      if(this.value>this.max)this.value=this.max;
+      if(this.value<this.min)this.value=this.min;
+    }
+
   }
 }
 

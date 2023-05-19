@@ -5,7 +5,7 @@
 
 @font-face {
   font-family: Helvetica;
-  src: url("assets/HelveticaInseratLT.ttf") format("ttf");
+  src: url("assets/webFonts/HelveticaInseratLT.ttf") format("ttf");
 }
 
 
@@ -194,17 +194,43 @@ body,html {
 
 .titleform {
   @extend .mat-headline-5, .color-primary;
-  margin: 20px;
+  margin: 8px;
 }
 
 .subtitleform {
   @extend .mat-subtitle-1, .color-primary;
   margin-top: -10px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .background-component {
   background-color: mat.get-color-from-palette(mat.$grey-palette, 900);
 }
 
+mat-vertical-stepper {
+  background: none !important;
+}
 
+.background-form {
+  text-align:left;
+  position:fixed;
+  width:100vw;
+  height:100vh;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.popup-form {
+  position:relative;
+  max-width: 500px;
+  display: inline-block;
+  text-align: center;
+  color: white;
+  padding: 10px;
+}
+
+
+a:link { text-decoration: none;color: gray;  }
+a:visited { text-decoration: none;color: gray;  }
+a:hover { text-decoration: none; color: lightgray; }
+a:active { text-decoration: none; color: gray; }

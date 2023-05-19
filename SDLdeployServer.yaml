@@ -1,0 +1,37 @@
+version: '2.0'
+services:
+  nfluentserver:
+    image: f80hub/tokensol
+    expose:
+      - port: 4242
+        as: 4242
+        to:
+          - global: true
+    command:
+      - python3
+    args:
+      - wsgi.py
+      - prodConfig
+      - debug
+      - ssl
+profiles:
+  compute:
+    nfluentserver:
+      resources:
+        cpu:
+          units: 1
+        memory:
+          size: 512Mi
+        storage:
+          - size: 1Gi
+  placement:
+    dcloud:
+      pricing:
+        nfluentserver:
+          denom: uakt
+          amount: 1000
+deployment:
+  nfluentserver:
+    dcloud:
+      profile: nfluentserver
+      count: 1

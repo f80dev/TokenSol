@@ -29,6 +29,7 @@ import {parse, stringify} from "yaml";
 import {DeviceService} from "../device.service";
 import {wait_message} from "../hourglass/hourglass.component";
 import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
+import {extract_merchant_from_param, Merchant} from "../payment/payment.component";
 
 
 @Component({
@@ -177,7 +178,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
     getParams(this.routes).then((params:any)=>{
       if(params.title_form)this.title_form=params.title_form;
-
+      this.claim=params.claim || environment.claim || "";
       this.sel_platform=this.network.stockage_available[0];
       this.stockage_available=this.network.stockage_available || params.stockage || "infura";
 
@@ -384,16 +385,16 @@ export class CreatorComponent implements OnInit,OnDestroy {
     this.save_config(false);
     if(!this.check_data())return;
 
-    this.message_preview="Avancement 0%";
     this.show_preview=true;
+    this.message_preview="Séquençage de la série"
 
     this.network.get_sequence(this.sel_config.layers,this.sel_config.limit).subscribe(async (result:any)=>{
       let sequences=result.sequences;
-
+      this.message_preview="Avancement 0%";
       let rep:any="ok";
       if(true || sequences.length>environment.visual_cost.quota && this.sel_config?.width!+this.sel_config?.height!>300){
         let nb_tokens_to_generate=sequences.length;
-        rep=await _ask_for_paiement(this,"NFLUCOIN-4921ed",
+        rep=await _ask_for_paiement(this,this.user.merchant.wallet!.token,
             nb_tokens_to_generate*(environment.visual_cost.price_in_fiat),
             nb_tokens_to_generate*(environment.visual_cost.price_in_crypto),
             this.user.merchant!,
@@ -407,6 +408,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       }
 
       if(rep){
+        this.user.init_wallet_provider(rep.provider,rep.address)
         this.user.nfts_to_mint=[];
         let step=Math.max(sequences.length/10,3);
 
@@ -431,8 +433,12 @@ export class CreatorComponent implements OnInit,OnDestroy {
                 this.message_preview="";
                 if(format.indexOf("mint")>-1)this.router.navigate(["mint"])
                 if(format.indexOf("zip")>-1){
-                  this.network.create_zip(result.files,this.user.profil.email).subscribe(()=>{
-                    showMessage(this, "Travail en cours ... consulter votre boite mail pour retrouver votre collection de visuels")
+                  this.network.create_zip(result.files,this.user.profil.email).subscribe((result:any)=>{
+                    if(!this.user.profil.email){
+                     open(result.zipfile,"visuels")
+                    }else{
+                      showMessage(this, "Travail en cours ... consulter votre boite mail pour retrouver votre collection de visuels")
+                    }
                   })
                 }
               }else{
@@ -455,7 +461,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
           },i*delay);
         }
       } else {
-        showMessage(this,"Annulation du processus");
+        this.message_preview="";
+        showMessage(this,"Annulation du paiement");
       }
 
 
@@ -979,6 +986,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   //add_image_to_layer ajouter une image
   //tag upload_file
   title_form="Générateur de visuels NFTs";
+  claim="";
   show_preview:boolean=false;
   show_conception: boolean=true;
   on_upload(evt: any,layer:Layer) {

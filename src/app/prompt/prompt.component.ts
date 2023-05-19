@@ -66,10 +66,8 @@ export class PromptComponent  {
 
   showEmoji=false;
   _type="text";
-  // @ts-ignore
-  _min!: number;
-  // @ts-ignore
-  _max!: number;
+  _min: number=0;
+  _max: number=0;
 
   constructor(
     public dialogRef_prompt: MatDialogRef<PromptComponent>,

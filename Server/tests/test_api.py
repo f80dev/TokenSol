@@ -4,7 +4,7 @@ from json import loads
 from flaskr.Keys import Key
 from flaskr.Mintpool import Mintpool
 from flaskr.Network import Network
-from flaskr.Tools import get_operation, now, get_key_by_name, random_from
+from flaskr.Tools import get_operation, now, get_key_by_name, random_from, is_email
 from flaskr.settings import OPERATIONS_DIR
 from tests.test_art import test_generate_collection, IMAGES
 from tests.test_tools import *
@@ -629,11 +629,23 @@ def test_mint_polygon(test_client,network="polygon-devnet"):
 	test_api_mint(test_client,miner=miner,col_id="",network=network)
 
 
-def test_api_refund(test_client,network=MAIN_NETWORK,token=NFLUCOIN,amount=2):
+def test_api_refund(test_client,network=MAIN_NETWORK,token=NFLUCOIN,amount=2,dest_name="paul"):
 	_network=get_network_instance(network)
 	miner=_network.find_key("nfluent")
-	dest=_network.find_key("paul")
-	solde0=_network.get_balance(dest.address,token_id=token)
-	rc=call_api(test_client,"refund/"+dest.address+"/"+str(amount)+"/"+token+"/","",{"bank":miner.encrypt(True),"network":network,"data":"Payment de test"})
-	solde1=_network.get_balance(dest.address,token_id=token)
-	assert solde1-solde0==amount*1e18
+	if is_email(dest_name):
+		dest=dest_name
+		solde0=0
+	else:
+		dest=_network.find_key(dest_name).address
+		solde0=_network.get_balance(dest.address,token_id=token)
+
+	rc=call_api(test_client,"refund/"+dest+"/"+str(amount)+"/"+token+"/","",{"bank":miner.encrypt(True),"network":network,"data":"Payment de test"})
+
+	if not is_email(dest):
+		solde1=_network.get_balance(dest,token_id=token)
+		assert solde1-solde0==amount*1e18
+
+def test_api_refund_email(test_client,dest_name="paul.dudule@gmail.com"):
+	test_api_refund(test_client,dest_name=dest_name)
+
+

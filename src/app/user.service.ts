@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable, OnDestroy} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
 import {$$, CryptoKey, detect_network, isLocal} from "../tools";
@@ -22,7 +22,7 @@ export interface UserProfil {
 @Injectable({
   providedIn: 'root'
 })
-export class UserService {
+export class UserService implements OnDestroy {
   addr: string = "";              //Adresse sur la blockchain
 
   addr_change = new Subject<string>();
@@ -177,6 +177,10 @@ export class UserService {
 
 
   logout() {
+    $$("Déconnexion / Logout");
+    try {
+      if(this.wallet_provider)this.wallet_provider.logout()
+    }  catch (e) {}
     this.addr = "";
     this.profil = {
       alias: "", email: "", perms: [], routes: [], access_code: "",message:""
@@ -267,6 +271,10 @@ export class UserService {
   change_access_code(new_password: string) {
     this.network.update_access_code(this.profil.access_code, new_password).subscribe(() => {
     })
+  }
+
+  ngOnDestroy(): void {
+    this.logout();
   }
 
 }

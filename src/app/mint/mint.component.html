@@ -181,10 +181,10 @@
         <strong>Créateurs</strong>: {{token_creators[0].address | alias:network.network}}
       </div>
 
-      <table style="display: inline-block;" class="mat-elevation-z2" *ngIf="token_creators.length>1">
+      <table style="display: inline-block;" *ngIf="token_creators.length>1">
         <tr *ngFor="let creator of token_creators">
           <td></td>
-          <td style="text-align: right;">{{(creator.address | alias:network.network).substring(0,15)+(creator.address.length>15 ? '..' : '')}}</td>
+          <td style="text-align: right;" [title]="creator.address">{{(creator.address | alias:network.network).substring(0,15)+(creator.address.length>15 ? '..' : '')}}</td>
           <td><mat-slider [min]="0" [max]="100"><input matSliderThumb [(ngModel)]="creator.share" (valueChange)="recalc_rate_except(creator)"></mat-slider></td>
           <td>{{creator.share}}%</td>
           <td>
@@ -325,15 +325,15 @@
         <div appFileDragNDrop (filesChangeEmiter)="drop($event,token)"
              title="Déposez vos fichiers à embarquer dans le NFT ici"
              style="min-height: 100px;width: 90%;margin: 5%;text-align: left;">
-          <div *ngIf="token.files.length==0" style="display:inline;margin:50px;">Déposer vos fichiers ici</div>
-          <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;">
+          <div *ngIf="token.files.length==0" style="display:inline-block;text-align: center;width:100%;"><br>Déposer vos fichiers ici</div>
+          <div *ngFor="let file of token.files" class="mat-body-1" style="margin:0;width: 100%;overflow: hidden;">
             <small style="display: flex;flex-wrap: nowrap;justify-content: left;">
               <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left:3px;" (click)="open_link(token,file)" [title]="file">visibility</mat-icon>
               <mat-icon style="font-size: medium;display: inline;cursor: pointer;margin-left: -6px;"
                         title="Détacher le document du NFT"
                         (click)="delete_link(token,file)">cancel</mat-icon>
-              <div (dblclick)="open_document(file)" style="margin-left: -5px;">
-                {{show_file(file)}}
+              <div (dblclick)="open_document(file)" style="margin-left: -5px;" [title]="file">
+                {{show_file(file).substring(0,20)}}
               </div>
             </small>
           </div>
