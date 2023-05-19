@@ -66,7 +66,10 @@ export class AskForPaymentComponent implements OnInit {
     ngOnInit(): void {
         this.buy_method=this.data.buy_method;
         if(!this.data.merchant || (!this.data.merchant.currency && (!this.data.merchant.wallet && !this.data.merchant.wallet.token))){
-            this.dialogRef.close(true);
+            this.dialogRef.close(true)
+        }
+        if(this.data.to_paid==0 && this.data.to_paid_in_fiat==0){
+            this.dialogRef.close(true)
         }
         if(this.data.merchant!.wallet!.token)this.nb_payment=this.nb_payment+1;
         if(this.data.merchant!.id)this.nb_payment=this.nb_payment+1;
