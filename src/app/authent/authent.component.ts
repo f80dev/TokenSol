@@ -409,8 +409,11 @@ export class AuthentComponent implements OnInit {
     }
   }
 
-
     open_polygon_extension_wallet() {
 
     }
+
+  open_xportal() {
+    open(this.url_xportal_direct_connect)
+  }
 }

@@ -136,7 +136,14 @@
          title="Flasher ce qrcode depuis votre wallet"
          style="width:90%;margin:5px;max-width: 300px;" [style.width]="size">
     <br>
-    <a [href]="url_xportal_direct_connect" *ngIf="device.isHandset$ | async">Ouvrir sur cet appareil</a>
+
+
+    <button mat-raised-button
+            *ngIf="device.modele!='desktop'"
+            (click)="open_xportal()">
+      Ouvrir sur cet appareil
+    </button>
+
   </div>
 
 
