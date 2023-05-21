@@ -68,15 +68,16 @@ export class AskForPaymentComponent implements OnInit {
         if(!this.data.merchant || (!this.data.merchant.currency && (!this.data.merchant.wallet && !this.data.merchant.wallet.token))){
             this.dialogRef.close(true)
         }
-        if(this.data.to_paid==0 && this.data.to_paid_in_fiat==0){
-            this.dialogRef.close(true)
-        }
+
         if(this.data.merchant!.wallet!.token)this.nb_payment=this.nb_payment+1;
         if(this.data.merchant!.id)this.nb_payment=this.nb_payment+1;
 
         if(this.data.merchant.currency=="")this.buy_method="crypto";
         if(!this.data.merchant.wallet)this.buy_method="fiat";
 
+        if(Number(this.data.to_paid)==0 && Number(this.data.to_paid_in_fiat)==0){
+            this.dialogRef.close({})
+        }
     }
 
     onpaid($event: any) {

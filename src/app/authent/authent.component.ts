@@ -42,7 +42,7 @@ export class AuthentComponent implements OnInit {
   //@Output('init_wallet') init_wallet: EventEmitter<{ provider:any,address:string }>=new EventEmitter();
 
   @Input() showAccesCode=false;         //Code secret d'accès (réservé)
-  @Input() showCancel=false;         //Code secret d'accès (réservé)
+  @Input() showCancel=true;         //Proposer le bouton d'annulation
   @Input() showWebcam=false;            //utilisation du QRCode dynamique du wallet nFluent
   @Input() showDynamicToken=false;      //Code dynamique utilisable en copié collé (a priori pas d'usage)
   @Input() use_cookie: boolean = false;

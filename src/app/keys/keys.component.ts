@@ -4,7 +4,6 @@ import {
   $$,
   CryptoKey,
   get_nfluent_wallet_url,
-  getParams,
   isEmail,
   newCryptoKey,
   setParams,

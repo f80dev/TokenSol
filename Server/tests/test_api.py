@@ -86,12 +86,12 @@ def test_api_upload_json(test_client,objs=["bonjour comment allez vous",{"key":"
 
 
 def test_send_photo_for_nftlive(test_client):
-	for format in ["base64","link"]:
+	for format in ["base64"]:
 		body={
 			"photo":IMAGES["backgrounds"][0],
 			"limit":1,
 			"dimension":500,
-			"config":RESSOURCE_TEST_DIR+"/config_certificat_photo.yaml",
+			"config":RESSOURCE_TEST_DIR+"/config_nftlive.yaml",
 			"format":format
 		}
 		image_to_mint= call_api(test_client, "send_photo_for_nftlive/", "", body)

@@ -247,8 +247,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
 
-
-
   add_layer(name="",force=false) {
     if(this.sel_config){
       let names=this.sel_config.layers.map((x)=>{return(x.name)});

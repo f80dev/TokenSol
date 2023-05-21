@@ -19,9 +19,9 @@ class Key(object):
       if ":" in encrypted:encrypted=encrypted.split(":")[1]
       decrypted=decrypt(encrypted.strip())
       if decrypted.startswith("{"):
-        obj=json.loads(decrypted)
+        obj=json.loads(decrypted)   #Encrypt contient toute la clé
       else:
-        secret_key=decrypted
+        obj["secret_key"]=decrypted
 
     if not obj is None:
       if "name" in obj: name=obj["name"]

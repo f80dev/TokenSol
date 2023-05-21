@@ -867,7 +867,7 @@ class Elrond(Network):
           "mini_wallet":wallet_appli,
           "url_wallet":self.getWallet(address),
           "url_explorer":url_explorer,
-          "words":words,
+          "words":" ".join(words),
           "qrcode":"cid:qrcode",
           "access_code":get_access_code_from_email(address)
         },domain_appli=domain_appli),email,subject=subject,attach=qrcode,filename="qrcode.png" if not qrcode is None else ""):

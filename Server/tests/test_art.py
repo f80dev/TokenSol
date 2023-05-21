@@ -16,6 +16,7 @@ PLATFORM_LIST=["github-nfluentdev-storage-main","db-server-tokenforge","server",
 
 IMAGES={
   "backgrounds":[
+    RESSOURCE_TEST_DIR+"PANO_20200830_195823.jpg",
     "https://img.freepik.com/free-photo/beautiful-milky-way-night-sky_53876-139825.jpg?w=1380&t=st=1670608013~exp=1670608613~hmac=b2ad049cb167a88487d282bb40d8061d98944ba401899a4354a699a0ab30363b",
     "https://img.freepik.com/free-photo/white-painted-wall-texture-background_53876-138197.jpg?w=996&t=st=1670608081~exp=1670608681~hmac=bc86415196bd4579744e799023fabd34b84b083a2860d12478f8c902b66d457d",
     "https://img.freepik.com/free-photo/abstract-luxury-blur-dark-grey-black-gradient-used-as-background-studio-wall-display-your-products-plain-studio-background_1258-54444.jpg?w=996&t=st=1670608097~exp=1670608697~hmac=ea40188a966f6dc040fe9cd8ddfa1d753ba08bb36f0029047a5b3468861d936c",

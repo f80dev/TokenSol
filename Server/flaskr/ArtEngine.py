@@ -661,6 +661,9 @@ class Layer:
       self.add(e)
 
 
+  def __str__(self):
+    return self.name+"("+str(len(self.elements))+" éléments)"
+
   def find_element(self,name) -> Sticker:
     for e in self.elements:
       if normalize(e.name).startswith(normalize(name)): return e
@@ -840,6 +843,7 @@ class ArtEngine:
     for item in items:
       layer=self.get_layer(item["layer"])
       elt=layer.find_element(item["sticker"])
+      if elt is None: raise RuntimeError(str(item["sticker"])+" est introuvable dans "+str(layer))
       elt.open()
       elt.transform(layer.scale,layer.translation,layer.margin)
       log("Collage de "+str(elt)+" sur "+str(collage))

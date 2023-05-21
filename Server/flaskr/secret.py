@@ -2,10 +2,10 @@
 APP_SECRET_KEY="hh4271"
 CRYPT_KEY_FOR_NFT=""
 
-STORJ_API_KEY="jwjf4jn63t2tunudcemia3njqosq"
+STORJ_API_KEY="jwgbxe2zddyhr2icqwmoh4wcuaaa"
 STORJ_SATTELITE_ADDR="12L9ZFwhzVpuEKMUNUqkaTLGzwY9G24tbiigLiXpmZWKwmcNDDs@eu1.storj.io:7777"
 STORJ_PASSPHRASE="hh4271!!"
-STORJ_SECRETKEY="j22tdcpmvpi3qfk5syys5qdacukfboqynovileisakiocbqy3tmq2"
+STORJ_SECRETKEY="jyeawbsgiqzc3cqq3ayr3oue5w2rdwzn5swm6zs2z3znpl64gshbs"
 STORJ_ENDPOINT="https://gateway.storjshare.io"
 
 #Initialisation de la base sur le serveur:

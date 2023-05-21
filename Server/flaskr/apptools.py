@@ -27,6 +27,7 @@ from flaskr.ipfs import IPFS
 from flaskr.nftstorage import NFTStorage
 
 from flaskr.settings import IPFS_SERVER, OPERATIONS_DIR
+from flaskr.storj import Storj
 
 
 def get_operations() -> [dict]:
@@ -147,6 +148,7 @@ def get_network_from_address(addr:str):
 
 def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4242/"):
   name=platform.lower().split("-")[0]
+  if name.startswith("storj"): return Storj(network=platform,domain_server=domain_server)
   if name.startswith("file"): return StoreFile(network=platform,domain_server=domain_server)
   if name.startswith("github"): return GithubStorage(platform=domain_server)
   if name.startswith("dao") or name=="db": return DAO(network=platform,domain_server=domain_server)

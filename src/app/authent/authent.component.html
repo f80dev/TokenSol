@@ -1,8 +1,5 @@
 <div style="width: 100%;text-align: center;position: relative;">
 
-
-  <br>
-
 <!--  Permet l'authentification force par code d'accés ou directement seed phrase-->
   <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
     <app-input *ngIf="showAccesCode"
@@ -165,7 +162,7 @@
   </div>
 
 
-  <div id="cmdPanel" style="margin-left:10%;margin-top:20px;width: 80%;text-align: center;" *ngIf="(showAddress || showAccesCode)">
+  <div id="cmdPanel" style="margin-left:10%;margin-top:20px;width: 80%;text-align: center;" >
     <button type="button" mat-raised-button 
             title="Ne pas se connecter" *ngIf="showCancel"
             (click)="oncancel.emit()">

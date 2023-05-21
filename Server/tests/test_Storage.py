@@ -7,6 +7,7 @@ from tests.test_tools import RESSOURCE_TEST_DIR
 
 DOMAIN_SERVER="http://127.0.0.1:4242/"
 PLATFORMS=[
+	("storj","tests")
 	("githubstorage", "github-nfluentdev-storage-main"),
 	("dao", DOMAIN_SERVER),
 	("nftstorage", "")

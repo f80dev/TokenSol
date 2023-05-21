@@ -16,10 +16,19 @@ label: Emoticons SÃ©rie
 layers:
   - elements:
       - image: https://images.unsplash.com/32/Mc8kW4x9Q3aRR3RkP5Im_IMG_4417.jpg?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDF8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+        name: image1
+
       - image: https://images.unsplash.com/photo-1531685250784-7569952593d2?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDN8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+        name: image2
+
       - image: https://images.unsplash.com/photo-1521459467264-802e2ef3141f?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDd8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+        name: image3
+
       - image: https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDZ8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+        name: image4
+
       - image: https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDJ8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3
+        name: image5
     height: 400
     indexed: true
     name: fond
@@ -32,9 +41,13 @@ layers:
     width: 400
   - elements:
       - image: https://em-content.zobj.net/thumbs/120/apple/354/star-struck_1f929.png
+        name: icon1
       - image: https://em-content.zobj.net/thumbs/72/apple/354/sleepy-face_1f62a.png
+        name: icon2
       - image: https://em-content.zobj.net/thumbs/72/apple/354/pleading-face_1f97a.png
+        name: icon3
       - image: https://em-content.zobj.net/thumbs/72/apple/354/hugging-face_1f917.png
+        name: icon4
     height: 400
     indexed: true
     name: motif
