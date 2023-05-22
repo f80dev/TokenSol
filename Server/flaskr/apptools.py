@@ -160,6 +160,8 @@ def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4
 def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True) -> Key:
   _network=get_network_instance(network)
   if _network.is_blockchain() and not is_email(email): return Key(address=email)
+  if not mail_new_wallet.endswith(".html"):mail_new_wallet=mail_new_wallet+".html"
+  mail_new_wallet=mail_new_wallet.replace(".html","_"+_network.network_name+".html")
   key=_network.create_account(email=email,
                               histo=dao,
                               domain_appli=domain_appli,

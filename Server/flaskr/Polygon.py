@@ -1,8 +1,10 @@
 from os.path import exists
 from os import listdir
 from time import sleep
-
 import requests
+from eth_account import Account
+from eth_account.hdaccount import generate_mnemonic
+
 from solcx import compile_source, install_solc
 from web3.contract import Contract
 from web3.middleware import geth_poa_middleware
@@ -84,7 +86,7 @@ class Polygon (Network):
     src=src.replace("MAX_PER_MINT = 1","MAX_PER_MINT = "+str(max_per_wallet))
 
     libs=["@openzeppelin="+POLYGON_DIR+"Master/node_modules/@openzeppelin"]
-    contract_id, contract_interface = compile_source(src,output_values=["abi","bin"],import_remappings=libs).popitem()
+    contract_id, contract_interface = compile_source(src,output_values=["abi","bin"],import_remappings=libs,evm_version="berlin").popitem()
     return contract_interface
 
 
@@ -92,7 +94,7 @@ class Polygon (Network):
     abi=contract_interface['abi']
     bytecode=contract_interface['bin']
     constructor_contract=self.w3.eth.contract(abi=abi,bytecode=bytecode).constructor(uri,name,symbol)
-    _tx=self.send_transaction(constructor_contract,_miner,10000000)
+    _tx=self.send_transaction(constructor_contract,_miner)
 
     addr=self.w3.eth.get_transaction_receipt(_tx["hash"])['contractAddress']
     _contract=self.w3.eth.contract(address=addr,abi=abi)
@@ -427,6 +429,7 @@ class Polygon (Network):
       "link_mint":self.getExplorer(nft_address,"token"),
       "link_transaction":tx["explorer"],
       "link_gallery":self.getGallery(miner.address),
+      "link_nft_gallery":self.getGallery(miner.address),
       "out":"",
       "cost":0,
       "unity":"MATIC",
@@ -467,7 +470,7 @@ class Polygon (Network):
     contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr.split("-")[0]),abi=self.abi)
     if not new_owner.startswith("0x"): new_owner=self.find_key(new_owner)
     index=int(nft_addr.split("-")[1]) if "-" in nft_addr else 0
-    rc= self.send_transaction(contract.functions.transferFrom(owner.address,new_owner.address,index),owner)
+    rc= self.send_transaction(contract.functions.transferFrom(owner.address,new_owner,index),owner)
     return rc
 
 
@@ -501,7 +504,7 @@ class Polygon (Network):
 
   def create_account(self,email="",seed="",domain_appli="",
                          subject="Votre compte Polygon est disponible",histo:DAO=None,dictionnary={},
-                     mail_new_wallet="",mail_existing_wallet="",send_qrcode_with_mail=True,send_real_email=True) -> Key:
+                     mail_new_wallet="",mail_existing_wallet="",send_qrcode_with_mail=True,send_real_email=True,lang="english") -> Key:
     """
     :param fund:
     :param name:
@@ -512,7 +515,7 @@ class Polygon (Network):
     if histo:
       pubkey=histo.get_address(email,self.network)
       if pubkey:
-        _u:eth_account.Account=self.w3.eth.account.create()
+        _u:Account=self.w3.eth.account.create()
         send_mail(open_html_file(mail_existing_wallet,{
           "wallet_address":pubkey,
           "blockchain_name":"Polygon",
@@ -523,12 +526,11 @@ class Polygon (Network):
         },domain_appli=domain_appli),email,subject=subject)
         return Key(address=pubkey)
 
-    words=""
     if len(seed) == 0:
-      _u=self.w3.eth.account.create()
-    else:
-      _u=self.w3.eth.account.create_with_mnemonic(passphrase=seed)
-      words=seed
+      Account.enable_unaudited_hdwallet_features()
+      seed=generate_mnemonic(24,lang)
+
+    _u=self.w3.eth.account.create_with_mnemonic(passphrase=seed)[0]
 
     pubkey = _u.address
     secret_key=self.w3.to_hex(_u.key)
@@ -543,13 +545,14 @@ class Polygon (Network):
         "url_wallet":self.getExplorer(pubkey),
         "url_explorer":self.getExplorer(pubkey),
         "other_wallet":"https://metamask.io/",
-        "words":words,
+        "secret_key":secret_key,
+        "words":seed,
         "qrcode":"cid:qrcode",
         "access_code":get_access_code_from_email(pubkey)
       },domain_appli=domain_appli),email,subject=subject):
         histo.add_email(email,pubkey,self.network)
 
-    return Key(secret_key=secret_key,name=email.split("@")[0],seed=words,network="polygon",address=pubkey)
+    return Key(secret_key=secret_key,name=email.split("@")[0],seed=seed,network="polygon",address=pubkey)
 
   def faucet(self,addr:str,amount:float,from_account:str="bank"):
     bank=self.get_account(from_account)
