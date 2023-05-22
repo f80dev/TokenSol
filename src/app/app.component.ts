@@ -4,7 +4,7 @@ import {UserProfil, UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {Location} from "@angular/common";
-import {$$, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
+import {$$, convert_to_list, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
 import {OperationService} from "./operation.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "./device.service";
@@ -142,57 +142,53 @@ export class AppComponent implements OnInit {
   }
 
 
-  init_form(){
-    getParams(this.routes,"params",true).then((params:any)=>{
-      $$("Analyse des paramètres par la fenetre principale ",params);
-      this.user.appname=params["appname"] || environment.appname;
-      if(params.hasOwnProperty("toolbar")){
-        this.user.toolbar_visible=params["toolbar"]
-      }else{
-        this.user.toolbar_visible=true;  //Par défaut on ne montre pas la toolbar
-      }
+  async init_form() {
+    let params:any = await getParams(this.routes, "params", true)
+    $$("Analyse des paramètres par la fenetre principale ", params);
+    this.user.appname = params["appname"] || environment.appname;
+    if (params.hasOwnProperty("toolbar")) {
+      this.user.toolbar_visible = params["toolbar"]
+    } else {
+      this.user.toolbar_visible = true;  //Par défaut on ne montre pas la toolbar
+    }
 
-      this.visual=params["visual"] || environment.splash_visual;
-      this.claim=params["claim"] || environment.claim;
-      this.network_service.server_nfluent=params["server"] || environment.server;
+    if (params.favicon) this.device.setFavicon(params.favicon);
+    this.device.setTitle(params.appname);
+    this.visual = params["visual"] || environment.splash_visual;
+    this.claim = params["claim"] || environment.claim;
+    this.network_service.server_nfluent = params["server"] || environment.server;
 
-      this.user.advance_mode=params["server"] || false;
-      this.user.merchant=params["merchant"] || environment.merchant;
+    this.user.advance_mode = params["server"] || false;
+    this.user.merchant = params["merchant"] || environment.merchant;
 
-      $$("Préparation des réseaux disponibles")
-      this.network_service.networks_available=params["networks"] ? params["networks"].split(",") : environment.networks_available.split(",");
-      this.network_service.stockage_available=params["stockage"] ? params["stockage"].split(",") : environment.stockage.split(",");
-      this.network_service.stockage_document_available=params["stockage_document"] ? params["stockage_document"].split(",") : environment.stockage_document.split(",");
+    $$("Préparation des réseaux disponibles")
+    this.network_service.networks_available = convert_to_list(params["networks"] || environment.networks_available)
+    this.network_service.stockage_available = convert_to_list(params["stockage"] || environment.stockage.split(","));
+    this.network_service.stockage_document_available = convert_to_list(params["stockage_document"] || environment.stockage_document)
 
-      this.networks=this.network_service.networks_available.map((x:any)=>{return {label:x,value:x}});
-      let network_name=params["network"]
-      if(this.network_service.networks_available.indexOf(network_name)==-1)network_name=this.networks[0].value;
-      let index=find(this.networks,{value:network_name,label:network_name},"value");
-      this.network_service.network=network_name;
-      this.sel_network=this.networks[index];
+    this.networks = this.network_service.networks_available.map((x: any) => {
+      return {label: x, value: x}
+    });
 
-      if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
-        this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{
-          this.network_service.init_keys().then(()=>{
-            this.showSplash=false;
-          });
+    // if(this.network_service.networks_available.indexOf(network_name)==-1)network_name=this.networks[0].value;
+    // let index=find(this.networks,{value:network_name,label:network_name},"value");
+    if (this.networks.length > 0) {
+      this.network_service.network = this.networks[0].value;
+      this.sel_network = this.networks[0].value;
+      if (params.hasOwnProperty("addr") || params.hasOwnProperty("miner")) {
+        this.user.init(params["addr"] || params["miner"], this.network_service.network).then(() => {
+          // this.network_service.init_keys().then(()=>{
+          //
+          // });
         });
-      } else {
-        this.showSplash=false;
       }
+    }
 
-      this.user.addr=params["addr"]
-      this.network_service.version=params["version"] || "main";
+    setTimeout(() => {this.showSplash = false}, 2500);
+    this.user.addr = params["addr"]
+    this.network_service.version = params["version"] || "main";
+    this.update_menu();
 
-      // if(!params.hasOwnProperty("appname") && !params.hasOwnProperty("toolbar")){
-      //   this.router.navigate(["pagenotfound"],{queryParams:{message:"Parametre de l'application incorrect"}})
-      // }
-
-      this.update_menu();
-
-    }).catch(
-        ()=>{}
-    );
   }
 
   logout(){

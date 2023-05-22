@@ -340,7 +340,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
             let seq=result.sequences[i];
             this.network.get_composition(seq,this.sel_config!.layers,this.sel_config?.data,size,"base64").subscribe((result:any)=>{
               $$("Récupération de "+result.images[0].substring(0,20)+"...")
-              this.add_to_preview([result.images[0]],[result.urls[0]])
+              this.add_to_preview([result.images[0]],[result.urls[0]],[result.files[0]])
 
               if(this.previews.length==real_limit){
                 this.message_preview="";
@@ -425,13 +425,14 @@ export class CreatorComponent implements OnInit,OnDestroy {
                 this.sel_config?.width+"x"+this.sel_config?.height,
                 format).subscribe((result:any)=>{
 
-              this.add_to_preview(result.urls,result.urls);
+              this.add_to_preview(result.urls,result.urls,result.files);
 
               if(this.previews.length==sequences.length){
                 this.message_preview="";
                 if(format.indexOf("mint")>-1)this.router.navigate(["mint"])
                 if(format.indexOf("zip")>-1){
-                  this.network.create_zip(result.files,this.user.profil.email).subscribe((result:any)=>{
+                  let lst_file=this.previews.map((x: any) => {return x.file})
+                  this.network.create_zip(lst_file,this.user.profil.email).subscribe((result:any)=>{
                     if(!this.user.profil.email){
                      open(result.zipfile,"visuels")
                     }else{
@@ -1207,9 +1208,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
     this.previews[idx]=img;
   }
 
-  add_to_preview(images:any[],urls:any[]) {
+  add_to_preview(images:any[],urls:any[],files:any[]) {
     for(let i=0;i<images.length;i++){
-      this.previews.push({src:images[i],url:urls[i],selected:true,style:{width: "100px","margin-left":"5px"}});
+      this.previews.push({src:images[i],url:urls[i],file:files[i],selected:true,style:{width: "100px","margin-left":"5px"}});
     }
   }
 

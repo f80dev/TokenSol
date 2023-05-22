@@ -9,14 +9,14 @@ export interface CryptoKey {
   name: string | null
   address: string
   privatekey:string | null
-  encrypt:string | null
+  encrypt:string | undefined
   balance:number | null
   qrcode:string | null
   explorer:string | null
   unity:string | null
 }
 
-export function newCryptoKey(address="",name="",privateKey="",encrypted=null) : CryptoKey {
+export function newCryptoKey(address="",name="",privateKey="",encrypted:string | undefined=undefined) : CryptoKey {
   let rc:CryptoKey= {
     explorer:null, qrcode: "", unity: "",
     name:name,
@@ -512,22 +512,31 @@ export function isEmail(addr="") {
 
 
 export interface Bank {
-  miner:string
-  refund: number
+  miner:CryptoKey
+  refund: number  //Montant de rechargement
   title: string
   network: string
   token: string
+  limit:number //Limit de rechargement par jour
+  histo: string //Base de données de stockage de l'historique des transactions
 }
 
+export function convert_to_list(text:string="",separator=",") : string[] {
+  text=text.trim()
+  if(text.length==0)return [];
+  return text.split(",");
+}
 
 export function extract_bank_from_param(params:any) : Bank | undefined {
   if(params && params["bank.miner"] && params["bank.token"]){
     return {
-      miner: params["bank.miner"],
+      miner: newCryptoKey("","","",params["bank.miner"]),
       network: params["bank.network"],
       refund: params["bank.refund"],
       title: params["bank.title"],
-      token: params["bank.token"]
+      token: params["bank.token"],
+      limit: params["bank.limit"],
+      histo:params["bank.histo"],
     }
   }
 

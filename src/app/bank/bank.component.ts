@@ -46,11 +46,11 @@ export class BankComponent implements OnInit {
 
   refund() {
     if(this.bank && this.addr.length>0){
-      let bank:CryptoKey=newCryptoKey("","theBank",this.bank!.miner);
       wait_message(this,"Ajout de "+this.bank!.refund+" "+this.token.name+" à votre compte ...");
 
-      this.network.refund(bank,this.addr,this.bank?.token,this.bank!.refund,"Rechargement",this.bank.network).subscribe((result)=>{
+      this.network.refund(this.bank,this.addr).subscribe((result)=>{
         $$("Fin du rechargement ",result);
+        this.addr=result.address;
         this.transaction=result;
         wait_message(this)
         if(result.error==""){
@@ -60,9 +60,13 @@ export class BankComponent implements OnInit {
           })
         } else {
           showMessage(this,result.error);
+          wait_message(this)
+          this.show_can_close=true
         }
 
-      },(err:any)=>{showError(this,err)})
+      },(err:any)=>{
+        showError(this,err)
+      })
     }
   }
 

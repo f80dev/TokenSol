@@ -6,7 +6,7 @@ import {HostListener, Injectable, OnInit} from '@angular/core';
 // } from "@solana/web3.js";
 // import * as SPLToken from "@solana/spl-token";
 import {HttpClient, HttpErrorResponse} from "@angular/common/http";
-import {$$, CryptoKey, encrypt, words} from "../tools";
+import {$$, Bank, CryptoKey, encrypt, words} from "../tools";
 import {environment} from "../environments/environment";
 
 import {catchError, retry, Subject, throwError, timeout} from "rxjs";
@@ -854,10 +854,10 @@ export class NetworkService implements OnInit {
     }
 
 
-    refund(_from:CryptoKey,dest:string,token_id: string="egld",amount:number=1.0,comment="",network="elrond-devnet") {
+    refund(bank:Bank,dest:string,comment="") {
         //@bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
-        let body={bank:_from,data:comment,network:network}
-        return this._post("refund/"+dest+"/"+amount+"/"+token_id+"/","",body,120000);
+        let body={bank:bank.miner,data:comment,network:bank.network,limit:bank.limit,histo:bank.histo}
+        return this._post("refund/"+dest+"/"+bank.refund+"/"+bank.token+"/","",body,120000);
     }
 
     get_collections(owners_or_collections: string,network="",detail=false) {

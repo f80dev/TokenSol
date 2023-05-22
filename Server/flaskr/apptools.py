@@ -330,7 +330,9 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
   #   }
 
   if ("result" in rc) and ("transaction" in rc["result"]) and (network.network!="file") and not dao is None:
-    dao.add_histo(request.args.get("ope",""),"mint",miner.address,collection["id"],rc["result"]["transaction"],network.network,"Minage")
+    dao.add_histo(
+      ope=request.args.get("ope",""),command="mint",account=miner.address,collection_id=collection["id"],
+      transaction_id=rc["result"]["transaction"],network=network.network,comment="Minage")
 
   return rc
 

@@ -769,7 +769,8 @@ class ArtEngine:
       layers=config["layers"]
     for l in layers:
       self.add(Layer(name=l["name"],unique=l["unique"],indexed=l["indexed"],
-                     translation=l["translation"],position=l["position"],
+                     translation=l["translation"] if "translation" in l else "0,0",
+                     position=l["position"]  if "position" in l else "0,0",
                      elements=l["elements"]))
 
 

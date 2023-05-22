@@ -194,6 +194,7 @@
             <th>Description</th>
             <th>Blockchain</th>
             <th>Visuel d'intro</th>
+            <th>Icone</th>
             <th>Commandes</th>
             <th>% max</th>
           </tr>
@@ -202,6 +203,7 @@
             <td>{{row.comment}}</td>
             <td>{{row.networks}}</td>
             <td><a [href]="row.visual"><img style="width:100px;" [src]="row.visual"></a></td>
+            <td><a [href]="row.favicon"><img style="width:25px;" [src]="row.favicon"></a></td>
             <td>
               <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>
               <button mat-icon-button (click)="open_appli(row,'local')" title="Ouvrir l'application en local"><mat-icon>home</mat-icon></button>

@@ -447,7 +447,7 @@ def api_create_zip():
   files.append("README")
 
   filename="collection.7z"
-  archive_file=open(current_app.config["UPLOAD_FOLDER"]+filename,"wb") if is_email(email) else BytesIO()
+  archive_file=open(current_app.config["UPLOAD_FOLDER"]+filename,"wb") if not is_email(email) else BytesIO()
   with py7zr.SevenZipFile(archive_file, 'w') as archive:
     for f in files:
       if exists(current_app.config["UPLOAD_FOLDER"]+f):
@@ -457,7 +457,7 @@ def api_create_zip():
   url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
 
   if is_email(email):
-    send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection")
+    send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection",attach=archive_file)
     return jsonify({"message":"mail contenant la collection envoyé a "+email})
   else:
     return jsonify({"zipfile":url_file})
@@ -757,17 +757,33 @@ def test():
 @bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
 def api_refund(address:str,amount:str="1",token="egld"):
   _network=get_network_instance(request.json["network"])
-  _miner=Key(encrypted=request.json["bank"]["privatekey"] if type(request.json["bank"])==dict else request.json["bank"])
+  _miner=Key(obj=request.json["bank"])
+  histo=DAO(network=request.json["histo"]) if "histo" in request.json else None
+  limit=int(request.json["limit"]) if "limit" in request.json and not histo is None else 0
+
+
   if is_email(address):
     _token=_network.get_token(token)
     key=_network.create_account(address,domain_appli=current_app.config["DOMAIN_APPLI"],
-                                 subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account")
+                                 subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account",histo=histo)
     address=key.address
-  rc=_network.transfer_money(token,_miner,address,int(amount),data=request.json["data"])
+
+  rc={"address":address}
+  if histo:
+    total=0
+    for h in histo.get_histos(addr=address,start=now()-24*1000):
+      if h["command"]=="refund": total=total+int(h["params"][0])
+    if total>=limit:
+      return jsonify({"error":"Plafond de versement atteint pour la journée"})
+
+  tx_esdt=_network.transfer_money(token,_miner,address,int(amount),data=request.json["data"])
+  if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
+  rc["transaction_esdt"]=tx_esdt
 
   #Si le client n'a aucun egld on lui en envoi afin de payer les frais de réseau
   if _network.get_account(address).balance<_network.get_min_gas_for_transaction(3):
-    _network.transfer_money("egld",_miner,address,_network.get_min_gas_for_transaction(4),"Dons en Egld pour paiement des frais de gaz")
+    tx_egld=_network.transfer_money("egld",_miner,address,_network.get_min_gas_for_transaction(4),"Dons en Egld pour paiement des frais de gaz")
+    rc["transaction_egld"]=tx_egld
 
   return jsonify(rc)
 
@@ -1155,14 +1171,13 @@ def action():
           tx_log=tx["error"] if len(tx["error"])>0 else tx["result"]["transaction"]
 
           DAO(config=current_app.config).add_histo(
-            operation["id"],
-            "update_nft",
-            keyfile,
-            "",
-            tx_log,
-            body["network"],
-            "MAJ du lien data offchain par "+body["operateur"],
-            [body["token"],body["operateur"]]
+            ope=operation["id"],
+            command="update_nft",
+            addr=keyfile,
+            transaction_id=tx_log,
+            network=body["network"],
+            comment="MAJ du lien data offchain par "+body["operateur"],
+            params=[body["token"],body["operateur"]]
           )
 
           if len(tx["error"])>0: return jsonify({"error":"2","message":tx["error"]})
@@ -1170,13 +1185,14 @@ def action():
           log("Modification direct du fichier")
           if section_method["storage"]=="github":
             rc=GithubStorage(section_method["repository"],"main",GITHUB_ACCOUNT,GITHUB_TOKEN).add(body["offchain"],body["uri"],True)
-            DAO(config=current_app.config).add_histo(operation["id"],
-                          "update_metadata_file",
-                          GITHUB_ACCOUNT,"",
-                          rc,
-                          operation["network"],
-                          "MAJ direct du data offchain",
-                          [body["token"]]
+            DAO(config=current_app.config).add_histo(
+                          ope=operation["id"],
+                          command="update_metadata_file",
+                          account=GITHUB_ACCOUNT,
+                          transaction_id=rc,
+                          network=operation["network"],
+                          comment="MAJ direct du data offchain",
+                          params=[body["token"]]
                           )
 
         return jsonify({
@@ -1736,7 +1752,7 @@ def mint_for_contest(confirmation_code=""):
 
   if len(rc["error"])==0:
     if not _ope is None:
-      dao.add_histo(_ope["id"],"mint",account,nft.collection["name"],rc["result"]["transaction"],_ope["network"],"minage pour loterie")
+      dao.add_histo(command="mint",addr=account,ope=_ope["id"],transaction_id=rc["result"]["transaction"],network=_ope["network"],comment="minage pour loterie")
 
     DAO(_data["domain"],_data["dbname"]).update(_data.toJson(),"quantity")
 
@@ -1886,7 +1902,7 @@ def keys(name:str=""):
   """
   dao=DAO(config=current_app.config)
 
-  network=request.args.get("network","")
+  network=request.args.get("network","").strip()
   if network=="undefined" or len(network)==0: return returnError("Le réseau doit être précisé")
   _network=get_network_instance(network)
 

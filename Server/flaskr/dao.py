@@ -282,12 +282,12 @@ class DAO(Storage,Network):
   #   if id.startswith("db_"):id=id[3:]
   #   return self.db["storage"].find_one(filter={"_id":ObjectId(id)})
 
-  def add_histo(self, ope,command,account, collection_id,transaction_id,network="",comment="",params=list()):
+  def add_histo(self, command,addr,transaction_id,ope="", collection_id="",network="",comment="",params=list()):
     if not self.db is None:
       self.db["histo"].insert_one({
         "operation":ope,
         "command":command,
-        "addr":account,
+        "addr":addr,
         "collection":collection_id,
         "ts":now(),
         "transaction":transaction_id,
@@ -547,6 +547,18 @@ class DAO(Storage,Network):
   def save_nft(self, nft):
     _nft=nft.__dict__
     return self.db["nfts"].replace_one(filter={"address":nft.address},replacement=_nft,upsert=True)
+
+  def get_histos(self, addr="",start=0,end=0):
+    """
+    Retourne l'histo entre deux dates
+    :param start:
+    :return:
+    """
+    if end==0:end=now()
+    rc=list()
+    for t in list(self.db["histo"].find({"addr":addr})):
+      if t["ts"]>start and t["ts"]<end: rc.append(t)
+    return rc
 
 
 
