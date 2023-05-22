@@ -1,3 +1,5 @@
+import {newCryptoKey} from "../tools";
+
 export const environment = {
   production: true,
   mail:"contact@nfluent.io",
@@ -38,11 +40,13 @@ export const environment = {
   },
 
   bank:{
-    miner: "nfluent: Z0FBQUFBQmtYUjJVbS1Uc0lpa2FTR2F0SnF4LW1HUHIzbHFKN2hCVmRPN3NRR1R3Wk4tUnhfcUxqUE9IQVdObzMxMHgtazhrT1hpWXVndENZallGNnI1Q2RTLVQ1N2d0TEQ2dHNmVlByV3B0RlR3SUMxejhKMHZUeVJ3NHl6dnNFNEIyZWk2eGZsS1hWU2FuQnljcGRDUEh4WFhSMTBRTFFLdHkxeTJuUjZxYWRRc1dVN2FqYlZzPQ==",
+    miner: newCryptoKey("","","","nfluent: Z0FBQUFBQmtYUjJVbS1Uc0lpa2FTR2F0SnF4LW1HUHIzbHFKN2hCVmRPN3NRR1R3Wk4tUnhfcUxqUE9IQVdObzMxMHgtazhrT1hpWXVndENZallGNnI1Q2RTLVQ1N2d0TEQ2dHNmVlByV3B0RlR3SUMxejhKMHZUeVJ3NHl6dnNFNEIyZWk2eGZsS1hWU2FuQnljcGRDUEh4WFhSMTBRTFFLdHkxeTJuUjZxYWRRc1dVN2FqYlZzPQ=="),
     title:"Bienvenu a la banque des NFluCoin",
     refund:5,
     token:"NFLUCOIN-4921ed",
-    network:"elrond-devnet"
+    network:"elrond-devnet",
+    limit:5,
+    histo:"db-server-nfluent"
   },
 
 

@@ -44,7 +44,9 @@ export const environment = {
     title:"Bienvenu a la banque des NFluCoin",
     refund:5,
     token:"NFLUCOIN-4921ed",
-    network:"elrond-devnet"
+    network:"elrond-devnet",
+    limit:5,
+    histo:"db-server-nfluent"
   },
 
 

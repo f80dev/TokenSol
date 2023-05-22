@@ -1188,7 +1188,7 @@ def action():
             DAO(config=current_app.config).add_histo(
                           ope=operation["id"],
                           command="update_metadata_file",
-                          account=GITHUB_ACCOUNT,
+                          addr=GITHUB_ACCOUNT,
                           transaction_id=rc,
                           network=operation["network"],
                           comment="MAJ direct du data offchain",
@@ -1752,7 +1752,11 @@ def mint_for_contest(confirmation_code=""):
 
   if len(rc["error"])==0:
     if not _ope is None:
-      dao.add_histo(command="mint",addr=account,ope=_ope["id"],transaction_id=rc["result"]["transaction"],network=_ope["network"],comment="minage pour loterie")
+      dao.add_histo(command="mint",
+                    addr=account,ope=_ope["id"],
+                    transaction_id=rc["result"]["transaction"],
+                    network=_ope["network"],
+                    comment="minage pour loterie")
 
     DAO(_data["domain"],_data["dbname"]).update(_data.toJson(),"quantity")
 

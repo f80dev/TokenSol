@@ -522,6 +522,8 @@ export interface Bank {
 }
 
 export function convert_to_list(text:string="",separator=",") : string[] {
+  if(!text)return [];
+  if(typeof text!="string")return text;
   text=text.trim()
   if(text.length==0)return [];
   return text.split(",");
