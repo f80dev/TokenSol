@@ -21,7 +21,7 @@ from flaskr.secret import POLYGON_SCAN_API_KEY
 
 POLYGON_DIR="./Polygon/"
 POLYGON_KEY_DIR=POLYGON_DIR+"Keys/"
-install_solc(version='latest')
+version=install_solc(version='latest')
 
 
 POLYGON_BANK_ACCOUNT={
@@ -52,8 +52,8 @@ class Polygon (Network):
 
 
 
-  def send_transaction(self,method,_account:Key) -> dict:
-    gas_needed=method.estimate_gas({"from":_account.address})
+  def send_transaction(self,method,_account:Key,gas_needed=0) -> dict:
+    if gas_needed==0: gas_needed=method.estimate_gas({"from":_account.address})
     transac=method.build_transaction({"from":_account.address,"gas":gas_needed,"nonce":self.w3.eth.get_transaction_count(_account.address)})
     sign_transac=self.w3.eth.account.sign_transaction(transac,private_key=_account.secret_key)
     tx_hash =self.w3.eth.send_raw_transaction(sign_transac.rawTransaction)
@@ -92,7 +92,7 @@ class Polygon (Network):
     abi=contract_interface['abi']
     bytecode=contract_interface['bin']
     constructor_contract=self.w3.eth.contract(abi=abi,bytecode=bytecode).constructor(uri,name,symbol)
-    _tx=self.send_transaction(constructor_contract,_miner)
+    _tx=self.send_transaction(constructor_contract,_miner,10000000)
 
     addr=self.w3.eth.get_transaction_receipt(_tx["hash"])['contractAddress']
     _contract=self.w3.eth.contract(address=addr,abi=abi)
@@ -208,8 +208,13 @@ class Polygon (Network):
     return addr
 
 
-  def get_balance(self,addr):
-    return self.w3.eth.get_balance(addr)
+  def get_balance(self,addr,token_id=""):
+    if len(token_id)==0:
+      return self.w3.eth.get_balance(addr)
+    else:
+      raise NotImplementedError("Fonctionnalité de récupération non implémentée")
+
+
 
   def get_account(self,addr) -> NfluentAccount:
     if addr is None: return None
@@ -394,10 +399,13 @@ class Polygon (Network):
            description:str="", collection:dict={},
            properties: list=[],storage:Storage=None,
            files=[], quantity=1, royalties=0,
-           visual="", tags="",creators=[],
+           visual="", tags="",creators=[],simulation=False,
            domain_server="",_metadata=None,price=0,symbol=""):
-    #properties["tag"]=tags
-    #properties["royalties"]=royalties
+
+    if len(miner.address)==0:
+      acc=self.w3.eth.account.from_key(miner.secret_key)
+      miner.address=acc.address
+
     if _metadata is None:
       _metadata=self.opensea_metadata(title,description,visual,properties,collection=collection,creators=creators,tags=tags)
 
@@ -437,10 +445,11 @@ class Polygon (Network):
     :return:
     """
     addr=self.w3.to_checksum_address(nft_addr)
-    if not self.abi: self.abi=self.init_contract_interface()["abi"]
-    _contract=self.w3.eth.contract(address=addr,abi=self.abi)
+
     #voir https://docs.openzeppelin.com/contracts/3.x/api/token/erc721#IERC721-approve-address-uint256-
     if operator!=miner.address:
+      if not self.abi: self.abi=self.init_contract_interface()["abi"]
+      _contract=self.w3.eth.contract(address=addr,abi=self.abi)
       tx=self.send_transaction(_contract.functions.approve(operator,0),miner)
     return True
 

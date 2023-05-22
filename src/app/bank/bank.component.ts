@@ -125,4 +125,8 @@ export class BankComponent implements OnInit {
     this.balance=0;
     this.save_local();
   }
+
+  cancel() {
+    this.change_addr();
+  }
 }

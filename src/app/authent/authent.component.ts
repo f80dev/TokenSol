@@ -58,7 +58,6 @@ export class AuthentComponent implements OnInit {
   @Input() showNfluentWalletConnect=false;
   @Input() address: string="";
   @Input() nfluent_server: string=environment.server;
-
   @Input() directShowQRCode:boolean=false;      //Propose directement les qrcodes ou laisse l'utilisateur le demander (par défaut)
 
   strong=false;                     //Niveau d'authentification
@@ -79,23 +78,24 @@ export class AuthentComponent implements OnInit {
   relayUrl:string = "wss://relay.walletconnect.com";
   qrcode_enabled: boolean = true;
   url_xportal_direct_connect: string="";
+  web3Provider: any;
 
 
   constructor(
-    public api:NetworkService,
-    public _location:Location,
-    public routes:ActivatedRoute,
-    public device:DeviceService,
-    public socialAuthService: SocialAuthService,
-    public toast:MatSnackBar
+      public api:NetworkService,
+      public _location:Location,
+      public routes:ActivatedRoute,
+      public device:DeviceService,
+      public socialAuthService: SocialAuthService,
+      public toast:MatSnackBar
   ) {
 
     const callbacks:any ={
-        onClientLogin: async ()=> {
-              this.address=await this.provider.getAddress();
-              },
-        onClientLogout: ()=> {},
-      }
+      onClientLogin: async ()=> {
+        this.address=await this.provider.getAddress();
+      },
+      onClientLogout: ()=> {},
+    }
 
     this.provider = new WalletConnectV2Provider(callbacks, this.get_chain_id(), this.relayUrl, this.walletConnect_ProjectId);
 
@@ -246,7 +246,7 @@ export class AuthentComponent implements OnInit {
     if(!isEmail(this.address) && !this.api.isElrond(this.address)){
       showMessage(this,"Pour l'instant, Le service n'est compatible qu'avec les adresses mail ou elrond");
     } else {
-        this.success();
+      this.success();
     }
   }
 
@@ -332,14 +332,14 @@ export class AuthentComponent implements OnInit {
 
   update_dynamic_token() {
     navigator.clipboard.readText().then(
-      text => {
-        this.on_flash({data:text});
-      }
-    )
-      .catch(error => {
-          showMessage(this,'Impossible de lire le presse-papier');
+        text => {
+          this.on_flash({data:text});
         }
-      );
+    )
+        .catch(error => {
+              showMessage(this,'Impossible de lire le presse-papier');
+            }
+        );
 
   }
 
@@ -354,19 +354,19 @@ export class AuthentComponent implements OnInit {
 
 
   async open_extension_wallet() {
-      //https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-signing-providers/#the-extension-provider-multiversx-defi-wallet
-      this.provider=ExtensionProvider.getInstance();
-      let rc=await this.provider.init();
-      let address=await this.provider.login();
-      if(address.length>0){
-        this.strong=true;
-        this.validate(address);
-      } else {
-        this.strong=false;
-        this.oninvalid.emit(false);
-      }
+    //https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-signing-providers/#the-extension-provider-multiversx-defi-wallet
+    this.provider=ExtensionProvider.getInstance();
+    let rc=await this.provider.init();
+    let address=await this.provider.login();
+    if(address.length>0){
+      this.strong=true;
+      this.validate(address);
+    } else {
+      this.strong=false;
+      this.oninvalid.emit(false);
+    }
 
-      //this.init_wallet.emit({provider:this.provider,address:this.address});
+    //this.init_wallet.emit({provider:this.provider,address:this.address});
   }
 
   async open_web_wallet(){
@@ -409,9 +409,28 @@ export class AuthentComponent implements OnInit {
     }
   }
 
-    open_polygon_extension_wallet() {
+  async open_polygon_extension_wallet() {
+    //Voir https://medium.com/upstate-interactive/how-to-connect-an-angular-application-to-a-smart-contract-using-web3js-f83689fb6909
 
+
+    // @ts-ignore
+    let ethereum = window.ethereum;
+    if (typeof ethereum !== 'undefined') {
+      console.log('MetaMask is installed!');
     }
+    if (ethereum) {
+      this.web3Provider = ethereum;
+      try {
+        // Request account access
+        ethereum.request({ method: 'eth_requestAccounts' }).then( (address:any) => {
+          console.log("Account connected: ", address[0]); // Account address that you had imported
+        });
+      } catch (error) {
+        // User denied account access...
+        console.error("User denied account access");
+      }
+    }
+  }
 
   open_xportal() {
     open(this.url_xportal_direct_connect)
