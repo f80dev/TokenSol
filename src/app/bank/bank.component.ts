@@ -11,7 +11,7 @@ import {
   $$,
   isEmail,
   Bank,
-  extract_bank_from_param
+  extract_bank_from_param, apply_params
 } from "../../tools";
 import {environment} from "../../environments/environment";
 import {wait_message} from "../hourglass/hourglass.component";
@@ -33,7 +33,8 @@ export class BankComponent implements OnInit {
   token: any;
   border="2%";
   size="90%";
-  background_image: string="";
+  visual: string="";
+  background: string="";
 
   public constructor(
     public network:NetworkService,
@@ -89,7 +90,7 @@ export class BankComponent implements OnInit {
       })
       this.network.init_network(this.bank.network);
     }
-    this.background_image=params.visual || "";
+    apply_params(this,params,environment.bank)
     this.addr=params.addr || params.address || localStorage.getItem("faucet_addr") || "";
     this.refresh_balance();
   }

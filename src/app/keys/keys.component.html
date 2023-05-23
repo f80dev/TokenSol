@@ -107,17 +107,27 @@
           <mat-icon>content_copy</mat-icon>
         </button>
 
-        <button type="button" mat-raised-button (click)="open_wallet(key)">
-          Wallet
+        <button type="button" title="voir le wallet" mat-icon-button (click)="open_wallet(key)">
+          <mat-icon>money</mat-icon>
         </button>
-        <button type="button" mat-raised-button (click)="open_lazy_wallet(key)">
-          Lazy
+
+        <button type="button" title="voir dans l'explorer" mat-icon-button (click)="open_explorer(key)">
+          <mat-icon>person_search</mat-icon>
         </button>
+
+        <button type="button" mat-icon-button (click)="open_gallery(key)">
+          <mat-icon>photo</mat-icon>
+        </button>
+
+<!--        <button type="button" mat-raised-button (click)="open_lazy_wallet(key)">-->
+<!--          Lazy-->
+<!--        </button>-->
+
         <button type="button" mat-raised-button (click)="open_collections(key,'nfluent')">
           Collections
         </button>
         <button type="button" mat-raised-button (click)="open_collections(key,network.isElrond() ? 'inspire' : 'opensea' )">
-          Gallerie
+          SpotLight
         </button>
         <button type="button" mat-raised-button mat-button
                 [cdkCopyToClipboard]="key.address"

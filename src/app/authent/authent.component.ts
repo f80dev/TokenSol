@@ -68,18 +68,15 @@ export class AuthentComponent implements OnInit {
   access_code="";
 
   nfluent_wallet_connect_qrcode="";
-
   provider: any
   _operation: Operation | undefined;
   private_key="";
   enabled_webcam: boolean=false;
 
-
   relayUrl:string = "wss://relay.walletconnect.com";
   qrcode_enabled: boolean = true;
   url_xportal_direct_connect: string="";
   web3Provider: any;
-
 
   constructor(
       public api:NetworkService,
@@ -98,7 +95,6 @@ export class AuthentComponent implements OnInit {
     }
 
     this.provider = new WalletConnectV2Provider(callbacks, this.get_chain_id(), this.relayUrl, this.walletConnect_ProjectId);
-
   }
 
   async init_wallet_provider(){
@@ -113,14 +109,14 @@ export class AuthentComponent implements OnInit {
   }
 
 
-
-
   refresh(){
     $$("Refresh de l'écran");
     if(this.title=="" && this.showWalletConnect)this.title="Pointer ce QRcode avec un wallet compatible 'Wallet Connect'";
 
     if (this.provider) {
-      this.init_wallet_provider();
+      this.init_wallet_provider().then(()=>{
+        if(this.showWalletConnect && this.directShowQRCode)this.open_wallet_connect()
+      });
 
       // this.provider.init().then((b: boolean) => {
       //   if (this.provider) {
@@ -147,6 +143,8 @@ export class AuthentComponent implements OnInit {
       });
     }
 
+
+
   }
 
 
@@ -171,8 +169,10 @@ export class AuthentComponent implements OnInit {
       this.showWebcam = this.connexion.webcam
       this.showAddress = this.connexion.address
       this.showNfluentWalletConnect = this.connexion.nfluent_wallet_connect
-      this.refresh();
+
     }
+
+    this.refresh();
 
 
 

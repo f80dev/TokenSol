@@ -1,6 +1,6 @@
-<div style="display: inline-block;position: relative;" [style.width]="size" [style.height]="size" >
-  <app-hourglass style="margin-top: 200px" [message]="message"></app-hourglass>
-  <img *ngIf="message.length==0" [src]="image_to_show" style="width: 100%;height: 100%">
+<div style="display: inline-block;position: relative;padding:0;margin:0;" [style.width]="size" [style.height]="size" >
+  <img [src]="image_to_show" style="width: 100%;height: 100%;margin:0;">
+  <div style="position:absolute;top:10px;left:10px;" *ngIf="show_title">{{title}}</div>
 </div>
 
 

@@ -424,7 +424,7 @@ export class NetworkService implements OnInit {
 
 
 
-    get_tokens_from(type_addr:string,addr:string,limit=100,with_attr=true,filter:any=null,offset=0,network="elrond-devnet") : Promise<{result:any[],offset:number}> {
+    get_tokens_from(type_addr:string,addr:string,limit=100,with_attr=true,filter:any=null,offset=0,network="elrond-devnet") : Promise<{result:NFT[],offset:number}> {
 
         $$("Recherche de token par "+type_addr)
         return new Promise((resolve,reject) => {
@@ -441,12 +441,12 @@ export class NetworkService implements OnInit {
                     }
 
                     if(type_addr=="token"){
-                        this.build_token_from_solscan(addr).then((token:SolanaToken)=>{
-                            resolve({result:[token],offset:0});
-                        }).catch((err)=>{
-                            reject(err);
-                        });
-                        return;
+                        // this.build_token_from_solscan(addr).then((token:SolanaToken)=>{
+                        //     resolve({result:[token],offset:0});
+                        // }).catch((err)=>{
+                        //     reject(err);
+                        // });
+                        // return;
                     }
 
                 }
@@ -923,9 +923,12 @@ export class NetworkService implements OnInit {
         return this.httpClient.delete(this.server_nfluent+"/api/minerpool/"+id+"/");
     }
 
-    getExplorer(addr:string | undefined,_type="address") : string {
-        if(this.isElrond())
-            return "https://"+(this.isMain() ? "" : "devnet.")+"xspotlight.com/"+addr;
+    getExplorer(addr:string | undefined,_type="address",tools="xspotligth") : string {
+        if(this.isElrond()){
+            if(tools=="xspotlight")return "https://"+(this.isMain() ? "" : "devnet.")+"xspotligth.com/"+addr;
+            if(tools=="explorer")return "https://"+(this.isMain() ? "" : "devnet-")+"explorer.multiversx.com/"+_type+"/"+addr;
+        }
+
         if(this.isPolygon()){
             if(this.isMain()){
                 return "https://polygonscan.com/"+_type+"/"+addr;

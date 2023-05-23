@@ -190,6 +190,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
   version: any;
   nft_size: number=350;
   balance: number=0
+  claim="";
+  appname="";
+  visual="";
 
   handleImage(event: any) {
     let rc=event;
@@ -334,6 +337,11 @@ export class MywalletComponent implements OnInit,OnDestroy {
   on_authent($event: any) {
     //Cette fonction est déclenché dans le cadre du nfluent_wallet_connect
     this.strong=$event.strong;
+    if(this.addr.length>0 && this.addr!=$event.address){
+      showMessage(this,"Cette identification ne correspond pas au wallet ouvert");
+      this.strong=false;
+      return;
+    }
     if($event.strong){
       this.addr=$event.address;
       this.refresh_balance();
@@ -373,6 +381,13 @@ export class MywalletComponent implements OnInit,OnDestroy {
     open(this.api.getExplorer(this.addr),"Explorer");
   }
 
+  open_gallery() {
+    open(environment.appli+"/gallery?"+setParams({
+      toolbar:false,address:this.addr,canChange:false,duration:10,background:"https://nfluent.io/assets/paper3.jpg"
+    }),"gallery")
+
+  }
+
 
   on_reverse(evt:any) {
 
@@ -396,5 +411,10 @@ export class MywalletComponent implements OnInit,OnDestroy {
         }
       })
     }
+  }
+
+  logout() {
+    this.addr="";
+    this._location.go("/wallet",setParams({toolbar:false}))
   }
 }

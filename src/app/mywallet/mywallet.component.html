@@ -1,3 +1,9 @@
+<app-splash
+        [appname]="appname"
+        [duration]="2000"
+        [image]="visual"
+        [description]="claim"></app-splash>
+
 <div style="position: fixed;right:0px;top:0px;display: block;height:20px;color: lightgray;" *ngIf="api.network.indexOf('devnet')>-1">DevNet</div>
 <mat-tab-group [selectedIndex]="indexTab" animationDuration="1500ms"
                (selectedIndexChange)="refresh($event)"
@@ -19,6 +25,11 @@
                 title="Voir dans Inspire.art">
           <mat-icon>visibility</mat-icon>
         </button>
+        <button mat-icon-button (click)="open_gallery()"
+                title="Ouvrir en gallerie">
+          <mat-icon>photo</mat-icon>
+        </button>
+
 
         <mat-slider [max]="500" [min]="100" title="Taille des NFTs affichés"
                     style="margin-left: 10px;width: 100px;">
@@ -253,14 +264,23 @@
   </mat-tab>
 
   <mat-tab label="Préférences">
-    <app-authent *ngIf="addr?.length==0"
+    <br><br>
+    <app-authent *ngIf="addr?.length==0 || !strong"
                  [showWalletConnect]="true"
                  [showExtensionWallet]="true"
                  [showWebWallet]="true"
                  (authent)="on_authent($event)"
                  (disconnect)="on_disconnect()"
+                 [showCancel]="false"
                  [showPrivateKey]="true">
     </app-authent>
+
+    <br>
+    <button type="button" mat-raised-button (click)="logout()" *ngIf="addr.length>0">
+      Se déconnecter
+    </button>
+
+
 
 
     <div *ngIf="addr!='' && strong">

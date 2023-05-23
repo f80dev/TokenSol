@@ -16,7 +16,7 @@ export class InputComponent implements OnChanges,OnInit {
 
   @Input() maxlength:string=""
   @Input() width:string="100%";
-  @Input() maxwidth:string="100vw";
+  @Input() maxwidth:string="100%";
   @Input() color_value="darkgray";
 
 

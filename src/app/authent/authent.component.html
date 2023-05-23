@@ -101,7 +101,7 @@
   </mat-card>
 
 
-  <mat-card *ngIf="qrcode.length==0 && network.indexOf('elrond')>-1" style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background">
+  <mat-card *ngIf="qrcode.length==0 && network.indexOf('elrond')>-1 && (showWalletConnect || showExtensionWallet || showWebWallet)" style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background">
     <mat-card-title class="multiversx-text">S'authentifier sur MultiversX via</mat-card-title>
     <button type="button" mat-raised-button class="multiversx-button"
             *ngIf="showWalletConnect && qrcode.length==0"
@@ -128,7 +128,7 @@
 
   <div *ngIf="showWalletConnect && qrcode.length>0"
        style="max-width: 450px;margin-left: -10px;width:100%;text-align: center;display: inline-block;">
-    Flasher ce qrcode depuis votre wallet<br>
+    {{intro_message}}
     <img [src]="qrcode"
          (click)="qrcode=''"
          title="Flasher ce qrcode depuis votre wallet"

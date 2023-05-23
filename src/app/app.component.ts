@@ -4,7 +4,7 @@ import {UserProfil, UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {Location} from "@angular/common";
-import {$$, convert_to_list, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
+import {$$, apply_params, convert_to_list, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
 import {OperationService} from "./operation.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "./device.service";
@@ -17,7 +17,6 @@ import {menu_items} from "./menu/menu.component";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  showSplash=true;
   @ViewChild('drawer', {static: false}) drawer: MatSidenav | undefined;
 
   networks:any[]=[];
@@ -45,6 +44,7 @@ export class AppComponent implements OnInit {
   }
   status="disconnect";
   full_menu: boolean = true;
+  appname: string="";
 
   constructor(
     public user:UserService,
@@ -144,6 +144,7 @@ export class AppComponent implements OnInit {
 
   async init_form() {
     let params:any = await getParams(this.routes, "params", true)
+
     $$("Analyse des paramètres par la fenetre principale ", params);
     this.user.appname = params["appname"] || environment.appname;
     if (params.hasOwnProperty("toolbar")) {
@@ -152,10 +153,8 @@ export class AppComponent implements OnInit {
       this.user.toolbar_visible = true;  //Par défaut on ne montre pas la toolbar
     }
 
-    if (params.favicon) this.device.setFavicon(params.favicon);
-    this.device.setTitle(params.appname);
-    this.visual = params["visual"] || environment.splash_visual;
-    this.claim = params["claim"] || environment.claim;
+    apply_params(this,params,environment)
+
     this.network_service.server_nfluent = params["server"] || environment.server;
 
     this.user.advance_mode = params["server"] || false;
@@ -184,7 +183,6 @@ export class AppComponent implements OnInit {
       }
     }
 
-    setTimeout(() => {this.showSplash = false}, 2500);
     this.user.addr = params["addr"]
     this.network_service.version = params["version"] || "main";
     this.update_menu();

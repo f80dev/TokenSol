@@ -247,6 +247,28 @@ export function rotate(src: string, angle: number, quality: number=1) : Promise<
       img.src = src;
     }
   });
+}
+
+
+export function apply_params(vm:any,params:any,env:any){
+  for(let prop of ["claim","title","appname","background"]){
+    if(vm.hasOwnProperty(prop))vm[prop]=params[prop] || env[prop] || "";
+  }
+  vm.visual=params.visual || ""
+
+  if(vm.hasOwnProperty("network")){
+    if(typeof vm.network=="string")vm.network = params.networks || env.network || "elrond-devnet"
+  }
+  if(params.hasOwnProperty("advanced_mode"))vm.advanced_mode=(params.advanced_mode=='true');
+
+  if(vm.hasOwnProperty("device")){
+    vm.device.setTitle(params.appname);
+    if(params.favicon)vm.device.setFavicon(params.favicon || "favicon.ico");
+  }
+
+  if(params.style && vm.hasOwnProperty("style"))vm.style.setStyle("theme",params.style);
+  if(vm.hasOwnProperty("miner"))vm.miner = newCryptoKey("","","",params.miner || env.miner)
+
 
 }
 

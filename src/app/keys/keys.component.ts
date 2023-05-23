@@ -104,6 +104,17 @@ export class KeysComponent implements OnInit {
     })
   }
 
+  open_gallery(key: CryptoKey) {
+    this.router.navigate(["gallery"],{queryParams:{
+      toolbar:false,
+        size:60,
+        address:key.address,
+        showNfluentWalletConnect:true,
+        directShowQRCode:true,
+        showWalletConnect:true,
+        visual:"https://nfluent.io/assets/paper1.jpg"}})
+  }
+
   open_wallet(key: CryptoKey) {
     this.router.navigate(
       ["wallet"],
@@ -111,12 +122,12 @@ export class KeysComponent implements OnInit {
     );
   }
 
-  open_lazy_wallet(key: CryptoKey) {
-    this.router.navigate(
-      ["wallet"],
-      {queryParams:{p:setParams({addr:key.address,toolbar:false,takePhoto:true,network:"db-server-nfluent"},"","")}}
-    );
-  }
+  // open_lazy_wallet(key: CryptoKey) {
+  //   this.router.navigate(
+  //     ["wallet"],
+  //     {queryParams:{p:setParams({addr:key.address,toolbar:false,takePhoto:true,network:"db-server-nfluent"},"","")}}
+  //   );
+  // }
 
   open_extra_wallet(key: CryptoKey) {
     open(get_nfluent_wallet_url(key.address,this.network.network,environment.appli))
@@ -124,8 +135,8 @@ export class KeysComponent implements OnInit {
 
   open_collections(key: CryptoKey,tools="nfluent") {
     if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.network.network}});
-    if(tools=="inspire")open(this.network.getExplorer(key.address),"Explorer");
-    if(tools=="opensea")open(this.network.getExplorer(key.address),"Explorer");
+    if(tools=="inspire")open(this.network.getExplorer(key.address),"explorer");
+    if(tools=="opensea")open(this.network.getExplorer(key.address),"explorer");
   }
 
   open_elrond_wallet() {
@@ -176,4 +187,8 @@ export class KeysComponent implements OnInit {
               network: this.network.network
             },"","")}})
     }
+
+  open_explorer(key: CryptoKey) {
+    open(this.network.getExplorer(key.address,"accounts","explorer"),"explorer")
+  }
 }
