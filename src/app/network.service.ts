@@ -924,7 +924,7 @@ export class NetworkService implements OnInit {
     }
 
     getExplorer(addr:string | undefined,_type="address",tools="xspotligth") : string {
-        if(this.isElrond()){
+        if(this.isElrond(addr)){
             if(tools=="xspotlight")return "https://"+(this.isMain() ? "" : "devnet.")+"xspotligth.com/"+addr;
             if(tools=="explorer")return "https://"+(this.isMain() ? "" : "devnet-")+"explorer.multiversx.com/"+_type+"/"+addr;
         }
@@ -1039,7 +1039,7 @@ export class NetworkService implements OnInit {
     }
 
     get_sequence(layers: Layer[], limit: number,config:string="") {
-        return this._post("get_sequence/","",{layers:layers,limit:limit,config:config});
+        return this._post("get_sequence/","",{layers:layers,limit:limit,config:config},600000);
     }
 
 

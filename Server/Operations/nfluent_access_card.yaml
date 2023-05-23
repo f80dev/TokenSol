@@ -47,7 +47,7 @@ branding:                     #Utiliser pour uniformiser l'aspect des applicatio
 
 #Section permettant de décrire précisément les collections utilisées par les NFT
 collections:
-  - id: "NFLUENT-518891"          #Id de la collection. A priori cet id doit se trouver dans les sources
+  - id: "NFLUPASS-92b409"          #Id de la collection. A priori cet id doit se trouver dans les sources
     name: "Nluent Access Card"               #Ce nom est utilisé dans les outils, il peut être plus long que celui stocké dans la blockchain
     visual:  ""
     description: "Carte d'accès au site nfluent"
@@ -99,7 +99,7 @@ data:
       miner: hhoareau
       active: True
       filter:
-        collection: 643e44ef512db3e29b15dea5
+        collection: NFLUPASS-92b409
 
 
 
@@ -166,7 +166,7 @@ validate:
   #Seul les NFT qui vérifient les conditions ci-dessous sont sélectionnables pour la validation
   filters:
     collections:          #Liste des collections que le visiteur doit posséder pour avoir l'accès,
-      - "NFLUENT-518891"    #si vide on prend la collection de src ou du lazy mining
+      - "NFLUPASS-92b409"    #si vide on prend la collection de src ou du lazy mining
 
 
 

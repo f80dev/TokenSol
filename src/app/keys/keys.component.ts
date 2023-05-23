@@ -158,7 +158,6 @@ export class KeysComponent implements OnInit {
 
     encrypt_key() {
 
-
     }
 
     async create_key() {

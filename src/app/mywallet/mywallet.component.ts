@@ -1,6 +1,6 @@
 import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, getParams, isLocal, newCryptoKey, setParams, showError, showMessage} from "../../tools";
+import {$$, apply_params, getParams, isLocal, newCryptoKey, setParams, showError, showMessage} from "../../tools";
 import {ActivatedRoute, Router} from "@angular/router";
 import {environment} from "../../environments/environment";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -78,9 +78,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
     getParams(this.routes).then((params:any)=>{
       $$("Récupération des paramètres: ",params);
 
-      let network=params["network"] || "elrond-devnet";
-      if(network=="db")network="db-server-nfluent";
-      this.network=network;
+
+      apply_params(this,params,environment)
+      this.api.network=this.network;
       this.addr=params["addr"] || params["address"] || "";
 
       this.refresh_balance();

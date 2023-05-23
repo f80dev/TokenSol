@@ -416,15 +416,18 @@
       <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
 
       <br><br>
-      <app-upload-file (uploaded)="on_upload_attributs($event)"
-                       title="Associer aux visuels un fichier de descriptions / attributs"
-                       extensions=".csv,.txt">
-        Associer des propriétés
-      </app-upload-file>
+      <div style="display: flex;align-items: center;">
+        <app-upload-file (uploaded)="on_upload_attributs($event)" height="35px"
+                         title="Associer aux visuels un fichier de descriptions / attributs"
+                         extensions=".csv,.txt">
+          Associer des propriétés
+        </app-upload-file>
 
-      <button type="button" mat-raised-button (click)="clear_data()">
-        Effacer tout
-      </button>
+        <button type="button" mat-raised-button (click)="clear_data()" style="margin-left: 20px;">
+          Effacer tout
+        </button>
+
+      </div>
 
       <br><br>
 

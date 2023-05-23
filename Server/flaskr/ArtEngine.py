@@ -813,7 +813,15 @@ class ArtEngine:
     while len(sequences)<limit and _try<200:
       seq=[]
       for layer in self.layers:
-        elt:Sticker=None if len(layer.elements)==0 else (layer.random() if not layer.unique else layer.elements[0])
+
+        elt:Sticker=None
+        if len(layer.elements)>0:
+          if layer.unique:
+            elt=layer.elements[0]
+            layer.remove(elt)
+          else:
+            elt=layer.random()
+
         if elt:
           seq.append({"layer":layer.name,"sticker":elt.name})
           if layer.unique:

@@ -25,28 +25,28 @@
     </div>
 
 
-    <mat-form-field *ngIf="!data?.onlyConfirm && !data?.options" style="width: 95%;">
+    <div *ngIf="!data?.onlyConfirm && !data?.options">
 
 
         <app-input *ngIf="_type!='memo' && _type!='options'" id="txtPrompt" [value_type]="_type"
-               [max]="_max" [min]="_min"
-               [value]="data.result" (valueChange)="data.result=$event"
-               [placeholder]="data.placeholder"
+                   [max]="_max" [min]="_min"
+                   [value]="data.result" (valueChange)="data.result=$event"
+                   [placeholder]="data.placeholder"
                    (keypress)="onEnter($event)"></app-input>
-<!--        <mat-icon *ngIf="data?.emojis" matSuffix (click)="showEmoji=!showEmoji">emoji_emotions</mat-icon>-->
-
-
+        <!--        <mat-icon *ngIf="data?.emojis" matSuffix (click)="showEmoji=!showEmoji">emoji_emotions</mat-icon>-->
 
         <app-input *ngIf="_type=='memo'"
-                  [rows]="data?.n_rows || 3"
-                  value_type="memo"
-                  [maxlength]="_max.toString()" [value]="data.result"
-                  (valueChange)="data.result=$event"></app-input>
+                   [rows]="data?.n_rows || 3"
+                   value_type="memo"
+                   [maxlength]="_max.toString()" [value]="data.result"
+                   (valueChange)="data.result=$event"></app-input>
 
 
-      <mat-hint *ngIf="data?.subtitle!=''">{{data?.subtitle}}</mat-hint>
+        <mat-hint *ngIf="data?.subtitle!=''">{{data?.subtitle}}</mat-hint>
 
-    </mat-form-field>
+
+    </div>
+
 
 
   </div>
