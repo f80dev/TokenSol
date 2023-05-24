@@ -10,7 +10,6 @@ import {
   download_file,
   getParams,
   hashCode,
-  isLocal,
   normalize,
   now,
   setParams,
@@ -340,7 +339,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
             let seq=result.sequences[i];
             this.network.get_composition(seq,this.sel_config!.layers,this.sel_config?.data,size,"base64").subscribe((result:any)=>{
               $$("Récupération de "+result.images[0].substring(0,20)+"...")
-              this.add_to_preview([result.images[0]],[result.urls[0]],[result.files[0]])
+              this.add_to_preview([result.images[0]],[result.urls[0]],[result.files[0]],[result.indexes[0]])
 
               if(this.previews.length==real_limit){
                 this.message_preview="";
@@ -425,7 +424,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
                 this.sel_config?.width+"x"+this.sel_config?.height,
                 format).subscribe((result:any)=>{
 
-              this.add_to_preview(result.urls,result.urls,result.files);
+              this.add_to_preview(result.urls,result.urls,result.files,result.indexes);
 
               if(this.previews.length==sequences.length){
                 this.message_preview="";
@@ -983,7 +982,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
   //add_image_to_layer ajouter une image
-  //tag upload_file
+  //tag upload_file upload
   title_form="Générateur de visuels NFTs";
   claim="";
   show_preview:boolean=false;
@@ -1208,9 +1207,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
     this.previews[idx]=img;
   }
 
-  add_to_preview(images:any[],urls:any[],files:any[]) {
+  add_to_preview(images:any[],urls:any[],files:any[],indexes:number[]) {
     for(let i=0;i<images.length;i++){
-      this.previews.push({src:images[i],url:urls[i],file:files[i],selected:true,style:{width: "100px","margin-left":"5px"}});
+      this.previews.push({src:images[i],url:urls[i],file:files[i],index:indexes[i],selected:true,style:{width: "100px","margin-left":"5px"}});
     }
   }
 

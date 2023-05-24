@@ -7,6 +7,7 @@ from time import sleep
 from flaskr import GitHubStorage
 from flaskr.GitHubStorage import GithubStorage
 from flaskr.Keys import Key
+from flaskr.MegaUpload import MegaUpload
 from flaskr.Network import Network
 from flaskr.Polygon import Polygon
 from flaskr.StoreFile import StoreFile
@@ -154,16 +155,17 @@ def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4
   if name.startswith("dao") or name=="db": return DAO(network=platform,domain_server=domain_server)
   if name.startswith("infura"):return Infura()
   if name.startswith("ipfs"):return IPFS(IPFS_SERVER)
+  if name.startswith("megaupload"):return MegaUpload(directory=domain_server)
   return NFTStorage()
 
 
-def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True) -> Key:
+def create_account(email,network,domain_appli,histo,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True) -> Key:
   _network=get_network_instance(network)
   if _network.is_blockchain() and not is_email(email): return Key(address=email)
   if not mail_new_wallet.endswith(".html"):mail_new_wallet=mail_new_wallet+".html"
   mail_new_wallet=mail_new_wallet.replace(".html","_"+_network.network_name+".html")
   key=_network.create_account(email=email,
-                              histo=dao,
+                              histo=histo,
                               domain_appli=domain_appli,
                               mail_new_wallet=mail_new_wallet,
                               mail_existing_wallet=mail_existing_wallet,

@@ -8,6 +8,9 @@ STORJ_PASSPHRASE="hh4271!!"
 STORJ_SECRETKEY="jyeawbsgiqzc3cqq3ayr3oue5w2rdwzn5swm6zs2z3znpl64gshbs"
 STORJ_ENDPOINT="https://gateway.storjshare.io"
 
+MEGAUPLOAD_EMAIL="rv@f80.fr"
+MEGAUPLOAD_PASSWORD="hh4271!!"
+
 #Initialisation de la base sur le serveur:
 #ouverture du firewall : firewall-cmd --zone=public --add-port=27017/tcp ou "ufw allow 27017/tcp" si on utilise ufw
 #docker rm -f f80db

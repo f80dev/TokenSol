@@ -123,10 +123,11 @@ export class NetworkService implements OnInit {
     // }
 
 
-    burn(nft_addr:string | undefined,key:string,network="elrond-devnet",delay=1) {
+    burn(nft_addr:string | undefined,key:CryptoKey,network="elrond-devnet",quantity=1) {
         return new Promise((resolve, reject) => {
             this.wait("En cours de destruction");
-            this.httpClient.get(this.server_nfluent+"/api/burn?&delay="+delay+"&account="+nft_addr+"&keyfile="+key+"&network="+network).subscribe((r:any)=>{
+            let body={miner:key}
+            this.httpClient.post(this.server_nfluent+"/api/burn/?&nft_addr="+nft_addr+"&quantity="+quantity+"&network="+network,body).subscribe((r:any)=>{
                 this.wait("");
                 if(r.result=="error")
                     reject(r.error);
@@ -766,13 +767,14 @@ export class NetworkService implements OnInit {
         return this.httpClient.post(this.server_nfluent+"/api/generate_svg/",data);
     }
 
-    create_account(network: string, email: string,new_account_mail="mail_new_account",existing_account_mail="mail_existing_account",dictionnary={}) {
+    create_account(network: string, email: string,new_account_mail="mail_new_account",existing_account_mail="mail_existing_account",dictionnary={},force=false) {
         //On pourra utiliser %network% pour inserer le nom du réseau dans le nom des emails de confirmations
         let body={
             email:email,
             mail_new_wallet:new_account_mail.replace("%network%",network.split("-")[0]),
             mail_existing_wallet:existing_account_mail.replace("%network%",network.split("-")[0]),
-            dictionnary:dictionnary
+            dictionnary:dictionnary,
+            force:force
         }
         return this.httpClient.post(this.server_nfluent+"/api/keys/?network="+network,body);
     }
@@ -923,9 +925,9 @@ export class NetworkService implements OnInit {
         return this.httpClient.delete(this.server_nfluent+"/api/minerpool/"+id+"/");
     }
 
-    getExplorer(addr:string | undefined,_type="address",tools="xspotligth") : string {
+    getExplorer(addr:string | undefined,_type="address",tools="xspotlight") : string {
         if(this.isElrond(addr)){
-            if(tools=="xspotlight")return "https://"+(this.isMain() ? "" : "devnet.")+"xspotligth.com/"+addr;
+            if(tools=="xspotlight")return "https://"+(this.isMain() ? "" : "devnet.")+"xspotlight.com/"+addr;
             if(tools=="explorer")return "https://"+(this.isMain() ? "" : "devnet-")+"explorer.multiversx.com/"+_type+"/"+addr;
         }
 
@@ -1043,8 +1045,8 @@ export class NetworkService implements OnInit {
     }
 
 
-    get_composition(items:any[],layers:any[],data:any,size:string="500x500",format="webp",platform="server") {
-        return this._post("get_composition/","",{format:format,size:size,data:data,items:items,layers:layers,platform:platform},200000);
+    get_composition(item:any,layers:any[],data:any,size:string="500x500",format="webp",platform="server") {
+        return this._post("get_composition/","",{format:format,size:size,data:data,items:item,layers:layers,platform:platform},200000);
     }
 
     create_zip(files:string[],email:string="") {

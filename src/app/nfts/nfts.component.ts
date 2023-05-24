@@ -93,11 +93,11 @@ export class NftsComponent implements OnInit {
       return;
     }
 
-      this.network.burn(nft.address, this.user!, this.network.network).then(success=>{
-        if(success)this.onrefresh.emit();
-      }).catch(err => {
-        showError(this,err)
-      })
+      // this.network.burn(nft.address, this.user, this.network.network).then(success=>{
+      //   if(success)this.onrefresh.emit();
+      // }).catch(err => {
+      //   showError(this,err)
+      // })
 
 
   }

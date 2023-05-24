@@ -285,7 +285,7 @@
 
       <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
         <img [src]="img.src" [ngStyle]="img.style"
-             [title]="img.url"
+             [title]="img.url || img.index"
              (dblclick)="save_file(img)"
              (click)="select_file(img)">
       </div>

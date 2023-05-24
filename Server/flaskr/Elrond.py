@@ -1074,16 +1074,18 @@ class Elrond(Network):
     return t
 
 
-  def burn(self,_user,token_id):
+  def burn(self,token_id,_user:Key,quantity=1,backup_address=""):
     """
-    https://docs.elrond.com/developers/nft-tokens/
+    https://docs.multiversx.com/tokens/nft-tokens#burn-quantity
     :param _user:
     :param token_id:
     :return:
     """
-    _user=self.toAccount(_user)
-    data = "ESDTLocalBurn@" + str_to_hex(token_id,False) + "@" + int_to_hex(1,4)
-    t = self.send_transaction(_user,_user , _user,  data=data)
+    collection,nonce=self.extract_from_tokenid(token_id)
+    data = "ESDTNFTBurn@" + str_to_hex(collection,False) + "@" + nonce + "@" + int_to_hex(quantity,4)
+    t = self.send_transaction(_user,_user.address , _user,  data=data)
+    if t["error"]!="" and len(backup_address)>0:
+      t=self.transfer(token_id,_user,backup_address,quantity)
     return t
 
 
@@ -1330,7 +1332,7 @@ class Elrond(Network):
 
 
 
-  def extract_from_tokenid(self, token_id):
+  def extract_from_tokenid(self, token_id) -> (str,str):
     nonce=""
     collection_id=""
 

@@ -390,15 +390,16 @@ def get_sequence_collection():
 
   limit=int(request.json["limit"] or 10)
   log("Lancement de la génération de "+str(limit)+" images")
-  sequences=gen_seq.generate_sequences(limit=limit,_seed=seed)
+
+  sequences=[]
+  for idx,item in enumerate(gen_seq.generate_sequences(limit=limit,_seed=seed)):
+    item={"index":idx,"items":item}
+    sequences.append(item)
   return jsonify({"sequences":sequences})
 
 
 @bp.route('/get_composition/',methods=["POST"])
 def get_composition():
-
-  work_dir=current_app.config["UPLOAD_FOLDER"]
-
   name=request.args.get("name","mycollection").replace(".png","")
   gen=ArtEngine(name=name,
                 work_dir=current_app.config["UPLOAD_FOLDER"],
@@ -406,11 +407,11 @@ def get_composition():
                 )
   data=request.json["data"]
   size=request.json["size"].split("x")
-  platform=request.json["platform"]
+
   format=request.json["format"]
   sequences=request.json["items"]
   if len(sequences)==0: return returnError("Liste vide")
-  if type(sequences[0])!=list: sequences=[sequences]
+  if type(sequences["items"][0])!=list: sequences=[sequences]
 
   log("Traitement de la data")
   if type(data)!=dict:
@@ -422,19 +423,22 @@ def get_composition():
   urls=[]
   direct=[]
   files=[]
+  indexes=[]
   for i,seq in enumerate(sequences):
-    image=gen.compose(seq,width=int(size[0]),height=int(size[1]),ext="webp",data=data,replacements={"__idx__":str(i)})
+    image=gen.compose(seq["items"],width=int(size[0]),height=int(size[1]),ext="webp",data=data,replacements={"__idx__":str(seq["index"])})
+    filename=image.get_filename()
+    files.append(filename)
+    indexes.append(seq["index"])
+
     if "base64" in format:
       b64=image.toBase64(format="webp")
       direct.append(b64)
 
-    if "files" in format or "zip" in format:
-      filename=image.get_filename()
+  if "files" in format or "zip" in format:
       if not exists(current_app.config["UPLOAD_FOLDER"]+filename): image.save(current_app.config["UPLOAD_FOLDER"]+filename)
       urls.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+filename)
-      files.append(filename)
 
-  return jsonify({"images":direct,"urls":urls,"files":files})
+  return jsonify({"images":direct,"urls":urls,"files":files,"indexes":indexes})
 
 
 
@@ -1942,7 +1946,9 @@ def keys(name:str=""):
     else:
       email=obj["email"]
 
-      key:Key=create_account(email,dao=dao,network=_network.network,
+      key:Key=create_account(email,
+                             histo=dao if not request.json["force"] else None,
+                             network=_network.network,
                               domain_appli=current_app.config["DOMAIN_APPLI"],
                               mail_new_wallet=obj["mail_new_wallet"] if "mail_new_wallet" in obj else None,
                               mail_existing_wallet=obj["mail_existing_wallet"] if "mail_existing_wallet" in obj else None
@@ -2984,17 +2990,16 @@ def scan_for_access():
 #voir https://metaboss.rs/burn.html
 #http://127.0.0.1:9999/api/burn/?account=GwCtQjSZj3CSNRbHVVJ7MqJHcMBGJJ9eHSyxL9X1yAXy&url=
 #TODO: ajouter les restrictions d'appel
-@bp.route('/burn/')
-def burn():
-  account=request.args.get("account")
-  keyfile=request.args.get("keyfile")
-  delay=request.args.get("delay","1.0")
-  network=request.args.get("network","solana-devnet")
+@bp.route('/burn/',methods=["POST"])
+def api_burn():
+  address=request.args.get("nft_addr")
+  quantity=int(request.args.get("quantity","1"))
+  miner=Key(obj=request.json["miner"])
 
-  if "elrond" in network:
-    rc=Elrond(network).burn(keyfile,account)
-  # else:
-  #   rc=Solana(network).exec("burn one",account=account,keyfile=keyfile,delay=int(delay))
+  _network=get_network_instance(request.args.get("network",""))
+  rc=_network.burn(address,miner,quantity=quantity,backup_address="erd1w5rdhzmmu890kry09etqzqp66uyyx6dg6uzgdmt7e860xq2v072sskjgha")
 
-  return jsonify(rc)
-
+  if rc["error"]=="":
+    return jsonify({"message":"burn de "+address})
+  else:
+    return jsonify({"error":rc["error"]})

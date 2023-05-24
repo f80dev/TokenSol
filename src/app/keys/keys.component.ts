@@ -19,6 +19,8 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {OperationService} from "../operation.service";
 import {DeviceService} from "../device.service";
 import {environment} from "../../environments/environment";
+import {NFT} from "../../nft";
+import {wait_message} from "../hourglass/hourglass.component";
 
 @Component({
   selector: 'app-keys',
@@ -28,6 +30,7 @@ import {environment} from "../../environments/environment";
 export class KeysComponent implements OnInit {
   privateKey: string="";
   name: string="";
+  message="";
 
   constructor(
     public dialog:MatDialog,
@@ -135,7 +138,7 @@ export class KeysComponent implements OnInit {
 
   open_collections(key: CryptoKey,tools="nfluent") {
     if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.network.network}});
-    if(tools=="inspire")open(this.network.getExplorer(key.address),"explorer");
+    if(tools=="inspire")open(this.network.getExplorer(key.address,"accounts"),"explorer");
     if(tools=="opensea")open(this.network.getExplorer(key.address),"explorer");
   }
 
@@ -189,5 +192,27 @@ export class KeysComponent implements OnInit {
 
   open_explorer(key: CryptoKey) {
     open(this.network.getExplorer(key.address,"accounts","explorer"),"explorer")
+  }
+
+  async burn_all_nft(key: CryptoKey) {
+    let rep:any=await _prompt(this,"Bruler tous les NFTs","","","oui/non","Brûler","Annuler",true);
+    if(rep=="yes"){
+      wait_message(this,"Récupération des NFT de "+key.address)
+      let resp=await this.network.get_tokens_from("owner",key.address,100,false,null,0,this.network.network);
+      let i=resp.result.length;
+      for(let token of resp.result){
+        try{
+          if(token.supply>0){
+            await this.network.burn(token.address,key,this.network.network,1)
+          }
+        }catch (e) {
+          wait_message(this,"Impossible de supprimer "+token.name)
+        }
+
+        i=i-1;
+        wait_message(this,"Reste "+i+" NFTs a brûler")
+      }
+      wait_message(this)
+    }
   }
 }

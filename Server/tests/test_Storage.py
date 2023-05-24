@@ -7,7 +7,8 @@ from tests.test_tools import RESSOURCE_TEST_DIR
 
 DOMAIN_SERVER="http://127.0.0.1:4242/"
 PLATFORMS=[
-	("storj","tests")
+	("megaupload","tests"),
+	("storj","tests"),
 	("githubstorage", "github-nfluentdev-storage-main"),
 	("dao", DOMAIN_SERVER),
 	("nftstorage", "")
@@ -56,6 +57,3 @@ def test_add_image():
 		cid=storage.add(img,overwrite=True)
 		result=requests.get(cid["url"]).content
 		assert result==bytes,"Les images "+img+" n'est pas bien stocké sur "+name[0]
-
-
-

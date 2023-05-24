@@ -252,11 +252,13 @@ def get_key_by_name(keys:[],name:str):
 
 
 def extract_title_from_html(name:str,replace=dict()):
-  body=requests.get(name).text
-  if not "<title>" in body: return ""
-  title=body.split("<title>")[1].split("</title>")[0]
-  for k in list(replace.keys()):
-    title=title.replace("{{"+k+"}}",str(replace.get(k)))
+  title=""
+  if name.startswith("http"):
+    body=requests.get(name).text
+    if not "<title>" in body: return ""
+    title=body.split("<title>")[1].split("</title>")[0]
+    for k in list(replace.keys()):
+      title=title.replace("{{"+k+"}}",str(replace.get(k)))
   return title
 
 

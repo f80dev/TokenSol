@@ -78,7 +78,13 @@ class Network():
   def nfluent_wallet_url(self,address:str,domain_appli=""):
     if type(address)!=str: address=address.address.bech32()
     url=domain_appli+"/wallet/?" if "localhost" in domain_appli or "127.0.0.1" in domain_appli else "https://wallet.nfluent.io/?"
-    return url+setParams({"toolbar":"false","network":self.network,"addr":address})
+    return url+setParams({
+      "toolbar":"false",
+      "network":self.network,
+      "addr":address,
+      "appname":"Nfluent Wallet",
+      "visual":"https://wallet.nfluent.io/assets/wallet.jpg"
+    })
 
 
   def get_balances(self, address,nft_addr=None):
@@ -99,7 +105,7 @@ class Network():
   def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
     return {"id":collection_name,"name":collection_name}
 
-  def burn(self,addr:str,miner:Key,n_token=1):
+  def burn(self,addr:str,miner:Key,n_token=1,backup_address=""):
     return True
 
 

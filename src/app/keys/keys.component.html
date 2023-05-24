@@ -67,6 +67,7 @@
   </div>
 
   <br>
+  <app-hourglass [message]="message"></app-hourglass>
   <h2>
     Liste des clés disponibles sur le serveur pour le {{network.network}}
     <mat-icon (click)="refresh()">refresh</mat-icon>
@@ -100,18 +101,13 @@
         <button mat-icon-button (click)="del_key(key.name)" title="supprimer">
           <mat-icon>delete</mat-icon>
         </button>
-        <button mat-icon-button  (click)="encrypt(key)" title="Encrypter">
-          <mat-icon>key</mat-icon>
-        </button>
-        <button mat-icon-button title="Copier l'adresse" [cdkCopyToClipboard]="key.address">
-          <mat-icon>content_copy</mat-icon>
-        </button>
+        <button mat-icon-button  (click)="encrypt(key)" title="Encrypter"><mat-icon>key</mat-icon></button>
+        <button mat-icon-button title="Copier l'adresse" [cdkCopyToClipboard]="key.address"><mat-icon>content_copy</mat-icon></button>
+        <button title="voir le wallet" mat-icon-button (click)="open_wallet(key)"><mat-icon>money</mat-icon></button>
+        <button title="voir le wallet" mat-icon-button (click)="burn_all_nft(key)"><mat-icon>local_fire_department</mat-icon></button>
 
-        <button type="button" title="voir le wallet" mat-icon-button (click)="open_wallet(key)">
-          <mat-icon>money</mat-icon>
-        </button>
 
-        <button type="button" title="voir dans l'explorer" mat-icon-button (click)="open_explorer(key)">
+        <button title="voir dans l'explorer" mat-icon-button (click)="open_explorer(key)">
           <mat-icon>person_search</mat-icon>
         </button>
 

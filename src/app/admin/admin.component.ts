@@ -173,10 +173,15 @@ export class AdminComponent implements OnInit {
 
   }
 
+  to_localhost(url:string) : string {
+    let domain=url.split("://")[1].split("/")[0].split("?")[0]
+    url=url.replace("https://"+domain,"http://localhost:4200")
+    return url;
+  }
+
   open_appli(obj:any,mode="standard") {
     if(mode=="local"){
-      let domain=obj.url.split("://")[1].split("/")[0].split("?")[0]
-      obj.url=obj.url.replace("https://"+domain,"http://localhost:4200")
+      obj.url=this.to_localhost(obj.url);
     }
     this.copy_appli(obj.url);
     open(obj.url,"Test application")
@@ -371,6 +376,7 @@ export class AdminComponent implements OnInit {
 
   batch_import(files: any) {
     //Chargement du fichier excel
+    let to_copy=""
     if (files.hasOwnProperty("filename")) files = [files]
     for (let f of files) {
       if (f.filename.endsWith("xlsx")) {
@@ -393,9 +399,11 @@ export class AdminComponent implements OnInit {
 
             }
             r.param_len=100*(2000/setParams(obj).length)+"%";
+            to_copy=to_copy+r.url+"\t"+this.to_localhost(r.url)+"\n";
             this.rows.push(r)
           }
-          showMessage(this,"Fichier importé");
+          this.clipboard.beginCopy(to_copy).copy()
+          showMessage(this,"Fichier importé. Les liens sont disponibles dans le presse-papier");
         })
       }
     }

@@ -21,7 +21,7 @@ export class SplashComponent implements OnInit,AfterViewInit {
   @Input() filter="";
   @Input() duration=2000;
   @Input() description: any;
-  @Input() image: string="./assets/forge.jpg";
+  @Input() image: string="";
   @Output('terminate') onterminate: EventEmitter<any>=new EventEmitter();
   animate: string="";
   show=0;
@@ -40,6 +40,7 @@ export class SplashComponent implements OnInit,AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    let delay=(this.image.length>0) ? 300 : 4000;
     setTimeout(()=>{this.show=1;},300);
   }
 

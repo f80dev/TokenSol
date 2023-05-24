@@ -113,7 +113,7 @@ export class ManageComponent implements OnInit {
 
   burn_all() {
     this.mass_treatment((nft:NFT)=>{
-      this.network.burn(nft.address,this.user.addr,this.network.network,1).then(success=>{}).catch(err => {showError(this,err)})
+      //this.network.burn(nft.address,this.user.addr,this.network.network,1).then(success=>{}).catch(err => {showError(this,err)})
     })
   }
 
