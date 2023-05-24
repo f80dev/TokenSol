@@ -98,7 +98,11 @@ def api_upload_excel_file():
         if row[j]=="non":row[j]=False
         k=header[j]
         if not k.startswith("Unnamed"):
-          obj[k]=row[j]
+          if k.startswith("params_to_add"):
+            for l in row[j].split("\n"):
+              obj[l.split("=")[0]]=l.split("=")[1]
+          else:
+            obj[k]=row[j]
 
     rc.append(obj)
 
@@ -411,7 +415,7 @@ def get_composition():
   format=request.json["format"]
   sequences=request.json["items"]
   if len(sequences)==0: return returnError("Liste vide")
-  if type(sequences["items"][0])!=list: sequences=[sequences]
+  #if type(sequences["items"][0])!=list: sequences=[sequences]
 
   log("Traitement de la data")
   if type(data)!=dict:

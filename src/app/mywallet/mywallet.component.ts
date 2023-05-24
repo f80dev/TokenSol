@@ -382,8 +382,12 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   open_gallery() {
-    open(environment.appli+"/gallery?"+setParams({
-      toolbar:false,address:this.addr,canChange:false,duration:10,background:"https://nfluent.io/assets/paper3.jpg"
+    open(environment.appli+"/gallery/?"+setParams({
+      toolbar:false,
+      address:this.addr,
+      canChange:false,
+      duration:10,
+      background:"https://nfluent.io/assets/paper3.jpg"
     }),"gallery")
 
   }
