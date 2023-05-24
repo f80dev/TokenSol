@@ -144,8 +144,8 @@ export class AppComponent implements OnInit {
 
   async init_form() {
     let params:any = await getParams(this.routes, "params", true)
+    apply_params(this,params,environment)
 
-    $$("Analyse des paramètres par la fenetre principale ", params);
     this.user.appname = params["appname"] || environment.appname;
     if (params.hasOwnProperty("toolbar")) {
       this.user.toolbar_visible = params["toolbar"]
@@ -153,7 +153,7 @@ export class AppComponent implements OnInit {
       this.user.toolbar_visible = true;  //Par défaut on ne montre pas la toolbar
     }
 
-    apply_params(this,params,environment)
+
 
     this.network_service.server_nfluent = params["server"] || environment.server;
 

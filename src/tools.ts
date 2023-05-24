@@ -251,10 +251,9 @@ export function rotate(src: string, angle: number, quality: number=1) : Promise<
 
 
 export function apply_params(vm:any,params:any,env:any){
-  for(let prop of ["claim","title","appname","background"]){
+  for(let prop of ["claim","title","appname","background","visual"]){
     if(vm.hasOwnProperty(prop))vm[prop]=params[prop] || env[prop] || "";
   }
-  vm.visual=params.visual || ""
 
   if(vm.hasOwnProperty("network")){
     if(typeof vm.network=="string")vm.network = params.networks || env.network || "elrond-devnet"
@@ -285,6 +284,7 @@ export function getParams(routes:ActivatedRoute,local_setting_params="",force_tr
         if(params){
           if(params.hasOwnProperty("p")){
             params=analyse_params(decodeURIComponent(params["p"]));
+            $$("Analyse des paramètres par la fenetre principale ", params);
           }
         }
 

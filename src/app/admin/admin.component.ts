@@ -9,7 +9,7 @@ import {Router} from "@angular/router";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MatSnackBar} from "@angular/material/snack-bar";
-import {NFT} from "../../nft";
+
 
 interface ConfigServer {
   Server:string

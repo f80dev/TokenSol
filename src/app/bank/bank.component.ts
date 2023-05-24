@@ -17,6 +17,7 @@ import {environment} from "../../environments/environment";
 import {wait_message} from "../hourglass/hourglass.component";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "../device.service";
+import {StyleManagerService} from "../style-manager.service";
 
 @Component({
   selector: 'app-bank',
@@ -41,6 +42,7 @@ export class BankComponent implements OnInit {
     public _location:Location,
     public device:DeviceService,
     public toast:MatSnackBar,
+    public style:StyleManagerService,
     public routes:ActivatedRoute,
   ){}
 
@@ -91,6 +93,7 @@ export class BankComponent implements OnInit {
       this.network.init_network(this.bank.network);
     }
     apply_params(this,params,environment.bank)
+    if(!params.style)this.style.setStyle("theme","nfluent-dark-theme.css")
     this.addr=params.addr || params.address || localStorage.getItem("faucet_addr") || "";
     this.refresh_balance();
   }

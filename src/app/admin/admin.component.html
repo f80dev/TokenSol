@@ -168,7 +168,7 @@
   </mat-expansion-panel>
 
 
-  <mat-expansion-panel>
+  <mat-expansion-panel (afterExpand)="default_appli_list()">
     <mat-expansion-panel-header>Déploiement de l'application</mat-expansion-panel-header>
 
     <div class="expansion-content">
@@ -178,11 +178,6 @@
         Importer Excel
       </app-upload-file>
 
-      <button mat-raised-button
-              title="Voir les applis par défaut"
-              (click)="default_appli_list()">
-        Applis par défaut
-      </button>
     </div>
 
 
