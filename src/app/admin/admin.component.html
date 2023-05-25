@@ -182,16 +182,17 @@
 
 
     <div class="expansion-content">
-        <table class="table-elevation">
+        <table class="table-elevation mat-body-2" style="text-align: left;" >
           <tr>
-            <th>Icones</th>
-            <th>Nom de l'application</th>
-            <th>Description</th>
-            <th>Blockchain</th>
-            <th>Visuel d'intro</th>
-
+            <th style="width: 30px;"></th>
+            <th style="width: 60px;">Nom de l'application</th>
+            <th style="width: 150px;">Description</th>
+            <th style="width: 80px;">Blockchains</th>
+            <th style="width: 100px;">Visuel d'intro</th>
+            <th style="width: 120px;">Minage</th>
+            <th style="width: 100px;">Stockage</th>
             <th>Commandes</th>
-            <th>% max</th>
+
           </tr>
           <tr *ngFor="let row of rows">
             <td><a [href]="row.favicon"><img style="width:25px;" [src]="row.favicon"></a></td>
@@ -200,6 +201,17 @@
             <td>{{row.networks}}</td>
             <td><a [href]="row.visual"><img style="width:100px;" [src]="row.visual"></a></td>
             <td>
+              <div *ngIf="row.miner">
+                {{row.miner.split(":")[0]}}<br>
+                {{row.collection}}<br>
+                {{row.royalties}}
+              </div>
+            </td>
+            <td>
+              {{row.stockage}}<br>
+              {{row.stockage_document}}
+            </td>
+            <td>
               <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>
               <button mat-icon-button (click)="open_appli(row,'local')" title="Ouvrir l'application en local"><mat-icon>home</mat-icon></button>
               <button mat-icon-button (click)="share_appli(row)" title="Partagé le lien"><mat-icon>share</mat-icon></button>
@@ -207,7 +219,7 @@
               <button mat-icon-button [cdkCopyToClipboard]="row.url"
                       (click)="informe_copy()" [title]="row.read_params"><mat-icon>info</mat-icon></button>
             </td>
-            <td>{{row.param_len}}</td>
+
           </tr>
         </table>
 

@@ -129,12 +129,12 @@
   <div *ngIf="showWalletConnect && qrcode.length>0"
        style="max-width: 450px;margin-left: -10px;width:100%;text-align: center;display: inline-block;">
     {{intro_message}}
+
     <img [src]="qrcode"
          (click)="qrcode=''"
          title="Flasher ce qrcode depuis votre wallet"
-         style="width:90%;max-width: 300px;" [style.width]="size">
+         style="width:90%;max-width: 300px;margin-top:10px;" [style.width]="size">
     <br>
-
 
     <button mat-raised-button
             *ngIf="device.modele!='desktop'"
