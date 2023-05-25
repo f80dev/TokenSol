@@ -8,6 +8,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {environment} from "../../environments/environment";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
+import {NFT} from "../../nft";
 
 @Component({
   selector: 'app-candymachine',
@@ -23,6 +24,7 @@ export class CandymachineComponent implements OnInit {
   addresses="";
   _style={};
   title="";
+  nfts: NFT[]=[]
 
   constructor(
     public routes:ActivatedRoute,
@@ -39,6 +41,11 @@ export class CandymachineComponent implements OnInit {
       this.network.get_operations(params["ope"]).subscribe((operation:any)=>{
         this.airdrop=params.hasOwnProperty('airdrop') ? params["airdrop"] : false;
         this.operation=operation;
+
+        this.network.get_nfts_from_operation(operation.id).subscribe((result)=>{
+                this.nfts=result.nfts;
+              })
+
         if(this.operation?.branding)this._style=this.operation.branding.style;
         if(this.operation?.candymachine.messages.title)this.title=this.operation.candymachine.messages.title;
         // this.miner=(params.hasOwnProperty('miner') ? params["miner"] : operation.mining.miner)

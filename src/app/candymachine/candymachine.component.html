@@ -4,7 +4,7 @@
     <h2 class="color-primary" *ngIf="!airdrop">{{title}}</h2>
     <h2 class="color-primary" *ngIf="airdrop">Airdrop de NFT</h2>
 
-    <app-showroom [operation_id]="operation!.id" [delay]="0.3" size="300px"></app-showroom>
+    <app-showroom [nfts]="nfts" [delay]="0.3" size="300px"></app-showroom>
 
     <br><br><br>
 
