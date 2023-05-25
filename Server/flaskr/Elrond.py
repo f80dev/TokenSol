@@ -1038,9 +1038,11 @@ class Elrond(Network):
       collection=collections[collection_id]
       if not "royalties" in nft or nft["royalties"]=="": nft["royalties"]=0
       nft["owner"]=_user.address.bech32()
+      visual=nft["url"] if not "ipfs" in nft["url"] else nft["media"][0]["thumbnailUrl"]
       _nft=NFT(
         object=nft,
         collection=collection,
+        visual=visual,
         creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
       )
       _nft.balances={_user.address.bech32():balances[_nft.address] if _nft.address in balances else 0}
