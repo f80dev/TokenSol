@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import {environment} from "../../environments/environment";
-import {UserService} from "../user.service";
+import {ActivatedRoute} from "@angular/router";
+import {apply_params, getParams} from "../../tools";
+import {Location} from "@angular/common";
 
 @Component({
   selector: 'app-about',
@@ -10,11 +12,18 @@ import {UserService} from "../user.service";
 export class AboutComponent implements OnInit {
 
   appname="";
+  website=environment.website;
+  version=environment.version;
 
-  constructor(public user:UserService) { }
+  constructor(
+      public routes:ActivatedRoute,
+      public _location:Location
+  ) { }
 
-  ngOnInit(): void {
-    this.appname=this.user.appname;
+  async ngOnInit() {
+    let params=await getParams(this.routes)
+    apply_params(this,params,environment);
+
   }
 
 }

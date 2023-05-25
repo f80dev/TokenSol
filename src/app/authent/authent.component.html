@@ -83,7 +83,7 @@
           title="Flasher avec votre wallet nfluent"
           [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
           [src]="nfluent_wallet_connect_qrcode"
-          style="cursor: copy;margin: 10px;" [style.width]="size"><br>
+          style="cursor: copy;" [style.width]="size"><br>
         <small>{{title}}</small>
 
       </div>
@@ -132,7 +132,7 @@
     <img [src]="qrcode"
          (click)="qrcode=''"
          title="Flasher ce qrcode depuis votre wallet"
-         style="width:90%;margin:5px;max-width: 300px;" [style.width]="size">
+         style="width:90%;max-width: 300px;" [style.width]="size">
     <br>
 
 

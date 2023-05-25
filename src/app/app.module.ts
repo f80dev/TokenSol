@@ -99,7 +99,6 @@ import { AskForPaymentComponent } from './ask-for-payment/ask-for-payment.compon
 import { JaugeComponent } from './jauge/jauge.component';
 import { AutovalidatorComponent } from './autovalidator/autovalidator.component';
 import { BankComponent } from './bank/bank.component';
-import { GalleryComponent } from './gallery/gallery.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -166,8 +165,7 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         AskForPaymentComponent,
         JaugeComponent,
         AutovalidatorComponent,
-        BankComponent,
-        GalleryComponent
+        BankComponent
     ],
     imports: [
         BrowserModule,
