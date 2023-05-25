@@ -191,6 +191,7 @@
             <th style="width: 100px;">Visuel d'intro</th>
             <th style="width: 120px;">Minage</th>
             <th style="width: 100px;">Stockage</th>
+            <th style="width: 150px;">Mails</th>
             <th>Commandes</th>
 
           </tr>
@@ -210,6 +211,10 @@
             <td>
               {{row.stockage}}<br>
               {{row.stockage_document}}
+            </td>
+            <td>
+              <a [href]="row.new_account_mail">Nouveau compte</a><br>
+              <a [href]="row.existing_account_mail">Existant</a><br>
             </td>
             <td>
               <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>

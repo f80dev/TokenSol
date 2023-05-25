@@ -18,12 +18,15 @@ export class ShowroomComponent implements OnInit,OnDestroy {
   @Input() operation_id:string="";
   @Input() delay:number=0.5;
   @Input() size:string="300px";
+  @Input() border="white solid 6px"
   @Output('update') onchange: EventEmitter<NFT>=new EventEmitter();
 
 
   private hInterval: NodeJS.Timeout | undefined;
   image_to_show: string | undefined;
   title: string="";
+  transition: any={};
+
 
 
   constructor(public network:NetworkService) { }
@@ -33,9 +36,13 @@ export class ShowroomComponent implements OnInit,OnDestroy {
       if(this.nfts.length>0){
         const index=Math.round(Math.random()*(this.nfts.length-1));
         if(this.nfts[index].visual.length>0){
-          this.image_to_show=this.nfts[index].visual;
-          this.title=this.nfts[index].name;
-          this.onchange.emit(this.nfts[index])
+          this.transition={transition: "opacity 0.2s ease-in-out",opacity:0}
+          setTimeout(()=>{
+            this.image_to_show=this.nfts[index].visual;
+            this.transition={transition: "opacity 0.2s ease-out-in",opacity:1}
+            this.title=this.nfts[index].name;
+            this.onchange.emit(this.nfts[index])
+          },200);
         }
       }
     },this.delay*1000);

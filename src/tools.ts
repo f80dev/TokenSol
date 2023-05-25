@@ -120,6 +120,18 @@ export function setParams(_d:any,prefix="",param_name="p") : string {
     return encodeURIComponent(url);
 }
 
+export function enterFullScreen(element:any) {
+  if(element.requestFullscreen) {
+    element.requestFullscreen();
+  }else if (element.mozRequestFullScreen) {
+    element.mozRequestFullScreen();     // Firefox
+  }else if (element.webkitRequestFullscreen) {
+    element.webkitRequestFullscreen();  // Safari
+  }else if(element.msRequestFullscreen) {
+    element.msRequestFullscreen();      // IE/Edge
+  }
+};
+
 
 export function analyse_params(params:string):any {
   let _params=decrypt(decodeURIComponent(params)).split("&");
@@ -251,7 +263,7 @@ export function rotate(src: string, angle: number, quality: number=1) : Promise<
 
 
 export function apply_params(vm:any,params:any,env:any){
-  for(let prop of ["claim","title","appname","background","visual"]){
+  for(let prop of ["claim","title","appname","background","visual","new_account_mail","existing_account_mail"]){
     if(vm.hasOwnProperty(prop))vm[prop]=params[prop] || env[prop] || "";
   }
 
@@ -267,8 +279,6 @@ export function apply_params(vm:any,params:any,env:any){
 
   if(params.style && vm.hasOwnProperty("style"))vm.style.setStyle("theme",params.style);
   if(vm.hasOwnProperty("miner"))vm.miner = newCryptoKey("","","",params.miner || env.miner)
-
-
 }
 
 

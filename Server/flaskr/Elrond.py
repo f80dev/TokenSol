@@ -870,7 +870,7 @@ class Elrond(Network):
           "words":" ".join(words),
           "qrcode":"cid:qrcode",
           "access_code":get_access_code_from_email(address)
-        },domain_appli=domain_appli),email,subject=subject,attach=qrcode,filename="qrcode.png" if not qrcode is None else ""):
+        },domain_appli=domain_appli),email,subject=subject):
           if histo: histo.add_email(email,address,self.network)
 
     return Key(secret_key.hex(),name=email.split("@")[0],address=address,seed=words)
