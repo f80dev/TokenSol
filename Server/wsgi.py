@@ -44,7 +44,7 @@ if __name__=="__main__":
   debug_mode=app.config["DEBUG"]
   domain_server=app.config["DOMAIN_SERVER"]
 
-  register_fonts(limit=1000 if not debug_mode else 5)
+  register_fonts(limit=1000 if not debug_mode else 300)
   log("Working directory : "+os.getcwd())
 
   if not "127.0.0.1" in domain_server and not "localhost" in domain_server:

@@ -414,6 +414,7 @@ def get_composition():
 
   format=request.json["format"]
   sequences=request.json["items"]
+  if type(sequences)!=list: sequences=[sequences]
   if len(sequences)==0: return returnError("Liste vide")
   #if type(sequences["items"][0])!=list: sequences=[sequences]
 
@@ -624,6 +625,11 @@ def send_photo_for_nftlive(conf_id:str=""):
       config=confs[0]
   if type(conf)==dict: config=conf
 
+  dyna_fields=dict()
+  for field in request.json["dynamic_fields"] if "dynamic_fields" in request.json else []:
+    dyna_fields[field["name"]]=field["value"]
+
+
   image=request.json["photo"] if "photo" in request.json else None
   if type(image)==dict:
     image=Sticker(image=image["file"],ext=image["type"],name=image["filename"])
@@ -636,10 +642,6 @@ def send_photo_for_nftlive(conf_id:str=""):
   seed=request.json["seed"] if "seed" in request.json else 0
   format=request.json["format"]
 
-  dyna_fields=dict()
-  for field in request.json["dynamic_fields"] if "dynamic_fields" in request.json else []:
-    dyna_fields[field["name"]]=field["value"]
-
   nft=ArtEngine()
   nft.reset()
 
@@ -650,7 +652,7 @@ def send_photo_for_nftlive(conf_id:str=""):
 
   for layer in config["layers"]:
     if not "name" in layer: layer["name"]="layer_"+now("hex")
-    nft.add(Layer(object=layer,elements=layer["elements"]))
+    nft.add(Layer(object=layer,elements=layer["elements"],replacements=dyna_fields))
 
   log("Génération des séquences")
   width=int(dim.split("x")[0])
@@ -1050,6 +1052,7 @@ def transfer_to():
   """
 
   nft_addr=request.json["token_id"]
+  quantity=request.json["quantity"] if "quantity" in request.json else 1
 
   from_network=get_network_instance(request.json["from_network"])
   to_network=get_network_instance(request.json["to_network"])
@@ -1080,7 +1083,8 @@ def transfer_to():
               collection=collection,
               from_network=from_network.network,
               target_network=to_network.network,
-              target_network_miner=target_miner)
+              target_network_miner=target_miner,
+              quantity=quantity)
 
   #Création des comptes
   # if "solana" in to_network:
@@ -1950,9 +1954,11 @@ def keys(name:str=""):
     else:
       email=obj["email"]
 
-      key:Key=create_account(email,
+    subject=obj["subject"] if "subject" in obj else "NFLUENT"
+
+    key:Key=create_account(email,
                              histo=dao if not request.json["force"] else None,
-                             network=_network.network,
+                             network=_network.network,subject=subject,
                               domain_appli=current_app.config["DOMAIN_APPLI"],
                               mail_new_wallet=obj["mail_new_wallet"] if "mail_new_wallet" in obj else None,
                               mail_existing_wallet=obj["mail_existing_wallet"] if "mail_existing_wallet" in obj else None

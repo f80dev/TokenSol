@@ -174,9 +174,10 @@ export class AdminComponent implements OnInit {
   }
 
   to_localhost(url:string) : string {
+    let rc=url;
     let domain=url.split("://")[1].split("/")[0].split("?")[0]
-    url=url.replace("https://"+domain,"http://localhost:4200")
-    return url;
+    rc=url.replace("https://"+domain,"http://localhost:4200")
+    return rc;
   }
 
   open_appli(obj:any,mode="standard") {
@@ -398,7 +399,7 @@ export class AdminComponent implements OnInit {
               }
 
             }
-            r.param_len=100*(2000/setParams(obj).length)+"%";
+
             to_copy=to_copy+r.url+"\t"+this.to_localhost(r.url)+"\n";
             this.rows.push(r)
           }

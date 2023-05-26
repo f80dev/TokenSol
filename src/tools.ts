@@ -279,6 +279,10 @@ export function apply_params(vm:any,params:any,env:any){
 
   if(params.style && vm.hasOwnProperty("style"))vm.style.setStyle("theme",params.style);
   if(vm.hasOwnProperty("miner"))vm.miner = newCryptoKey("","","",params.miner || env.miner)
+  if(vm.hasOwnProperty("user")){
+    vm.user.params = params;
+    $$("Conservation des parametres dans le service user")
+  }
 }
 
 

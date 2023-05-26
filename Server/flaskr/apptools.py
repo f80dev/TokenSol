@@ -159,13 +159,14 @@ def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4
   return NFTStorage()
 
 
-def create_account(email,network,domain_appli,histo,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True) -> Key:
+def create_account(email,network,domain_appli,histo,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True,subject="") -> Key:
   _network=get_network_instance(network)
   if _network.is_blockchain() and not is_email(email): return Key(address=email)
   if not mail_new_wallet.endswith(".html"):mail_new_wallet=mail_new_wallet+".html"
   mail_new_wallet=mail_new_wallet.replace(".html","_"+_network.network_name+".html")
   key=_network.create_account(email=email,
                               histo=histo,
+                              subject=subject,
                               domain_appli=domain_appli,
                               mail_new_wallet=mail_new_wallet,
                               mail_existing_wallet=mail_existing_wallet,
@@ -184,6 +185,7 @@ def transfer(addr:str,
              target_network_owner:str=None,
              target_network:str=None,
              collection:dict=None,
+             quantity=1,
              metadata_storage_platform="nftstorage"):
   """
   Transfer un NFT d'un réseau à un autre
@@ -216,13 +218,13 @@ def transfer(addr:str,
     _storage=get_storage_instance(metadata_storage_platform)
 
     rc=_target_network.mint(target_network_miner,nft.name,nft.description,collection,nft.attributes,_storage,nft.files,
-                    nft.supply,nft.royalties,nft.visual,nft.tags,nft.creators)
+                    quantity,nft.royalties,nft.visual,nft.tags,nft.creators)
     if rc["error"]=="":
       nft.address=rc["result"]["mint"]
-      get_network_instance(from_network).burn(addr,from_network_miner,1)
+      get_network_instance(from_network).burn(addr,from_network_miner,quantity=quantity)
     return rc
   else:
-    rc=_target_network.transfer(addr,from_network_miner,target_network_owner)
+    rc=_target_network.transfer(addr,from_network_miner,target_network_owner,quantity=quantity)
     return {"error":"probleme technique au transfert" if not rc else "","result":{"mint":nft.address}}
 
 

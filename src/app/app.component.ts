@@ -146,7 +146,7 @@ export class AppComponent implements OnInit {
     let params:any = await getParams(this.routes, "params", true)
     apply_params(this,params,environment)
 
-    this.user.appname = params["appname"] || environment.appname;
+    this.user.params.appname = params["appname"] || environment.appname;
     if (params.hasOwnProperty("toolbar")) {
       this.user.toolbar_visible = params["toolbar"]
     } else {

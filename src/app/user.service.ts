@@ -57,7 +57,8 @@ export class UserService implements OnDestroy {
   nfts_to_mint: any[] = []
   advance_mode: boolean = false;
   toolbar_visible: boolean = true;
-  appname: string = environment.appname;
+
+  params:any;                             //Enregistrement des parametres au lancement de l'appli
   verified_address: Boolean=false;
   wallet_provider: any;                   //Instance d'acces au wallet distant
 

@@ -1,6 +1,6 @@
 <app-splash
             [appname]="appname"
-            [duration]="4000"
+            [duration]="1000"
             [image]="visual"
             [description]="claim"></app-splash>
 
@@ -8,7 +8,7 @@
   <mat-icon (click)="drawer!.toggle()" *ngIf="device.isHandset$ | async">menu</mat-icon>
 
   <div *ngIf="!(device.isHandset$ | async) && network_service.online" style="margin-left: 10px;">
-      {{user!.appname}}<br>
+      {{user!.params.appname}}<br>
       <small *ngIf="network_service.config.version?.length>0">v{{network_service.config.version | async}}</small>
   </div>
 

@@ -767,10 +767,13 @@ export class NetworkService implements OnInit {
         return this.httpClient.post(this.server_nfluent+"/api/generate_svg/",data);
     }
 
-    create_account(network: string, email: string,new_account_mail="mail_new_account",existing_account_mail="mail_existing_account",dictionnary={},force=false) {
+    create_account(network: string, email: string,
+                   new_account_mail="mail_new_account.html",
+                   existing_account_mail="mail_existing_account.html",dictionnary={},force=false,subject="Votre nouveau wallet") {
         //On pourra utiliser %network% pour inserer le nom du réseau dans le nom des emails de confirmations
         let body={
             email:email,
+            subject:subject,
             mail_new_wallet:new_account_mail.replace("%network%",network.split("-")[0]),
             mail_existing_wallet:existing_account_mail.replace("%network%",network.split("-")[0]),
             dictionnary:dictionnary,

@@ -1,6 +1,6 @@
-<div class="mainform">
+<div class="mainform" style="text-align: center;">
   
-  <div class="mat-headline-2 color-primary" style="margin: 30px;">{{appname}}</div>
+  <div class="mat-headline-2 color-primary" style="margin: 30px;" *ngIf="user && user.params">{{user.params.appname}}</div>
   <div style="margin-top: -20px">version {{version}}</div>
   <br>
 
@@ -19,7 +19,7 @@
     <span style="margin: 20px;">© NFluenT 2023    ·    v{{version}}   ·   Tous droits réservés</span> ·
     <a href="https://nfluent.io/mentions_legales.html"
        target="_blank"
-       style="margin: 5px;color: black;">
+       style="margin: 5px;">
       Mentions légales
     </a> ·
 
