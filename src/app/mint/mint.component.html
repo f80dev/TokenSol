@@ -134,6 +134,7 @@
 
       <div *ngIf="sel_key">
         <app-input label="Collection utilisée"
+                   *ngIf="network.isElrond()"
                    [value]="sel_collection" width="250px"
                    (valueChange)="changeCollection($event)" value_type="list"
                    [options]="collections">
@@ -160,7 +161,7 @@
         </button>
 
         <app-input label="Nom de la collection"
-                   *ngIf="network.isPolygon()"
+                   *ngIf="network.isPolygon() || !network.isBlockchain()"
                    [value]="collection_name" width="300px"
                    (valueChange)="collection_name=$event">
         </app-input>

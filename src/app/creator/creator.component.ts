@@ -150,6 +150,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       }
       this.max_nft = rc;
       if(this.sel_config.limit>this.max_nft)this.sel_config.limit=this.max_nft;
+      if(this.sel_config.limit==0)this.sel_config.limit=this.max_nft/2;
     }
   }
 
@@ -416,14 +417,14 @@ export class CreatorComponent implements OnInit,OnDestroy {
         for(let i=0;i<sequences.length;i=i+step){
           setTimeout(()=>{
             let seq=sequences.slice(i,i+step);
-
+            $$("Fabrication de "+i+" à "+(i+step))
             this.network.get_composition(
                 seq,
                 this.sel_config?.layers!,
                 this.sel_config!.data,
                 this.sel_config?.width+"x"+this.sel_config?.height,
                 format).subscribe((result:any)=>{
-
+              $$("Réponse=",result.urls)
               this.add_to_preview(result.urls,result.urls,result.files,result.indexes);
 
               if(this.previews.length==sequences.length){
@@ -958,6 +959,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       this.network.upload(img, this.sel_platform, "image/svg").subscribe((r: any) => {
         layer.elements.push({"image": r.url, type: "image/svg","name":"svg_"+layer.name+"_"+idx});
         if (l_images.length == idx + 1) {
+          this.eval_max_nft();
           resolve(layer)
         } else {
           this.upload_image_in_correct_order(idx + 1, l_images, layer)
@@ -997,8 +999,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
     if(body.filename.endsWith("svg")){
       this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe(async (r:any)=>{
-        layer=await this.upload_image_in_correct_order(0,r,layer)
-        this.eval_max_nft();
+        try{
+          layer=await this.upload_image_in_correct_order(0,r,layer)
+        } catch (e){
+          showError(this,e)
+        }
       })
     }else{
       this.message="Chargement des visuels";

@@ -16,6 +16,7 @@
 #Pour le server F80: certbot certonly --standalone --email hhoareau@gmail.com -d server.f80lab.com && cp /etc/letsencrypt/live/server.f80lab.com/* /root/certs
 #Pour le serveur NFluent: certbot certonly --standalone --email hhoareau@gmail.com -d api.nfluent.io && cp /etc/letsencrypt/live/api.nfluent.io/* /root/certs
 #cp /etc/letsencrypt/live/server.f80lab.com/* /root/certs
+#cp /etc/letsencrypt/live/api.nfluent.io/* /root/certs
 
 #fabrication: docker build -t f80hub/tokensol . && docker push f80hub/tokensol:latest
 #installation: docker rm -f tokensol && docker pull f80hub/tokensol:latest

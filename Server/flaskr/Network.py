@@ -73,7 +73,8 @@ class Network():
 
 
   def get_balance(self,address,token_id=""):
-    raise NotImplementedError()
+   raise NotImplementedError()
+
 
   def nfluent_wallet_url(self,address:str,domain_appli=""):
     if type(address)!=str: address=address.address.bech32()

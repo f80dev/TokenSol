@@ -439,7 +439,7 @@ def get_composition():
       b64=image.toBase64(format="webp")
       direct.append(b64)
 
-  if "files" in format or "zip" in format:
+    if "files" in format or "zip" in format:
       if not exists(current_app.config["UPLOAD_FOLDER"]+filename): image.save(current_app.config["UPLOAD_FOLDER"]+filename)
       urls.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+filename)
 

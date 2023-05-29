@@ -167,7 +167,7 @@ class DAO(Storage,Network):
 
   def mint(self, miner, title, description, collection, properties: list,
            storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
-           domain_server="",price=0,symbol="NFluentToken"):
+           domain_server="",price=0,symbol="NFluentToken",simulation=False):
     """
     Opere un transfert du NFT dans la base de données
     :param _data:
@@ -539,6 +539,13 @@ class DAO(Storage,Network):
     if not _nft.address in acc.nfts_balances:acc.nfts_balances[_nft.address]=0
     acc.nfts_balances[_nft.address]+=occ
     self.save_account(acc)
+
+  def get_balance(self,addr,token_id=""):
+    if len(token_id)==0:
+      return 1000
+    else:
+      acc=self.get_account(addr)
+      return acc.nfts_balances[token_id] if token_id in acc.nfts_balances else 0
 
   def save_account(self, acc:NfluentAccount):
     a=acc.__dict__

@@ -112,6 +112,10 @@ export class MintComponent implements OnInit {
 
     this.networks=this.network.networks_available.map((x:any)=>{return {label:x,value:x}});
     let keys=await this.network.init_network(local_config.network || this.networks[0].value);
+    if(!keys){
+      showError(this,"Impossible de récupérer les clés");
+      keys=[]
+    }
     if(keys.length>0){
       this.update_miner(local_config.key ? this.network.find_key_by_address(local_config.key.address) : keys[0])
     }
@@ -295,9 +299,11 @@ export class MintComponent implements OnInit {
 
 
   async confirm_mint(start=0,nb_tokens_to_mint=1){
+    let price=Math.round((100*nb_tokens_to_mint*(this.user.price || environment.mint_cost.price_to_mint_one_token_in_crypto))/100);
+    let price_in_fiat=Math.round((100*nb_tokens_to_mint*((this.user.price_in_fiat || environment.mint_cost.price_to_mint_one_token_in_fiat)))/100);
     let rep:any=await _ask_for_paiement(this,"NFLUCOIN-4921ed",
-        nb_tokens_to_mint*(this.user.price || environment.mint_cost.price_to_mint_one_token_in_crypto),
-        nb_tokens_to_mint*((this.user.price_in_fiat || environment.mint_cost.price_to_mint_one_token_in_fiat)),
+        price,
+        price_in_fiat,
         this.user.merchant!,
         this.user.wallet_provider,
         "Confirmer le minage",
@@ -332,6 +338,17 @@ export class MintComponent implements OnInit {
       let _t:NFT=this.tokens[index];
       if(!this.isValide(_t)){
         _t.price=this.price
+        if(!_t.collection && this.sel_key)_t.collection={
+          description: this.collection_name,
+          link: "",
+          options: [],
+          owner: this.sel_key,
+          price: undefined,
+          roles: undefined,
+          type: undefined,
+          visual: undefined,
+          id:this.collection_name,
+          name:this.collection_name}
         _t.supply=this.quantity
         _t.message="hourglass:Minage";
         _t.creators=this.token_creators;
