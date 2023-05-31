@@ -44,8 +44,6 @@
                    [value]="sel_collection" (valueChange)="force_refresh($event)">
         </app-input>
 
-
-
       </div>
       <app-hourglass [message]="message"></app-hourglass>
 
@@ -264,6 +262,20 @@
   </mat-tab>
 
   <mat-tab label="Préférences">
+    <div style="width:300px;display:inline-block;margin:20px;" class="mat-body-2">
+      <table style="border-spacing: 10px;">
+        <tr>
+          <th>Collection</th>
+          <th>Visible sur NGallery</th>
+        </tr>
+        <tr *ngFor="let col of collections">
+          <td>{{col.name}}</td>
+          <td>
+            <mat-slide-toggle [(ngModel)]="col.gallery" (ngModelChange)="save_accout_settings()"></mat-slide-toggle>
+          </td>
+        </tr>
+      </table>
+    </div>
     <br><br>
     <app-authent *ngIf="addr?.length==0 || !strong"
                  [showWalletConnect]="true"

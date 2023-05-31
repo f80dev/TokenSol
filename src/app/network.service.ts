@@ -163,6 +163,8 @@ export class NetworkService implements OnInit {
     }
 
 
+
+
     archive(tokens: any) {
         return new Promise((resolve, reject) => {
             this.httpClient.post(this.server_nfluent+"/api/export/",tokens).subscribe((r)=>{
@@ -173,8 +175,8 @@ export class NetworkService implements OnInit {
         });
     }
 
-    encrypte_key(name:string,network:string,privateKey="") {
-        let body={secret_key:privateKey,alias:name}
+    encrypte_key(name:string,network:string,privateKey="",address="") {
+        let body={secret_key:privateKey,alias:name,address:address}
         return this._post("encrypt_key/"+network+"/","",body)
     }
 
@@ -423,6 +425,14 @@ export class NetworkService implements OnInit {
         return this.httpClient.post<any>(url+"?"+param,body).pipe(retry(1),timeout(_timeout),catchError(this.handleError))
     }
 
+    _delete(url: string, param: string="") {
+        if(!url.startsWith("http")){
+            url="/api/"+url;
+            url=this.server_nfluent+url.replace("//","/").replace("/api/api/","/api/")
+        }
+        return this.httpClient.delete(url+"?"+param).pipe(retry(1),timeout(2000),catchError(this.handleError))
+    }
+
 
 
     get_tokens_from(type_addr:string,addr:string,limit=100,with_attr=true,filter:any=null,offset=0,network="elrond-devnet") : Promise<{result:NFT[],offset:number}> {
@@ -499,6 +509,8 @@ export class NetworkService implements OnInit {
         setTimeout(()=>{this.waiting=""},durationInSec*1000);
     }
 
+
+
     isElrond(addr="") {
         if(addr==null)return false;
         if(addr.length==0){
@@ -518,6 +530,13 @@ export class NetworkService implements OnInit {
         if(network=="")network=this.network;
         return network.indexOf("polygon")>-1;
     }
+
+    isDatabase(network="") {
+        if(network=="")network=this.network;
+        return network.startsWith("dao-") || network.startsWith("db-");
+    }
+
+
 
     get_nfts_balance_from_ftx(){
         return this.httpClient.get("https://ftx.us/api/nft/balances")
@@ -690,6 +709,8 @@ export class NetworkService implements OnInit {
         let body={from:_from,message:message,subject:subject,name:name};
         return this.httpClient.post(this.server_nfluent+"/api/send_email_to_contact/",body);
     }
+
+
 
     send_transaction_confirmation(email: string, body: any) {
         return this.httpClient.post(this.server_nfluent+"/api/send_transaction_confirmation/"+email+"/",body)
@@ -1078,5 +1099,18 @@ export class NetworkService implements OnInit {
             description:description
         }
         return this._post("send_bill/","",body,200000);
+    }
+
+    delete_file(filename:string) {
+        return this._delete("files/"+filename)
+    }
+
+    set_account_settings(address:string,exclude_collection_from_gallery:string[]){
+        let body={exclude_from_gallery:exclude_collection_from_gallery}
+        return this._post("account_settings/"+address,"",body);
+    }
+
+    get_account_settings(address:string){
+        return this._get("account_settings/"+address);
     }
 }

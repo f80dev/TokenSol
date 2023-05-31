@@ -137,7 +137,7 @@
     <br>
 
     <button mat-raised-button
-            *ngIf="device.modele!='desktop'"
+            *ngIf="device.modele!='desktop' && showDirectConnect && showWalletConnect"
             (click)="open_xportal()">
       Ouvrir sur cet appareil
     </button>

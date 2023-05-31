@@ -4,7 +4,7 @@
 	<app-hourglass [message]="message"></app-hourglass>
 	<app-jauge [activate]="message.length>0" [duration]="40" [step]="0.1" [max]="100"></app-jauge>
 	<div *ngIf="!show_can_close && message.length==0 && bank">
-		<h4 *ngIf="addr!=''">
+		<h4 *ngIf="addr!='' && token">
 			Des {{token.name}} pour
 			<span class="color-primary" *ngIf="addr.length>0">{{addr.substring(0,20)+"..."}}</span>
 		</h4>
@@ -22,16 +22,23 @@
 		             (authent)="update_address($event)">
 		</app-authent>
 
-		<div *ngIf="addr.length>0" style="margin-top: 100px;">
+		<div *ngIf="addr.length>0 && token" style="margin-top: 100px;">
 
 			Vous avez<br><br>
 			<div class="color-primary mat-headline-3" style="margin-top: -10px;">{{balance}}</div>
 			<div style="margin-top: -50px;">{{token!.name}}</div>
 
-			<div *ngIf="network.isDevnet()" style="position:absolute;display:block;bottom: 15px;text-align: center;width:100%;padding:0;">
+			<div  style="position:absolute;display:block;bottom: 15px;text-align: center;width:100%;padding:0;">
 				<button mat-raised-button color="primary"
+						*ngIf="network.isDevnet()"
 				        (click)="refund()">
 					Recevoir<br>{{bank.refund}} {{token.name}}
+				</button>
+
+				<button mat-raised-button color="primary"
+						*ngIf="network.isMain()"
+				        (click)="buy()">
+					Acheter
 				</button>
 
 				<button mat-raised-button

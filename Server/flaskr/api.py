@@ -344,7 +344,9 @@ def api_get_collections(addresses:str):
   retourne l'ensemble des collections appartenant à un utilisateur
   :return:
   """
+
   bl=get_network_instance(request.args.get("network","elrond-devnet"))
+  if ":" in addresses: addresses=Key(encrypted=addresses).address
   detail=(request.args.get("detail","true")=="true")
   operations=request.args.get("operations","canCreate")
 
@@ -452,7 +454,7 @@ def api_create_zip():
   email=request.json["email"]
   files=request.json["files"]
 
-  copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection","./README")
+  copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection",current_app.config["UPLOAD_FOLDER"]+"/README")
   files.append("README")
 
   filename="collection.7z"
@@ -725,12 +727,27 @@ def appli_configs():
 #test https://api.nfluent.io:4242/api/infos/
 def infos():
   dao=DAO(config=current_app.config)
+
+  files=[]
+  total=0
+  dir=current_app.config["UPLOAD_FOLDER"]
+  for f in os.listdir(dir):
+    total=total+os.path.getsize(dir+f)
+    dt=os.path.getmtime(dir+f)
+    files.append({
+      "name":f,
+      "size":int(os.path.getsize(dir+f)/1024),
+      "date":datetime.datetime.fromtimestamp(dt).strftime("%d/%m/%y"),
+      "delay":int((now()-dt)/(3600*24))
+    })
   rc={
     "Server":current_app.config["DOMAIN_SERVER"],
     "Client":current_app.config["DOMAIN_APPLI"],
     "Database_Server":current_app.config["DB_SERVER"],
     "Database_Name":current_app.config["DB_NAME"],
-    "Upload_Folder":current_app.config["UPLOAD_FOLDER"],
+    "Upload_Folder":dir,
+    "Uploaded_files":files,
+    "Uploaded_size":int(total/1024),
     "Activity_Report":current_app.config["ACTIVITY_REPORT"],
     "Static_Folder":current_app.config["STATIC_FOLDER"],
     "Menu":current_app.config["MENU"],
@@ -742,6 +759,7 @@ def infos():
     "PLATFORMS":current_app.config["PLATFORMS"],
     "NETWORKS":current_app.config["NETWORKS"]
     }
+
   return jsonify(rc)
 
 
@@ -2071,7 +2089,8 @@ def get_image(cid:str=""):
 
   if request.method=="DELETE":
     if "/api/images/" in cid:cid=cid.split("/api/images/")[1].split("?")[0]
-    if exists(current_app.config["UPLOAD_FOLDER"]+cid):rc=os.remove(current_app.config["UPLOAD_FOLDER"]+cid)
+    if exists(current_app.config["UPLOAD_FOLDER"]+cid):
+      rc=os.remove(current_app.config["UPLOAD_FOLDER"]+cid)
     return "Ok",200
 
 
@@ -2288,6 +2307,20 @@ def extract_zip():
   pass
 
 
+@bp.route('/account_settings/<address>',methods=["POST","GET"])
+def api_account_settings(address:str):
+  dao=DAO(config=current_app.config)
+  if request.method=="POST":
+    dao.set_account_settings(address,request.json)
+    return jsonify({"message":"collections a exclure ajoutées"})
+
+  if request.method=="GET":
+    settings=dao.get_account_settings(address)
+    if settings is None:settings=dict()
+    return jsonify(settings)
+
+
+
 @bp.route('/upload/',methods=["POST"])
 def upload():
   """
@@ -2404,7 +2437,7 @@ def api_create_collection():
   solde=_net.balance(miner.address)
   collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"],simulation=simulation)
   if collection is None:
-    return returnError("Probleme technique pour la création de la collection "+_data["name"])
+    return returnError("Probleme de création de la collection "+_data["name"]+". Vérifier notamment son nom qui doit être unique")
 
   if simulation: return jsonify({"simulation":"ok"})
 

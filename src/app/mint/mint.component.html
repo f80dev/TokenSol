@@ -118,7 +118,7 @@
       </button>
 
       <app-input
-              label="Blockchain"
+              label="Blockchain cible"
               title="Désigne la blockchain recevant les NFTs minés (Devnet signifie qu'il s'agit du réseau de test)"
               [options]="networks" width="200px"
               value_type="list" color="white"
@@ -132,10 +132,9 @@
                   (onChange)="update_miner($event)"
                   [network]="network.network"></app-selkey>
 
-      <div *ngIf="sel_key">
+      <div *ngIf="sel_key && (network.isElrond() || network.isDatabase())" style="width: 300px;">
         <app-input label="Collection utilisée"
-                   *ngIf="network.isElrond()"
-                   [value]="sel_collection" width="250px"
+                   [value]="sel_collection" width="225px"
                    (valueChange)="changeCollection($event)" value_type="list"
                    [options]="collections">
         </app-input>
@@ -154,21 +153,17 @@
           <mat-icon>content_copy</mat-icon>
         </button>
 
-        <button type="button" mat-icon-button
-                title="Voir les collections disponibles"
-                (click)="open_collections()">
-          <mat-icon>visibility</mat-icon>
-        </button>
 
-        <app-input label="Nom de la collection"
-                   *ngIf="network.isPolygon() || !network.isBlockchain()"
-                   [value]="collection_name" width="300px"
-                   (valueChange)="collection_name=$event">
-        </app-input>
+
 <!--        <app-warning help="Le minage de NFT sur Elrond nécessite d'avoir choisi une collection"-->
 <!--                     [if]="network.isElrond() && !sel_collection"></app-warning>-->
 
       </div>
+      <app-input label="Nom de la collection"
+                 *ngIf="network.isPolygon()"
+                 [value]="collection_name" width="300px"
+                 (valueChange)="collection_name=$event;local_save();">
+      </app-input>
     </div>
 
   </mat-expansion-panel>

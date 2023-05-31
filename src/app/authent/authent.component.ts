@@ -49,6 +49,7 @@ export class AuthentComponent implements OnInit {
   @Input() showGoogle=false;            //Authentification via Google (pour les personnes souhaitant laissé un mail)
   @Input() showWalletConnect=false;
   @Input() showWebWallet=false;
+  @Input() showDirectConnect=true;
   @Input() showExtensionWallet=false;
   @Input() walletConnect_ProjectId="ea9073e2f07f3d98fea76d4f26f789fe"
   @Input() showAddress=false;

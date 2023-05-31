@@ -13,8 +13,9 @@ export class ShowroomComponent implements OnInit,OnDestroy {
   @Input() nfts:NFT[]=[];
 
   @Input() show_title:boolean=false;
-
+  @Input() exclude_collections:string[]=[];
   @Input() collection_network:string="elrond-devnet";
+
 
   @Input() delay:number=0.5;
   @Input() size:string="300px";
@@ -45,7 +46,8 @@ export class ShowroomComponent implements OnInit,OnDestroy {
   select_nft(){
     if(this.nfts.length>0){
       const index=Math.round(Math.random()*(this.nfts.length-1));
-      if(this.nfts[index].visual.length>0){
+      let nft=this.nfts[index];
+      if(nft.visual.length>0 && (!nft.collection || this.exclude_collections.indexOf(nft.collection.id)==-1)){
         this.show_nft(this.nfts[index])
       }
     }

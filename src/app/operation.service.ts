@@ -18,7 +18,7 @@ export class OperationService implements OnInit {
   constructor(
     public network: NetworkService,
   ) {
-    setTimeout(()=>{this.refresh();},100);
+
   }
 
   get_operation_from_web(url:string){

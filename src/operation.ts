@@ -5,6 +5,7 @@ import {CryptoKey} from "./tools";
 
 
 export interface Collection {
+  gallery: any;
   name:string
   id: string
   visual: string | undefined
@@ -338,6 +339,7 @@ export function newCollection(name:string,owner:CryptoKey,id="",type_collection=
   return {
     description: "",
     id: id,
+    gallery:true,
     link: "",
     name: name,
     options: [],

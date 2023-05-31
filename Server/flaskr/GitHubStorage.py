@@ -33,7 +33,7 @@ class GithubStorage(Storage):
       self.api = Github(self.token).get_user(self.login).get_repo(self.repo)
       log("Stockage github activé avec le token "+self.token+" : voir le dépôt https://github.com/"+self.login+"/"+self.repo)
     except Exception as inst:
-      log("Probleme de connexion avec "+self.token+" pour "+self.login + "/"+ self.repo+" : "+str(inst))
+      raise RuntimeError("Probleme de connexion avec "+self.token+" pour "+self.login + "/"+ self.repo+" : "+str(inst))
 
 
   def __del__(self):
@@ -48,12 +48,18 @@ class GithubStorage(Storage):
     return bytes
 
 
+  def list(self):
+    rc=[]
+    for f in self.api.get_contents("."):
+      rc.append({"sha":f.sha,"cid":f.path,"branch":self.branch})
+    return rc
+
   def get_sha(self,cid):
     rc=self.api.get_contents(cid,ref=self.branch)
     return rc.sha
 
-  def rem(self,cid:str):
-    sha=self.get_sha(cid)
+  def rem(self,cid:str,sha=""):
+    if len(sha)==0: sha=self.get_sha(cid)
     rc=self.api.delete_file(path=cid,message="Demande de suppression",branch=self.branch,sha=sha)
     return rc
 
@@ -100,7 +106,10 @@ class GithubStorage(Storage):
       else:
         contents = self.api.get_contents(id,ref=self.branch)
     except Exception as inst:
-      rc=self.api.create_file(id,"create",content,branch=self.branch)
+      try:
+        rc=self.api.create_file(id,"create",content,branch=self.branch)
+      except Exception as inst:
+        log("Probleme de creation de fichier "+str(inst))
 
     return {"cid":id,"url":url,"hash":get_hash(content)}
 

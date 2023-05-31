@@ -8,7 +8,7 @@ import {ImageItem} from "ng-gallery";
 export interface CryptoKey {
   name: string | null
   address: string
-  privatekey:string | null
+  secret_key:string | null
   encrypt:string | undefined
   balance:number | null
   qrcode:string | null
@@ -21,7 +21,7 @@ export function newCryptoKey(address="",name="",privateKey="",encrypted:string |
     explorer:null, qrcode: "", unity: "",
     name:name,
     address:address,
-    privatekey:privateKey,
+    secret_key:privateKey,
     encrypt:encrypted,
     balance:null
   }
@@ -175,22 +175,21 @@ export function now(format="number") : any {
 }
 
 
-export function exportToCsv(filename: string, rows: object[]) {
+export function exportToCsv(filename: string, rows: object[],separator=";",cr="\n",text_sep="'") {
   if (!rows || !rows.length) {
     return;
   }
-  const separator = ',';
   const keys = Object.keys(rows[0]);
   const csvContent =
       keys.join(separator) +
-      '\n' +
+      cr +
       rows.map((row:any) => {
         return keys.map(k => {
           let cell = row[k] === null || row[k] === undefined ? '' : row[k];
           cell = cell instanceof Date
               ? cell.toLocaleString()
-              : "'"+cell.toString().replace(/"/g, '""')+"'";
-          if (cell.search(/("|,|\n)/g) >= 0) {
+              : text_sep+cell.toString().replace(/"/g, '""')+text_sep;
+          if (cell.search(/("|"+separator"+|"+cr+")/g) >= 0) {
             cell = `"${cell}"`;
           }
           return cell;

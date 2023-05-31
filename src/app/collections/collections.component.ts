@@ -3,13 +3,16 @@ import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {Collection} from "../../operation";
 import {ActivatedRoute, Router} from "@angular/router";
-import {getParams, newCryptoKey, now, showError, showMessage} from "../../tools";
+import {$$, CryptoKey, getParams, newCryptoKey, now, setParams, showError, showMessage} from "../../tools";
 import {Location} from "@angular/common";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {wait_message} from "../hourglass/hourglass.component";
 import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
 import {environment} from "../../environments/environment";
 import {MatDialog} from "@angular/material/dialog";
+import {NFT} from "../../nft";
+import {_prompt} from "../prompt/prompt.component";
+import {Clipboard} from "@angular/cdk/clipboard";
 
 @Component({
   selector: 'app-collections',
@@ -33,6 +36,7 @@ export class CollectionsComponent implements OnInit {
   new_collection:Collection = {
     description: "description",
     id: "",
+    gallery:true,
     name: "MaCollection",
     owner: newCryptoKey(),
     price: undefined,
@@ -43,32 +47,46 @@ export class CollectionsComponent implements OnInit {
     options: this.collection_options.map((x:any)=>{return x.value})
   };
 
-  addr:string="";
   perms: any;
   types_collection=[{label:"Non fongible",value:"NonFungibleESDT"},{label:"Semi Fongible",value:"SemiFungibleESDT"}];
   collections: Collection[]=[]
-  miner: any;
+  miner: CryptoKey | undefined;
+  preview_nfts: NFT[]=[];
+  params: any={}
 
   constructor(
     public network:NetworkService,
     public router:Router,
+    public clipboard:Clipboard,
     public user:UserService,
     public toast:MatSnackBar,
     public _location:Location,
     public routes:ActivatedRoute,
     public dialog:MatDialog
-  ) {}
-
+  ) {
+    $$("Inscription à la modification des parametres")
+    this.user.params_available.subscribe((params:any)=>{
+      this.params=params;
+      if(this.collections.length==0){
+        this.refresh(params["owner"],params["network"]);
+      }
+    })
+  }
 
   async ngOnInit() {
     let params:any=await getParams(this.routes);
-    this.refresh(params["owner"],params["network"]);
+    this.params=params;
+    this.refresh(params.owner,params.network);
+  }
+
+  local_save(){
+
   }
 
 
   refresh(addr:string,network:string){
     if(addr && network){
-      this.addr=addr;
+      this.network.network=network;
       this.message="Récupération des collections";
       this.network.get_account(addr,network).subscribe((accounts:any[])=>{
         this.miner=accounts[0];
@@ -95,72 +113,80 @@ export class CollectionsComponent implements OnInit {
 
 
   open_collection(col: Collection) {
-    open(this.network.getExplorer(col.id),"Explorer");
+    if(this.network.isBlockchain()){
+      open(this.network.getExplorer(col.id),"Explorer");
+    } else {
+      this.network.get_nfts_from_collection(col.id,this.network.network).subscribe((result)=>{
+        this.preview_nfts=result.nfts;
+        if(this.preview_nfts.length==0)showMessage(this,"Aucun NFT dans cette collection")
+      })
+    }
+
   }
 
 
 
   async create_collection() {
-    this.new_collection.owner=this.miner;
-    if(!this.new_collection.name || this.new_collection.name.length<3 || this.new_collection.name?.indexOf(' ')>-1){
-      showMessage(this,"Format du nom incorrect");
-      return;
-    }
-    this.network.create_collection(this.new_collection,true).subscribe(async (r:any)=>{
-      let rep:any=await _ask_for_paiement(this,this.user.merchant.wallet?.token!,
-          environment.collection_cost.price_in_crypto,
-          environment.collection_cost.price_in_fiat,
-          this.user.merchant!,
-          this.user.wallet_provider,
-          "Confirmer le création de la collection",
-          "",
-          "",
-          this.user.profil.email,
-          {contact: "contact@nfluent.io", description: "Création d'une collection NFT pour "+this.network.network.split("-")[0], subject: "Création d'une nouvelle collection"},
-          this.user.buy_method)
-
-      if(rep){
-        this.user.init_wallet_provider(rep.data.provider);
-        this.user.buy_method=rep.buy_method;
-
-        showMessage(this,"Lancement du processus de minage");
-
-        // if(!this.user.key?.privatekey){
-        //   for(let k of this.network.keys){
-        //     if(k.address==this.user.addr){
-        //       this.user.key=k;
-        //     }
-        //   }
-        // }
-        //
-
-        wait_message(this,"Fabrication de la collection sur la blockchain");
-        this.network.create_collection(this.new_collection).subscribe((r:any)=>{
-          this.collections.splice(0,0,r.collection);
-          wait_message(this)
-          showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
-        },(err)=>{
-          this.network.wait();
-          showError(this,err);
-        })
+    if(this.miner){
+      this.new_collection.owner=this.miner;
+      if(!this.new_collection.name || this.new_collection.name.length<3 || this.new_collection.name?.indexOf(' ')>-1){
+        showMessage(this,"Format du nom incorrect");
+        return;
       }
-    })
+      this.network.create_collection(this.new_collection,true).subscribe(async (r:any)=>{
+        let rep:any=await _ask_for_paiement(this,this.user.merchant.wallet?.token!,
+            environment.collection_cost.price_in_crypto,
+            environment.collection_cost.price_in_fiat,
+            this.user.merchant!,
+            this.user.wallet_provider,
+            "Confirmer le création de la collection",
+            "",
+            "",
+            this.user.profil.email,
+            {contact: "contact@nfluent.io", description: "Création d'une collection NFT pour "+this.network.network.split("-")[0], subject: "Création d'une nouvelle collection"},
+            this.user.buy_method)
 
+        if(rep){
+          if(rep.data){
+            this.user.init_wallet_provider(rep.data.provider);
+            this.user.buy_method=rep.buy_method;
+          }
 
+          // if(!this.user.key?.privatekey){
+          //   for(let k of this.network.keys){
+          //     if(k.address==this.user.addr){
+          //       this.user.key=k;
+          //     }
+          //   }
+          // }
+          //
 
-
-
+          wait_message(this,"Fabrication de la collection sur la blockchain");
+          this.network.create_collection(this.new_collection).subscribe((r:any)=>{
+            this.refresh(this.miner!.address,this.network.network)
+            wait_message(this)
+            showMessage(this,"Votre collection est créé pour "+r.cost+" egld");
+          },(err)=>{
+            this.network.wait();
+            showError(this,err);
+          })
+        }
+      },(err)=>{
+        this.network.wait();
+        showError(this,err);
+      })
+    }
   }
 
 
 
   open_inspire() {
-    open(this.network.getExplorer(this.addr),"Explorer");
+    if(this.miner)open(this.network.getExplorer(this.miner.address),"Explorer");
   }
 
 
   open_miner(col: Collection) {
-    this.router.navigate(["miner"],{queryParams:{collection:col.id,owner:this.user.addr}})
+    this.router.navigate(["miner"],{queryParams:{collection:col.id,owner:this.miner,network:this.network.network}})
   }
 
 
@@ -195,4 +221,41 @@ export class CollectionsComponent implements OnInit {
     open("https://wallet.multiversx.com/issue-nft/create-collection")
   }
 
+  open_dealer(col: Collection,store_type="dispenser") {
+    this.network.encrypte_key("",this.network.network,this.miner!.secret_key!).subscribe(async (r)=>{
+      let params_dest:any=await _prompt(this,"Paramètres de la destinations",localStorage.getItem("params_dest") || "","clé du mineur, blockchain et collection","text","Ok","Annuler",false);
+      if(!params_dest)return;
+      localStorage.setItem("params_dest",params_dest)
+
+      params_dest=JSON.parse(params_dest)
+
+      let params={
+        network:this.network.network,
+        collection:col.id,
+        miner:r.encrypt,
+        networks:this.network.networks_available.join(","),
+        miner_dest:params_dest.miner_dest,
+        network_dest:params_dest.network_dest,
+        collection_dest:params_dest.collection_dest,
+        miner_addr:r.address,
+        toolbar:false
+      }
+      this.router.navigate([store_type], {queryParams:{p:setParams(params,"","")}})
+    })
+
+  }
+
+  copy_parameters(col: Collection) {
+
+      let rc={
+        miner_dest:this.params.encrypted,
+        network_dest:this.network.network,
+        collection_dest:col.id
+      }
+      if(this.clipboard.beginCopy(JSON.stringify(rc)).copy()){
+        showMessage(this,"Les parametres de la collection sont disponibles dans le presse papier")
+      }
+
+
+  }
 }

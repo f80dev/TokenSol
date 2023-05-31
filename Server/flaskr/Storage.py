@@ -8,6 +8,9 @@ class Storage:
 	def add(self,content,overwrite=False):
 		pass
 
+	def list(self):
+		pass
+
 	def get(self,key):
 		pass
 

@@ -4,6 +4,15 @@
 
   <app-hourglass [message]="message"></app-hourglass>
 
+  <div *ngIf="network_dest=='' || !miner_dest || !collection_dest" class="expansion-content">
+    <app-input label="Collection utilisée"
+               [value]="collection_dest" width="250px"
+               (valueChange)="collection_dest=$event" value_type="list"
+               [options]="collections">
+    </app-input>
+
+  </div>
+
   <div *ngIf="message.length==0" style="width: 100%;font-size: 15px;text-align: center;">
 <!--    <div class="mat-headline-5 color-accent" *ngIf="miner">{{miner.address | alias}} cliquez sur le NFT à envoyer</div>-->
     <br>

@@ -4,8 +4,6 @@ import {Location} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {
   getParams,
-  CryptoKey,
-  newCryptoKey,
   showMessage,
   showError,
   $$,
@@ -18,6 +16,7 @@ import {wait_message} from "../hourglass/hourglass.component";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "../device.service";
 import {StyleManagerService} from "../style-manager.service";
+import {UserService} from "../user.service";
 
 @Component({
   selector: 'app-bank',
@@ -42,10 +41,36 @@ export class BankComponent implements OnInit {
     public _location:Location,
     public device:DeviceService,
     public toast:MatSnackBar,
+    public user:UserService,
     public style:StyleManagerService,
     public routes:ActivatedRoute,
-  ){}
+  ){
+    this.user.params_available.subscribe((params:any)=>{
+      this.refresh(params);
+    })
+  }
 
+
+  refresh(params:any){
+    if(params.merchant){
+      this.bank=params.bank || environment.bank || {}
+    } else {
+      this.bank=extract_bank_from_param(params) || environment.bank;
+    }
+    if(this.bank){
+      if(params.claim)this.bank!.title=params.claim;
+      this.network.get_token(this.bank.token,this.bank.network).subscribe((r)=>{
+        this.token=r;
+        apply_params(this,params,environment.bank)
+        if(!params.style)this.style.setStyle("theme","nfluent-dark-theme.css")
+        this.addr=params.addr || params.address || localStorage.getItem("faucet_addr") || "";
+        this.refresh_balance();
+        this.network.init_network(this.bank!.network);
+      })
+
+    }
+
+  }
 
   refund() {
     if(this.bank && this.addr.length>0){
@@ -79,23 +104,8 @@ export class BankComponent implements OnInit {
       if(isHandset){this.border="0px";this.size="100%";}
     })
 
-    let params:any=await getParams(this.routes);
-    if(params.merchant){
-      this.bank=params.bank || environment.bank || {}
-    } else {
-      this.bank=extract_bank_from_param(params) || environment.bank;
-    }
-    if(this.bank){
-      if(params.claim)this.bank!.title=params.claim;
-      this.network.get_token(this.bank.token,this.bank.network).subscribe((r)=>{
-        this.token=r;
-      })
-      this.network.init_network(this.bank.network);
-    }
-    apply_params(this,params,environment.bank)
-    if(!params.style)this.style.setStyle("theme","nfluent-dark-theme.css")
-    this.addr=params.addr || params.address || localStorage.getItem("faucet_addr") || "";
-    this.refresh_balance();
+    // let params:any=await getParams(this.routes);
+    // this.refresh(params);
   }
 
 
@@ -136,5 +146,9 @@ export class BankComponent implements OnInit {
 
   cancel() {
     this.change_addr();
+  }
+
+  buy() {
+
   }
 }

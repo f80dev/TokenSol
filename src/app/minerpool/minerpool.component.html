@@ -35,9 +35,9 @@
   <table class="table-elevation">
     <tr>
       <th *ngIf="user.advance_mode">Ajouter le</th>
-      <th>Network</th>
       <th>Sources</th>
-      <th>Filtre</th>
+      <th *ngIf="user.advance_mode">Filtre</th>
+      <th>Network</th>
       <th>Mineur</th>
       <th>Collection</th>
       <th>Destinataire</th>
@@ -48,7 +48,7 @@
     </tr>
     <tr *ngFor="let ask of asks">
       <td *ngIf="user.advance_mode">{{ask.dtCreate*1000 | date:'dd/MM HH:mm'}} </td>
-      <td>{{ask.target.network}} </td>
+
       <td>
         <ul>
           <li *ngFor="let s of ask.sources">
@@ -56,7 +56,8 @@
           </li>
         </ul>
       </td>
-      <td>{{ask.filter}}</td>
+      <td *ngIf="user.advance_mode">{{ask.filter}}</td>
+      <td>{{ask.target.network}} </td>
       <td style="max-width: 200px;"><app-link [content]="ask.target.miner" [network]="network.network"></app-link></td>
       <td style="max-width: 200px;">{{ask.target.collection}} </td>
       <td style="max-width: 200px;">{{ask.dest | alias | slice:0:20}} </td>

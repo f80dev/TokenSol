@@ -36,7 +36,6 @@ export class AppComponent implements OnInit {
     rescue:{label:"Restauration",title:"",actif:false,icon:"build_circle",queryParam:{}}, // & {'ope':operation!.sel_ope!.id,'network':network_service!.network}
     _logout:{label:"Déconnexion",title:"",actif:false,icon:"logout",queryParam:{}},
     login:{label:"Se connecter",title:"",actif:true,icon:"login",queryParam:{}},
-    bank:{label:"Banque / Faucet",title:"",actif:true,icon:"account_balance",queryParam:{}},
     settings:{label:"Préférences",title:"Gérer ses préférences",actif:true,icon:"lock",queryParam:{}},
     admin:{label:"Administration",title:"",actif:true,icon:"lock",queryParam:{}},
     faqs:{label:"Questions",title:"",actif:true,icon:"quiz",queryParam:{}},
@@ -57,10 +56,10 @@ export class AppComponent implements OnInit {
     public device:DeviceService
   ) {
 
-
     this.user.profil_change.subscribe(()=>{
       this.update_menu();
     })
+
     this.user.addr_change.subscribe(()=>{
       this.update_menu();
     })
@@ -146,14 +145,13 @@ export class AppComponent implements OnInit {
     let params:any = await getParams(this.routes, "params", true)
     apply_params(this,params,environment)
 
-    this.user.params.appname = params["appname"] || environment.appname;
+
+    this.user.params = params["appname"] || environment.appname;
     if (params.hasOwnProperty("toolbar")) {
       this.user.toolbar_visible = params["toolbar"]
     } else {
       this.user.toolbar_visible = true;  //Par défaut on ne montre pas la toolbar
     }
-
-
 
     this.network_service.server_nfluent = params["server"] || environment.server;
 
@@ -171,20 +169,24 @@ export class AppComponent implements OnInit {
 
     // if(this.network_service.networks_available.indexOf(network_name)==-1)network_name=this.networks[0].value;
     // let index=find(this.networks,{value:network_name,label:network_name},"value");
-    if (this.networks.length > 0) {
-      this.network_service.network = this.networks[0].value;
-      this.sel_network = this.networks[0].value;
-      if (params.hasOwnProperty("addr") || params.hasOwnProperty("miner")) {
-        this.user.init(params["addr"] || params["miner"], this.network_service.network).then(() => {
-          // this.network_service.init_keys().then(()=>{
-          //
-          // });
-        });
-      }
-    }
+    // if (this.networks.length > 0) {
+    //   this.network_service.network = this.networks[0].value;
+    //   this.sel_network = this.networks[0].value;
+    //   if (params.hasOwnProperty("addr") || params.hasOwnProperty("miner")) {
+    //     this.user.init(params["addr"] || params["miner"], this.network_service.network).then(() => {
+    //       // this.network_service.init_keys().then(()=>{
+    //       //
+    //       // });
+    //     });
+    //   }
+    // }
 
     this.user.addr = params["addr"]
     this.network_service.version = params["version"] || "main";
+
+    $$("Message de disponibilité des parametres")
+    this.user.params_available.next(params);
+
     this.update_menu();
 
   }

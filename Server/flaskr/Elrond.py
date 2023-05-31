@@ -408,7 +408,6 @@ class Elrond(Network):
         for ask_role in special_role.split(","):
           url=url+"&"+ask_role+"=true"
 
-
       result=api(url,"gateway=api")
       if not result is None:
         cols=result
@@ -988,6 +987,16 @@ class Elrond(Network):
     return rc
 
 
+  def extract_visual_from_nft(self,nft):
+    if not "media" in nft or len(nft["media"])==0:
+      url=nft["url"]
+    else:
+      url=nft["media"][0]["originalUrl"]
+      if "ipfs" in url:
+        url=nft["url"]
+
+    return url
+
 
   def get_nfts(self,_user:AccountOnNetwork,limit=2000,with_attr=False,offset=0,with_collection=False,type_token="NonFungibleESDT,SemiFungibleESDT") -> [NFT]:
     """
@@ -1019,7 +1028,6 @@ class Elrond(Network):
     #nfts=list(nfts["data"]["esdts"].values())
     if len(nfts)<offset:return []
 
-
     collections=dict()
     for nft in nfts[offset:limit]:
       _data={}
@@ -1038,11 +1046,11 @@ class Elrond(Network):
       collection=collections[collection_id]
       if not "royalties" in nft or nft["royalties"]=="": nft["royalties"]=0
       nft["owner"]=_user.address.bech32()
-      visual=nft["url"] if not "ipfs" in nft["url"] else nft["media"][0]["thumbnailUrl"]
+
       _nft=NFT(
         object=nft,
         collection=collection,
-        visual=visual,
+        visual=self.extract_visual_from_nft(nft),
         creators=[{"address":nft["creator"],"share":int(nft["royalties"])/100}] if not "creators" in _data else _data["creators"],
       )
       _nft.balances={_user.address.bech32():balances[_nft.address] if _nft.address in balances else 0}

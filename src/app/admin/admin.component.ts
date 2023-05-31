@@ -9,6 +9,7 @@ import {Router} from "@angular/router";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {MatSnackBar} from "@angular/material/snack-bar";
+import {wait_message} from "../hourglass/hourglass.component";
 
 
 interface ConfigServer {
@@ -73,6 +74,10 @@ export class AdminComponent implements OnInit {
   };
   sel_url: any=null;
   rows: any[]=[];
+  sel_filter: string = "temp*";
+  delay: number = 10;
+  files: any[]=[];
+  nb_selected_file: number=0;
 
 
   constructor(
@@ -90,8 +95,11 @@ export class AdminComponent implements OnInit {
   ngOnInit(): void {
 
     this.user.login("Se connecter pour accèder aux commandes d'administration");
+    wait_message(this,"Chargement des informations",true);
     this.network.info_server().subscribe((infos:any)=>{
+      wait_message(this);
       this.server_config=infos;
+      this.refresh_file_selection();
       this.networks=this.network.config["NETWORKS"].map((x:any)=>{return {label:x,value:x}});
       this.stockages=this.network.stockage_available;
 
@@ -99,6 +107,7 @@ export class AdminComponent implements OnInit {
     },(err:any)=>{
       showMessage(this,"Problème de connexion serveur")
       showError(this,err);
+      wait_message(this);
     })
   }
 
@@ -418,5 +427,30 @@ export class AdminComponent implements OnInit {
   default_appli_list() {
     let url="https://github.com/f80dev/TokenSol/raw/master/Parametres%20des%20applications.xlsx";
     this.batch_import([{filename:url,file:url}]);
+  }
+
+  refresh_file_selection() {
+    this.files=[];
+    let filter=this.sel_filter;
+    this.nb_selected_file=0
+    if(filter.endsWith("*"))filter=filter.substring(0,filter.length-1);
+    for(let f of this.server_config!.Uploaded_files){
+      f.selected=(f.name.startsWith(filter) && f.delay>this.delay);
+      if(f.selected)this.nb_selected_file=this.nb_selected_file+1;
+      this.files.push(f);
+    }
+  }
+
+  delete_selected_files() {
+    let op=0;
+    for(let f of this.files){
+      if(f.selected){
+        this.network.delete_file(f.name).subscribe(()=>{
+          op=op+1;
+          if(op>=this.nb_selected_file)this.refresh_file_selection();
+        });
+      }
+    }
+
   }
 }

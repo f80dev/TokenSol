@@ -1,6 +1,8 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {HttpClient} from "@angular/common/http";;
 import {NetworkService} from "../network.service";
+import {MatDialog} from "@angular/material/dialog";
+import {_prompt} from "../prompt/prompt.component";
 
 @Component({
   selector: 'app-dbtable',
@@ -20,7 +22,8 @@ export class DbtableComponent implements OnInit {
 
   constructor(
     public httpClient:HttpClient,
-    public network:NetworkService
+    public network:NetworkService,
+    public dialog:MatDialog
   ) { }
 
   update_cols(cols:string[]){
@@ -36,9 +39,8 @@ export class DbtableComponent implements OnInit {
     for(let i=0;i<rows.length;i++){
       for(let k of Object.keys(rows[i])){
         let v=rows[i][k];
-        if(typeof(v)=="boolean"){
-          v=v ? "X" : "";
-        }
+        if(typeof(v)=="boolean"){v=v ? "X" : "";}
+        if(typeof(v)=="object"){v=JSON.stringify(v)}
         rows[i][this.dictionnary[k]]=v;
       }
     }
@@ -70,8 +72,10 @@ export class DbtableComponent implements OnInit {
     this.refresh()
   }
 
-  clear() {
-    if(this.source!="local"){
+  async clear() {
+    let rep=await _prompt(this,"Confirmer l'effacement","","","oui/non","Effacer tout","Annuler",true);
+
+    if(rep=="yes" && this.source!="local"){
       this.httpClient.delete(this.network.server_nfluent+"/api/tables/"+this.table).subscribe(()=>{
         this.refresh();
       })

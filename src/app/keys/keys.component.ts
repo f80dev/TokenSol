@@ -80,9 +80,13 @@ export class KeysComponent implements OnInit {
     }
   }
 
-  encrypt(key: any) {
+  encrypt(key: any,encrypt_all=false) {
     this.network.encrypte_key(key.name,this.network.network,this.privateKey).subscribe((r:any)=>{
-      this.clipboard.copy(key.name+": "+r.private_key);
+      if(encrypt_all){
+        this.clipboard.copy(key.name+": "+r.encrypt);
+      } else {
+        this.clipboard.copy(key.name+": "+r.private_key);
+      }
       showMessage(this,"La clé est disponible dans le presse papier")
     });
   }
@@ -137,7 +141,12 @@ export class KeysComponent implements OnInit {
   }
 
   open_collections(key: CryptoKey,tools="nfluent") {
-    if(tools=="nfluent")this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.network.network}});
+    if(tools=="nfluent" && key){
+      this.network.encrypte_key(key.name!,this.network.network,key.secret_key!,key.address).subscribe((r)=>{
+        this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.network.network,encrypted:r.encrypt}});
+      })
+
+    }
     if(tools=="inspire")open(this.network.getExplorer(key.address,"accounts"),"explorer");
     if(tools=="opensea")open(this.network.getExplorer(key.address),"explorer");
   }

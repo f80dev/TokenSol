@@ -176,6 +176,21 @@ export class CreatorComponent implements OnInit,OnDestroy {
       this.sel_palette=this.palette_names[0];
     })
 
+    this.network.list_config().subscribe((r:any)=> {
+      if(r){
+        this.configs = r.map((x:any)=>{return x.doc});
+        let item=localStorage.getItem("config");
+        if(item){
+          $$("Chargement de la configuration du localStorage")
+          this.sel_config=parse(item);
+          this.eval_max_nft();
+        }else{
+          $$("Initialisation d'une nouvelle configuration")
+          this.new_conf("localConfig",true);
+        }
+      }
+    },(err)=>{showError(this,err)});
+
     getParams(this.routes).then((params:any)=>{
       if(params.title_form)this.title_form=params.title_form;
       this.claim=params.claim || environment.claim || "";
@@ -188,22 +203,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
           this.stockage_available[i]={label:s.split("-")[0],value:s}
         }
       }
-
-      this.network.list_config().subscribe((r:any)=> {
-        if(r){
-          this.configs = r.map((x:any)=>{return x.doc});
-          let item=localStorage.getItem("config");
-          if(item){
-            $$("Chargement de la configuration du localStorage")
-            this.sel_config=parse(item);
-            this.eval_max_nft();
-          }else{
-            $$("Initialisation d'une nouvelle configuration")
-            this.new_conf("localConfig",true);
-          }
-        }
-      },(err)=>{showError(this,err)});
-
 
       this.eval_max_nft();
       this.refresh();
@@ -411,7 +410,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
         let step=Math.max(sequences.length/10,3);
 
         this.previews=[];
-        this.message_preview="Avancement "+Number(100*step/sequences.length)+"%";
 
         $$("Démarage du traitement")
         for(let i=0;i<sequences.length;i=i+step){
@@ -427,6 +425,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
               $$("Réponse=",result.urls)
               this.add_to_preview(result.urls,result.urls,result.files,result.indexes);
 
+              this.message_preview="Avancement "+Math.round(Number(100*i/sequences.length))+"%";
               if(this.previews.length==sequences.length){
                 this.message_preview="";
                 if(format.indexOf("mint")>-1)this.router.navigate(["mint"])
@@ -440,8 +439,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
                     }
                   })
                 }
-              }else{
-                this.message_preview="Avancement "+Math.round(Number(100*i/sequences.length))+"%";
               }
 
               if(format.indexOf("mint")>-1){

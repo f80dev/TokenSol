@@ -52,8 +52,9 @@
   </div>
 
 
-    <app-input [label]="data?.question || ''" *ngIf="_type=='options'"
+    <app-input [label]="data?.question || ''" *ngIf="_type=='options' || _type=='list'"
                value_type="list" [value]="data.result"
+               (valueChange)="data.result=$event"
                [options]="data.options || []"></app-input>
 
   <div *ngIf="_type=='images' && data.options.length>0" style="display: flex;width:500px;flex-direction: row;flex-wrap: wrap;">

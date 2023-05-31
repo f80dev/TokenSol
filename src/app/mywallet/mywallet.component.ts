@@ -23,6 +23,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   indexTab: number=0;
   url_key: any="";
   showDetail=false;
+  exclude_collections:string[]=[]
 
   @Input("filter") filter="";
 
@@ -82,6 +83,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
       apply_params(this,params,environment)
       this.api.network=this.network;
       this.addr=params["addr"] || params["address"] || "";
+      this.api.get_account_settings(this.addr).subscribe((r)=>{this.exclude_collections=r.exclude_from_gallery || [];})
 
       this.refresh_balance();
       this.showDetail=params["show_detail"] || false;
@@ -124,7 +126,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
       if(nft.collection){
         if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection.id)==-1){
           let name=nft.collection.name ? nft.collection.name : nft.collection.id;
-          this.collections.push(newCollection(name,nft.collection.owner,nft.collection.id));
+          let col=newCollection(name,nft.collection.owner,nft.collection.id)
+          col.gallery=(this.exclude_collections.indexOf(col.id)==-1)
+          this.collections.push(col);
           this.options.push({label:name,value:nft.collection.id}); //=this.collections.map((x:Collection)=>{return {label:x.name,value:x.id}})
         }
       }
@@ -228,6 +232,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   send(image:string) {
     if(this.sel_ope?.nftlive){
       let collection:Collection= {
+        gallery: true,
         name: this.sel_ope?.nftlive!.nft_target.collection,
         id: "",
         roles:[],
@@ -420,5 +425,13 @@ export class MywalletComponent implements OnInit,OnDestroy {
   logout() {
     this.addr="";
     this._location.go("/wallet",setParams({toolbar:false}))
+  }
+
+  save_accout_settings() {
+    let rc=[]
+    for(let c of this.collections){
+      if(!c.gallery)rc.push(c.id)
+    }
+    this.api.set_account_settings(this.addr,rc).subscribe(()=>{});
   }
 }

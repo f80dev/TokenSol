@@ -1,18 +1,22 @@
 attributes: {}
 data:
-  creators: ""
-  description: DÃ©monstration des possibilitÃ©s de tokenforge
+  creators: "nfluent=10%"
+  description: "Démonstration des possibilités de tokenforge"
   files: ""
   operation: nfluent_access_card
-  properties: ""
+  properties: "
+    année de création=2023
+    objectif=démonstration de tokenforge
+    référence=ref.__idx__    
+  "
   sequence:
     - Texte ici
-  symbol: ""
-  tags: ""
-  title: Emojies __idx__
+  symbol: "token __idx__"
+  tags: "emojies serie nfluent"
+  title: "Emojies __idx__"
 height: 400
 help: ""
-label: Emoticons SÃ©rie
+label: Emoticons Série
 layers:
   - elements:
       - image: https://images.unsplash.com/32/Mc8kW4x9Q3aRR3RkP5Im_IMG_4417.jpg?ixid=Mnw5OTUyN3wwfDF8c2VhcmNofDF8fGJhY2tncm91bmR8ZW58MHx8fHwxNjc4ODc5NDMz&ixlib=rb-4.0.3

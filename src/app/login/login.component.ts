@@ -45,7 +45,7 @@ export class LoginComponent implements OnInit {
       this.user.setProfil(this.email,this.access_code).then(()=>{
         localStorage.setItem("access_code",encrypt(this.access_code));
         localStorage.setItem("email",encrypt(this.email));
-        this.user.profil.email=this.email;
+        this.user.setProfil(this.email,this.access_code)
         this.user.strong=true;
         this.user.verified_address=true;
         this._location.back()

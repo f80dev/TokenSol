@@ -7,12 +7,12 @@ from tests.test_tools import RESSOURCE_TEST_DIR
 
 DOMAIN_SERVER="http://127.0.0.1:4242/"
 PLATFORMS=[
-	("megaupload","tests"),
-	("storj","tests"),
-	("githubstorage", "github-nfluentdev-storage-main"),
+	("githubstorage", "github-nfluentdev-storage_2-main"),
 	("dao", DOMAIN_SERVER),
 	("nftstorage", "")
 ]
+
+#a inclure quand terminé : ("megaupload","tests"),	("storj","tests"),
 
 #TODO: ajouter les autres plateforms de stockage serveur, github, storej
 
@@ -43,6 +43,12 @@ def test_add_file():
 			assert len(result["url"])>0
 
 
+def test_clear_directory(platform=PLATFORMS[0]):
+	#voir la liste des platforms:
+	storage=get_storage_instance(platform[0],platform[1])
+	files=storage.list()
+	for f in files:
+		storage.rem(f["cid"],sha=f["sha"])
 
 def test_add_image():
 	img=""

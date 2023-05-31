@@ -1,5 +1,5 @@
 <div class="mainform" style="text-align: center" [ngStyle]="_style">
-  <div *ngIf="!showEnd && operation?.candymachine">
+  <div *ngIf="!showEnd && nfts.length>0">
     <br>
     <h2 class="color-primary" *ngIf="!airdrop">{{title}}</h2>
     <h2 class="color-primary" *ngIf="airdrop">Airdrop de NFT</h2>
@@ -32,7 +32,14 @@
         (invalid)="invalid()"
         (authent)="authent($event)">
       </app-authent>
+    </div>
 
+    <div *ngIf="!operation && !airdrop">
+      <app-authent
+              [connexion]="connexion"
+              (invalid)="invalid()"
+              (authent)="authent($event)">
+      </app-authent>
     </div>
 
 
