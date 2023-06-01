@@ -465,15 +465,16 @@ class DAO(Storage,Network):
 
 
 
-  def add_validator(self, id,ask_for):
+  def add_validator(self, id,ask_for=""):
     """
     Ajout d'un nouveau validateur dans la liste
     :param ask_for contient une collection ou une liste de NFT
     :return:
     """
-    if ask_for is None or len(ask_for)==0:
-      log("Inscription rejetée car aucune demande de collection ou d'opération associée")
-      return False
+
+    # if ask_for is None or len(ask_for)==0:
+    #   log("Inscription rejetée car aucune demande de collection ou d'opération associée")
+    #   return False
 
     self.db["validators"].update_one({"id":id},{"$set":{
       "id":id,

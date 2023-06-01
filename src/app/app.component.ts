@@ -56,13 +56,9 @@ export class AppComponent implements OnInit {
     public device:DeviceService
   ) {
 
-    this.user.profil_change.subscribe(()=>{
-      this.update_menu();
-    })
-
-    this.user.addr_change.subscribe(()=>{
-      this.update_menu();
-    })
+    this.user.profil_change.subscribe(()=>{this.update_menu();})
+    this.user.addr_change.subscribe(()=>{this.update_menu();})
+    this.network_service.network_change.subscribe(()=>{this.update_menu()})
 
     this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.user.toolbar_visible)this.drawer.toggle();})
     this.device.smallScreen.subscribe((r:boolean)=>{this.full_menu=!r;})
@@ -103,7 +99,7 @@ export class AppComponent implements OnInit {
   update_menu(){
     let connected=this.user.isConnected();
     this.items["settings"].actif=connected;
-    this.items["keys"].actif=connected && (this.network_service.network!="");
+    this.items["keys"].actif=connected;
     this.items["build"].actif=connected;
     this.items["analytics"].actif=connected;
     this.items["login"].actif=!connected;

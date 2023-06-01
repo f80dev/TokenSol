@@ -12,7 +12,7 @@ MAIN_NETWORK = "elrond-devnet"
 NFLUCOIN="NFLUCOIN-4921ed"
 MAIN_MINER="bob"
 
-NETWORKS=["elrond-devnet","polygon-devnet","db-server-nfluent_test"]
+NETWORKS=["db-server-nfluent_test","elrond-devnet","polygon-devnet"]
 PLATFORMS=["db-server-nfluent_test","nftstorage","file","infura"] #ipfs
 MAIN_STORAGE_PLATFORM=PLATFORMS[0]
 

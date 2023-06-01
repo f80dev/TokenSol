@@ -1,7 +1,7 @@
 //Version 0.1
 import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
 import {NetworkService} from "../network.service";
-import {$$, isEmail, isLocal, setParams, showError, showMessage} from "../../tools";
+import {$$, isEmail, isLocal, now, setParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {environment} from "../../environments/environment";
 import {Location} from "@angular/common";
@@ -13,6 +13,7 @@ import {DeviceService} from "../device.service";
 import { WalletConnectV2Provider } from "@multiversx/sdk-wallet-connect-provider";
 import { ExtensionProvider } from "@multiversx/sdk-extension-provider";
 import {WALLET_PROVIDER_DEVNET, WALLET_PROVIDER_MAINNET, WalletProvider} from "@multiversx/sdk-web-wallet-provider/out";
+import {Socket} from "ngx-socket-io";
 
 //Installation de @multiversx/sdk-wallet-connect-provider via yarn add @multiversx/sdk-wallet-connect-provider
 
@@ -49,7 +50,7 @@ export class AuthentComponent implements OnInit {
   @Input() showGoogle=false;            //Authentification via Google (pour les personnes souhaitant laissé un mail)
   @Input() showWalletConnect=false;
   @Input() showWebWallet=false;
-  @Input() showDirectConnect=true;
+  @Input() showDirectConnect=true;      //Utilisation pour lancer xPortal sur le device (possible sur Android / IPhone)
   @Input() showExtensionWallet=false;
   @Input() walletConnect_ProjectId="ea9073e2f07f3d98fea76d4f26f789fe"
   @Input() showAddress=false;
@@ -82,6 +83,7 @@ export class AuthentComponent implements OnInit {
   constructor(
       public api:NetworkService,
       public _location:Location,
+      public socket:Socket,
       public routes:ActivatedRoute,
       public device:DeviceService,
       public socialAuthService: SocialAuthService,
@@ -112,8 +114,6 @@ export class AuthentComponent implements OnInit {
 
   refresh(){
     $$("Refresh de l'écran");
-    if(this.title=="" && this.showWalletConnect)this.title="Pointer ce QRcode avec un wallet compatible 'Wallet Connect'";
-
     if (this.provider) {
       this.init_wallet_provider().then(()=>{
         if(this.showWalletConnect && this.directShowQRCode)this.open_wallet_connect()
@@ -132,6 +132,7 @@ export class AuthentComponent implements OnInit {
       }
     }
 
+
     if(this.showGoogle){
       this.socialAuthService.authState.subscribe((socialUser) => {
         this.strong=true;
@@ -143,9 +144,6 @@ export class AuthentComponent implements OnInit {
         $$("Erreur de connexion",err);
       });
     }
-
-
-
   }
 
 
@@ -175,7 +173,14 @@ export class AuthentComponent implements OnInit {
 
     this.refresh();
 
-
+    let validator_name="val_"+now("rand")
+    this.api.subscribe_as_validator("",this.network,validator_name).subscribe((result:any)=>{
+      this.nfluent_wallet_connect_qrcode=this.api.server_nfluent+"/api/qrcode/"+encodeURIComponent(result.access_code);
+    });
+    this.socket.on(validator_name,((data:any) => {
+      this.address=data.address;
+      this.success()
+    }))
 
     // if(this.operation.length>0){
     //   $$("On utilise "+this.operation+" pour le paramétrage du module");
@@ -435,5 +440,15 @@ export class AuthentComponent implements OnInit {
 
   open_xportal() {
     open(this.url_xportal_direct_connect)
+  }
+
+  cancel() {
+    this.address="";
+    this.oncancel.emit()
+  }
+
+  active_webcam() {
+    this.enabled_webcam=true;
+    this.nfluent_wallet_connect_qrcode='';
   }
 }

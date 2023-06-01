@@ -1,174 +1,188 @@
 <div style="width: 100%;text-align: center;position: relative;">
 
-<!--  Permet l'authentification force par code d'accés ou directement seed phrase-->
-  <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
-    <app-input *ngIf="showAccesCode"
-               [value]="access_code"
-               (valueChange)="access_code=$event"
-               (validate)="connect('code')" label_button="Valider"
-               help="Ce code se trouve dans le mail reçu à la création de votre wallet"
-               label="Votre code d'accès">
-    </app-input>
-    <app-input *ngIf="showPrivateKey"
-               (valueChange)="private_key=$event" label_button="Valider"
-               [value]="private_key" (validate)="connect('private_key')"
-               help="Cette phrase vous a été envoyé dans le mail de création"
-               label="Votre phrase secrete">
-    </app-input>
-  </div>
+  <div class="mat-subheading-1">{{title}}</div>
+
+  <!--  Permet l'authentification force par code d'accés ou directement seed phrase-->
+  <mat-expansion-panel *ngIf="showAccesCode || showPrivateKey">
+    <mat-expansion-panel-header>Utiliser votre clé secréte</mat-expansion-panel-header>
+    <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
+      <app-input *ngIf="showAccesCode"
+                 [value]="access_code"
+                 (valueChange)="access_code=$event"
+                 (validate)="connect('code')" label_button="Valider"
+                 help="Ce code se trouve dans le mail reçu à la création de votre wallet"
+                 label="Votre code d'accès">
+      </app-input>
+      <app-input *ngIf="showPrivateKey"
+                 (valueChange)="private_key=$event" label_button="Valider"
+                 [value]="private_key" (validate)="connect('private_key')"
+                 help="Cette phrase vous a été envoyé dans le mail de création"
+                 label="Votre phrase secrete">
+      </app-input>
+    </div>
+  </mat-expansion-panel>
 
 
   <br>
 
-<!--  https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
-  <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
+  <!--  https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
+  <mat-expansion-panel *ngIf="showAccesCode || showPrivateKey">
+    <mat-expansion-panel-header>Utiliser votre email</mat-expansion-panel-header>
+    <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
 
-<!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
-      <asl-google-signin-button  *ngIf="showGoogle"
+      <!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
+      <asl-google-signin-button  *ngIf="showGoogle && address.length==0"
                                  style="height: 50px;"
                                  [type]="(device.isHandset$ | async) ? 'icon' : 'standard'" size="medium"
                                  title="Authentification simplifiée pour les utisateurs de gmail">
       </asl-google-signin-button>
 
       <app-input *ngIf="showAddress || showEmail"
-                 width="350px"
+                 width="300px"
                  [label]="intro_message"
-                 label_button="Valider"
                  [placeholder]="prompt"
                  [value]="address" (valueChange)="update_address($event)"
                  (validate)="validate($event)"
                  [help]="explain_message">
       </app-input>
-  </div>
-
-  <button type="button" color="primary" *ngIf="showWebcam"
-          mat-raised-button 
-          (click)="enabled_webcam=true" >
-    Utiliser mon QRCode
-  </button>
+    </div>
+  </mat-expansion-panel>
 
 
-  <br>
-  <app-scanner *ngIf="enabled_webcam"
-               [size]="size"
-               title="Montrer le QRcode de votre wallet à cette caméra"
-               (flash)="on_flash($event)"
-               (cancel)="cancel_webcam()"
-               (click)="update_dynamic_token()">
-  </app-scanner>
-
-  <!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
-  <div *ngIf="showDynamicToken">
-    <button type="button" color="primary"
-            mat-raised-button
-            mat-button
-            (click)="update_dynamic_token()" >
-      Coller le token
-    </button>
-  </div>
-
-
-  <!--  Le validator est un qrcode équivalent à wallet connect mais destiné à nfluent wallet-->
-  <div style="width: 100%;text-align: center">
-    <div style="width: fit-content;display: inline-block;margin:20px;" *ngIf="showNfluentWalletConnect && qrcode.length==0">
-      <button type="button" mat-raised-button color="primary"
-              *ngIf="!directShowQRCode"
-              (click)="directShowQRCode=true">
-        Utiliser le Wallet Nfluent
+  <div *ngIf="!directShowQRCode">
+    <mat-expansion-panel *ngIf="showNfluentWalletConnect">
+      <mat-expansion-panel-header class="color-primary">Utiliser le wallet NFluent</mat-expansion-panel-header>
+      <button type="button" color="primary"
+              mat-raised-button
+              (click)="active_webcam()" >
+        Utiliser mon QRCode
       </button>
 
-      <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && directShowQRCode"
-           [style.opacity]="qrcode_enabled ? 1 : 0.5" >
+      <br>
+      <app-scanner *ngIf="enabled_webcam"
+                   [size]="size"
+                   title="Montrer le QRcode de votre wallet à cette caméra"
+                   (flash)="on_flash($event)"
+                   (cancel)="cancel_webcam()"
+                   (click)="update_dynamic_token()">
+      </app-scanner>
+
+      <!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
+      <div *ngIf="showDynamicToken">
+        <button type="button" color="primary"
+                mat-raised-button
+                mat-button
+                (click)="update_dynamic_token()" >
+          Coller le token
+        </button>
+      </div>
+
+      <div style="width: fit-content;display: inline-block;margin:20px;" *ngIf="qrcode.length==0 && address.length==0">
         <img
-          title="Flasher avec votre wallet nfluent"
-          [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
-          [src]="nfluent_wallet_connect_qrcode"
-          style="cursor: copy;" [style.width]="size"><br>
+                title="Flasher avec votre wallet nfluent"
+                [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
+                [src]="nfluent_wallet_connect_qrcode"
+                style="cursor: copy;max-width: 90%;" [style.width]="size"><br>
         <small>{{title}}</small>
+      </div>
+
+    </mat-expansion-panel>
+    <mat-expansion-panel *ngIf="showDirectConnect || showWalletConnect || showExtensionWallet || showWebWallet">
+      <mat-expansion-panel-header class="color-primary">Utiliser Wallet Connect</mat-expansion-panel-header>
+      <mat-card *ngIf="address.length==0 && qrcode.length==0 && network.indexOf('elrond')>-1 && (showWalletConnect || showExtensionWallet || showWebWallet)" style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background">
+        <mat-card-title class="multiversx-text">S'authentifier sur MultiversX via</mat-card-title>
+        <button type="button" mat-raised-button class="multiversx-button"
+                *ngIf="showWalletConnect && qrcode.length==0"
+                (click)="open_wallet_connect()">
+          L'application xPortal
+        </button><br>
+
+        <button type="button" mat-raised-button class="multiversx-button"
+                *ngIf="showWebWallet"
+                (click)="open_web_wallet()">
+          Le wallet du Web
+        </button><br>
+
+        <button type="button" mat-raised-button class="multiversx-button"
+                *ngIf="showExtensionWallet"
+                (click)="open_extension_wallet()">
+          L'extension Chrome
+        </button><br>
+
+
+      </mat-card>
+
+      <br>
+
+      <div *ngIf="showWalletConnect && qrcode.length>0" style="max-width: 450px;margin-left: -10px;width:100%;text-align: center;display: inline-block;">
+        {{intro_message}}
+        <img [src]="qrcode"
+             (click)="qrcode=''"
+             title="Flasher ce qrcode depuis votre wallet"
+             style="width:90%;max-width: 300px;margin-top:10px;" [style.width]="size">
+        <br>
+
+        <button mat-raised-button
+                *ngIf="device.modele!='desktop' && showDirectConnect && showWalletConnect"
+                (click)="open_xportal()">
+          Ouvrir sur cet appareil
+        </button>
 
       </div>
 
-    </div>
+    </mat-expansion-panel>
+    <mat-expansion-panel *ngIf="qrcode.length==0 && network.indexOf('polygon')>-1" class="polygon-background">
+      <mat-expansion-panel-header class="color-primary">Utiliser l'extension</mat-expansion-panel-header>
+      <button type="button" mat-raised-button class="polygon-button"
+              *ngIf="showWalletConnect && qrcode.length==0"
+              (click)="open_polygon_extension_wallet()">
+        Extension Chrome
+      </button>
+    </mat-expansion-panel>
   </div>
 
-  <mat-card *ngIf="qrcode.length==0 && network.indexOf('polygon')>-1" style="text-align: center;width: fit-content;display: inline-block;" class="polygon-background">
-    <mat-card-title class="polygon-text">Utiliser Polygon</mat-card-title>
-    <button type="button" mat-raised-button class="polygon-button"
-            *ngIf="showWalletConnect && qrcode.length==0"
-            (click)="open_polygon_extension_wallet()">
-      Extension Chrome
-    </button><br>
-  </mat-card>
 
+  <div *ngIf="directShowQRCode">
+    <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && showNfluentWalletConnect"
+         [style.opacity]="qrcode_enabled ? 1 : 0.5" >
+      <img
+              title="Flasher avec votre wallet nfluent"
+              [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
+              [src]="nfluent_wallet_connect_qrcode"
+              style="cursor: copy;" [style.width]="size"><br>
+      <small>{{title}}</small>
 
-  <mat-card *ngIf="qrcode.length==0 && network.indexOf('elrond')>-1 && (showWalletConnect || showExtensionWallet || showWebWallet)" style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background">
-    <mat-card-title class="multiversx-text">S'authentifier sur MultiversX via</mat-card-title>
-    <button type="button" mat-raised-button class="multiversx-button"
-            *ngIf="showWalletConnect && qrcode.length==0"
-            (click)="open_wallet_connect()">
-      L'application xPortal
-    </button><br>
+    </div>
 
-    <button type="button" mat-raised-button class="multiversx-button"
-            *ngIf="showWebWallet"
-            (click)="open_web_wallet()">
-      Le wallet du Web
-    </button><br>
-
-    <button type="button" mat-raised-button class="multiversx-button"
-            *ngIf="showExtensionWallet"
-            (click)="open_extension_wallet()">
-      L'extension Chrome
-    </button><br>
-
-
-  </mat-card>
-
-  <br>
-
-  <div *ngIf="showWalletConnect && qrcode.length>0"
-       style="max-width: 450px;margin-left: -10px;width:100%;text-align: center;display: inline-block;">
-    {{intro_message}}
-
+    {{intro_message}}<br>
     <img [src]="qrcode"
-         (click)="qrcode=''"
          title="Flasher ce qrcode depuis votre wallet"
          style="width:90%;max-width: 300px;margin-top:10px;" [style.width]="size">
-    <br>
-
-    <button mat-raised-button
-            *ngIf="device.modele!='desktop' && showDirectConnect && showWalletConnect"
-            (click)="open_xportal()">
-      Ouvrir sur cet appareil
-    </button>
-
   </div>
 
+  <!--  <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >-->
+  <!--    <div *ngIf="showNetwork">-->
+  <!--      Se connecter avec votre wallet sur<br>-->
+  <!--      <button type="button" mat-raised-button -->
+  <!--              *ngIf="api.isSolana(network) && (api.installed_wallet().indexOf('phantom')>-1 || api.installed_wallet().indexOf('solflare')>-1)"-->
+  <!--              (click)="open_wallet()">-->
+  <!--        Solana-->
+  <!--      </button>-->
 
-  <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >
-    <div *ngIf="showNetwork">
-      Se connecter avec votre wallet sur<br>
-      <button type="button" mat-raised-button 
-              *ngIf="api.isSolana(network) && (api.installed_wallet().indexOf('phantom')>-1 || api.installed_wallet().indexOf('solflare')>-1)"
-              (click)="open_wallet()">
-        Solana
-      </button>
-
-      <button type="button" mat-raised-button 
-              *ngIf="api.installed_wallet().indexOf('maiar')>-1"
-              (click)="open_wallet()">
-        Elrond
-      </button>
-    </div>
-  </div>
+  <!--      <button type="button" mat-raised-button -->
+  <!--              *ngIf="api.installed_wallet().indexOf('maiar')>-1"-->
+  <!--              (click)="open_wallet()">-->
+  <!--        Elrond-->
+  <!--      </button>-->
+  <!--    </div>-->
+  <!--  </div>-->
 
 
-  <div id="cmdPanel" style="margin-left:10%;margin-top:20px;width: 80%;text-align: center;" >
-    <button type="button" mat-raised-button 
+  <div id="cmdPanel" *ngIf="!directShowQRCode" style="margin-left:10%;margin-top:20px;width: 80%;text-align: center;" >
+    <button type="button" mat-raised-button
             title="Ne pas se connecter" *ngIf="showCancel"
-            (click)="oncancel.emit()">
+            (click)="cancel()">
       Annuler
     </button>
-
   </div>
 </div>

@@ -19,8 +19,6 @@ def test_reset(networks=NETWORKS):
 
 
 
-
-
 def test_create_account(email=MAIN_EMAIL,networks=NETWORKS,domain_appli=DEFAULT_DOMAIN_APPLI):
 	rc=None
 	for network in networks:

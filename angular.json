@@ -10,7 +10,7 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:application": {
-          "strict": true
+          "strict": false
         }
       },
       "root": "",
@@ -45,7 +45,21 @@
             ],
             "styles": [
               "src/styles.scss",
-              "src/nfluent.scss"
+              {
+                "input": "src/nfluent-dark.scss",
+                "bundleName": "nfluent-dark",
+                "inject": false
+              },
+              {
+                "input": "src/nfluent-yellow.scss",
+                "bundleName": "nfluent-yellow",
+                "inject": false
+              },
+              {
+                "input": "src/nfluent.scss",
+                "bundleName": "nfluent",
+                "inject": false
+              }
             ],
             "scripts": [
 

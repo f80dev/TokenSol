@@ -2890,9 +2890,12 @@ def validators(validator=""):
           nfts.append(nft)
       owners=[x.owner for x in nfts]
     else:
-      log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
-      _network=get_network_instance(request.json["network"])
-      owners=list(set([x.owner for x in _network.get_nfts_from_collections(ask_for.split(","))]))
+      if ask_for=="":
+        owners=[]
+      else:
+        log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
+        _network=get_network_instance(request.json["network"])
+        owners=list(set([x.owner for x in _network.get_nfts_from_collections(ask_for.split(","))]))
 
     return jsonify({
       "access_code":access_code,
@@ -2998,8 +3001,6 @@ def api_remove_background():
     return jsonify({"image":Sticker(image=output,work_dir=work_dir).toBase64()})
   else:
     return jsonify({"image":Sticker(image=input,work_dir=work_dir).toBase64(),"error":"Impossible de supprimer le fond depuis windows"})
-
-
 
 
 

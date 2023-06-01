@@ -55,8 +55,13 @@
 		<br>
 		Votre disposez de <span class="color-primary">{{balance}} {{token.name}}</span><br><br>
 		<br><br>
-		<h2>Vous pouvez maintenant fermer cet écran</h2>
-		<a [href]="transaction!.explorer" target="_blank">Voir la transaction</a>
+
+		<h2>
+			{{end_message}}<br>
+			Vous pouvez maintenant fermer cet écran
+		</h2>
+		<br>
+		<a *ngIf="transaction && transaction.explorer" [href]="transaction!.explorer" target="_blank">Voir la transaction</a>
 		<br>
 		<button mat-raised-button color="primary"
 				style="margin-top: 60px;"

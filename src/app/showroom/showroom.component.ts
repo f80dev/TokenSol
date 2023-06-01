@@ -8,7 +8,7 @@ import {NetworkService} from "../network.service";
   templateUrl: './showroom.component.html',
   styleUrls: ['./showroom.component.css']
 })
-export class ShowroomComponent implements OnInit,OnDestroy {
+export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
 
   @Input() nfts:NFT[]=[];
 
@@ -27,6 +27,7 @@ export class ShowroomComponent implements OnInit,OnDestroy {
   image_to_show: string | undefined;
   title: string="";
   transition: any={};
+  histo:number[]=[];
 
 
 
@@ -45,16 +46,22 @@ export class ShowroomComponent implements OnInit,OnDestroy {
 
   select_nft(){
     if(this.nfts.length>0){
-      const index=Math.round(Math.random()*(this.nfts.length-1));
-      let nft=this.nfts[index];
-      if(nft.visual.length>0 && (!nft.collection || this.exclude_collections.indexOf(nft.collection.id)==-1)){
-        this.show_nft(this.nfts[index])
+      let nft=null;
+      for(let i=0;i<100;i++){
+        const index=Math.round(Math.random()*(this.nfts.length-1));
+        nft=this.nfts[index];
+        if(this.histo.indexOf(index)==-1 && nft.visual.length>0 && (!nft.collection || this.exclude_collections.indexOf(nft.collection.id)==-1)){
+          this.histo.push(index);
+          if(this.histo.length>=this.nfts.length)this.histo=[];
+          break;
+        }
       }
+      if(nft)this.show_nft(nft)
     }
   }
 
   ngOnInit(): void {
-
+    this.histo=[];
     this.refresh();
   }
 
@@ -78,18 +85,18 @@ export class ShowroomComponent implements OnInit,OnDestroy {
     if(this.hInterval)clearInterval(this.hInterval);
   }
 
-  // ngOnChanges(changes: SimpleChanges): void {
-  //   if(this.operation_id!=""){
-  //     this.network.get_nfts_from_operation(this.operation_id).subscribe((result)=>{
-  //       this.nfts=result.nfts;
-  //     })
-  //   } else {
-  //     if(this.collection_id!=""){
-  //       this.network.get_nfts_from_collection(this.collection_id,this.collection_network).subscribe((result)=>{
-  //         this.nfts=result.nfts;
-  //       })
-  //     }
-  //   }
-  // }
+  ngOnChanges(changes: SimpleChanges): void {
+    // if(this.operation_id!=""){
+    //   this.network.get_nfts_from_operation(this.operation_id).subscribe((result)=>{
+    //     this.nfts=result.nfts;
+    //   })
+    // } else {
+    //   if(this.collection_id!=""){
+    //     this.network.get_nfts_from_collection(this.collection_id,this.collection_network).subscribe((result)=>{
+    //       this.nfts=result.nfts;
+    //     })
+    //   }
+    this.histo=[];
+  }
 
 }

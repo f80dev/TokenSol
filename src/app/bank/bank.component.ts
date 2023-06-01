@@ -35,6 +35,7 @@ export class BankComponent implements OnInit {
   size="90%";
   visual: string="";
   background: string="";
+  end_message: string = "";
 
   public constructor(
     public network:NetworkService,
@@ -82,12 +83,10 @@ export class BankComponent implements OnInit {
         this.transaction=result;
         wait_message(this)
         if(result.error==""){
-          showMessage(this,"Vous avez récupérer de nouveaux "+this.token.name);
-          this.refresh_balance().then(()=>{
-            this.show_can_close=true;
-          })
+          this.end_message="Vous avez récupérer de nouveaux "+this.token.name
+          this.refresh_balance().then(()=>{this.show_can_close=true;})
         } else {
-          showMessage(this,result.error);
+          this.end_message=result.error;
           wait_message(this)
           this.show_can_close=true
         }
@@ -138,7 +137,6 @@ export class BankComponent implements OnInit {
 
 
   change_addr() {
-    this._location.replaceState("bank","")
     this.addr="";
     this.balance=0;
     this.save_local();

@@ -9,7 +9,7 @@ body,html {
   margin: 0;
   padding: 0;
   background-color: #59591d;
-  color: white;
+  color: yellow;
 }
 
 $nfluent-primary-color: mat.define-palette(mat.$yellow-palette, 700);
@@ -17,7 +17,7 @@ $nfluent-secondary-color: mat.define-palette(mat.$yellow-palette, 700);
 $nfluent-accent-color:mat.define-palette(mat.$yellow-palette, 500);
 $nfluent-warn-color:mat.define-palette(mat.$yellow-palette, A200, A100, A400);
 
-$nfluent-theme: mat.define-light-theme((
+$nfluent-dark-theme: mat.define-dark-theme((
         color: (
                 primary:$nfluent-primary-color,
                 secondary:$nfluent-secondary-color,
@@ -32,5 +32,10 @@ $nfluent-theme: mat.define-light-theme((
 // passed to `define-light-theme` omits typography, `button-theme` will not
 // emit any typography styles.
 @include mat.all-component-themes($nfluent-dark-theme);
+
+
+.color-primary {
+  color: mat.get-color-from-palette(mat.$yellow-palette, 500);
+}
 
 

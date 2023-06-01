@@ -36,11 +36,10 @@ export class NetworkService implements OnInit {
     online: boolean=true;
     keys:CryptoKey[]=[];
     config:any={};
-    networks_available:string[]=[];          //network
-    stockage_available:string[]=[];          //stockage visuel et metadata
-    stockage_document_available:string[]=[]; //stockage document attaché
-
-    chain_id="D"                               //Chain_id du réseau elrond
+    networks_available:string[]=[];             //network
+    stockage_available:string[]=[];             //stockage visuel et metadata
+    stockage_document_available:string[]=[];    //stockage document attaché
+    chain_id="D"                                //Chain_id du réseau elrond
 
     constructor(
         private httpClient : HttpClient
@@ -81,6 +80,7 @@ export class NetworkService implements OnInit {
             if(this.network){
                 this.httpClient.get<CryptoKey[]>(this.server_nfluent + "/api/keys/?access_code="+access_code+"&network=" + this.network + "&with_private=true&with_balance="+with_balance+"&operation="+operation_id,).subscribe((r: CryptoKey[]) => {
                     this.keys = r;
+                    this.network_change.next("keys");
                     this.wait();
                     resolve(r);
                 },(err:any)=>{

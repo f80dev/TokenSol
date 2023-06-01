@@ -4,7 +4,6 @@
 @include mat.core();
 @import "nfluent";
 
-//voir https://material.angular.io/guide/theming#application-background-color
 body,html {
   margin: 0;
   padding: 0;
@@ -12,10 +11,9 @@ body,html {
   color: white;
 }
 
-
-// Emit styles for MatButton based on `$my-theme`. Because the configuration
-// passed to `define-light-theme` omits typography, `button-theme` will not
-// emit any typography styles.
 @include mat.all-component-themes($nfluent-dark-theme);
 
+.color-primary {
+  color: mat.get-color-from-palette($nfluent-indigo-palette, 400);
+}
 

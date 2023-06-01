@@ -1,0 +1,13 @@
+<div *ngIf="collections.length>0">
+    Pour vous authentifier vous devez posséder un NFT de la collection
+    <span *ngFor="let col of _collections">
+      <a [href]="col.link" target="_blank">{{col.name}}</a>,
+    </span>
+</div>
+
+<app-authent
+        *ngIf="show_authent"
+        [title]="title"
+        (authent)="check_nft($event)"
+        [connexion]="connexion">
+</app-authent>
