@@ -13,6 +13,10 @@ from tests.test_tools import *
 def operation():
 	return get_operation("Main_devnet")
 
+def test_canvas(test_client):
+	rc=call_api(test_client,"canvas/")
+	assert "zone" in rc
+	assert "svg" in rc
 
 
 def get_account_from_network(test_client, network=MAIN_NETWORK, seuil=1, filter="bob,carol,dan,eve,frank,grace",all=False) -> dict:

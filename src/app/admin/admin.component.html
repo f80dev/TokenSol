@@ -236,14 +236,15 @@
           <th style="width: 80px;">Blockchains</th>
           <th style="width: 100px;">Visuel d'intro</th>
           <th style="width: 120px;">Minage</th>
-          <th style="width: 100px;">Stockage</th>
-          <th style="width: 150px;">Mails</th>
+          <th style="width: 100px;" *ngIf="user.advance_mode">Paramétres</th>
+          <th style="width: 100px;" *ngIf="user.advance_mode">Stockage</th>
+          <th style="width: 150px;" *ngIf="user.advance_mode">Mails</th>
           <th>Commandes</th>
 
         </tr>
         <tr *ngFor="let row of rows">
-          <td><a [href]="row.favicon"><img style="width:25px;" [src]="row.favicon"></a></td>
-          <td>{{row.appname}}</td>
+          <td><img (click)="share_appli(row)" style="width:25px;" [src]="row.favicon"></td>
+          <td><a [href]="row.url" target="_blank">{{row.appname}}</a></td>
           <td>{{row.comment}}</td>
           <td>{{row.networks}}</td>
           <td><a [href]="row.visual"><img style="width:100px;" [src]="row.visual"></a></td>
@@ -254,11 +255,12 @@
               {{row.royalties}}
             </div>
           </td>
-          <td>
+          <td *ngIf="user.advance_mode">{{row.params}}</td>
+          <td *ngIf="user.advance_mode">
             {{row.stockage}}<br>
             {{row.stockage_document}}
           </td>
-          <td>
+          <td  *ngIf="user.advance_mode">
             <a [href]="row.new_account_mail">Nouveau compte</a><br>
             <a [href]="row.existing_account_mail">Existant</a><br>
           </td>

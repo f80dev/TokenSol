@@ -45,11 +45,6 @@ mat-card {
 
 }
 
-mat-card-title {
-  @extend .mat-body-1, .color-primary;
-  font-size: medium !important;
-  padding: 10px;
-}
 
 mat-card-content {
   padding: 7px;
@@ -62,10 +57,7 @@ mat-expansion-panel {
   margin-bottom: 15px;
 }
 
-mat-expansion-panel-header {
-  @extend .mat-body-2, .color-primary;
-  font-weight: bold !important;
-}
+
 
 //voir https://css-tricks.com/snippets/css/a-guide-to-flexbox/
 .expansion-content {
@@ -135,7 +127,6 @@ th {
   z-index:100001;
   text-align: center;
   padding:50px;
-  background-color: white;
   border: darkgrey solid 1px;
   opacity: 1 !important;
 }

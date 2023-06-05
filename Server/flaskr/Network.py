@@ -61,7 +61,7 @@ class Network():
   def canMintOnCollection(self,miner_addr:str,collection:dict,quantity=1):  #Pour l'ensemble des réseaux excepté Elrond c'est toujours vrai
     return True
 
-  def transfer(self,addr:str,miner:Key,owner:str):
+  def transfer(self,addr:str,miner:Key,owner:str,quantity=1):
     raise NotImplementedError("Fonction transfer")
 
   def create_account(self,email="",seed="",domain_appli="",

@@ -294,7 +294,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
       rc={"error":"Mint error: "+rc["error"],"hash":rc["hash"]}
 
   if miner.address!=owner:
-    tx_transfer=network.transfer(nft.address,miner,owner)
+    tx_transfer=network.transfer(nft.address,miner,owner,nft.supply)
     if not tx_transfer or len(tx_transfer["error"])>0:
       rc["error"]=tx_transfer["error"]
       return rc

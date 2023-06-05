@@ -13,6 +13,8 @@ from os import listdir
 from os.path import exists
 from random import random
 from shutil import copyfile
+from xml.dom.minidom import parse, parseString, Document
+from xml.sax.xmlreader import XMLReader
 from zipfile import ZipFile
 
 import py7zr
@@ -1915,6 +1917,29 @@ def api_users(email=""):
   access_code=request.args.get("access_code")
   _network=get_network_instance(request.args.get("network","elrond-devnet"))
   u=dao.get_user(email,access_code,network_for_keys=_network.network)
+
+# test : http://localhost:4242/api/canvas/
+@bp.route('/canvas/',methods=["GET"])
+def api_canvas():
+  svg_url=request.args.get("svg","https://raw.githubusercontent.com/f80dev/NGallery/master/src/assets/canvas.svg")
+  svg_code=requests.get(svg_url).text
+  document:Document=parseString(svg_code)
+  w=int(document.documentElement._attrs["width"].value)
+  h=int(document.documentElement._attrs["height"].value)
+  zone=None
+  for rect in document.getElementsByTagName("rect"):
+    props=rect._attrs
+    if "id" in props and props["id"].value=="NFT":
+      zone={
+        "left":str(100*float(props["x"].value)/w)+"vw",
+        "top":str(100*float(props["y"].value)/h)+"vh",
+        "size":str(100*float(props["height"].value)/h)+"vh"
+      }
+
+  return jsonify({"zone":zone,"svg":svg_code})
+
+
+
 
 
 

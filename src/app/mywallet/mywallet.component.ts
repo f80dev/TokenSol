@@ -126,10 +126,12 @@ export class MywalletComponent implements OnInit,OnDestroy {
       if(nft.collection){
         if(this.collections.map((x:Collection)=>{return x.id}).indexOf(nft.collection.id)==-1){
           let name=nft.collection.name ? nft.collection.name : nft.collection.id;
-          let col=newCollection(name,nft.collection.owner,nft.collection.id)
-          col.gallery=(this.exclude_collections.indexOf(col.id)==-1)
-          this.collections.push(col);
-          this.options.push({label:name,value:nft.collection.id}); //=this.collections.map((x:Collection)=>{return {label:x.name,value:x.id}})
+          this.api.get_collections(name,this.network).subscribe((cols)=>{
+            let col=cols[0]
+            col.gallery=(this.exclude_collections.indexOf(col.id)==-1)
+            this.collections.push(col);
+            this.options.push({label:col.name,value:col.id}); //=this.collections.map((x:Collection)=>{return {label:x.name,value:x.id}})
+          })
         }
       }
     }
@@ -197,6 +199,14 @@ export class MywalletComponent implements OnInit,OnDestroy {
   claim="";
   appname="";
   visual="";
+
+  gallery_models=[
+    {label:"Gallerie",value:{svg:"musee.svg",background:"https://gallery.nfluent.io/assets/redwall1.jpg"}},
+    {label:"Canvas rouge",value:{svg:"canvas.svg",background:"https://gallery.nfluent.io/assets/redwall2.jpg"}},
+    {label:"Métal",value:{svg:"canvas.svg",background:"https://gallery.nfluent.io/assets/wall1.jpg"}},
+    {label:"Grafiti",value:{svg:"grafitis.svg",background:"https://gallery.nfluent.io/assets/redwall1.jpg"}}
+  ]
+  sel_model: {label:string,value:{svg:string,background:string}}=this.gallery_models[0];
 
   handleImage(event: any) {
     let rc=event;
@@ -386,15 +396,18 @@ export class MywalletComponent implements OnInit,OnDestroy {
     open(this.api.getExplorer(this.addr),"Explorer");
   }
 
-  open_gallery() {
-    open(environment.appli+"/gallery/?"+setParams({
+  open_gallery(address:any,collection:any) {
+    let p:any={
       toolbar:false,
-      address:this.addr,
-      canChange:false,
-      duration:10,
-      background:"https://nfluent.io/assets/paper3.jpg"
-    }),"gallery")
-
+      network:this.network,
+      canChange:true,
+      svg:this.sel_model?.value.svg,
+      background:this.sel_model?.value.background,
+      duration:20
+    }
+    if(address)p["address"]=address
+    if(collection)p["collection"]=collection.id;
+    open("https://gallery.nfluent.io/?"+setParams(p),"gallery")
   }
 
 

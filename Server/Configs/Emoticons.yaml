@@ -5,8 +5,8 @@ data:
   files: ""
   operation: nfluent_access_card
   properties: "
-    année de création=2023
-    objectif=démonstration de tokenforge
+    année de création=2023\n
+    objectif=démonstration de tokenforge\n
     référence=ref.__idx__    
   "
   sequence:

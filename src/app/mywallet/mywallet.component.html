@@ -25,7 +25,7 @@
                 title="Voir dans Inspire.art">
           <mat-icon>visibility</mat-icon>
         </button>
-        <button mat-icon-button (click)="open_gallery()"
+        <button mat-icon-button (click)="open_gallery(addr,null)"
                 title="Ouvrir en gallerie">
           <mat-icon>photo</mat-icon>
         </button>
@@ -262,23 +262,40 @@
   </mat-tab>
 
   <mat-tab label="Préférences">
-    <div style="width:300px;display:inline-block;margin:20px;" class="mat-body-2">
-      <table style="border-spacing: 10px;">
+    <mat-expansion-panel style="max-width:600px;display:inline-block;margin:20px;" class="mat-body-2">
+      <mat-expansion-panel-header>Gestion des collections</mat-expansion-panel-header>
+      <br>
+      <app-input [options]="gallery_models" label="Décors de présentation"
+                 help="Esthétique de votre présentation"
+                 [value]="sel_model" (valueChange)="sel_model=$event"></app-input>
+      <br>
+      <table style="width:100%;">
         <tr>
           <th>Collection</th>
-          <th>Visible sur NGallery</th>
+          <th>Visible</th>
+          <th>Présenter</th>
         </tr>
         <tr *ngFor="let col of collections">
-          <td>{{col.name}}</td>
+          <td><a [href]="col.link" target="_blank">{{col.name}}</a></td>
           <td>
             <mat-slide-toggle [(ngModel)]="col.gallery" (ngModelChange)="save_accout_settings()"></mat-slide-toggle>
           </td>
+          <td>
+            <button mat-icon-button (click)="open_gallery(null,col)">
+              <mat-icon>movie</mat-icon>
+            </button>
+          </td>
         </tr>
       </table>
-    </div>
+    </mat-expansion-panel>
+
     <br><br>
+    <div class="mat-headline-4 color-primary">Se connecter</div>
     <app-authent *ngIf="addr?.length==0 || !strong"
+                 style="max-width: 350px"
                  [showWalletConnect]="true"
+                 [showEmail]="false"
+                 [showGoogle]="false"
                  [showExtensionWallet]="true"
                  [showWebWallet]="true"
                  (authent)="on_authent($event)"

@@ -22,11 +22,8 @@
     </div>
   </mat-expansion-panel>
 
-
-  <br>
-
   <!--  https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
-  <mat-expansion-panel *ngIf="showAccesCode || showPrivateKey">
+  <mat-expansion-panel *ngIf="showEmail || showGoogle">
     <mat-expansion-panel-header>Utiliser votre email</mat-expansion-panel-header>
     <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
 
@@ -37,7 +34,7 @@
                                  title="Authentification simplifiée pour les utisateurs de gmail">
       </asl-google-signin-button>
 
-      <app-input *ngIf="showAddress || showEmail"
+      <app-input *ngIf="showEmail"
                  width="300px"
                  [label]="intro_message"
                  [placeholder]="prompt"
@@ -77,19 +74,21 @@
         </button>
       </div>
 
-      <div style="width: fit-content;display: inline-block;margin:20px;" *ngIf="qrcode.length==0 && address.length==0">
+      <div style="width: fit-content;display: inline-block;margin:20px;">
         <img
                 title="Flasher avec votre wallet nfluent"
                 [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
                 [src]="nfluent_wallet_connect_qrcode"
                 style="cursor: copy;max-width: 90%;" [style.width]="size"><br>
-        <small>{{title}}</small>
+        <small>Flashez depuis votre wallet NFluent</small>
       </div>
 
     </mat-expansion-panel>
-    <mat-expansion-panel *ngIf="showDirectConnect || showWalletConnect || showExtensionWallet || showWebWallet">
+
+<!--    Wallet connect pour MVX-->
+    <mat-expansion-panel *ngIf="network.indexOf('elrond')>-1 && (showDirectConnect || showWalletConnect || showExtensionWallet || showWebWallet)" >
       <mat-expansion-panel-header class="color-primary">Utiliser Wallet Connect</mat-expansion-panel-header>
-      <mat-card *ngIf="address.length==0 && qrcode.length==0 && network.indexOf('elrond')>-1 && (showWalletConnect || showExtensionWallet || showWebWallet)" style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background">
+      <mat-card style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background" *ngIf="qrcode.length==0">
         <mat-card-title class="multiversx-text">S'authentifier sur MultiversX via</mat-card-title>
         <button type="button" mat-raised-button class="multiversx-button"
                 *ngIf="showWalletConnect && qrcode.length==0"
@@ -97,11 +96,11 @@
           L'application xPortal
         </button><br>
 
-        <button type="button" mat-raised-button class="multiversx-button"
-                *ngIf="showWebWallet"
-                (click)="open_web_wallet()">
-          Le wallet du Web
-        </button><br>
+<!--        <button type="button" mat-raised-button class="multiversx-button"-->
+<!--                *ngIf="showWebWallet"-->
+<!--                (click)="open_web_wallet()">-->
+<!--          Le wallet du Web-->
+<!--        </button><br>-->
 
         <button type="button" mat-raised-button class="multiversx-button"
                 *ngIf="showExtensionWallet"

@@ -61,6 +61,7 @@ export class AuthentComponent implements OnInit {
   @Input() address: string="";
   @Input() nfluent_server: string=environment.server;
   @Input() directShowQRCode:boolean=false;      //Propose directement les qrcodes ou laisse l'utilisateur le demander (par défaut)
+  @Input() callback: string="";
 
   strong=false;                     //Niveau d'authentification
   @Input() size="350px";
@@ -79,6 +80,7 @@ export class AuthentComponent implements OnInit {
   qrcode_enabled: boolean = true;
   url_xportal_direct_connect: string="";
   web3Provider: any;
+
 
   constructor(
       public api:NetworkService,
@@ -376,9 +378,10 @@ export class AuthentComponent implements OnInit {
   }
 
   async open_web_wallet(){
+    //tag webwallet open_webwallet
     //https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-signing-providers/#the-web-wallet-provider
     this.provider=new WalletProvider(this.network.indexOf("devnet")>-1 ? WALLET_PROVIDER_DEVNET : WALLET_PROVIDER_MAINNET)
-    const callback_url = encodeURIComponent(environment.appli);
+    const callback_url = this.callback=="" ? encodeURIComponent(environment.appli+"/"+this._location.path(true)) : encodeURIComponent(environment.appli+this.callback)
     try{
       let address=await this.provider.login({callback_url})
       this.strong=address.length>0;

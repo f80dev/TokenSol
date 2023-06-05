@@ -249,7 +249,13 @@ export class MintComponent implements OnInit {
       if(f.filename.startsWith("http")){
         let resp=await fetch(f.filename);
         let data=await resp.arrayBuffer();
-        tags=ExifReader.load(data)      //voir https://www.npmjs.com/package/exifreader
+        try{
+          tags=ExifReader.load(data)      //voir https://www.npmjs.com/package/exifreader
+        }catch(e){
+          $$("Lecture exif de "+f.filename+" impossible")
+          tags=null;
+        }
+
       }
 
       if(f.filename.endsWith(".json")){

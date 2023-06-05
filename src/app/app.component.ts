@@ -10,6 +10,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "./device.service";
 import {MatSidenav} from "@angular/material/sidenav";
 import {menu_items} from "./menu/menu.component";
+import {StyleManagerService} from "./style-manager.service";
 
 @Component({
   selector: 'app-root',
@@ -52,6 +53,7 @@ export class AppComponent implements OnInit {
     public router:Router,
     public _location:Location,
     public toast:MatSnackBar,
+    public style:StyleManagerService,
     public operation:OperationService,
     public device:DeviceService
   ) {
@@ -229,5 +231,12 @@ export class AppComponent implements OnInit {
   }
 
 
+  theme_mode($event: any) {
+    if($event){
+      this.style.setStyle("theme","nfluent-dark.css")
+    } else {
+      this.style.setStyle("theme","nfluent.css")
+    }
+  }
 }
 

@@ -5,7 +5,9 @@
 	<app-jauge [activate]="message.length>0" [duration]="40" [step]="0.1" [max]="100"></app-jauge>
 	<div *ngIf="!show_can_close && message.length==0 && bank">
 		<h4 *ngIf="addr!='' && token">
-			Des {{token.name}} pour
+			Des {{token.name}}
+			<span *ngIf="network.isDevnet()">(devnet)</span>
+			pour
 			<span class="color-primary" *ngIf="addr.length>0">{{addr.substring(0,20)+"..."}}</span>
 		</h4>
 		<app-authent *ngIf="addr.length==0"
@@ -28,15 +30,29 @@
 			<div class="color-primary mat-headline-3" style="margin-top: -10px;">{{balance}}</div>
 			<div style="margin-top: -50px;">{{token!.name}}</div>
 
+			<div 		 *ngIf="show_payment" style="margin-top: 100px;">
+				{{'Achat de '+bank.refund+' '+token.name}}
+				<app-payment [merchant]="user.merchant"
+							 [user]="addr"
+							 buy_method="fiat"
+							 [bank]="bank"
+							 [fiat_price]="fiat_price*bank.refund"
+							 (cancel)="cancel_pay()"
+							 [title]="'Achat de '+bank.refund+' '+token.name"
+							 (paid)="onpaid($event)">
+				</app-payment>
+			</div>
+
+
 			<div  style="position:absolute;display:block;bottom: 15px;text-align: center;width:100%;padding:0;">
 				<button mat-raised-button color="primary"
-						*ngIf="network.isDevnet()"
+						*ngIf="fiat_price==0"
 				        (click)="refund()">
 					Recevoir<br>{{bank.refund}} {{token.name}}
 				</button>
 
 				<button mat-raised-button color="primary"
-						*ngIf="network.isMain()"
+						*ngIf="fiat_price>0"
 				        (click)="buy()">
 					Acheter
 				</button>

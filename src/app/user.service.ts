@@ -62,6 +62,7 @@ export class UserService implements OnDestroy {
   params:any={appname:""}                             //Enregistrement des parametres au lancement de l'appli
   verified_address: Boolean=false;
   wallet_provider: any;                   //Instance d'acces au wallet distant
+  theme_mode: boolean=false;
 
   constructor(
       private httpClient: HttpClient,

@@ -17,6 +17,9 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "../device.service";
 import {StyleManagerService} from "../style-manager.service";
 import {UserService} from "../user.service";
+import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
+import {MatDialog} from "@angular/material/dialog";
+import {PaymentTransaction} from "../payment/payment.component";
 
 @Component({
   selector: 'app-bank',
@@ -36,6 +39,8 @@ export class BankComponent implements OnInit {
   visual: string="";
   background: string="";
   end_message: string = "";
+  fiat_price=0;
+  show_payment: boolean = false;
 
   public constructor(
     public network:NetworkService,
@@ -43,6 +48,7 @@ export class BankComponent implements OnInit {
     public device:DeviceService,
     public toast:MatSnackBar,
     public user:UserService,
+    public dialog:MatDialog,
     public style:StyleManagerService,
     public routes:ActivatedRoute,
   ){
@@ -59,6 +65,7 @@ export class BankComponent implements OnInit {
       this.bank=extract_bank_from_param(params) || environment.bank;
     }
     if(this.bank){
+      this.fiat_price=Number(params.fiat_price || "0")
       if(params.claim)this.bank!.title=params.claim;
       this.network.get_token(this.bank.token,this.bank.network).subscribe((r)=>{
         this.token=r;
@@ -146,7 +153,15 @@ export class BankComponent implements OnInit {
     this.change_addr();
   }
 
-  buy() {
+  async buy() {
+    this.show_payment=true;
+  }
 
+  onpaid($event: PaymentTransaction) {
+    this.refund();
+  }
+
+  cancel_pay() {
+    this.show_payment=false;
   }
 }

@@ -19,16 +19,15 @@ export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
 
   @Input() delay:number=0.5;
   @Input() size:string="300px";
+  @Input() type_animation:string="crossfade";
   @Input() border="white solid 6px"
   @Output('update') onchange: EventEmitter<NFT>=new EventEmitter();
-
 
   private hInterval: any
   image_to_show: string | undefined;
   title: string="";
   transition: any={};
   histo:number[]=[];
-
 
 
   constructor(public network:NetworkService) { }

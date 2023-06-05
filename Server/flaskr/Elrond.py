@@ -733,7 +733,7 @@ class Elrond(Network):
         nft=NFT(
           name=item["name"],symbol="",
           miner=item["creator"],
-          owner=item["owner"],
+          owner=item["owner"] if "owner" in item else "",
           tags=tags,
           collection={"id":col_id},
           attributes=attributes,

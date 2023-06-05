@@ -6,7 +6,10 @@ import {UserService} from "../user.service";
 import {NetworkService} from "../network.service";
 
 
-export function _ask_for_paiement(vm:any,token_id:string,to_paid:number,to_paid_in_fiat:number,
+export function _ask_for_paiement(vm:any,
+                                  token_id:string,
+                                  to_paid:number,
+                                  to_paid_in_fiat:number,
                                   merchant:Merchant,
                                   provider:any=null,
                                   title="Paiement",
@@ -16,6 +19,7 @@ export function _ask_for_paiement(vm:any,token_id:string,to_paid:number,to_paid_
                                   bill_content:{description:string,subject:string,contact:string},
                                   buy_method="",
                                   bank:Bank | undefined=undefined)  {
+    //token_id : reference du token utilisable pour le paiement
     return new Promise((resolve, reject) => {
         if(to_paid==0 || to_paid_in_fiat==0){
             resolve({})
