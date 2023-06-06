@@ -1924,19 +1924,27 @@ def api_canvas():
   svg_url=request.args.get("svg","https://raw.githubusercontent.com/f80dev/NGallery/master/src/assets/canvas.svg")
   svg_code=requests.get(svg_url).text
   document:Document=parseString(svg_code)
-  w=int(document.documentElement._attrs["width"].value)
-  h=int(document.documentElement._attrs["height"].value)
   zone=None
-  for rect in document.getElementsByTagName("rect"):
-    props=rect._attrs
-    if "id" in props and props["id"].value=="NFT":
-      zone={
-        "left":str(100*float(props["x"].value)/w)+"vw",
-        "top":str(100*float(props["y"].value)/h)+"vh",
-        "size":str(100*float(props["height"].value)/h)+"vh"
-      }
 
-  return jsonify({"zone":zone,"svg":svg_code})
+  new_width=request.args.get("width","")
+  new_height=request.args.get("height","")
+  if len(new_width)>0 and len(new_height)>0:
+    document.documentElement._attrs["width"].value=new_width
+    document.documentElement._attrs["height"].value=new_height
+  else:
+    w=int(document.documentElement._attrs["width"].value)
+    h=int(document.documentElement._attrs["height"].value)
+
+    for rect in document.getElementsByTagName("rect"):
+      props=rect._attrs
+      if "id" in props and props["id"].value=="NFT":
+        zone={
+          "left":str(100*float(props["x"].value)/w)+"vw",
+          "top":str(100*float(props["y"].value)/h)+"vh",
+          "size":str(100*float(props["height"].value)/h)+"vh"
+        }
+
+  return jsonify({"zone":zone,"svg":document.toxml()})
 
 
 

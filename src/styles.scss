@@ -91,7 +91,8 @@ button {
 }
 
 th {
-  background-color: #d8caea;
+  @extend .background-component;
+  @extend .color-primary;
   padding: 6px;
   font-size: medium;
   text-align: left;
@@ -105,9 +106,8 @@ th {
   left:0;
   z-index: 100000;
   display: block;
-  background-color: #efefef;
   text-align: center;
-  opacity: 0.9;
+  opacity: 0.95;
   pointer-events: none;
 }
 

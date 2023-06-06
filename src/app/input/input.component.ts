@@ -44,6 +44,7 @@ export class InputComponent implements OnChanges,OnInit {
   @Input() min: number=0;
   @Input() step: number=1;
   @Input() multiselect: boolean = false;
+  @Input() showClear: boolean=true
 
   constructor() { }
 

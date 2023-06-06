@@ -593,7 +593,7 @@ class DAO(Storage,Network):
 
   def get_account_settings(self, address:str) -> dict :
     rc=self.db["account_settings"].find_one({"address":address})
-    del rc["_id"]
+    if rc and "_id" in rc: del rc["_id"]
     return rc
 
 

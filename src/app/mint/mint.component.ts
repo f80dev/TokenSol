@@ -1,8 +1,8 @@
 import {Component, OnInit} from '@angular/core';
 import {
-  $$, b64DecodeUnicode,
+  $$, apply_params, b64DecodeUnicode,
   base64ToArrayBuffer, CryptoKey, exportToCsv, find,
-  getParams, isEmail, newCryptoKey, now,
+  isEmail, newCryptoKey, now,
   showError,
   showMessage
 } from "../../tools";
@@ -134,6 +134,7 @@ export class MintComponent implements OnInit {
     }
 
     let params:any=this.user.params;
+    apply_params(this,params,environment)
     if(params.import){this.batch_import_from_url(params.import);}
 
     //Récupération d'une collection en particulier
@@ -302,11 +303,11 @@ export class MintComponent implements OnInit {
 
 
   async confirm_mint(start=0,nb_tokens_to_mint=1){
-    let price:any=this.user.price;
+    let price:any=this.user.params.price_to_mint;
     if(price==undefined)price=environment.mint_cost.price_to_mint_one_token_in_crypto;
     price=Math.round(100*(price*nb_tokens_to_mint/100));
 
-    let price_in_fiat:any=this.user.price_in_fiat ;
+    let price_in_fiat:any=this.user.params.fiat_price_to_mint;
     if(price_in_fiat==undefined)price_in_fiat=environment.mint_cost.price_to_mint_one_token_in_fiat;
     price_in_fiat=Math.round(100*nb_tokens_to_mint*price_in_fiat)/100;
 

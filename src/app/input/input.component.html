@@ -14,7 +14,7 @@
            [title]="infobulle"
            (focusin)="showHelp=true" (focusout)="showHelp=false" (keyup)="on_key($event)">
 
-    <mat-icon matSuffix *ngIf="value_type!='number' && value && value!.length>0"
+    <mat-icon matSuffix *ngIf="showClear && value_type!='number' && value && value!.length>0"
               style="opacity: 0.6;"
               (click)="on_clear()">cancel</mat-icon>
     <mat-hint *ngIf="showHelp" class="mat-body-2 help-input">{{help}}</mat-hint>
@@ -30,7 +30,7 @@
               (focusout)="showHelp=false" (keyup)="on_key($event)">
     </textarea>
 
-    <mat-icon matSuffix *ngIf="value && value!.length>0" (click)="on_clear()" style="opacity: 0.7;">cancel</mat-icon>
+    <mat-icon matSuffix *ngIf="showClear && value && value!.length>0" (click)="on_clear()" style="opacity: 0.7;">cancel</mat-icon>
     <mat-hint *ngIf="showHelp" class="mat-body-2 help-input">
       {{help}}
     </mat-hint>

@@ -31,10 +31,6 @@ export class UserService implements OnDestroy {
 
   buy_method: "crypto" | "fiat" | "" = "";
 
-  //Ces prix sont utilisables dans différents services: minage, signature de document, ...
-  price:number=0;
-  price_in_fiat:number=0;
-
   key: CryptoKey | undefined;
   provider: any | undefined;
   collections: Collection[] = [];

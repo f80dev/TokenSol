@@ -1114,7 +1114,7 @@ export class NetworkService implements OnInit {
         return this._get("account_settings/"+address);
     }
 
-    canvas(svg: string) {
-        return this._get("canvas/","svg="+encodeURIComponent(svg));
+    canvas(svg: string,width="100%",height="100%") {
+        return this._get("canvas/","svg="+encodeURIComponent(svg)+"&width="+width+"&height="+height);
     }
 }

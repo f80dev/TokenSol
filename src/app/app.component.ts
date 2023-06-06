@@ -144,7 +144,7 @@ export class AppComponent implements OnInit {
     apply_params(this,params,environment)
 
 
-    this.user.params = params["appname"] || environment.appname;
+    this.user.params = params;
     if (params.hasOwnProperty("toolbar")) {
       this.user.toolbar_visible = params["toolbar"]
     } else {

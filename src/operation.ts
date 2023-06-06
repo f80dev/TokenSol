@@ -25,6 +25,9 @@ export interface Connexion {
   email: boolean | false
   google: boolean | false
   webcam: boolean | false
+  extension_wallet:boolean | false
+  web_wallet:boolean | false
+  direct_connect: boolean | false
   nfluent_wallet_connect: boolean | false            //QRCode proposé par nfluent en substitution de Wallet Connect à utiliser depuis le wallet nfluent
 }
 

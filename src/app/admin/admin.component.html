@@ -227,8 +227,8 @@
     </div>
 
 
-    <div class="expansion-content">
-      <table class="table-elevation mat-body-2" style="text-align: left;" >
+    <div class="expansion-content" style="overflow: scroll;">
+      <table class="table-elevation mat-body-2" style="text-align: left;min-width:400px;" >
         <tr>
           <th style="width: 30px;"></th>
           <th style="width: 60px;">Nom de l'application</th>
@@ -239,6 +239,7 @@
           <th style="width: 100px;" *ngIf="user.advance_mode">Paramétres</th>
           <th style="width: 100px;" *ngIf="user.advance_mode">Stockage</th>
           <th style="width: 150px;" *ngIf="user.advance_mode">Mails</th>
+          <th style="width: 150px;" *ngIf="user.advance_mode">Theme</th>
           <th>Commandes</th>
 
         </tr>
@@ -263,6 +264,9 @@
           <td  *ngIf="user.advance_mode">
             <a [href]="row.new_account_mail">Nouveau compte</a><br>
             <a [href]="row.existing_account_mail">Existant</a><br>
+          </td>
+          <td *ngIf="user.advance_mode">
+            {{row.style}}
           </td>
           <td>
             <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>

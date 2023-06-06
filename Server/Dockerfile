@@ -101,6 +101,7 @@ RUN pip3 -v install multiversx-sdk-network-providers
 RUN pip3 -v install pyopenssl
 RUN pip3 -v install openpyxl
 RUN pip3 -v install mega.py
+RUN pip3 -v install bitcoinlib
 
 WORKDIR /
 RUN mkdir Solana
