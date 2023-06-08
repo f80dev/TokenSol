@@ -68,7 +68,9 @@ export const environment = {
           unity: "NfluCoin",
         }
 
-  }
+  },
+
+  dictionnary: {}
 };
 
 /*

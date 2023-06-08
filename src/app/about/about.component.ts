@@ -14,7 +14,11 @@ import {UserService} from "../user.service";
 export class AboutComponent implements OnInit {
 
   website=environment.website;
+  company="NFluent"
   version=environment.version;
+  cgu=environment.website+"/cgu.html"
+  contact=""
+  logo="./assets/icons/icon_nfluent_256.png"
 
   constructor(
       public routes:ActivatedRoute,
@@ -24,11 +28,12 @@ export class AboutComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    if(this.user.params){
+    if(this.user.params && this.user.params.appname && this.user.params.appname.length>0){
       apply_params(this,this.user.params,environment);
     }else{
       let params=await getParams(this.routes)
-      apply_params(this,this.user.params,environment);
+      apply_params(this,params,environment);
+
     }
   }
 

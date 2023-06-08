@@ -262,7 +262,7 @@ export function rotate(src: string, angle: number, quality: number=1) : Promise<
 
 
 export function apply_params(vm:any,params:any,env:any){
-  for(let prop of ["claim","title","appname","background","visual","new_account_mail","existing_account_mail"]){
+  for(let prop of ["claim","title","appname","background","visual","new_account_mail","existing_account_mail","website","cgu","contact","company","logo"]){
     if(vm.hasOwnProperty(prop))vm[prop]=params[prop] || env[prop] || "";
   }
 

@@ -23,6 +23,7 @@ export const environment = {
     default_price:1,
     default_fiat_price:0.1
   },
+  dictionnary: {},
 
   mint_cost:{
     price_to_mint_one_token_in_crypto:0.1,

@@ -55,7 +55,7 @@
     "jsqr": "1.4.0",
     "monaco-yaml": "^4.0.3",
     "nft.storage": "^7.0.0",
-    "ng-navigator-share": "^1.0.4",
+    "ng-navigator-share": "1.0.4",
     "ngx-color-picker": "^13.0.0",
     "ngx-json-viewer": "^3.2.1",
     "ngx-sharebuttons": "^11.0.0",

@@ -21,6 +21,7 @@ export const environment = {
     default_price:1,
     default_fiat_price:0.1
   },
+  dictionnary: {},
 
 
   mint_cost:{

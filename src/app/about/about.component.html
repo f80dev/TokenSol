@@ -4,22 +4,20 @@
   <div style="margin-top: -20px">version {{version}}</div>
   <br>
 
-  <img src="./assets/icons/icon_nfluent_256.png" style="margin: 50px;">
+  <img [src]="logo" style="margin: 50px;">
   <br><br>
-  <button mat-icon-button (click)="_location.back()"><mat-icon>left_arrow</mat-icon></button>
+  <button mat-icon-button (click)="_location.back()"><mat-icon>arrow_back</mat-icon></button>
   <br><br><br>
 
   <div style="display: flex;align-items: center;width:100%;justify-items: center;display: inline-block;">
-    Made with <mat-icon style="display: inline-block;color: darkred;">favorite</mat-icon> by <a [href]="website">NFluent</a>
+    Made with <mat-icon style="display: inline-block;color: darkred;">favorite</mat-icon> by <a [href]="website">{{company}}</a>
   </div>
 
   <div style="width: 80%;margin-left: 10%;position:absolute;display:block;bottom: 20px;font-variant-caps: all-petite-caps;"
        class="mat-headline-6">
 
-    <span style="margin: 20px;">© NFluenT 2023    ·    v{{version}}   ·   Tous droits réservés</span> ·
-    <a href="https://nfluent.io/mentions_legales.html"
-       target="_blank"
-       style="margin: 5px;">
+    <span style="margin: 20px;">© {{company}} 2023    ·    v{{version}}   ·   Tous droits réservés</span> ·
+    <a [href]="cgu" target="_blank" style="margin: 5px;">
       Mentions légales
     </a> ·
 

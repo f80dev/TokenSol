@@ -240,6 +240,7 @@
           <th style="width: 100px;" *ngIf="user.advance_mode">Stockage</th>
           <th style="width: 150px;" *ngIf="user.advance_mode">Mails</th>
           <th style="width: 150px;" *ngIf="user.advance_mode">Theme</th>
+          <th style="width: 100px;" *ngIf="user.advance_mode">Support</th>
           <th>Commandes</th>
 
         </tr>
@@ -265,9 +266,12 @@
             <a [href]="row.new_account_mail">Nouveau compte</a><br>
             <a [href]="row.existing_account_mail">Existant</a><br>
           </td>
+
+          <td *ngIf="user.advance_mode">{{row.style}}</td>
           <td *ngIf="user.advance_mode">
-            {{row.style}}
+            <a [title]="row.company" target="_blank" [href]="row.website"> <img [src]="row.logo" style="width: 50px;"></a>
           </td>
+
           <td>
             <button mat-icon-button (click)="open_appli(row)" title="Ouvrir l'application"><mat-icon>web</mat-icon></button>
             <button mat-icon-button (click)="open_appli(row,'local')" title="Ouvrir l'application en local"><mat-icon>home</mat-icon></button>

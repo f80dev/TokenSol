@@ -98,11 +98,14 @@ def api_upload_excel_file():
       if str(row[j])!="nan":
         if row[j]=="oui":row[j]=True
         if row[j]=="non":row[j]=False
-        k=header[j]
+        k:str=header[j]
         if not k.startswith("Unnamed"):
-          if k.startswith("params_to_add"):
+          if k.startswith("params_to_add") or k=='support':
             for l in row[j].split("\n"):
-              obj[l.split("=")[0]]=l.split("=")[1]
+              if "=" in l:
+                obj[l.split("=")[0]]=l.split("=")[1]
+              else:
+                log("Syntax error "+l)
           else:
             obj[k]=row[j]
 
