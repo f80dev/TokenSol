@@ -29,6 +29,7 @@ export class UploadFileComponent implements OnInit, OnChanges {
   @Output("canceled") oncancel: EventEmitter<any> = new EventEmitter();
   @Input("extensions") extensions: string = "*"; //format: accept=".doc,.docx"  ou "accept="audio/*"
   style_border: any = {padding:0,margin:0,width:'150px',height:'37px',display:'inline-block',position:"relative",border: 'none', background: 'none'}
+  @Input() src="";
 
 
   constructor(

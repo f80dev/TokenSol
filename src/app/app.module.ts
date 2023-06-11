@@ -227,7 +227,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
           provider: new GoogleLoginProvider(GOOGLE_CLIENT_ID),
           }
         ],
-      } as SocialAuthServiceConfig}
+      } as SocialAuthServiceConfig
+    }
   ],
   bootstrap: [AppComponent]
 })

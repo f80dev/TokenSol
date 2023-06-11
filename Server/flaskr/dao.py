@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import random
 from random import randint
 
 import requests
@@ -594,6 +595,21 @@ class DAO(Storage,Network):
   def get_account_settings(self, address:str) -> dict :
     rc=self.db["account_settings"].find_one({"address":address})
     if rc and "_id" in rc: del rc["_id"]
+    return rc
+
+  def create_link(self, body:dict) -> str:
+      while True:
+        cid=hex(random.randint(0,9999999)).replace("0x","")
+        if not self.db["shortlinks"].find_one({"cid":cid}):
+          body["cid"]=cid
+          rc=self.db["shortlinks"].insert_one(body)
+          if rc.inserted_id:
+            return cid
+
+
+  def get_link(self, cid:str) -> str:
+    rc=self.db["shortlinks"].find_one({"cid":cid})
+    del rc["_id"]
     return rc
 
 

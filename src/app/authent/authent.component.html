@@ -4,7 +4,7 @@
 
   <!--  Permet l'authentification force par code d'accés ou directement seed phrase-->
   <mat-expansion-panel *ngIf="showAccesCode || showPrivateKey">
-    <mat-expansion-panel-header>Utiliser votre clé secréte</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Utiliser votre clé secrète</mat-expansion-panel-header>
     <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
       <app-input *ngIf="showAccesCode"
                  [value]="access_code"
@@ -40,6 +40,7 @@
                  [placeholder]="prompt"
                  [value]="address" (valueChange)="update_address($event)"
                  (validate)="validate($event)"
+                 label_button="Valider"
                  [help]="explain_message">
       </app-input>
     </div>
@@ -47,43 +48,7 @@
 
 
   <div *ngIf="!directShowQRCode">
-    <mat-expansion-panel *ngIf="showNfluentWalletConnect">
-      <mat-expansion-panel-header class="color-primary">Utiliser le wallet NFluent</mat-expansion-panel-header>
-      <button type="button" color="primary"
-              mat-raised-button
-              (click)="active_webcam()" >
-        Utiliser mon QRCode
-      </button>
 
-      <br>
-      <app-scanner *ngIf="enabled_webcam"
-                   [size]="size"
-                   title="Montrer le QRcode de votre wallet à cette caméra"
-                   (flash)="on_flash($event)"
-                   (cancel)="cancel_webcam()"
-                   (click)="update_dynamic_token()">
-      </app-scanner>
-
-      <!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
-      <div *ngIf="showDynamicToken">
-        <button type="button" color="primary"
-                mat-raised-button
-                mat-button
-                (click)="update_dynamic_token()" >
-          Coller le token
-        </button>
-      </div>
-
-      <div style="width: fit-content;display: inline-block;margin:20px;">
-        <img
-                title="Flasher avec votre wallet nfluent"
-                [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
-                [src]="nfluent_wallet_connect_qrcode"
-                style="cursor: copy;max-width: 90%;" [style.width]="size"><br>
-        <small>Flashez depuis votre wallet NFluent</small>
-      </div>
-
-    </mat-expansion-panel>
 
 <!--    Wallet connect pour MVX-->
     <mat-expansion-panel *ngIf="network.indexOf('elrond')>-1 && (showDirectConnect || showWalletConnect || showExtensionWallet || showWebWallet)" >
@@ -130,6 +95,49 @@
       </div>
 
     </mat-expansion-panel>
+
+
+<!--Wallet nfluent-->
+    <mat-expansion-panel *ngIf="showNfluentWalletConnect" [expanded]="!showEmail && !showAddress">
+      <mat-expansion-panel-header class="color-primary">Utiliser le wallet NFluent</mat-expansion-panel-header>
+      <button type="button" color="primary"
+              mat-raised-button
+              (click)="active_webcam()" >
+        Utiliser mon QRCode
+      </button>
+
+      <br>
+      <app-scanner *ngIf="enabled_webcam"
+                   [size]="size"
+                   title="Montrer le QRcode de votre wallet à cette caméra"
+                   (flash)="on_flash($event)"
+                   (cancel)="cancel_webcam()"
+                   (click)="update_dynamic_token()">
+      </app-scanner>
+
+      <!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
+      <div *ngIf="showDynamicToken">
+        <button type="button" color="primary"
+                mat-raised-button
+                mat-button
+                (click)="update_dynamic_token()" >
+          Coller le token
+        </button>
+      </div>
+
+      <div style="width: fit-content;display: inline-block;margin:20px;">
+        <img
+                title="Flasher avec votre wallet nfluent"
+                [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
+                [src]="nfluent_wallet_connect_qrcode"
+                style="cursor: copy;max-width: 90%;" [style.width]="size"><br>
+        <small>Flashez depuis votre wallet NFluent</small>
+      </div>
+
+    </mat-expansion-panel>
+
+
+<!--    Wallet Polygon-->
     <mat-expansion-panel *ngIf="qrcode.length==0 && network.indexOf('polygon')>-1" class="polygon-background">
       <mat-expansion-panel-header class="color-primary">Utiliser l'extension</mat-expansion-panel-header>
       <button type="button" mat-raised-button class="polygon-button"

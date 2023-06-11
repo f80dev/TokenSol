@@ -393,7 +393,8 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   open_inspire() {
-    open(this.api.getExplorer(this.addr),"Explorer");
+    let tools=this.nfts.length==0 ? "explorer" : "xspotlight";
+    open(this.api.getExplorer(this.addr,"accounts",tools),"Explorer");
   }
 
   open_gallery(address:any,collection:any) {

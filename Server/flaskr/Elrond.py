@@ -387,7 +387,7 @@ class Elrond(Network):
 
 
 
-  def get_collections(self, addr:str, detail:bool=True, type_collection="", special_role=""):
+  def get_collections(self, addr:str, detail:bool=True, type_collection="", special_role="",limit=200):
     """
     récupération des collections voir : https://devnet-api.multiversx.com/#/accounts/AccountController_getAccountCollectionsWithRoles
     :param creator:
@@ -415,7 +415,7 @@ class Elrond(Network):
         log("Bug: Impossible de récupérer les NFTs de "+addr)
         return []
     else:
-      cols=[self.get_collection(addr)]
+      cols=self.find_collections(addr,limit=limit)
     rc=[]
     if cols is None: return []
 
@@ -429,7 +429,7 @@ class Elrond(Network):
           _col["roles"]=[_col["role"]]
           del _col["role"]
 
-      if not "address" in _col["roles"][0]: _col["roles"][0]["address"]=_col["owner"]
+        if not "address" in _col["roles"][0]: _col["roles"][0]["address"]=_col["owner"]
 
       _col["link"]="https://"+("devnet." if "devnet" in self.network else "")+"inspire.art/collections/"+_col["id"]
       if len(type_collection)==0 or type_collection in _col["type"]:
@@ -449,6 +449,14 @@ class Elrond(Network):
         }
 
     return rc
+
+
+  def find_collections(self, query:str,limit=400) -> [dict]:
+    resp=requests.get(self._proxy.url+"/collections?size="+str(limit)+"&search="+query)
+    if resp.status_code==200:
+      cols=resp.json()
+      return cols
+    return []
 
 
 
@@ -864,6 +872,7 @@ class Elrond(Network):
         if send_mail(open_html_file(mail_new_wallet,{
           "wallet_address":address,
           "mini_wallet":wallet_appli,
+          "blockchain_name":"MultiversX",
           "url_wallet":self.getWallet(address),
           "url_explorer":url_explorer,
           "words":" ".join(words),

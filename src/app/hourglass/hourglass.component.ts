@@ -42,14 +42,17 @@ export class HourglassComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: any): void {
     let new_message=changes.message.currentValue;
-    if(new_message.startsWith("(i)")){
-      this.message=new_message.replace("(i)","")
-      this.diameter=0;
+    if(new_message){
+      if(new_message.startsWith("(i)")){
+        this.message=new_message.replace("(i)","")
+        this.diameter=0;
+      }
+      if(new_message.indexOf("https://")>-1){
+        this.link="https://"+new_message.split("https://")[1].split(" ")[0];
+        this.message=new_message.replace(this.link,"");
+      }
     }
-    if(new_message.indexOf("https://")>-1){
-      this.link="https://"+new_message.split("https://")[1].split(" ")[0];
-      this.message=new_message.replace(this.link,"");
-    }
+
   }
 
   ngOnInit() {

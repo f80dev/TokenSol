@@ -342,6 +342,18 @@ def generate_svg():
   return jsonify(rc)
 
 
+@bp.route('/short_link/',methods=["POST","GET"])
+def api_short_link():
+  dao=DAO(network=request.args.get("database","db-server-nfluent"))
+  if request.method=="POST":
+    cid=dao.create_link(request.json)
+    return jsonify({"cid":cid,"url":"https://s.f80.fr/"+cid})
+
+  if request.method=="GET":
+    body=dao.get_link(request.args.get("cid"))
+    return jsonify(body)
+
+
 @bp.route('/collections/<addresses>/')
 #test http://127.0.0.1:4242/api/collection/herve
 def api_get_collections(addresses:str):
@@ -354,11 +366,12 @@ def api_get_collections(addresses:str):
   if ":" in addresses: addresses=Key(encrypted=addresses).address
   detail=(request.args.get("detail","true")=="true")
   operations=request.args.get("operations","canCreate")
+  limit=int(request.args.get("limit","200"))
 
   cols=[]
   for addr in addresses.split(","):
     filter_type=request.args.get("filter_type","")
-    cols=cols+bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations)
+    cols=cols+bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations,limit=limit)
 
   return jsonify(cols)
 

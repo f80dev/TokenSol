@@ -403,19 +403,26 @@ export class AuthentComponent implements OnInit {
 
   async open_wallet_connect() {
     //https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-signing-providers/#the-wallet-connect-provider
-    await this.provider.init()
-    const { uri, approval } = await this.provider.connect();
-    this.qrcode=this.api.server_nfluent+"/api/qrcode/"+encodeURIComponent(uri);
-    this.url_xportal_direct_connect="https://xportal.com/?wallet-connect="+uri; //"+this.provider.?relay-protocol%3Dirn&symKey=2a0e80dd8b982dac05eef5ce071fbe541d390fc302666d09856ae379416bfa6e"
-    this.url_xportal_direct_connect="https://maiar.page.link/?apn=com.elrond.maiar.wallet&isi=1519405832&ibi=com.elrond.maiar.wallet&link="+encodeURIComponent(this.url_xportal_direct_connect);
-    let address=await this.provider.login({approval});
-    if(address){
-      //this.init_wallet.emit({provider:this.provider,address:this.address});
-      this.strong=true;
-      this.validate(address);
-    } else {
-      this.oncancel.emit();
+    try{
+      await this.provider.init()
+      const { uri, approval } = await this.provider.connect();
+      this.qrcode=this.api.server_nfluent+"/api/qrcode/"+encodeURIComponent(uri);
+      this.url_xportal_direct_connect="https://xportal.com/?wallet-connect="+uri; //"+this.provider.?relay-protocol%3Dirn&symKey=2a0e80dd8b982dac05eef5ce071fbe541d390fc302666d09856ae379416bfa6e"
+      this.url_xportal_direct_connect="https://maiar.page.link/?apn=com.elrond.maiar.wallet&isi=1519405832&ibi=com.elrond.maiar.wallet&link="+encodeURIComponent(this.url_xportal_direct_connect);
+      let address=await this.provider.login({approval});
+      if(address){
+        //this.init_wallet.emit({provider:this.provider,address:this.address});
+        this.strong=true;
+        this.validate(address);
+      } else {
+        this.oncancel.emit();
+      }
+    }catch (e){
+      showError(this,"Impossible d'utiliser wallet connect pour l'instant. Utiliser une autre méthode pour accéder à votre wallet")
     }
+
+
+
   }
 
   async open_polygon_extension_wallet() {

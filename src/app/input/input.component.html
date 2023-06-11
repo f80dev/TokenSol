@@ -39,7 +39,7 @@
   <button mat-raised-button mat-button
           *ngIf="label_button.length>0"
           style="height: 40px;"
-          [disabled]="value.length==0"
+          [disabled]="!value || value.length==0"
           [title]="help_button"
           (click)="on_validate()">
     {{label_button}}

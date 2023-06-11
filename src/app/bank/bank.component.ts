@@ -123,7 +123,7 @@ export class BankComponent implements OnInit {
   refresh_balance(){
     return new Promise((resolve,reject) => {
       if(this.addr && this.addr.length>0){
-        this.network.getBalance(this.addr,this.network.network,this.bank!.token).subscribe((result:any)=>{
+        this.network.getBalance(this.addr,this.bank!.network,this.bank!.token).subscribe((result:any)=>{
           this.balance=Math.round(result[0].balance/1e16)/100;
           resolve(true);
         },(err)=>{reject(err);})
