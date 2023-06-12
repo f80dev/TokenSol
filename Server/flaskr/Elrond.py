@@ -357,7 +357,7 @@ class Elrond(Network):
           return {"error":""}
         else:
           log("Probleme avec la simulation de la transaction "+t["failReason"])
-          return {"error":t["failReason"]}
+          return {"error":t["failReason"],"hash":""}
 
       start=now()
       while now()-start<timeout:
@@ -380,9 +380,9 @@ class Elrond(Network):
       log("Exception d'execution de la requete " + mess)
       if mess.startswith("{"):
         mess=(mess.split("}")[0]+"}").replace("'","\"").replace("None","\"\"")
-        return {"error":json.loads(mess),"status":"error"}
+        return {"error":json.loads(mess),"status":"error","hash":""}
 
-      return {"error":mess,"status":"error"}
+      return {"error":mess,"status":"error","hash":""}
 
 
 
@@ -442,7 +442,7 @@ class Elrond(Network):
         item["id"]=item["ticker"]
         item["options"]={
           "canFreeze":item["canFreeze"],
-          "canTransfer":item["canTransfer"],
+          "canTransfer":item["canTransfer"] if "canTransfer" in item else False,
           "canWipe":item["canWipe"],
           "canPause":item["canPause"],
           "canTranferNftCreateRole":item["canTransferNftCreateRole"]
@@ -736,12 +736,17 @@ class Elrond(Network):
       result=sorted(list(result),key=lambda x:x["nonce"])
       for i in range(len(result)):
         item=result[i]
+        if "metadata" in item and "name" in item["metadata"] and "creator" in item["metadata"]:
+          item["name"]=item["metadata"]["name"]
+          item["attributes"]=item["metadata"]["attributes"]
+          item["creator"]=item["metadata"]["creator"]
+          item["price"]=item["metadata"]["price"]
+          item["symbol"]=item["metadata"]["symbol"]
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
         attributes,description,tags,creators=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
         nft=NFT(
           name=item["name"],symbol="",
           miner=item["creator"],
-          owner=item["owner"] if "owner" in item else "",
           tags=tags,
           collection={"id":col_id},
           attributes=attributes,
@@ -751,7 +756,8 @@ class Elrond(Network):
           royalties=royalties,
           files=item["uris"],
           supply=int(item["supply"] if "supply" in item else 1),
-          price=0
+          price=item["price"] if "price" in item else 0,
+          balances=self.get_balances(nft_addr=item["identifier"])
         )
         nft.network=self.network
         nft.address=item["identifier"]
@@ -774,7 +780,7 @@ class Elrond(Network):
                           )
 
 
-  def get_balances(self, addr:str,nft_addr=None) -> dict():
+  def get_balances(self, addr:str=None,nft_addr=None) -> dict():
     """
 
     :param addr:
@@ -782,10 +788,15 @@ class Elrond(Network):
     :return:
     """
     rc=dict()
-    nfts=api(self._proxy.url+"/accounts/"+str(addr)+"/nfts?size=2000")
-    if nfts:
-      for nft in nfts:
-        rc[nft["identifier"]]=(int(nft["balance"]) if "balance" in nft else 1)
+    if not addr is None:
+      nfts=api(self._proxy.url+"/accounts/"+str(addr)+"/nfts?size=2000")
+      if nfts:
+        for nft in nfts:
+          rc[nft["identifier"]]=(int(nft["balance"]) if "balance" in nft else 1)
+    else:
+      accounts=api(self._proxy.url+"/nfts/"+str(nft_addr)+"/accounts")
+      for acc in accounts:
+        rc[acc["address"]]=(int(acc["balance"]) if "balance" in acc else 1)
 
     return rc
 
@@ -1018,8 +1029,8 @@ class Elrond(Network):
     """
     _user:AccountOnNetwork=self.toAccount(_user)
     if _user is None:return []
-    rc:[NFT]=[]
     owner=_user.address.bech32()
+    rc:[NFT]=[]
     balances=self.get_balances(owner)
 
     #nfts:dict=api(self._proxy.url+"/address/"+_user.public_key.to_address("erd").bech32()+"/esdt")

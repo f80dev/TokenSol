@@ -26,6 +26,12 @@ def test_get_collections():
         assert "canUpdateAttributes" in role
 
 
+def test_get_nfts_from_collection(col=MAIN_COLLECTION):
+  _network=Elrond("devnet")
+  nfts=_network.get_nfts_from_collections([col],False)
+  for nft in nfts:
+    assert len(nft.balances.keys())>0
+
 
 def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1,simulation=False):
   _network=Elrond("devnet")
@@ -112,6 +118,7 @@ def test_get_nfts(miner=MAIN_ACCOUNT):
   nfts=_network.get_nfts(miner,2000)
   assert not nfts is None
   assert len(nfts)>0
+  assert nfts[0].balances[miner]>0
   assert len(nfts[0].address)>0
 
 
@@ -120,6 +127,7 @@ def test_get_sfts(miner=MAIN_ACCOUNT):
   nfts=_network.get_nfts(miner,2000,type_token="SemiFungibleESDT")
   assert not nfts is None
   assert len(nfts)>0
+  assert nfts[0].balances[miner]>0
   assert len(nfts[0].address)>0
 
 

@@ -78,6 +78,7 @@ export class AdminComponent implements OnInit {
   delay: number = 10;
   files: any[]=[];
   nb_selected_file: number=0;
+  message="";
 
 
   constructor(

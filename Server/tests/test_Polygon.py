@@ -1,5 +1,4 @@
 import time
-from random import randint
 
 from flaskr.Polygon import Polygon
 from flaskr.Tools import log, random_from

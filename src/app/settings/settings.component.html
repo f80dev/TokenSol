@@ -10,7 +10,7 @@
     <mat-expansion-panel [expanded]="true" style="width:94%;margin:3%;">
         <mat-expansion-panel-header>Accès rapide</mat-expansion-panel-header>
         <table style="width:90%;text-align: left;">
-            <tr *ngIf="user.addr.length>0">
+            <tr *ngIf="user && user.addr && user.addr.length>0">
                 <td>Consulter vos collections</td>
                 <td style="width: 50px;"><a [routerLink]="'/collections'" [queryParams]="{owner:user.addr}"><mat-icon>build</mat-icon></a></td>
             </tr>

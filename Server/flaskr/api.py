@@ -23,7 +23,7 @@ import requests
 import yaml
 from PIL.Image import Image
 from bson import ObjectId
-from flask import request, jsonify, send_file, make_response, Blueprint, current_app
+from flask import request, jsonify, send_file, make_response, Blueprint, current_app, redirect
 from flask_jwt_extended import create_access_token
 from numpy import isnan
 from werkzeug.datastructures import FileStorage
@@ -351,7 +351,12 @@ def api_short_link():
 
   if request.method=="GET":
     body=dao.get_link(request.args.get("cid"))
-    return jsonify(body)
+    if not "collection" in body or not body["collection"]:
+      log("Aucun critère de filtrage, on redirige directement")
+      if not body["redirect"].startswith("http"): body["redirect"]="https://"+body["redirect"]
+      return redirect(body["redirect"])
+    else:
+      return jsonify(body)
 
 
 @bp.route('/collections/<addresses>/')
@@ -806,9 +811,10 @@ def api_refund(address:str,amount:str="1",token="egld"):
   _miner=Key(obj=request.json["bank"])
   histo=DAO(network=request.json["histo"]) if "histo" in request.json else None
   limit=int(request.json["limit"]) if "limit" in request.json and not histo is None else 0
-
+  email=""
 
   if is_email(address):
+    email=address
     _token=_network.get_token(token)
     key=_network.create_account(address,domain_appli=current_app.config["DOMAIN_APPLI"],
                                  subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account",histo=histo)
@@ -825,6 +831,9 @@ def api_refund(address:str,amount:str="1",token="egld"):
   tx_esdt=_network.transfer_money(token,_miner,address,int(amount),data=request.json["data"])
   if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
   rc["transaction_esdt"]=tx_esdt
+
+  if tx_esdt["status"]=="success" and len(email)>0:
+    send_mail(open_html_file("mail_refund",{"token":_token["name"],"amount":str(amount)}),email,subject="Don de "+_token["name"])
 
   #Si le client n'a aucun egld on lui en envoi afin de payer les frais de réseau
   if _network.get_account(address).balance<_network.get_min_gas_for_transaction(3):
@@ -2944,7 +2953,10 @@ def validators(validator=""):
       else:
         log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
         _network=get_network_instance(request.json["network"])
-        owners=list(set([x.owner for x in _network.get_nfts_from_collections(ask_for.split(","))]))
+        owners=[]
+        for nft in _network.get_nfts_from_collections(ask_for.split(",")):
+          for owner in nft.balances.keys():
+            if nft.balances[owner]>0 and not owner in owners: owners.append(owner)
 
     return jsonify({
       "access_code":access_code,

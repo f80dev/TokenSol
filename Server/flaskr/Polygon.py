@@ -185,9 +185,9 @@ class Polygon (Network):
     miner=_contract.functions.owner().call()
     symbol=_contract.functions.symbol().call()
     _nft=NFT(name=metadata["name"] if metadata else "",
-             owner=owner,
              miner=miner,
              symbol=symbol,
+             balances={"owner":owner,"balance":1},
              description=metadata["description"]  if metadata else "",
              visual=metadata["image"]  if metadata else "",
              attributes=metadata["attributes"]  if metadata else "",
@@ -296,14 +296,13 @@ class Polygon (Network):
           else:
             metadata=self.get_metadata(contrat.functions.baseTokenURI().call(),timeout=1)
             _nft=NFT(address=nft_addr,
-                     owner=addr,
                      name=t["tokenName"],
                      symbol=t["tokenSymbol"],
                      supply=contrat.functions.totalSupply().call(),
                      visual=metadata["image"] if metadata else None,
+                     balances={addr:1}
                      )
 
-          _nft.balances={addr:1}
           _nft.network=self.network
           rc.append(_nft)
           if len(rc)==limit: return rc

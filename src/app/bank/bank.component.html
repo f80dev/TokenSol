@@ -26,9 +26,12 @@
 
 		<div *ngIf="addr.length>0 && token" style="margin-top: 100px;">
 
-			Vous avez<br><br>
-			<div class="color-primary mat-headline-3" style="margin-top: -10px;">{{balance}}</div>
-			<div style="margin-top: -50px;">{{token!.name}}</div>
+			<div *ngIf="balance>0">
+				Vous avez<br><br>
+				<div class="color-primary mat-headline-3" style="margin-top: -10px;">{{balance}}</div>
+				<div style="margin-top: -50px;">{{token!.name}}</div>
+
+			</div>
 
 			<div 		 *ngIf="show_payment" style="margin-top: 100px;">
 				{{'Achat de '+bank.refund+' '+token.name}}
@@ -69,7 +72,7 @@
 
 	<div *ngIf="show_can_close">
 		<br>
-		Votre disposez de <span class="color-primary">{{balance}} {{token.name}}</span><br><br>
+		Vous disposez de <span class="color-primary">{{balance}} {{token.name}}</span><br><br>
 		<br><br>
 
 		<h2>

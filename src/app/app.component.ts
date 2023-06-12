@@ -31,6 +31,7 @@ export class AppComponent implements OnInit {
     keys:{label:"Clés",title:"",actif:true,icon:"key",queryParam:{}},
     mint:{label:"Miner",title:"",actif:true,icon:"build",queryParam:{}},
     build:{label:"Opérations",title:"",actif:true,icon:"edit",queryParam:{}},
+    validators:{label:"Validateurs",title:"",actif:true,icon:"checkmark",queryParam:{}},
     analytics:{label:"Analytics",title:"",actif:true,icon:"analytics",queryParam:{}},
     wallet:{label:"Wallet",title:"",actif:false,icon:"dollar",queryParam:{}},
     pool:{label:"Pool de minage",title:"",actif:true,icon:"list",queryParam:{}},

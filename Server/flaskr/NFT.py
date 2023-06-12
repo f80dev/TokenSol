@@ -30,7 +30,6 @@ class NFT:
   def __init__(self,
                name: str="",
                miner:str="",
-               owner:str="",
                symbol: str="",
                collection: dict={},
                attributes: list=list(),
@@ -45,7 +44,7 @@ class NFT:
                files:list=[],
                dtCreate:int=0,
                network="",
-               balances={},
+               balances:dict={},
                object=None) -> object:
 
     if not object is None:
@@ -85,8 +84,7 @@ class NFT:
 
       royalties=extract_from_dict(object,["seller_fee_basis_points","royalties"],0)
       address=extract_from_dict(object,["address","id","identifier"],"")
-
-      owner=object["owner"] if "owner" in object else ""
+      balances=object["balances"] if "balances" in object else {object["owner"]:1} if "owner" in object else {}
       self.other=object["other"] if "other" in object else {}
       self.tags=object["tags"] if "tags" in object else ""
 
@@ -101,7 +99,6 @@ class NFT:
     self.supply=supply
     self.price=price
     self.miner=miner
-    self.owner=owner
     self.symbol=symbol
     self.visual=visual
     self.creators=creators
