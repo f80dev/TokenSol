@@ -3,13 +3,10 @@
 
 @import "nfluent";
 
-html, body { height: 100%;  }
-body { margin: 0;}
 
 .spacer {
   flex: auto;
 }
-
 
 
 .table-elevation {
@@ -53,8 +50,8 @@ mat-card-content {
 mat-expansion-panel {
   width: 96% !important;
   margin: 2% !important;
-  margin-top: 15px;
-  margin-bottom: 15px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 
@@ -134,20 +131,19 @@ th {
 
 .background-form {
   text-align:left;
-  position:fixed;
   width:100vw;
-  height:100vh;
   background-repeat: no-repeat;
   background-size: cover;
 }
 
 .popup-form {
   position:relative;
-  max-width: 500px;
+  max-width: 700px;
+  min-height: 100vh;
   display: inline-block;
   text-align: center;
   color: white;
-  padding: 10px;
+  padding: 2%;
 }
 
 

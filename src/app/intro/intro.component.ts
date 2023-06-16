@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import {environment} from "../../environments/environment";
 import {UserService} from "../user.service";
 import {Router} from "@angular/router";
-import {setParams} from "../../tools";
 import {NetworkService} from "../network.service";
 
 @Component({
@@ -13,6 +12,7 @@ import {NetworkService} from "../network.service";
 export class IntroComponent implements OnInit {
 
   version: any;
+    logo=environment.logo;
 
   constructor(public user:UserService,public router:Router,public network:NetworkService) {
     this.version=environment.version;

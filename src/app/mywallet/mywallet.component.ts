@@ -243,6 +243,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
     if(this.sel_ope?.nftlive){
       let collection:Collection= {
         gallery: true,
+        supply: 1,
         name: this.sel_ope?.nftlive!.nft_target.collection,
         id: "",
         roles:[],

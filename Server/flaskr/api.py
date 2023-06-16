@@ -343,15 +343,16 @@ def generate_svg():
 
 
 @bp.route('/short_link/',methods=["POST","GET"])
-def api_short_link():
+@bp.route('/sl/<cid>',methods=["GET"])
+def api_short_link(cid=""):
   dao=DAO(network=request.args.get("database","db-server-nfluent"))
   if request.method=="POST":
     cid=dao.create_link(request.json)
     return jsonify({"cid":cid,"url":"https://s.f80.fr/"+cid})
 
   if request.method=="GET":
-    body=dao.get_link(request.args.get("cid"))
-    if not "collection" in body or not body["collection"]:
+    body=dao.get_link(cid)
+    if (not "collection" in body or not body["collection"]) and body["price"]==0 :
       log("Aucun critère de filtrage, on redirige directement")
       if not body["redirect"].startswith("http"): body["redirect"]="https://"+body["redirect"]
       return redirect(body["redirect"])

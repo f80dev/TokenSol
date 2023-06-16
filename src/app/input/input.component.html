@@ -1,7 +1,7 @@
-<div class="input-elements" [style.width]="width" [style.max-width]="maxwidth">
+<div class="input-elements" [style.width]="width" [style.max-width]="maxwidth" [ngClass]="fontname">
 
   <!-- input standard -->
-  <mat-form-field appearance="fill" class="mat-body-2" [title]="help_input" style="width: 100%;padding: 0;"
+  <mat-form-field appearance="fill"  [title]="help_input" style="width: 100%;padding: 0;"
                   *ngIf="value_type!='slider' && value_type!='list' && options.length==0 && cols==0 && rows==0">
     <mat-label *ngIf="label.length>0" class="mat-caption">{{label}}</mat-label>
     <input matInput
@@ -21,7 +21,7 @@
   </mat-form-field>
 
   <!-- input de type textarea-->
-  <mat-form-field style="width: 100%;" *ngIf="cols>0 && rows>0" appearance="fill" class="mat-body-2">
+  <mat-form-field style="width: 100%;" *ngIf="cols>0 && rows>0" appearance="fill">
     <mat-label *ngIf="label.length>0" class="mat-caption">{{label}}</mat-label>
 
     <textarea [placeholder]="placeholder" title="infobull" matInput
@@ -38,7 +38,7 @@
 
   <button mat-raised-button mat-button
           *ngIf="label_button.length>0"
-          style="height: 40px;"
+          style="height: 40px;margin-left:10px;"
           [disabled]="!value || value.length==0"
           [title]="help_button"
           (click)="on_validate()">
@@ -57,7 +57,7 @@
                   *ngIf="value_type=='list' || options.length>0">
 
     <mat-label *ngIf="label.length>0" class="mat-caption">{{label}}</mat-label>
-    <mat-select [(value)]="value" (selectionChange)="sel_change($event)" class="mat-body-2" [multiple]="multiselect" >
+    <mat-select [(value)]="value" (selectionChange)="sel_change($event)" [multiple]="multiselect" >
       <mat-option *ngFor="let option of options" [value]="option.value" class="mat-body-2">
         {{option.label}}
       </mat-option>

@@ -252,7 +252,7 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
         }
 
         try {
-          wait_message(this,"En attente de validation sur votre wallet",true)
+          wait_message(this,"En attente de validation sur votre wallet")
           let sign_transaction=await this.wallet_provider.signTransaction(t);
           wait_message(this,"Envoi de la transaction")
           let hash=await proxyNetworkProvider.sendTransaction(sign_transaction);

@@ -21,7 +21,7 @@ export function _ask_for_paiement(vm:any,
                                   bank:Bank | undefined=undefined)  {
     //token_id : reference du token utilisable pour le paiement
     return new Promise((resolve, reject) => {
-        if(to_paid==0 || to_paid_in_fiat==0){
+        if(to_paid==0 && to_paid_in_fiat==0){
             resolve({})
         }else{
             vm.dialog.open(AskForPaymentComponent,{

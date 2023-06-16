@@ -103,14 +103,4 @@ export class ValidatorsComponent implements OnInit {
       })
 
     }
-
-    add_validator() {
-      _prompt(this,"Nom du validateur","fictif").then((rep)=>{
-        if(this.operation.sel_ope){
-          open("./autovalidate?validator_name="+rep+"&ope="+this.operation.sel_ope.id,"_blank");
-          // setTimeout(()=>{this.refresh();},3000);
-        }
-      })
-
-    }
 }

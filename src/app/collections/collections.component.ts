@@ -43,6 +43,7 @@ export class CollectionsComponent implements OnInit {
     type: "NonFungibleESDT",
     visual: undefined,
     roles: [],
+    supply: 1,
     link: "",
     options: this.collection_options.map((x:any)=>{return x.value})
   };
@@ -84,7 +85,7 @@ export class CollectionsComponent implements OnInit {
   }
 
 
-  refresh(addr:string,network:string){
+  refresh(addr:string,network:string,with_detail=true){
     if(addr && network){
       this.network.network=network;
       this.message="Récupération des collections";
@@ -92,7 +93,7 @@ export class CollectionsComponent implements OnInit {
         this.miner=accounts[0];
       })
 
-      this.network.get_collections(addr,network,true).subscribe((r:any)=>{
+      this.network.get_collections(addr,network,with_detail).subscribe((r:any)=>{
         this.message="";
         this.collections=[];
         for(let col of r){
@@ -257,5 +258,17 @@ export class CollectionsComponent implements OnInit {
       }
 
 
+  }
+
+  async add_validator(col: Collection) {
+    let rep=await _prompt(this,"Tester un validateur","fictif","Nom du validateur","text","Tester","Annuler",false)
+    open(environment.appli+"/autovalidate?name="+rep+"&network="+this.network.network+"&collection="+col.id)
+    this.router.navigate(["validators"])
+  }
+
+  async short_url(col: Collection) {
+    let redirect=await _prompt(this,"Lien de redirection","","commençant par https","text","Réduire","Annuler",false)
+    let domain=encodeURIComponent("https://s.f80.fr")
+    open("https://s.f80.fr/create/?redirect="+decodeURIComponent(redirect)+"&collection="+col.id+"&domain="+domain)
   }
 }

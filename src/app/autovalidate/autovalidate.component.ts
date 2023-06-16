@@ -28,11 +28,13 @@ export class AutovalidateComponent implements OnInit {
   ngOnInit(): void {
     getParams(this.routes).then((params:any)=>{
       this.validator_name=params["validator_name"]
-      this.authentification=params["authentification"] || {wallet_connect:true};
+      this.authentification=params["authentification"] || {wallet_connect:true,nfluent_wallet_connect:true,extension_wallet:true};
       this.network_name=params["network"]
       if(params.hasOwnProperty("collections")){
         this.collections=params["collections"];
         if(typeof params["collections"]=="string")this.collections=params["collections"].split(",");
+      }else{
+        this.collections=[params["collection"]];
       }
       //if(params.hasOwnProperty("ope"))this.network.get_operations(params["ope"]).subscribe((ope)=>{this.operation=ope;})
     })

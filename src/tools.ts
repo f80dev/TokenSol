@@ -276,8 +276,9 @@ export function apply_params(vm:any,params:any,env:any){
     if(params.favicon)vm.device.setFavicon(params.favicon || "favicon.ico");
   }
 
-  if(params.style && vm.hasOwnProperty("style")){
-    vm.style.setStyle("theme","./"+params.style);
+  let style=params.style || env.style;
+  if(style && vm.hasOwnProperty("style")){
+    vm.style.setStyle("theme","./"+style);
   }
   if(vm.hasOwnProperty("miner"))vm.miner = newCryptoKey("","","",params.miner || env.miner)
   if(vm.hasOwnProperty("user")){

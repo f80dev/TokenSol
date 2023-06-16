@@ -352,6 +352,7 @@ export class MintComponent implements OnInit {
         _t.price=this.price
         if(!_t.collection && this.sel_key)_t.collection={
           description: this.collection_name,
+          supply:1,
           link: "",
           gallery:true,
           options: [],

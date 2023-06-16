@@ -4,7 +4,7 @@
         Gestion des collections de <strong>{{miner!.address | alias}}</strong> sur <strong>{{network.network}}</strong>
     </div>
 
-    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;" *ngIf="!network.isPolygon()">
+    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;">
         <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
         <div class="expansion-content">
             <app-input [value]="new_collection.name" (valueChange)="new_collection.name=$event"
@@ -12,13 +12,22 @@
                        label="Nom de la collection" maxlength="20"
                        help="Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux ou espace"></app-input>
 
-            <app-input [value]="new_collection.type" (valueChange)="new_collection.type=$event"
-                       [options]="types_collection" value_field="value"
-                       label="Type de collection" ></app-input>
+            <div *ngIf="network.isElrond()">
+                <app-input [value]="new_collection.type" (valueChange)="new_collection.type=$event"
+                           [options]="types_collection" value_field="value"
+                           label="Type de collection" ></app-input>
 
-            <app-input [value]="new_collection.options" (valueChange)="new_collection.options=$event"
-                       [options]="collection_options" [multiselect]="true" width="300px" value_field="value"
-                       label="Options de la collection" ></app-input>
+                <app-input [value]="new_collection.options" (valueChange)="new_collection.options=$event"
+                           [options]="collection_options" [multiselect]="true" width="300px" value_field="value"
+                           label="Options de la collection" ></app-input>
+
+            </div>
+            <div *ngIf="!network.isElrond()">
+                <app-input [value]="new_collection.supply" (valueChange)="new_collection.supply=$event"
+                           value_type="number"
+                           label="Supply max" ></app-input>
+
+            </div>
 
             <!--        <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">-->
             <!--          {{collection_option.label}}-->
@@ -57,8 +66,12 @@
         le wallet natif
     </button>
 
-    <button type="button" mat-raised-button (click)="refresh(miner!.address,network.network)">
-        Actualiser
+    <button type="button" mat-raised-button (click)="refresh(miner!.address,network.network,false)">
+        Actualisation rapide
+    </button>
+
+    <button type="button" mat-raised-button (click)="refresh(miner!.address,network.network,true)">
+        Actualisation
     </button>
 
     <br><br>
@@ -69,7 +82,7 @@
         <tr>
             <th style="width: 100px">Name</th>
             <th style="width: 80px">Identifiant</th>
-            <th style="width: 50px">SemiFongible</th>
+            <th style="width: 50px">SemiFongible / Supply</th>
 
             <th style="width: 100px" *ngIf="user.advance_mode">{{"Propriétés de la collection" | screencutter}}</th>
             <th style="width: 100px" *ngIf="user.advance_mode">Roles</th>
@@ -79,7 +92,10 @@
         <tr *ngFor="let col of collections">
             <td style="width: 50px;" title="Nom de la collection">{{col.name}}</td>
             <td style="width: 50px;overflow: hidden;" title="Identifiant"><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
-            <td style="width: 20px;"><mat-icon *ngIf="col.type?.startsWith('SemiFungible')">checkmark</mat-icon></td>
+            <td style="width: 20px;">
+                <span *ngIf="col?.supply">{{col.supply}}</span>
+                <mat-icon *ngIf="col.type?.startsWith('SemiFungible') && network.network.indexOf('elrond')>-1">checkmark</mat-icon>
+            </td>
 
             <td style="overflow: hidden;font-size: small;" *ngIf="user.advance_mode">
                 <app-json-to-list style="text-align: left;" [data]="col.options"></app-json-to-list>
@@ -87,12 +103,12 @@
 
             <td style="max-width: 350px;overflow: hidden;font-size: x-small;" *ngIf="user.advance_mode">
                 <app-dbtable [dictionnary]="{
-            canAddQuantity:'i_add_circle|ajouter des quantités',
-            canAddUri:'i_link|ajouter des liens',
-            canBurn:'i_delete_forever|bruler',
-            canTransfer:'i_swap_horiz|Transferer',
-            canCreate:'i_build|Miner',
-            canUpdateAttributes: 'i_edit|Mettre a jour les attributs'}" [source]="col.roles">
+                    canAddQuantity:'i_add_circle|ajouter des quantités',
+                    canAddUri:'i_link|ajouter des liens',
+                    canBurn:'i_delete_forever|bruler',
+                    canTransfer:'i_swap_horiz|Transferer',
+                    canCreate:'i_build|Miner',
+                    canUpdateAttributes: 'i_edit|Mettre a jour les attributs'}" [source]="col.roles">
                 </app-dbtable>
             </td>
 
@@ -102,6 +118,16 @@
                     <mat-icon>build</mat-icon>
                 </button>
                 &nbsp;
+                <button type="button" mat-icon-button (click)="short_url(col)" title="Shorté un lien sur la base de la collection">
+                    <mat-icon>content_cut</mat-icon>
+                </button>
+
+                <button type="button" mat-icon-button (click)="add_validator(col)" title="Ajouter un validateur sur la collection">
+                    <mat-icon>checkmark</mat-icon>
+                </button>
+
+
+
                 <button type="button" mat-icon-button (click)="open_explorer(col)">
                     <mat-icon>search</mat-icon>
                 </button>
@@ -117,8 +143,6 @@
                 <button type="button" mat-raised-button (click)="open_collection(col)">
                     Voir les NFTs
                 </button>
-                &nbsp;
-
 
                 <button type="button" mat-raised-button (click)="open_analyser(col)">
                     Analyse

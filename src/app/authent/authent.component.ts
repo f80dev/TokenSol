@@ -43,7 +43,7 @@ export class AuthentComponent implements OnInit {
   //@Output('init_wallet') init_wallet: EventEmitter<{ provider:any,address:string }>=new EventEmitter();
 
   @Input() showAccesCode=false;         //Code secret d'accès (réservé)
-  @Input() showCancel=true;         //Proposer le bouton d'annulation
+  @Input() showCancel=false;         //Proposer le bouton d'annulation
   @Input() showWebcam=false;            //utilisation du QRCode dynamique du wallet nFluent
   @Input() showDynamicToken=false;      //Code dynamique utilisable en copié collé (a priori pas d'usage)
   @Input() use_cookie: boolean = false;
@@ -155,11 +155,6 @@ export class AuthentComponent implements OnInit {
 
     this.address="";
     if(this.use_cookie)this.address=localStorage.getItem("authent_address") || "";
-    this.device.isHandset$.subscribe((r:boolean)=>{
-      if(r){
-        this.showExtensionWallet=false;
-      }
-    });
 
     if(this.connexion){
       this.showWalletConnect=this.connexion.wallet_connect;
@@ -170,8 +165,18 @@ export class AuthentComponent implements OnInit {
       this.showWebcam = this.connexion.webcam
       this.showAddress = this.connexion.address
       this.showNfluentWalletConnect = this.connexion.nfluent_wallet_connect
-
     }
+
+    this.device.isHandset$.subscribe((r:boolean)=>{
+      if(r){
+        this.showExtensionWallet=false;
+      }
+
+      if(this.showWalletConnect && !this.showWebWallet && !this.showExtensionWallet){
+        this.open_wallet_connect();
+      }
+    });
+
 
     this.refresh();
 

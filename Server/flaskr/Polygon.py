@@ -1,6 +1,8 @@
 from os.path import exists
 from os import listdir
 from time import sleep
+
+import mnemonic
 import requests
 from eth_account import Account
 from eth_account.hdaccount import generate_mnemonic
@@ -50,6 +52,7 @@ class Polygon (Network):
     if not addr.startswith("0x"): return False
     if not len(addr)==42: return False
     return True
+
 
 
 
@@ -300,11 +303,12 @@ class Polygon (Network):
                      symbol=t["tokenSymbol"],
                      supply=contrat.functions.totalSupply().call(),
                      visual=metadata["image"] if metadata else None,
-                     balances={addr:1}
+                     balances={addr:balance}
                      )
 
           _nft.network=self.network
           rc.append(_nft)
+          log("Ajout de "+str(_nft))
           if len(rc)==limit: return rc
       except:
         log("Probleme technique de lecture des NFTs")
@@ -455,6 +459,13 @@ class Polygon (Network):
       tx=self.send_transaction(_contract.functions.approve(operator,0),miner)
     return True
 
+  def burn(self,nft_addr,owner:Key,quantity=1,backup_address=""):
+    if not self.abi: self.abi=self.init_contract_interface()["abi"]
+    contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr.split("-")[0]),abi=self.abi)
+    index=int(nft_addr.split("-")[1]) if "-" in nft_addr else 0
+    rc= self.send_transaction(contract.functions.burn(index),owner)
+    return rc
+
 
   def transfer(self,nft_addr:str,owner:Key,new_owner:str,quantity=1):
     """
@@ -586,8 +597,13 @@ class Polygon (Network):
 
       if fname.endswith(".secret"): #or f.endswith(".json"):
         f=open(POLYGON_KEY_DIR+fname,"r",encoding="utf8")
-        key = f.read().replace("\n","")
-        _u = self.w3.eth.account.from_key(key)
+        key = f.read().replace("\n","").strip()
+        if len(key.split(" "))>10:
+          #key=mnemonic.Mnemonic.to_seed(key).hex()
+          Account.enable_unaudited_hdwallet_features()
+          _u=self.w3.eth.account.from_mnemonic(key)
+        else:
+          _u = self.w3.eth.account.from_key(key)
 
         secret_key=_u._private_key.hex()
         rc.append(Key(secret_key=secret_key,
@@ -599,16 +615,27 @@ class Polygon (Network):
     return rc
 
 
-  # def get_collections(self, addr="",detail=False,filter_type="NFT"):
-  #   return [
-  #     {"id":"PolygonCollection","name":"Polygon","owner":"Polygon"}
-  #   ]
-  #   nfts=self.get_nfts(addr,with_attr=detail,with_collection=False,metadata_timeout=1)
-  #   rc=[]
-  #   for nft in nfts:
-  #     if nft.collection and nft.collection!={} and not nft.collection in rc:
-  #       rc.append(nft.collection)
-  #   return rc
+  def get_collections(self, addr="",detail=False,filter_type="NFT",special_role="",type_collection="SemiFungible",limit=50):
+    addr=self.toAccount(addr).address
+    abi=self.init_contract_interface()["abi"]
+    txs=self.find_all_contract_for(addr)
+
+    rc=[]
+    for tx in txs:
+      contract_addr=tx["contractAddress"]
+      col={"id":contract_addr,
+           "name":tx["tokenName"],
+           "owner":tx["to"],
+           "type":"SemiFungible"}
+
+      if detail:
+        _contract=self.w3.eth.contract(address=self.w3.to_checksum_address(contract_addr),abi=abi)
+        #metadata=self.get_metadata(_contract.functions.baseTokenURI().call(),timeout=1)
+        col["supply"]=_contract.functions.totalSupply().call()
+
+      rc.append(col)
+
+    return rc
 
 
   def get_balances(self, address,nft_addr=None) -> dict:

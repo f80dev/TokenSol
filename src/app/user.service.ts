@@ -84,8 +84,8 @@ export class UserService implements OnDestroy {
 
   get_collection(addr: string, network: string) {
     //Retourne l'ensemble des collections disponibles
-    return new Promise((resolve, reject) => {
-      this.network.get_collections(addr, network, false).subscribe((cols: any) => {
+    return new Promise<Collection[]>((resolve, reject) => {
+      this.network.get_collections(addr, network, false).subscribe((cols: Collection[]) => {
         this.collections = cols;
         resolve(cols);
       }, (err: any) => {
@@ -149,7 +149,8 @@ export class UserService implements OnDestroy {
           }
           this.addr = r.address;
           if (with_collections) {
-            this.get_collection(this.addr, network).then(() => {
+            this.get_collection(this.addr, network).then((cols:Collection[]) => {
+              this.collections=cols;
               this.addr_change.next(r.address);
               resolve(r.address);
             });

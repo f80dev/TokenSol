@@ -10,8 +10,10 @@
          (change)="import($event)"
          [accept]="extensions"/>
 
-  <div *ngIf="icon.length>0" style="cursor: pointer;">
-    <mat-icon (click)="csvInput.click()"  color="accent" *ngIf="!icon.startsWith('http')">{{icon}}</mat-icon>
+  <div *ngIf="icon.length>0" style="cursor: pointer;display:inline-block;">
+    <button mat-icon-button (click)="csvInput.click()" *ngIf="!icon.startsWith('http')">
+      <mat-icon>{{icon}}</mat-icon>
+    </button>
     <img style="width:50px;height:50px;" *ngIf="icon.startsWith('http')" [src]="icon">
   </div>
 

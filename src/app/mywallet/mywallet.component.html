@@ -37,7 +37,9 @@
           <input matSliderThumb [(ngModel)]="nft_size">
         </mat-slider>
 
-        <span style="margin: 10px">{{balance | number:"1.0-1"}} EGold</span>
+        <span style="margin: 10px">
+          {{balance | number:"1.0-1"}} <span *ngIf="network.indexOf('elrond')>-1">EGold</span>
+        </span>
 
         <app-input [options]="options"
                    label="Collections" value_field="value"

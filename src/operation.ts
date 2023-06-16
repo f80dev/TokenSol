@@ -15,6 +15,7 @@ export interface Collection {
   type: string | undefined
   roles: any[] | undefined
   link: string | ""
+  supply: number
   options: string[] | []
 }
 
@@ -345,6 +346,7 @@ export function newCollection(name:string,owner:CryptoKey,id="",type_collection=
     gallery:true,
     link: "",
     name: name,
+    supply:1,
     options: [],
     owner: owner,
     price: 0,

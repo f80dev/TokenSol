@@ -45,6 +45,7 @@ export class InputComponent implements OnChanges,OnInit {
   @Input() step: number=1;
   @Input() multiselect: boolean = false;
   @Input() showClear: boolean=true
+  @Input() fontname="mat-body-2"
 
   constructor() { }
 

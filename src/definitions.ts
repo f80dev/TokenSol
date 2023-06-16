@@ -17,7 +17,9 @@ export const MAX_FILE_SIZE=10000      //En Ko
 
 //Voir https://console.cloud.google.com/apis/credentials/oauthclient/1047581333959-f7rub1f23lkhuts4ig50pabhv3cakf6u.apps.googleusercontent.com?project=nfluenttokenfactory
 //export const GOOGLE_CLIENT_ID="167299914377-p8vuf2f6npqnigl5kpqrh34cqjd81eko.apps.googleusercontent.com"
-export const GOOGLE_CLIENT_ID="374328672254-kgeau4348kfsdogmh1glktv3ihj6ui56.apps.googleusercontent.com"
+//export const GOOGLE_CLIENT_ID="374328672254-kgeau4348kfsdogmh1glktv3ihj6ui56.apps.googleusercontent.com"
+export const GOOGLE_CLIENT_ID="794055474370-nj8dfh004epum0h6ne1chq903dr4rofe.apps.googleusercontent.com"
+export const GOOGLE_SECRET="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"
 // export const GOOGLE_SECRET_ID="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"
 
 // export const SALT="sel"

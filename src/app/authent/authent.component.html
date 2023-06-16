@@ -3,55 +3,8 @@
   <div class="mat-subheading-1">{{title}}</div>
 
   <!--  Permet l'authentification force par code d'accés ou directement seed phrase-->
-  <mat-expansion-panel *ngIf="showAccesCode || showPrivateKey">
-    <mat-expansion-panel-header>Utiliser votre clé secrète</mat-expansion-panel-header>
-    <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
-      <app-input *ngIf="showAccesCode"
-                 [value]="access_code"
-                 (valueChange)="access_code=$event"
-                 (validate)="connect('code')" label_button="Valider"
-                 help="Ce code se trouve dans le mail reçu à la création de votre wallet"
-                 label="Votre code d'accès">
-      </app-input>
-      <app-input *ngIf="showPrivateKey"
-                 (valueChange)="private_key=$event" label_button="Valider"
-                 [value]="private_key" (validate)="connect('private_key')"
-                 help="Cette phrase vous a été envoyé dans le mail de création"
-                 label="Votre phrase secrete">
-      </app-input>
-    </div>
-  </mat-expansion-panel>
-
-  <!--  https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
-  <mat-expansion-panel *ngIf="showEmail || showGoogle">
-    <mat-expansion-panel-header>Utiliser votre email</mat-expansion-panel-header>
-    <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
-
-      <!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
-      <asl-google-signin-button  *ngIf="showGoogle && address.length==0"
-                                 style="height: 50px;"
-                                 [type]="(device.isHandset$ | async) ? 'icon' : 'standard'" size="medium"
-                                 title="Authentification simplifiée pour les utisateurs de gmail">
-      </asl-google-signin-button>
-
-      <app-input *ngIf="showEmail"
-                 width="300px"
-                 [label]="intro_message"
-                 [placeholder]="prompt"
-                 [value]="address" (valueChange)="update_address($event)"
-                 (validate)="validate($event)"
-                 label_button="Valider"
-                 [help]="explain_message">
-      </app-input>
-    </div>
-  </mat-expansion-panel>
-
-
-  <div *ngIf="!directShowQRCode">
-
-
-<!--    Wallet connect pour MVX-->
-    <mat-expansion-panel *ngIf="network.indexOf('elrond')>-1 && (showDirectConnect || showWalletConnect || showExtensionWallet || showWebWallet)" >
+  <mat-accordion *ngIf="!directShowQRCode">
+    <mat-expansion-panel *ngIf="network.indexOf('elrond')>-1 && (showDirectConnect || showWalletConnect || showExtensionWallet || showWebWallet)" [expanded]="true">
       <mat-expansion-panel-header class="color-primary">Utiliser Wallet Connect</mat-expansion-panel-header>
       <mat-card style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background" *ngIf="qrcode.length==0">
         <mat-card-title class="multiversx-text">S'authentifier sur MultiversX via</mat-card-title>
@@ -61,11 +14,11 @@
           L'application xPortal
         </button><br>
 
-<!--        <button type="button" mat-raised-button class="multiversx-button"-->
-<!--                *ngIf="showWebWallet"-->
-<!--                (click)="open_web_wallet()">-->
-<!--          Le wallet du Web-->
-<!--        </button><br>-->
+        <!--        <button type="button" mat-raised-button class="multiversx-button"-->
+        <!--                *ngIf="showWebWallet"-->
+        <!--                (click)="open_web_wallet()">-->
+        <!--          Le wallet du Web-->
+        <!--        </button><br>-->
 
         <button type="button" mat-raised-button class="multiversx-button"
                 *ngIf="showExtensionWallet"
@@ -95,10 +48,7 @@
       </div>
 
     </mat-expansion-panel>
-
-
-<!--Wallet nfluent-->
-    <mat-expansion-panel *ngIf="showNfluentWalletConnect" [expanded]="!showEmail && !showAddress">
+    <mat-expansion-panel *ngIf="showNfluentWalletConnect">
       <mat-expansion-panel-header class="color-primary">Utiliser le wallet NFluent</mat-expansion-panel-header>
       <button type="button" color="primary"
               mat-raised-button
@@ -135,9 +85,46 @@
       </div>
 
     </mat-expansion-panel>
+    <mat-expansion-panel *ngIf="showAccesCode || showPrivateKey">
+      <mat-expansion-panel-header>Utiliser votre clé secrète</mat-expansion-panel-header>
+      <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
+        <app-input *ngIf="showAccesCode"
+                   [value]="access_code"
+                   (valueChange)="access_code=$event"
+                   (validate)="connect('code')" label_button="Valider"
+                   help="Ce code se trouve dans le mail reçu à la création de votre wallet"
+                   label="Votre code d'accès">
+        </app-input>
+        <app-input *ngIf="showPrivateKey"
+                   (valueChange)="private_key=$event" label_button="Valider"
+                   [value]="private_key" (validate)="connect('private_key')"
+                   help="Cette phrase vous a été envoyé dans le mail de création"
+                   label="Votre phrase secrete">
+        </app-input>
+      </div>
+    </mat-expansion-panel>
+    <mat-expansion-panel *ngIf="showEmail || showGoogle">
+      <mat-expansion-panel-header>Utiliser votre email</mat-expansion-panel-header>
+      <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
 
+        <!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
+        <asl-google-signin-button  *ngIf="showGoogle && address.length==0"
+                                   style="height: 50px;"
+                                   [type]="(device.isHandset$ | async) ? 'icon' : 'standard'" size="medium"
+                                   title="Authentification simplifiée pour les utisateurs de gmail">
+        </asl-google-signin-button>
 
-<!--    Wallet Polygon-->
+        <app-input *ngIf="showEmail"
+                   width="300px"
+                   [label]="intro_message"
+                   [placeholder]="prompt"
+                   [value]="address" (valueChange)="update_address($event)"
+                   (validate)="validate($event)"
+                   label_button="Valider"
+                   [help]="explain_message">
+        </app-input>
+      </div>
+    </mat-expansion-panel>
     <mat-expansion-panel *ngIf="qrcode.length==0 && network.indexOf('polygon')>-1" class="polygon-background">
       <mat-expansion-panel-header class="color-primary">Utiliser l'extension</mat-expansion-panel-header>
       <button type="button" mat-raised-button class="polygon-button"
@@ -146,7 +133,9 @@
         Extension Chrome
       </button>
     </mat-expansion-panel>
-  </div>
+  </mat-accordion>
+
+  <!--  https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
 
 
   <div *ngIf="directShowQRCode">
