@@ -1,5 +1,5 @@
 import {environment} from "./environments/environment";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Params} from "@angular/router";
 import {NFT} from "./nft";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {NFLUENT_WALLET} from "./definitions";
@@ -292,29 +292,35 @@ export function getParams(routes:ActivatedRoute,local_setting_params="",force_tr
   //Decryptage des parametres de l'url
   //Version 1.0
   return new Promise((resolve, reject) => {
-    setTimeout(()=>{
 
-      routes.queryParams.subscribe((params:any) => {
-        if(params==null && local_setting_params.length>0)params=localStorage.getItem(local_setting_params)
+      routes.queryParams.subscribe({next:(ps:any) => {
+        if(ps==null && local_setting_params.length>0){
+          ps=localStorage.getItem(local_setting_params)
+        }
 
-        if(params){
-          if(params.hasOwnProperty("p")){
-            params=analyse_params(decodeURIComponent(params["p"]));
-            $$("Analyse des paramètres par la fenetre principale ", params);
+        if(ps){
+          if(ps.hasOwnProperty("p")){
+            let temp:any=analyse_params(decodeURIComponent(ps["p"]));
+            for(let k of Object.keys(ps)){
+              if(k!="p"){
+                temp[k]=ps[k];
+              }
+            }
+            ps=temp;
+            $$("Analyse des paramètres par la fenetre principale ", ps);
           }
         }
 
-        if(!params) {
+        if(!ps) {
           if (force_treatment) {resolve({})}else{reject()}
         }else{
-          if(local_setting_params.length>0)localStorage.setItem(local_setting_params,params["p"]);
-          resolve(params);
+          if(local_setting_params.length>0)localStorage.setItem(local_setting_params,ps["p"]);
+          resolve(ps);
         }
-      },(err)=>{
+      },error:(err)=>{
         $$("!Impossible d'analyser les parametres de l'url");
         reject(err);
-      })
-    },200);
+      }})
   });
 }
 

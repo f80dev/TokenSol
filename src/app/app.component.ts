@@ -1,5 +1,5 @@
 import {ActivatedRoute, Router} from "@angular/router";
-import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import {UserProfil, UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
@@ -17,7 +17,7 @@ import {StyleManagerService} from "./style-manager.service";
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit,AfterViewInit {
   @ViewChild('drawer', {static: false}) drawer: MatSidenav | undefined;
 
   networks:any[]=[];
@@ -91,11 +91,14 @@ export class AppComponent implements OnInit {
     })
   }
 
+  ngAfterViewInit(): void {
+    setTimeout(()=>{this.init_form();},200);
+  }
+
   ngOnInit(): void {
     if(getBrowserName()=="firefox"){
       showMessage(this,"Le fonctionnement de TokenForge est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement",8000,()=>{},"Ok");
     }
-    this.init_form();
   }
 
 
@@ -143,7 +146,6 @@ export class AppComponent implements OnInit {
   async init_form() {
     let params:any = await getParams(this.routes, "params", true)
     apply_params(this,params,environment)
-
 
     this.user.params = params;
     if (params.hasOwnProperty("toolbar")) {

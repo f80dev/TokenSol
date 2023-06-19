@@ -105,8 +105,7 @@ export class BankComponent implements OnInit {
 
   async ngOnInit() {
     this.device.isHandset$.subscribe((isHandset)=>{
-      if(isHandset){this.border="0px";this.size="100%";}
-    })
+      if(isHandset){this.border="0px";this.size="90%";}})
 
     // let params:any=await getParams(this.routes);
     // this.refresh(params);
