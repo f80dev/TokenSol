@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>TokenForge</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta property="og:title" content="TokenForge">
+  <meta property="og:description" content="Outil de conception, minage et gestion des NFT by NFLUENT">
+  <meta property="og:image" content="https://www.femis.fr/squelettes/imgs/femis-blanc-2.png">
+  <meta property="og:url" content="https://nfluent.io/">
+
+  <link id="favicon" rel="icon" type="image/x-icon" href="favicon.ico">
+  <link id="apple_favicon" rel="apple-touch-icon" href="favicon.png">
+
+<!--  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>-->
+
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="assets/webFonts/MyFontsWebfontsKit.css">
+  <link rel="stylesheet" type="text/css" href="assets/webFonts/mediasans.css">
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1976d2">
+<link rel="stylesheet" href="styles.css"></head>
+<body class="mat-typography" style="margin:0;padding: 0;">
+
+<script>
+  (function () {
+    // Retrieve the URL the user was trying to access when receiving the 404.
+    var redirect = sessionStorage.redirect;
+    // Remove the URL from sessionStorage.
+    delete sessionStorage.redirect;
+    // Check if we actually need to redirect.
+    if (redirect && redirect != location.href) {
+      // We need to redirect to the URL the user was trying to access.
+      history.replaceState(null, null, redirect);
+    }
+  })();
+</script>
+<app-root></app-root>
+<noscript>Activer le javascript pour utiliser TokenForge.</noscript>
+<script src="runtime.js" type="module"></script><script src="polyfills.js" type="module"></script><script src="main.js" type="module"></script></body>
+</html>
