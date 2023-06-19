@@ -12,13 +12,14 @@ import {NetworkService} from "../network.service";
 export class IntroComponent implements OnInit {
 
   version: any;
-    logo=environment.logo;
+  logo=environment.logo;
 
   constructor(public user:UserService,public router:Router,public network:NetworkService) {
     this.version=environment.version;
   }
 
   ngOnInit(): void {
+    this.logo=this.user.params.logo;
   }
 
   open_create() {

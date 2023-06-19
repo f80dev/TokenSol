@@ -19,7 +19,7 @@ export class AboutComponent implements OnInit {
   version=environment.version;
   cgu=environment.website+"/cgu.html"
   contact=""
-  logo=environment.logo || "./assets/logo.png"
+  logo="./assets/logo.png"
 
   constructor(
       public routes:ActivatedRoute,
@@ -31,13 +31,9 @@ export class AboutComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    if(this.user.params && this.user.params.appname && this.user.params.appname.length>0){
-      apply_params(this,this.user.params,environment);
-    }else{
-      let params=await getParams(this.routes)
-      apply_params(this,params,environment);
+    let params=await getParams(this.routes)
+    apply_params(this,params,environment);
 
-    }
   }
 
   open_share() {

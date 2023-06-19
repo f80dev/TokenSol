@@ -14,7 +14,9 @@ export const environment = {
   appli:"http://127.0.0.1:4200",
   wallet:"http://127.0.0.1:4200",
   website:"https://nfluent.io",
-  networks_available:"elrond-devnet,polygon-devnet"
+  networks_available:"elrond-devnet,polygon-devnet",
+  logo:"./assets/icons/tokenforge-512.png",
+
 };
 
 /*

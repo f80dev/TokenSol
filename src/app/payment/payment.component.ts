@@ -79,7 +79,7 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
   @Input() price: number = 0
   @Input() fiat_price: number=0;
   @Input() billing_to: string="";
-  @Input() bank:Bank | undefined;
+  @Input() bank:Bank | string | undefined;
   @Input() merchant: Merchant | undefined
   @Output('paid') onpaid: EventEmitter<PaymentTransaction>=new EventEmitter();
   @Output('cancel') oncancel: EventEmitter<any> =new EventEmitter();
@@ -320,19 +320,25 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
   }
 
   open_bank() {
-    let url="https://tokenforge.nfluent.io/bank?";
-    let claim="Acquérir des "+this.money!.unity+" en quelques clics"
-    url=url+setParams({
-      address :this.get_address(),
-      merchant:this.merchant,
-      bank:this.bank,
-      claim: claim,
-      toolbar :false,
-      appname:"The "+this.money!.unity+" bank",
-      style:"nfluent-dark.css",
-      visual:"https://nfluent.io/assets/bank.avif",
-      background:"https://nfluent.io/assets/cash_machine.jpg"
-    })
+    let url="";
+    if(!this.bank)return;
+    if(this.bank.toString().startsWith("http")){
+      url=this.bank.toString();
+    } else {
+      url="https://tokenforge.nfluent.io/bank?";
+      let claim="Acquérir des "+this.money!.unity+" en quelques clics"
+      url=url+setParams({
+        address :this.get_address(),
+        merchant:this.merchant,
+        bank:this.bank,
+        claim: claim,
+        toolbar :false,
+        appname:"The "+this.money!.unity+" bank",
+        style:"nfluent-dark.css",
+        visual:"https://nfluent.io/assets/bank.avif",
+        background:"https://nfluent.io/assets/cash_machine.jpg"
+      })
+    }
     open(url,"bank")
     this.handle=setInterval(()=>{this.refresh_solde()},20000);
   }

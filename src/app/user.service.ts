@@ -133,7 +133,7 @@ export class UserService implements OnDestroy {
         this.verified_address=verified_address;
         this.network.get_account(addr!, network).subscribe((result: any) => {
           let r=result[0];
-          this.balance = r.amount;
+          this.balance = r.amount || 0;
           this.key=this.network.find_key_by_address(r.address);
           if(!this.key){
             this.key = {

@@ -66,6 +66,12 @@ mat-expansion-panel {
   justify-content: space-around;
 }
 
+.expansion-content-left {
+  @extend .expansion-content;
+  justify-content: flex-start;
+}
+
+
 
 .faq-content {
   text-align: left;

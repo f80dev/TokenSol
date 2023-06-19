@@ -10,14 +10,19 @@
         <div *ngIf="balance>0" style="font-size: small">Vous avez {{balance/1e18 | number:"1.0-1"}} {{money!.unity}}</div>
     </div>
 
-    <div *ngIf="balance<price && merchant && merchant.wallet && bank" style="margin-top: 20px;">
-        <div class="color-accent">Votre solde est insuffisant</div>
+    <div *ngIf="balance<price && merchant && merchant.wallet" style="margin-top: 20px;">
+        <div class="color-primary mat-subheading-1">Votre solde est insuffisant</div>
 
         <button mat-raised-button color="primary"
-                style="margin: 20px;"
+                style="margin: 20px;" *ngIf="bank"
                 (click)="open_bank()">
             Acquérir des {{money!.unity}}
         </button>
+
+        <p *ngIf="!bank">
+            Vous devez récupérer des {{money!.unity}} pour accèder au contenu
+        </p>
+
     </div>
 
     <button type="button" mat-raised-button color="primary"

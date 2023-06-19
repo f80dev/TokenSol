@@ -3,8 +3,6 @@ import {NetworkService} from "../network.service";
 import {Location} from "@angular/common";
 import {ActivatedRoute} from "@angular/router";
 import {
-  getParams,
-  showMessage,
   showError,
   $$,
   isEmail,
@@ -17,7 +15,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "../device.service";
 import {StyleManagerService} from "../style-manager.service";
 import {UserService} from "../user.service";
-import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
+
 import {MatDialog} from "@angular/material/dialog";
 import {PaymentTransaction} from "../payment/payment.component";
 
@@ -35,7 +33,7 @@ export class BankComponent implements OnInit {
   transaction: any;
   token: any;
   border="2%";
-  size="90%";
+  size="85%";
   visual: string="";
   background: string="";
   end_message: string = "";

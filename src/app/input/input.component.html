@@ -17,7 +17,7 @@
     <mat-icon matSuffix *ngIf="showClear && value_type!='number' && value && value!.length>0"
               style="opacity: 0.6;"
               (click)="on_clear()">cancel</mat-icon>
-    <mat-hint *ngIf="showHelp" class="mat-body-2 help-input">{{help}}</mat-hint>
+    <mat-hint *ngIf="showHelp" class="mat-body-1 help-input">{{help}}</mat-hint>
   </mat-form-field>
 
   <!-- input de type textarea-->
@@ -31,7 +31,7 @@
     </textarea>
 
     <mat-icon matSuffix *ngIf="showClear && value && value!.length>0" (click)="on_clear()" style="opacity: 0.7;">cancel</mat-icon>
-    <mat-hint *ngIf="showHelp" class="mat-body-2 help-input">
+    <mat-hint *ngIf="showHelp" class="mat-body-1 help-input">
       {{help}}
     </mat-hint>
   </mat-form-field>
