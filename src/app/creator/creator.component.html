@@ -251,7 +251,7 @@
 
             <div *ngFor="let elt of layer.elements?.slice(0,sel_config.max_items)"
                  [title]="elt.name+'\n'+elt.image.substring(0,100)+'\n\nCliquer pour voir à échelle 1:1'"
-                 style="display: inline-block;margin: 5px;max-width: 100px;max-height: 100px;cursor: pointer;width:20%;height:100%;">
+                 style="display: inline-block;margin: 5px;max-width: 100px;max-height: 100px;cursor: pointer;width:20%;height:100%;position:relative;">
               <img *ngIf="elt?.image?.length>0"
                    [src]="elt.image"
                    alt="En cours de chargement"
@@ -259,6 +259,9 @@
                    [style.background-color]="backcolor" class="mat-elevation-z4"
                    (mousedown)="modify_element($event,layer,elt)"
                    (dblclick)="open_file(elt)">
+              <mat-icon style="position: absolute;left:5px;top:5px;display: block;z-index: 10;font-size: small;cursor: pointer;"
+                        (click)="delete_element(layer,layer.elements.indexOf(elt))">cancel
+              </mat-icon>
             </div>
             <span *ngIf="layer.elements && sel_config.max_items<1000 && layer.elements.length>sel_config.max_items" style="font-size: xx-large;cursor: pointer;" (click)="sel_config.max_items=1000">...</span>
           </td>

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, ElementRef, OnInit, ViewChild} from '@angular/core';
 import {Location} from "@angular/common";
 import {UserProfil, UserService} from "../user.service";
 import {decrypt, encrypt, getParams, showMessage} from "../../tools";
@@ -18,7 +18,7 @@ export class LoginComponent implements OnInit {
   access_code: string="";
   email: any="";
   show_wallet_authent: boolean=false;
-
+  @ViewChild('address') elt_address: ElementRef |undefined
 
   constructor(
     public _location:Location,
@@ -34,6 +34,8 @@ export class LoginComponent implements OnInit {
 
     getParams(this.routes).then((params:any)=>{
       if(params.hasOwnProperty("message") || params.hasOwnProperty("title"))this.title=params["title"] || params["message"];
+      if(params.hasOwnProperty("registration"))this.show_registration=params.registration
+      if(params.hasOwnProperty("wallet_authent"))this.show_wallet_authent=(params.wallet_authent=="true")
       this.access_code=decrypt(localStorage.getItem("access_code"));
       this.email=decrypt(localStorage.getItem("email"));
       this.authent();

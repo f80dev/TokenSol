@@ -16,6 +16,7 @@ export const environment = {
   stockage_document: "server-nfluent,github-nfluentdev-storage-main,infura,server",
   networks_available:"elrond-devnet,polygon-devnet,db-server-nfluent",
   logo:"./assets/icons/tokenforge-512.png",
+  faqs:"./assets/faqs.yaml",
 
   admin:{
     default_miner:"dudule: Z0FBQUFBQmtWUUdEa2FCdHdVeHRnaFlsRDVlMUJHbDlEWi0tVlVjMGF4Qmk2VWpjbXd1LW1JQ3poQzMtbFN2YzdtT3BLSk9PY2gxRElBLTFXYlZ0NTdvakI3NXVJUjN3SUVxS0N3Q3lQa1F5eks4VmhNZ0p2QWJmN3Y3bV9lVXViRmdXSFJTWjBQN0pWOV9vWHNUWGNoN0lMRFB1dDI3TFB3OHp1dzAxWmphSnhXLUFRa2pGX3VYMHlPMTR0TTZ3MXFYcVJDakVxenJGbGlZYm05MndPVXo5Q2w0U05qdGM5S29xMWdyRmtIWlFoQ3hKTEYtMVdfTk85M2NsV2NKWlRVWkFIeEJNdWkwSGFnaGpZVVBBTFNXMmlBeWhPXzVHT3hTVUYzRkIxQVlYQkxyaFcxUUpIQkdlSzlVekg4QjIwWWNDSkVLZUlKU2NFVnVmdHdsMjREMlVpOVpUWE91SHFOc2hIUndiSUtUQVBXRDJhNXEwdmFjbC1CcE90VVlYUzVrelRHbzlCTmZvdTVhTHMwQS1DOGtvdGhJRVE5ckRRX1liRHpYMEZSNzktdFZKeENJamtSdTBmNTh6OVVTSVdYUEtYcXk2UGVuUA==",

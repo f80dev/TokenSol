@@ -113,6 +113,17 @@ def test_create_SFTCollection_and_mint():
   test_mint_sft(force_create_collection=True)
 
 
+def test_find_esdt_by_owner(owner=MAIN_ACCOUNT):
+  rc=Elrond("devnet").get_tokens(owner)
+  assert len(rc)>1
+  assert "identifier" in rc[0]
+
+def test_find_esdt_by_name():
+  rc=Elrond("devnet").get_tokens(filter="BTC")
+  assert len(rc)>=100
+  assert "image" in rc[0]
+
+
 def test_get_nfts(miner=MAIN_ACCOUNT):
   _network=Elrond("devnet")
   nfts=_network.get_nfts(miner,2000)

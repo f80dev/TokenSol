@@ -20,7 +20,7 @@ from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
 
 
-from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt, is_email
+from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt, is_email, now
 
 from flaskr.dao import DAO
 from flaskr.infura import Infura
@@ -114,6 +114,24 @@ def extract_keys_from_operation(ope):
     private_key=decrypt(ope["keys"][k])
     rc.append(Key(name=k,secret_key=private_key))
   return rc
+
+
+def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,network:str,comment="airdrop") -> dict :
+  rc={"address":address}
+  if histo:
+    total=0
+    for h in histo.get_histos(addr=address,start=now()-24*1000):
+      if h["command"]=="refund": total=total+int(h["params"][0])
+    if total>=limit:
+      return {"error":"Plafond de versement atteint pour la journée","status":"error"}
+
+  _network=get_network_instance(network)
+  if type(token)==dict and "identifier" in token:token=token["identifier"]
+  tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
+  if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
+  rc["transaction_esdt"]=tx_esdt
+  return rc
+
 
 def get_network_instance(network:str):
   if type(network)==Network: return network

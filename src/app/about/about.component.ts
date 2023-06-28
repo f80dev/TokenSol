@@ -6,6 +6,7 @@ import {Location} from "@angular/common";
 import {StyleManagerService} from "../style-manager.service";
 import {UserService} from "../user.service";
 import {NgNavigatorShareService} from "ng-navigator-share";
+import {_prompt} from "../prompt/prompt.component";
 
 @Component({
   selector: 'app-about',
@@ -20,6 +21,8 @@ export class AboutComponent implements OnInit {
   cgu=environment.website+"/cgu.html"
   contact=""
   logo="./assets/logo.png"
+  exist_faqs: boolean = false;
+  show_admin: boolean = false;
 
   constructor(
       public routes:ActivatedRoute,
@@ -31,9 +34,11 @@ export class AboutComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    let params=await getParams(this.routes)
+    let params:any=await getParams(this.routes)
     apply_params(this,params,environment);
-
+    this.exist_faqs=(params.faqs || environment.faqs || "").length>0
+    let env:any=environment
+    this.show_admin=env.hasOwnProperty("admin_password")
   }
 
   open_share() {
@@ -44,4 +49,19 @@ export class AboutComponent implements OnInit {
     })
   }
 
+  open_faqs() {
+    this.router.navigate(["faqs"])
+  }
+
+  async open_admin() {
+    // @ts-ignore
+    if(!environment.admin_password || environment.admin_password==""){
+      this.router.navigate(["admin"])
+    }else{
+      let conf=await _prompt(this,"Password administrateur","","","text","ok","annuler",false)
+      // @ts-ignore
+      if(conf==environment.admin_password)this.router.navigate(["admin"]);
+    }
+
+  }
 }

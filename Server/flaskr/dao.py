@@ -192,7 +192,6 @@ class DAO(Storage,Network):
     """
     nft=NFT(name=title,
             miner=miner.address,
-            owner=miner.address,
             collection=collection["id"],
             attributes=properties,
             description=description,
@@ -276,7 +275,7 @@ class DAO(Storage,Network):
     rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
 
-  def get_collections(self,owner_or_collection:str,detail:bool=False,type_collection="",special_role=""):
+  def get_collections(self,owner_or_collection:str,detail:bool=False,type_collection="",special_role="",limit=1000):
     rc=[]
     cols=self.db["collections"].find({"_id":ObjectId(owner_or_collection.replace("col_",""))}) if owner_or_collection.startswith("col") else self.db["collections"].find({"owner":owner_or_collection})
     for col in cols:
@@ -384,12 +383,15 @@ class DAO(Storage,Network):
     _miner=self.get_account(miner.address)
     if _miner is None: return False
 
-    if not nft_addr in _miner.nfts_balances or _miner.nfts_balances[nft_addr]<quantity:
+    _nft=self.get_nft(nft_addr,False)
+
+    if _nft and not miner.address in _nft.balances or _nft.balances[miner.address]<quantity:
       return self.create_transaction(error="Quantité insuffisante",hash="db_"+now("hex"),nft_addr=nft_addr)
 
-    _miner.nfts_balances[nft_addr]=_miner.nfts_balances[nft_addr]-quantity
+    _nft.balances[miner.address]-=quantity
+    #_miner.nfts_balances[nft_addr]=_miner.nfts_balances[nft_addr]-quantity
 
-    self.save_account(_miner)
+    self.save_nft(_nft)
 
     return self.create_transaction(error="",hash="db_"+now("hex"),nft_addr=nft_addr)
 
@@ -610,6 +612,15 @@ class DAO(Storage,Network):
   def get_link(self, cid:str) -> str:
     rc=self.db["shortlinks"].find_one({"cid":cid})
     del rc["_id"]
+    return rc
+
+  def add_airdrop(self, body):
+    rc=self.db["airdrops"].insert_one(body)
+    return rc.inserted_id
+
+
+  def get_airdrop(self, program):
+    rc=self.db["airdrops"].find_one(ObjectId(program))
     return rc
 
 

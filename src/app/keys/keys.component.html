@@ -62,7 +62,7 @@
             label="Blockchain"
             [options]="network.networks_available" width="200px"
             value_type="list" color="white"
-            [value]="network.network" value_field="value"
+            [value]="sel_network"
             (valueChange)="updateNetwork($event)"></app-input>
   </div>
 
@@ -101,12 +101,12 @@
         <button mat-icon-button (click)="del_key(key.name)" title="supprimer">
           <mat-icon>delete</mat-icon>
         </button>
-        <button mat-icon-button  (click)="encrypt(key,false)" title="Encrypter la clé privée"><mat-icon>key</mat-icon></button>
+<!--        <button mat-icon-button  (click)="encrypt(key,false)" title="Encrypter la clé privée"><mat-icon>key</mat-icon></button>-->
         <button mat-icon-button  (click)="encrypt(key,true)" title="Encrypter toute la clé"><mat-icon>lock</mat-icon></button>
         <button mat-icon-button title="Copier l'adresse" [cdkCopyToClipboard]="key.address"><mat-icon>content_copy</mat-icon></button>
-        <button title="voir le wallet" mat-icon-button (click)="open_wallet(key)"><mat-icon>money</mat-icon></button>
-        <button title="voir le wallet" mat-icon-button (click)="burn_all_nft(key)"><mat-icon>local_fire_department</mat-icon></button>
-
+        <button title="Voir le wallet NFLUENT" mat-icon-button (click)="open_wallet(key)"><mat-icon>money</mat-icon></button>
+        <button title="Detruire les NFTs" mat-icon-button (click)="burn_all_nft(key)"><mat-icon>local_fire_department</mat-icon></button>
+        <button title="Lancer un airdrop" mat-icon-button (click)="open_airdrop(key)"><mat-icon>savings</mat-icon></button>
 
         <button title="voir dans l'explorer" mat-icon-button (click)="open_explorer(key)">
           <mat-icon>person_search</mat-icon>

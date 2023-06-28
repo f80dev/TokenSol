@@ -4,6 +4,7 @@ import {NFT} from "./nft";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {NFLUENT_WALLET} from "./definitions";
 import {ImageItem} from "ng-gallery";
+import {_prompt} from "./app/prompt/prompt.component";
 
 export interface CryptoKey {
   name: string | null
@@ -109,6 +110,7 @@ export function setParams(_d:any,prefix="",param_name="p") : string {
   //Encryptage des parametres de l'url
   //Version 1.0
   let rc=[];
+  _d=JSON.parse(JSON.stringify(_d))
   for(let k of Object.keys(_d)){
     if(typeof(_d[k])=="object")_d[k]="b64:"+btoa(JSON.stringify(_d[k]));
     rc.push(k+"="+encodeURIComponent(_d[k]));
@@ -163,11 +165,12 @@ export function analyse_params(params:string):any {
   return rc;
 }
 
-export function now(format="number") : any {
+export function now(format="number",offset_in_sec=0) : any {
+  let d=new Date(new Date().getTime()+offset_in_sec*1000);
   let rc=new Date().getTime();
-  if(format=="date")return new Date().toLocaleDateString();
-  if(format=="time")return new Date().toLocaleTimeString();
-  if(format=="datetime")return new Date().toLocaleString();
+  if(format=="date")return d.toLocaleDateString();
+  if(format=="time")return d.toLocaleTimeString();
+  if(format=="datetime")return d.toLocaleString();
   if(format=="rand")return (Math.random()*10000).toString(16);
   if(format=="hex")return rc.toString(16);
   if(format=="dec" || format=="str")return rc.toString();
@@ -261,7 +264,7 @@ export function rotate(src: string, angle: number, quality: number=1) : Promise<
 }
 
 
-export function apply_params(vm:any,params:any,env:any){
+export function apply_params(vm:any,params:any,env:any={}){
   for(let prop of ["claim","title","appname","background","visual","new_account_mail","existing_account_mail","website","cgu","contact","company","logo"]){
     if(vm.hasOwnProperty(prop))vm[prop]=params[prop] || env[prop] || "";
   }
@@ -287,6 +290,22 @@ export function apply_params(vm:any,params:any,env:any){
   }
 }
 
+
+export function open_image_banks(vm:any){
+  showMessage(vm,"Il est possible de faire directement glisser les images d'un site web vers le calque souhaité")
+  _prompt(vm,"Saisissez un mot clé (de préférence en anglais)",
+      "rabbit",
+      "Accéder directement à plusieurs moteurs de recherche d'image","text",
+      "Rechercher","Annuler",false).then((resp:any)=>{
+    open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
+    open("https://giphy.com/search/"+resp,"giphy")
+    open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
+    open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
+    open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
+    open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
+  })
+
+}
 
 export function getParams(routes:ActivatedRoute,local_setting_params="",force_treatment=false) {
   //Decryptage des parametres de l'url
@@ -493,8 +512,9 @@ export function copyAchievements(clp:Clipboard,to_copy:string) {
 
 }
 
-export function canTransfer(nft:NFT) : boolean {
-  if(nft.balances[nft.miner.address]==0)return false;
+export function canTransfer(nft:NFT,address:string) : boolean {
+  if(!nft.balances.hasOwnProperty(address))return false;
+  if(nft.balances[address]==0)return false;
   return true;
 }
 

@@ -90,8 +90,9 @@ class akashConfig(prodConfig):
   """
   configuration local
   """
-  TESTING = True
-  DOMAIN_SERVER="http://provider.bdl.computer:30802"          #address du serveur ou s'execute flask
+  TESTING = False
+  DEBUG = False
+  DOMAIN_SERVER="http://provider.serverjuice.org:32424"          #address du serveur ou s'execute flask
 
 
 class testConfig(localConfig):

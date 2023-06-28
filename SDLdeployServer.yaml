@@ -21,9 +21,9 @@ profiles:
         cpu:
           units: 1
         memory:
-          size: 512Mi
+          size: 1Gi
         storage:
-          - size: 1Gi
+          - size: 2Gi
   placement:
     dcloud:
       pricing:

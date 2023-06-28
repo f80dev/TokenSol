@@ -11,7 +11,7 @@ import {
   getParams,
   hashCode,
   normalize,
-  now,
+  now, open_image_banks,
   setParams,
   showError,
   showMessage
@@ -566,14 +566,17 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
+  delete_element(layer:any,pos:number):void {
+    layer.elements.splice(pos,1);
+    this.eval_max_nft();
+  }
 
   modify_element($event:MouseEvent, layer: Layer, element:any) {
     let pos=layer.elements.indexOf(element);
     if($event.button==0){
       $event.stopPropagation();
       if($event.ctrlKey){
-        layer.elements.splice(pos,1);
-        this.eval_max_nft();
+        this.delete_element(layer,pos)
       }
 
       if($event.altKey){
@@ -967,17 +970,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   async find_image() {
-    showMessage(this,"Il est possible de faire directement glisser les images d'un site web vers le calque souhaité")
-    let resp=await _prompt(this,"Saisissez un mot clé (de préférence en anglais)",
-        "rabbit",
-        "Accéder directement à plusieurs moteurs de recherche d'image","text",
-        "Rechercher","Annuler",false)
-    open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
-    open("https://giphy.com/search/"+resp,"giphy")
-    open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
-    open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
-    open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
-    open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
+    open_image_banks(this)
   }
 
   //add_image_to_layer ajouter une image

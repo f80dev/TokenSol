@@ -1,4 +1,4 @@
-import {ActivatedRoute, Router} from "@angular/router";
+import {ActivatedRoute, NavigationEnd, Router} from "@angular/router";
 import {AfterViewInit, Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import {UserProfil, UserService} from "./user.service";
 import {NetworkService} from "./network.service";
@@ -11,6 +11,10 @@ import {DeviceService} from "./device.service";
 import {MatSidenav} from "@angular/material/sidenav";
 import {menu_items} from "./menu/menu.component";
 import {StyleManagerService} from "./style-manager.service";
+
+
+declare const gtag: Function;
+
 
 @Component({
   selector: 'app-root',
@@ -58,6 +62,13 @@ export class AppComponent implements OnInit,AfterViewInit {
     public operation:OperationService,
     public device:DeviceService
   ) {
+
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        gtag('config', 'G-FLYQ98Q9W9', { 'page_path': event.urlAfterRedirects });
+      }
+    })
+
 
     this.user.profil_change.subscribe(()=>{this.update_menu();})
     this.user.addr_change.subscribe(()=>{this.update_menu();})

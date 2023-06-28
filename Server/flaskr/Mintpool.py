@@ -172,7 +172,7 @@ class Mintpool:
 		
 						for _try in range(20):
 							nft_to_mint:NFT=random_from(nfts)
-							if nft_to_mint.balances[_from_miner.address]>0: break
+							if _from_miner.address in nft_to_mint.balances and nft_to_mint.balances[_from_miner.address]>0: break
 
 						if nft_to_mint.balances[_from_miner.address]==0:
 

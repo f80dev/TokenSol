@@ -84,6 +84,8 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
       filename_encoded=str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "filename" in data and not "image" in data["type"] else ""
       if "file" in data: data["content"]=data["file"]
       filename=get_filename_from_content(data["content"],"store",data["type"])
+      if "/" in platform and exists("./"+platform.split("/")[1]):
+        upload_dir="./"+platform.split("/")[1]+"/"
       with open(upload_dir+filename,"wb") as file: file.write(b)
       return {"cid":filename,"url":domain_server+"/api/files/"+filename+("?f="+filename_encoded if len(filename_encoded)>0 else "")}
 

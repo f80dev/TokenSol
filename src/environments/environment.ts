@@ -17,6 +17,7 @@ export const environment = {
   wallet:"http://127.0.0.1:4200",
   website:"https://nfluent.io",
   logo:"./assets/icons/tokenforge-512.png",
+  faqs:"./assets/faqs.yaml",
 
   stockage: "server-nfluent,nftstorage,infura,github-nfluentdev-storage-main",
   stockage_document: "server-nfluent,github-nfluentdev-storage-main,infura,server",

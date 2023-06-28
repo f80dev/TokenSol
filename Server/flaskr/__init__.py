@@ -17,6 +17,7 @@ def create_app(config=None) -> (Flask,BackgroundScheduler):
   config_name peut prendre les valeurs : ["prod","dev","local"]
   :return:
   """
+
   r_scheduler = BackgroundScheduler()
   log("Initialisation du scheduler ok")
 

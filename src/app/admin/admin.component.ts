@@ -79,6 +79,21 @@ export class AdminComponent implements OnInit {
   files: any[]=[];
   nb_selected_file: number=0;
   message="";
+  bank_properties=[
+    {label: "Réseau",value:"elrond-devnet",name:"network"},
+    {label: "Montant de la recharge",value:"1",name:"bank.refund",type:"number"},
+    {label: "Titre",value:"Rechargement",name:"bank.title"},
+    {label: "Limite par jour",value:"2",name:"bank.limit"},
+    {label: "Base d'historisation",value:"db-server-nfluent",name:"bank.histo"},
+    {label: "Token",value:"",name:"bank.token"},
+
+    {label: "Style",value:"nfluent-dark.css",name:"style"},
+    {label: "Nom de l'application",value:"Bank",name:"appname"},
+    {label: "Fond d'écran",value:"https://s.f80.fr/assets/wood.jpg",name:"bank.token"},
+    {label: "FavIcon",value:"favicon.png",name:"favicon"},
+    {label: "Splash Screen",value:"https://nftlive.nfluent.io/assets/logo_mvx.jpg",name:"visual"},
+    {label: "Claim",value:"",name:"claim"},
+  ];
 
 
   constructor(
@@ -452,6 +467,18 @@ export class AdminComponent implements OnInit {
         });
       }
     }
-
   }
+
+
+
+  upload_on_server(directory: string,files:any[]) {
+    if(typeof(files[0])!="object")files=[files];
+    for(let f of files){
+      this.network.upload(f,"server/"+directory).subscribe(()=>{
+        showMessage(this,f.filename+" uploadé")
+      })
+    }
+  }
+
+
 }

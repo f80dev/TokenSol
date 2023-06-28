@@ -1,16 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {ActivatedRoute, Router} from "@angular/router";
-import {$$, canTransfer, CryptoKey, getParams, newCryptoKey, setParams, showError, showMessage} from "../../tools";
+import {
+  $$,
+  apply_params,
+  canTransfer,
+  CryptoKey,
+  getParams,
+  newCryptoKey,
+  setParams,
+  showError,
+  showMessage
+} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {MatDialog} from "@angular/material/dialog";
 
-import {Collection, newCollection, Operation} from "../../operation";
+import {Collection, Connexion, newCollection, Operation} from "../../operation";
 import {NFT} from "../../nft";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {environment} from "../../environments/environment";
 import {UserService} from "../user.service";
+import {_prompt} from "../prompt/prompt.component";
+import {genlink_to_obj} from "../genlink/genlink.component";
+import {StyleManagerService} from "../style-manager.service";
+import {NgNavigatorShareService} from "ng-navigator-share";
 
 @Component({
   selector: 'app-dispenser',
@@ -23,26 +37,32 @@ export class DispenserComponent implements OnInit {
   operation: Operation | undefined;
   dest=""; //Destinataire
   miner:CryptoKey | undefined;
-
-  miner_dest: string="";
+  miner_addr:string=""
+  miner_dest: CryptoKey | undefined;
   network_dest: string="";
+
+  collections: Collection[]=[];
+  appli=environment.appli;
+  dm_props:any[]=[];
+
   collection_dest:Collection | undefined;
 
   constructor(
       public network:NetworkService,
       public routes:ActivatedRoute,
       public dialog:MatDialog,
+      public share:NgNavigatorShareService,
       public router:Router,
       public user:UserService,
       public toast:MatSnackBar,
       public alias:AliasPipe,
+      public style:StyleManagerService,
       public clipboardService:Clipboard
   ) {}
 
   eval_nfts(nfts:NFT[],collections:string[]){
     for(let nft of nfts){
-      //nft.miner=newCryptoKey(nft.miner)
-      if(canTransfer(nft)){
+      if(canTransfer(nft,this.miner_addr)){
         nft.style={opacity:1};
       } else {
         nft.style={opacity:0.3,cursor:"not-allowed",pointerEvents:"none"};
@@ -61,13 +81,26 @@ export class DispenserComponent implements OnInit {
   }
 
   //test: http://127.0.0.1:4200/dispenser?ope=calvi22_devnet&toolbar=false/dispenser?ope=calvi22_devnet
-  collections: Collection[]=[];
+  background: string="";
+  title=""
+  claim="";
+
+  refresh(){
+    this.network.get_nfts_from_collection(this.user.params.collection,this.user.params.network).subscribe(result=>{
+      this.eval_nfts(result.nfts,[this.user.params.collection])
+      this.message="";
+    })
+  }
 
   async ngOnInit() {
     let params:any=await getParams(this.routes)
+    apply_params(this,params);
+    this.user.params=params;
     let limit=Number(params["limit"] || "1000") ;
     this.message="Préparation de la page";
     this.nfts=[];
+
+    this.miner_addr=params.miner_addr;
     if(params.ope){
       this.network.get_operations(params["ope"]).subscribe((operation:Operation)=>{
         this.operation=operation;
@@ -83,27 +116,39 @@ export class DispenserComponent implements OnInit {
         });
       })
     }else{
-      this.miner=newCryptoKey(params.miner_addr,"","",params.miner);
-      this.network_dest=params.network_dest;
-      this.miner_dest=params.miner_dest;
-      this.update_miner_dest();
-      this.network.get_nfts_from_collection(params.collection,params.network).subscribe(result=>{
-        this.eval_nfts(result.nfts,[params.collection])
-        this.message="";
-      })
+      debugger
+      this.network.network=params.network
+      this.miner=newCryptoKey(params.miner_addr,"","",params.miner)
+      this.network_dest=params.network_dest
+      this.miner_dest=newCryptoKey("","","",params.miner_dest)
+      this.collection_dest=newCollection("",this.miner_dest,params.collection_dest)
+      this.dm_props=[
+          {label: "Réseau",value:this.network_dest,name:"network_dest"},
+              {label: "Collection",value:this.collection_dest!.id,name:"collection_dest"},
+              {label: "Miner",value:this.miner_dest!.encrypt,name:"miner_dest"},
+
+              {label: "Style",value:"nfluent.css",name:"style"},
+              {label: "Nom de l'application",value:"Mineur de NFT",name:"appname"},
+              {label: "Fond d'écran",value:"https://s.f80.fr/assets/wood.jpg",name:"background"},
+              {label: "FavIcon",value:"favicon.png",name:"favicon"}
+          ];
+
+      this.update_miner_dest()
+      this.refresh();
     }
   }
 
   update_miner_dest(){
     if(this.miner_dest && this.network_dest!=''){
-      this.network.get_collections(this.miner_dest,this.network_dest,false).subscribe((cols)=>{
+      this.network.get_collections(this.miner_dest.address,this.network_dest,false).subscribe((cols)=>{
         this.collections=cols;
       })
     }
   }
 
+
   get_nft_link(nft:any){
-    if(this.operation)
+    if(this.operation){
       return setParams({
         token: nft,
         price: 0,
@@ -112,10 +157,32 @@ export class DispenserComponent implements OnInit {
         selfWalletConnexion: this.operation.dispenser?.selfWalletConnection,
         mining: this.operation.mining
       },"","");
-    return null;
+    }
+    else{
+      let c:Connexion={
+        address: false,
+        direct_connect: false,
+        email: true,
+        extension_wallet: true,
+        google: false,
+        nfluent_wallet_connect: true,
+        on_device: false,
+        wallet_connect: true,
+        web_wallet: false,
+        webcam: true
+      }
+      let obj=genlink_to_obj(this.dm_props);
+      obj.nft=nft;
+      obj.miner=this.miner?.encrypt
+      obj.price=0
+      obj.authentification=c;
+      obj.toolbar=false;
+
+      return setParams(obj,"","");
+    }
   }
 
-  send(nft: any) {
+  async send(nft: any) {
     //Envoi du NFT
 
     if(nft.balances[this.miner!.address]==0){
@@ -124,17 +191,18 @@ export class DispenserComponent implements OnInit {
     }
 
     nft.price=0;
-    if(this.operation){
-      this.router.navigate(["dm"],{queryParams:{p:this.get_nft_link(nft)}})
-    }
+    // if(this.operation){
+    //   this.router.navigate(["dm"],{queryParams:{p:this.get_nft_link(nft)}})
+    // }
 
+    if(!this.dest)this.dest=await _prompt(this,"Destinataire","","une adresse de wallet ou email","text","Envoyer","Annuler",false)
 
     if(this.dest && this.miner && this.miner_dest && this.collection_dest){
       this.message="Minage et envoi en cours sur le wallet "+this.dest;
-      let miner_dest=newCryptoKey("","","",this.miner_dest)
-      this.network.transfer_to(nft.address, this.dest,this.miner,miner_dest,this.network.network,this.network_dest,this.collection_dest.id).subscribe((r:any)=>{
+      this.network.transfer_to(nft.address, this.dest,this.miner,this.miner_dest,this.network.network,this.network_dest,this.collection_dest.id).subscribe((r:any)=>{
         this.message="";
         showMessage(this,"Envoyé");
+        this.refresh();
       },(err:any)=>{
         showError(this,err);
       });
@@ -167,4 +235,12 @@ export class DispenserComponent implements OnInit {
   on_upload($event: any) {
     debugger
   }
+
+    share_url() {
+        this.share.share({
+          title:this.user.params.appname,
+          text:this.user.params.claim,
+          url:this.router.url
+        })
+    }
 }

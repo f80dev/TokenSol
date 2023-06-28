@@ -4,7 +4,7 @@
 
   <div class="titleform">Minage des NFTs</div>
   <div class="subtitleform">
-    Minage sur {{network.network}} prévu pour {{tokens.length}} NFTs assuré par {{sel_key?.name}}
+    Minage sur {{sel_network.label}} prévu pour {{tokens.length}} NFTs assuré par {{sel_key?.name}}
   </div>
 
 
@@ -14,7 +14,7 @@
       <div class="expansion-content">
         <a href="./assets/Assets.xlsm">Fichier De traitement en masse</a><br><br>
 
-        <button type="button"  mat-raised-button
+        <button  mat-raised-button
                 [cdkCopyToClipboard]="nfts_to_clipboard()"
                 title="Copier la liste des NFT à miner dans le presse-papier"
                 (click)="confirm_clipboard()">
@@ -79,7 +79,7 @@
                  (valueChange)="sel_platform=$event"></app-input>
 
 
-      <button type="button" *ngIf="tokens.length>0"
+      <button *ngIf="tokens.length>0"
               mat-raised-button mat-button
               style="margin-left: 50px;"
               title="Mettre les visuels en lignes (en vue du minage)"
@@ -89,7 +89,7 @@
         </div>
       </button>
 
-      <button type="button" *ngIf="tokens.length>0"
+      <button *ngIf="tokens.length>0"
               mat-raised-button mat-button
               (click)="export_to_csv()">
         Exporter sous Excel
@@ -110,7 +110,7 @@
 
     <div class="expansion-content">
 
-      <button type="button" [disabled]="mintable()==0"
+      <button [disabled]="mintable()==0"
               mat-raised-button *ngIf="tokens.length>0"
               color="primary" style="margin: 50px;"
               (click)="confirm_mint(0,mintable())">
@@ -118,11 +118,11 @@
       </button>
 
       <app-input
-              label="Blockchain cible"
+              label="Réseau / Blockchain cible"
               title="Désigne la blockchain recevant les NFTs minés (Devnet signifie qu'il s'agit du réseau de test)"
               [options]="networks" width="200px"
               value_type="list" color="white"
-              [value]="network.network" value_field="value"
+              [value]="sel_network"
               (valueChange)="updateChain($event)"></app-input>
 
       <app-selkey *ngIf="network.network"
@@ -134,18 +134,26 @@
 
       <div *ngIf="sel_key && (network.isElrond() || network.isDatabase())" style="width: 300px;">
         <app-input label="Collection utilisée"
-                   [value]="sel_collection" width="225px"
+                   width="225px" value_field="id"
                    (valueChange)="changeCollection($event)" value_type="list"
                    [options]="collections">
         </app-input>
 
-        <button type="button" mat-icon-button
+        <button mat-icon-button
                 title="Créer une nouvelle collection"
                 (click)="new_collection()">
           <mat-icon>add_circle</mat-icon>
         </button>
 
-        <button type="button" mat-icon-button
+        <button mat-icon-button
+                (click)="save_as_miner_target()"
+                title="Enregistrer commme destination de minage">
+          <mat-icon>save</mat-icon>
+        </button>
+        
+        
+
+        <button mat-icon-button
                 title="Copier l'identifiant de la collection sélectionnée"
                 *ngIf="sel_collection"
                 [cdkCopyToClipboard]="sel_collection.id"
@@ -189,7 +197,7 @@
         </tr>
       </table>
 
-      <button type="button" *ngIf="!isInCreators(token_creators)"
+      <button *ngIf="!isInCreators(token_creators)"
               mat-raised-button [disabled]="!sel_key"
               (click)="add_miner_to_creator()">
         Ajouter le mineur
@@ -225,7 +233,7 @@
     </button>
 
 
-    <button type="button" mat-raised-button mat-button
+    <button mat-raised-button mat-button
             title="Synchronize les paramètres sur l'operation sélectionnée"
             (click)="sync_on_ope()">
       Depuis l'opération

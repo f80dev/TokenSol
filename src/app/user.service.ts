@@ -59,6 +59,7 @@ export class UserService implements OnDestroy {
   verified_address: Boolean=false;
   wallet_provider: any;                   //Instance d'acces au wallet distant
   theme_mode: boolean=false;
+  target_mint: any;
 
   constructor(
       private httpClient: HttpClient,

@@ -643,7 +643,7 @@ def test_api_refund(test_client,network=MAIN_NETWORK,token=NFLUCOIN,amount=2,des
 		dest=_network.find_key(dest_name).address
 		solde0=_network.get_balance(dest.address,token_id=token)
 
-	rc=call_api(test_client,"refund/"+dest+"/"+str(amount)+"/"+token+"/","",{"bank":miner.encrypt(True),"network":network,"data":"Payment de test"})
+	rc=call_api(test_client,"refund/"+dest+"/"+str(amount)+"/"+token+"/","",{"bank":miner.encrypt(),"network":network,"data":"Payment de test"})
 
 	if not is_email(dest):
 		solde1=_network.get_balance(dest,token_id=token)

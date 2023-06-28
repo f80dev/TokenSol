@@ -19,7 +19,6 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {OperationService} from "../operation.service";
 import {DeviceService} from "../device.service";
 import {environment} from "../../environments/environment";
-import {NFT} from "../../nft";
 import {wait_message} from "../hourglass/hourglass.component";
 
 @Component({
@@ -31,6 +30,7 @@ export class KeysComponent implements OnInit {
   privateKey: string="";
   name: string="";
   message="";
+  sel_network: any;
 
   constructor(
     public dialog:MatDialog,
@@ -49,7 +49,9 @@ export class KeysComponent implements OnInit {
 
   ngOnInit(): void {
       if(this.user.isConnected()){
-
+        let network=environment.networks_available.split(',')[0]
+        this.sel_network={label:network,value:network}
+        this.network.init_network(network)
       } else {
         this.user.login("Se connecter pour gérer les clés de l'application");
       }
@@ -125,7 +127,7 @@ export class KeysComponent implements OnInit {
   open_wallet(key: CryptoKey) {
     this.router.navigate(
       ["wallet"],
-      {queryParams:{p:setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.network.network},"","")}}
+      {queryParams:{p:setParams({addr:key.address,toolbar:false,takePhoto:true,network:this.sel_network.value},"","")}}
     );
   }
 
@@ -136,14 +138,15 @@ export class KeysComponent implements OnInit {
   //   );
   // }
 
+
   open_extra_wallet(key: CryptoKey) {
-    open(get_nfluent_wallet_url(key.address,this.network.network,environment.appli))
+    open(get_nfluent_wallet_url(key.address,this.sel_network.value,environment.appli))
   }
 
   open_collections(key: CryptoKey,tools="nfluent") {
     if(tools=="nfluent" && key){
-      this.network.encrypte_key(key.name!,this.network.network,key.secret_key!,key.address).subscribe((r)=>{
-        this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.network.network,encrypted:r.encrypt}});
+      this.network.encrypte_key(key.name!,this.sel_network.value,key.secret_key!,key.address).subscribe((r)=>{
+        this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.sel_network.value,encrypted:r.encrypt}});
       })
 
     }
@@ -153,7 +156,7 @@ export class KeysComponent implements OnInit {
 
   open_elrond_wallet() {
     let url="https://wallet.elrond.com/unlock/pem"
-    if(this.network.network.indexOf("devnet")>-1)url=url.replace("wallet","devnet-wallet");
+    if(this.sel_network.value.indexOf("devnet")>-1)url=url.replace("wallet","devnet-wallet");
     open(url,"elrondwallet")
   }
 
@@ -173,11 +176,11 @@ export class KeysComponent implements OnInit {
     }
 
     async create_key() {
-        let email=await _prompt(this,"Créer un nouveau wallet "+this.network.network,this.user.profil.email,
+        let email=await _prompt(this,"Créer un nouveau wallet "+this.sel_network.value,this.user.profil.email,
             "Indiquer votre mail pour recevoir la clé privée de votre wallet",
             "text","Créer la clé","Annuler",false);
         if(isEmail(email)){
-          this.network.create_account(this.network.network,email).subscribe((r:any)=>{
+          this.network.create_account(this.sel_network.value,email).subscribe((r:any)=>{
             this.clipboard.copy(r.secret_key);
             showMessage(this,"Consulter votre mail pour retrouver votre compte, la clé privée est disponible dans le presse papier");
             this.open_faucet(newCryptoKey(r.addr));
@@ -186,16 +189,17 @@ export class KeysComponent implements OnInit {
     }
 
   updateNetwork($event: any) {
-    this.network.network=$event;
-    this._location.replaceState("keys","network="+this.network.network)
+    this.sel_network=$event;
+    this._location.replaceState("keys","network="+this.sel_network.value)
+    this.network.init_network(this.sel_network.value)
   }
 
     async open_nfluent_wallet() {
-        let addr=await _prompt(this,"Indiquer une adresse du réseau "+this.network.network,"","","text","Ok","Annuler",false);
+        let addr=await _prompt(this,"Indiquer une adresse du réseau "+this.sel_network.value,"","","text","Ok","Annuler",false);
         this.router.navigate(["mywallet"],{queryParams:{p:setParams({
               addr:addr,
               toolbar: true,
-              network: this.network.network
+              network: this.sel_network.value
             },"","")}})
     }
 
@@ -207,12 +211,12 @@ export class KeysComponent implements OnInit {
     let rep:any=await _prompt(this,"Bruler tous les NFTs","","","oui/non","Brûler","Annuler",true);
     if(rep=="yes"){
       wait_message(this,"Récupération des NFT de "+key.address)
-      let resp=await this.network.get_tokens_from("owner",key.address,100,false,null,0,this.network.network);
+      let resp=await this.network.get_tokens_from("owner",key.address,100,false,null,0,this.sel_network.value);
       let i=resp.result.length;
       for(let token of resp.result){
         try{
           if(token.supply>0){
-            await this.network.burn(token.address,key,this.network.network,1)
+            await this.network.burn(token.address,key,this.sel_network.value,1)
           }
         }catch (e) {
           wait_message(this,"Impossible de supprimer "+token.name)
@@ -222,6 +226,14 @@ export class KeysComponent implements OnInit {
         wait_message(this,"Reste "+i+" NFTs a brûler")
       }
       wait_message(this)
+    }
+  }
+
+  open_airdrop(key: CryptoKey) {
+    if(key.secret_key && key.address){
+      this.network.encrypte_key(key.name || "",this.sel_network.value,key.secret_key,key.address).subscribe((r:any)=>{
+        open("https://airdrop.nfluent.io/?"+setParams({wallet:r.encrypt,network:this.sel_network.value,address:key.address}))
+      })
     }
   }
 }

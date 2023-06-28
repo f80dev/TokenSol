@@ -18,7 +18,7 @@ def receive(app):
 
 
 if __name__=="__main__":
-  app,scheduler=create_app(sys.argv[1] if len(sys.argv)>1 else "localConfig")
+  app,scheduler=create_app(sys.argv[1] if len(sys.argv)>1 else "akashConfig")
   mintpool=Mintpool(app.config)
   log("Version du serveur : "+app.config["VERSION"])
 
@@ -35,10 +35,11 @@ if __name__=="__main__":
   log("Scheduler started")
   atexit.register(lambda: scheduler.shutdown())
 
-  domain_server=app.config["DOMAIN_SERVER"]
-  index_port=domain_server.rindex(":")
-  _port=int(domain_server[index_port+1:])
-  log("Domain server "+domain_server+":"+str(_port))
+  # domain_server=app.config["DOMAIN_SERVER"]
+  # index_port=domain_server.rindex(":")
+  # _port=int(domain_server[index_port+1:])
+  # log("Domain server "+domain_server+":"+str(_port))
+  _port=4242
 
   app.config.update(SESSION_COOKIE_SECURE=True,SESSION_COOKIE_HTTPONLY=True,SESSION_COOKIE_SAMESITE='Lax')
   debug_mode=app.config["DEBUG"]
@@ -48,7 +49,7 @@ if __name__=="__main__":
   log("Working directory : "+os.getcwd())
 
   if not "127.0.0.1" in domain_server and not "localhost" in domain_server:
-    activity_report_sender(app.config,"Démarage du serveur "+app.config["DOMAIN_SERVER"]+" en mode "+("debug" if debug_mode else "prod"))
+    activity_report_sender(app.config,"Démarage du serveur "+app.config["DOMAIN_SERVER"]+"/api/infos en mode "+("debug" if debug_mode else "prod"))
 
   if "ssl" in sys.argv:
     log("Activation du SSL")
@@ -65,7 +66,7 @@ if __name__=="__main__":
     log("Pas d'activation du SSL")
     host=domain_server.split("//")[1].split(":")[0]
     log("Démarage des sockets sur port "+str(_port))
-    socketio.run(app,port=_port,host=host,debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=False)
+    socketio.run(app,port=_port,host="0.0.0.0",debug=debug_mode,allow_unsafe_werkzeug=True,use_reloader=False)
     log("Sockets démarrées")
 
   if not "127.0.0.1" in domain_server:

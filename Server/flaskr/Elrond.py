@@ -503,7 +503,7 @@ class Elrond(Network):
     }
 
 
-  def transfer_money(self,nft_addr:str,miner:Key,to_addr:str,quantity=1,data=""):
+  def transfer_money(self,nft_addr:str,miner:Key,to_addr:str,quantity=1,data="airdrop"):
     """
     voir https://docs.multiversx.com/sdk-and-tools/sdk-py/sdk-py-cookbook/#egld--esdt-transfers
     :param nft_addr:
@@ -743,7 +743,7 @@ class Elrond(Network):
           item["price"]=item["metadata"]["price"]
           item["symbol"]=item["metadata"]["symbol"]
         royalties=int(item["royalties"]*100) if "royalties" in item else 0
-        attributes,description,tags,creators=self.analyse_attributes(item["attributes"],with_ipfs=with_attr)
+        attributes,description,tags,creators=self.analyse_attributes(item["attributes"] if "attributes" in item else None,with_ipfs=with_attr)
         nft=NFT(
           name=item["name"],symbol="",
           miner=item["creator"],
@@ -886,13 +886,14 @@ class Elrond(Network):
           "blockchain_name":"MultiversX",
           "url_wallet":self.getWallet(address),
           "url_explorer":url_explorer,
+          "encrypted_key":Key(secret_key=secret_key.hex(),address=address).encrypt(),
           "words":" ".join(words),
           "qrcode":"cid:qrcode",
           "access_code":get_access_code_from_email(address)
         },domain_appli=domain_appli),email,subject=subject):
           if histo: histo.add_email(email,address,self.network)
 
-    return Key(secret_key.hex(),name=email.split("@")[0],address=address,seed=words)
+    return Key(secret_key=secret_key.hex(),name=email.split("@")[0],address=address,seed=words,network=self.network_name)
 
 
   def analyse_attributes(self,body,with_ipfs=True,timeout=2) -> (list,str,str,list):
@@ -903,7 +904,10 @@ class Elrond(Network):
     """
     tags=""
     desc=""
+    attr=""
     creators=[]
+    if body is None: return (attr,desc,tags,creators)
+
     try:
       attr=str(base64.b64decode(bytes(body,"utf8")),"utf8")
     except:
@@ -1149,6 +1153,46 @@ class Elrond(Network):
     return False
 
 
+  def get_tokens(self,filter,_type="FungibleESDT",with_detail=False,limit=100) -> list:
+    """
+    voir #https://api.multiversx.com/#/tokens/TokenController_getTokens
+    :param filter:
+    :param type:
+    :param with_detail:
+    :return:
+    """
+    if not _type.endswith("ESDT"):_type=_type+"ESDT"
+    rc=[]
+    size=25
+    offset=0
+    while offset+size<=limit:
+      if filter.startswith("erd") and len(filter)>15:
+        url=self._proxy.url+"/accounts/"+filter+"/tokens?includeMetaESDT=true"
+      else:
+        url=self._proxy.url+"/tokens?from="+str(offset)+"&size="+str(size)+"&search="+filter+"&type="+_type+"&includeMetaESDT=true"
+      if with_detail: url=url+"&includeMetaESDT=true"
+      result=requests.get(url+"&sort=accounts&order=desc")
+      if len(filter)>0 and len(result.json())==0:
+        url=self._proxy.url+"/tokens?from="+str(offset)+"&size="+str(size)+"&name="+filter+"*&type="+_type+("&includeMetaESDT=true" if with_detail else "")
+        result=requests.get(url+"&sort=accounts&order=desc")
+
+      if result.status_code==200:
+        rc=rc+result.json()
+        if len(result.json())<size: break
+      offset=offset+size
+
+
+    for i,t in enumerate(rc):
+      rc[i]["id"]=rc[i]["identifier"]
+      rc[i]["image"]=rc[i]["assets"]["pngUrl"] if "assets" in rc[i] else "https://tokenforge.nfluent.io/assets/icons/egld-token-logo.webp"
+      rc[i]["descripion"]=rc[i]["assets"]["description"] if "assets" in rc[i] else ""
+      rc[i]["balance"]=round(int(rc[i]["balance"])/1e20)*100 if "balance" in rc[i] else ""
+
+    return rc
+
+
+
+
   def get_token(self,token_id:str) -> dict:
     if token_id.lower()=="egld":
       rc={"name":"egld","identifier":"egld","supply":21000000,"unity":"egld"}
@@ -1312,7 +1356,11 @@ class Elrond(Network):
         if "address" in user:user=user["address"]
 
     if type(user)==str:
-      user=self.find_key(user)
+      if user.startswith("erd"):
+        user=self.find_key(user)
+      else:
+        address=UserSecretKey(bytes.fromhex(user)).generate_public_key().to_address("erd").bech32()
+        user=Key(secret_key=user,address=address,network="elrond")
 
     if type(user)==Key:
       if user.address=="":
@@ -1409,6 +1457,11 @@ class Elrond(Network):
 
 
   def find_key(self,address_or_name) -> Key:
+    """
+    Trouve la clé sur le serveur
+    :param address_or_name:
+    :return:
+    """
     if type(address_or_name)==Key: return address_or_name
     if type(address_or_name)==AccountOnNetwork:
       address_or_name=address_or_name.address.bech32()

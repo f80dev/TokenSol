@@ -10,6 +10,14 @@
     <mat-icon>arrow_back</mat-icon>
   </button>
 
+  <button mat-icon-button (click)="open_faqs()" *ngIf="exist_faqs">
+    <mat-icon>help</mat-icon>
+  </button>
+
+  <button mat-icon-button (click)="open_admin()" *ngIf="show_admin">
+    <mat-icon>build</mat-icon>
+  </button>
+
   <br><br><br>
 
   <div style="display: flex;align-items: center;width:100%;justify-items: center;display: inline-block;">

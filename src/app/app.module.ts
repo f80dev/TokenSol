@@ -22,7 +22,7 @@ import { PromptComponent } from './prompt/prompt.component';
 import {MAT_DIALOG_DATA, MatDialogModule} from "@angular/material/dialog";
 import {MatFormFieldModule} from "@angular/material/form-field";
 import {MatSelectModule} from "@angular/material/select";
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import { SafePipe } from './safe.pipe';
 import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
 import {NgxJsonViewerModule} from "ngx-json-viewer";
@@ -100,6 +100,11 @@ import { JaugeComponent } from './jauge/jauge.component';
 import { AutovalidatorComponent } from './autovalidator/autovalidator.component';
 import { BankComponent } from './bank/bank.component';
 import { TranslatePipe } from './translate.pipe';
+import { RaffleComponent } from './raffle/raffle.component';
+import { TokenSelectorComponent } from './token-selector/token-selector.component';
+import { GenlinkComponent } from './genlink/genlink.component';
+import { FaqLinkComponent } from './faq-link/faq-link.component';
+import { TestsComponent } from './tests/tests.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -168,7 +173,12 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         JaugeComponent,
         AutovalidatorComponent,
         BankComponent,
-        TranslatePipe
+        TranslatePipe,
+        RaffleComponent,
+        TokenSelectorComponent,
+        GenlinkComponent,
+        FaqLinkComponent,
+        TestsComponent
     ],
     imports: [
         BrowserModule,
@@ -213,7 +223,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         GooglePayButtonModule,
         NgxDatatableModule,
         MatCardModule,
-        MatSlideToggleModule
+        MatSlideToggleModule,
+        ReactiveFormsModule
     ],
   providers: [
     FilterPipe,AliasPipe,SafePipe,OrderPipe,

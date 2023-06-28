@@ -1,4 +1,4 @@
-<div class="mainform" style="height: 100vh;">
+<div class="mainform" style="height: 100vh;text-align: center;">
 <!--
               L'integration des fonctionnalité de l'authent peut se faire directement dans le code sans passer par un fichier d'operation
                [checknft]="operation.validate.filters.collections"
@@ -7,17 +7,19 @@
                [showWebcam]="operation.validate.authentification.webcam"
                [showNfluentWalletConnect]="operation.validate.authentification.nfluent_wallet_connect"
 -->
+  <div style="max-width: 450px;display: inline-block;">
+    <app-autovalidator title="Veuillez scanner le code"
+                       *ngIf="authentification"
+                       [showCollections]="true"
+                       (validate)="success($event)"
+                       (fail)="fail($event)"
+                       [network]="network_name"
+                       [validator_name]="validator_name"
+                       [collections]="collections"
+                       [connexion]="authentification">
+    </app-autovalidator>
 
-  <app-autovalidator title="Veuillez scanner le code"
-                     *ngIf="authentification"
-                     [showCollections]="true"
-                     (validate)="success($event)"
-                     (fail)="fail($event)"
-                     [network]="network_name"
-                     [validator_name]="validator_name"
-                     [collections]="collections"
-                     [connexion]="authentification">
-  </app-autovalidator>
+  </div>
 
 <!--  -->
 <!--  <app-authent (authent)="on_authent($event)"-->

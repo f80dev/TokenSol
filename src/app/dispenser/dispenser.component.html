@@ -1,8 +1,10 @@
-<div class="mainform" [ngStyle]="operation?.branding?.style">
+<div class="background-form" style="min-height:100vh;margin:0;padding:0;position:absolute;overflow:scroll;display: block;left:0;top:0;" [style.background-image]="'url('+background+')'">
 
-  <div class="titleform">{{operation?.title}}</div>
+  <div class="titleform">{{title}}</div>
+  <div class="subtitleform">{{claim}}</div>
 
   <app-hourglass [message]="message"></app-hourglass>
+  <br>
 
   <div *ngIf="network_dest=='' || !miner_dest || !collection_dest" class="expansion-content">
     <app-input label="Collection utilisée"
@@ -57,9 +59,9 @@
               <td>Collection</td><td><span [title]="nft.collection!.description">{{nft.collection!.name}}</span></td>
             </tr>
 
-            <tr *ngIf="nft.balances[nft.miner.address]>=1">
+            <tr>
               <td>Quantité<br>Price</td>
-              <td>{{nft.balances[nft.miner.address]}}<br>{{nft.price}}</td>
+              <td>{{nft.balances[miner!.address] || 0}}<br>{{nft.price}}</td>
             </tr>
 
             <tr></tr>
@@ -122,6 +124,16 @@
     </div>
 
   </div>
+
+  <div style="max-width: 600px;display:inline-block;text-align: center;" *ngIf="message.length==0">
+    <app-genlink [properties]="dm_props"
+                 title="Module de distribution"
+                 [domain]="appli" [show_command_panel]="false"></app-genlink>
+
+    <br>
+    <button mat-raised-button (click)="share_url()">Partager</button>
+  </div>
+
 
   <br>
 

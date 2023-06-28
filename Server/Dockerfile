@@ -22,6 +22,7 @@
 #installation: docker rm -f tokensol && docker pull f80hub/tokensol:latest
 #Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp ou ufw allow 4242/tcp
 #démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 wsgi.py devConfig ssl
+#démarrage prod sans répertoires: docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp  -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 wsgi.py prodConfig
 
 
 
@@ -152,4 +153,6 @@ RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 WORKDIR $APP_HOME
 
-CMD ["python3", "wsgi.py","devConfig","ssl"]
+#On peut utiliser la ligne ci-dessous (prioritaire) ou passer les commandes en argument de docker
+#CMD ["python3", "wsgi.py","devConfig","ssl"]
+CMD ["python3", "wsgi.py","prodConfig","ssl"]

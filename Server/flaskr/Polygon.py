@@ -556,6 +556,7 @@ class Polygon (Network):
         "url_explorer":self.getExplorer(pubkey),
         "other_wallet":"https://metamask.io/",
         "secret_key":secret_key,
+        "encrypted_key":Key(secret_key=secret_key,address=pubkey).encrypt(),
         "words":seed,
         "qrcode":"cid:qrcode",
         "access_code":get_access_code_from_email(pubkey)

@@ -729,8 +729,8 @@ export class NetworkService implements OnInit {
         return this._get("/palettes/");
     }
 
-    getfaqs() {
-        return this._get("/getyaml/faqs/","dir=./flaskr/static");
+    getfaqs(file="") {
+        return this._get("/getyaml/","url="+file);
     }
 
     del_config(id_config:string,user:string="") {
@@ -1120,5 +1120,9 @@ export class NetworkService implements OnInit {
 
     create_short_link(body:any) {
         return this._post("short_link/","",body)
+    }
+
+    find_tokens(network: string, filter: string,with_detail=false,limit=200) {
+        return this._get("tokens/","network="+network+"&filter="+filter+"&with_detail="+with_detail+"&limit="+limit)
     }
 }

@@ -1,5 +1,5 @@
 //Version 0.1
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
 import {NetworkService} from "../network.service";
 import {$$, isEmail, isLocal, now, setParams, showError, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
@@ -11,9 +11,11 @@ import {Connexion, Operation} from "../../operation";
 import {ADDR_ADMIN} from "../../definitions";
 import {DeviceService} from "../device.service";
 import { WalletConnectV2Provider } from "@multiversx/sdk-wallet-connect-provider";
+
 import { ExtensionProvider } from "@multiversx/sdk-extension-provider";
 import {WALLET_PROVIDER_DEVNET, WALLET_PROVIDER_MAINNET, WalletProvider} from "@multiversx/sdk-web-wallet-provider/out";
 import {Socket} from "ngx-socket-io";
+import {EvmWalletServiceService} from "../evm-wallet-service.service";
 
 //Installation de @multiversx/sdk-wallet-connect-provider via yarn add @multiversx/sdk-wallet-connect-provider
 
@@ -22,7 +24,7 @@ import {Socket} from "ngx-socket-io";
   templateUrl: './authent.component.html',
   styleUrls: ['./authent.component.css']
 })
-export class AuthentComponent implements OnInit {
+export class AuthentComponent implements OnInit,OnChanges {
 
   @Input() intro_message:string="";
   @Input() network:string="elrond-devnet";
@@ -89,17 +91,26 @@ export class AuthentComponent implements OnInit {
       public routes:ActivatedRoute,
       public device:DeviceService,
       public socialAuthService: SocialAuthService,
-      public toast:MatSnackBar
+      public toast:MatSnackBar,
+      public evmwalletservice:EvmWalletServiceService
   ) {
 
-    const callbacks:any ={
-      onClientLogin: async ()=> {
-        this.address=await this.provider.getAddress();
-      },
-      onClientLogout: ()=> {},
+    if(this.network.indexOf("elrond")>-1){
+      const callbacks:any ={
+        onClientLogin: async ()=> {
+          this.address=await this.provider.getAddress();
+        },
+        onClientLogout: ()=> {},
+      }
+      this.provider = new WalletConnectV2Provider(callbacks, this.get_chain_id(), this.relayUrl, this.walletConnect_ProjectId);
+
     }
 
-    this.provider = new WalletConnectV2Provider(callbacks, this.get_chain_id(), this.relayUrl, this.walletConnect_ProjectId);
+    if(this.network.indexOf("polygon")>-1){
+
+    }
+
+
   }
 
   async init_wallet_provider(){
@@ -170,10 +181,6 @@ export class AuthentComponent implements OnInit {
     this.device.isHandset$.subscribe((r:boolean)=>{
       if(r){
         this.showExtensionWallet=false;
-      }
-
-      if(this.showWalletConnect && !this.showWebWallet && !this.showExtensionWallet){
-        this.open_wallet_connect();
       }
     });
 
@@ -432,25 +439,8 @@ export class AuthentComponent implements OnInit {
 
   async open_polygon_extension_wallet() {
     //Voir https://medium.com/upstate-interactive/how-to-connect-an-angular-application-to-a-smart-contract-using-web3js-f83689fb6909
-
-
-    // @ts-ignore
-    let ethereum = window.ethereum;
-    if (typeof ethereum !== 'undefined') {
-      console.log('MetaMask is installed!');
-    }
-    if (ethereum) {
-      this.web3Provider = ethereum;
-      try {
-        // Request account access
-        ethereum.request({ method: 'eth_requestAccounts' }).then( (address:any) => {
-          console.log("Account connected: ", address[0]); // Account address that you had imported
-        });
-      } catch (error) {
-        // User denied account access...
-        console.error("User denied account access");
-      }
-    }
+    let r=await this.evmwalletservice.connectWallet()
+    if(this.address!="")this.success();
   }
 
   open_xportal() {
@@ -465,5 +455,19 @@ export class AuthentComponent implements OnInit {
   active_webcam() {
     this.enabled_webcam=true;
     this.nfluent_wallet_connect_qrcode='';
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if(this.network.indexOf("polygon")>-1){
+      this.evmwalletservice.checkWalletConnected().then((accounts:any[])=>{
+        this.address=accounts[0]
+        this.strong=true;
+      })
+    }
+
+    if(this.showWalletConnect && !this.showWebWallet && !this.showExtensionWallet){
+      if(this.network.indexOf("elrond")>-1)this.open_wallet_connect();
+
+    }
   }
 }

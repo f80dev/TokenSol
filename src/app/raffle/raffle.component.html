@@ -1,0 +1,13 @@
+<div class="mainform">
+    <div style="width: 300px;">
+        <app-token-selector [network]="network" [with_detail]="false"
+                            [value]="selected_token"
+                            (valueChange)="selected_token=$event">
+        </app-token-selector>
+    </div>
+
+    <div *ngIf="selected_token">
+        {{selected_token.name}}
+    </div>
+
+</div>

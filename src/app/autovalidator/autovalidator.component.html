@@ -8,6 +8,7 @@
 <app-authent
         *ngIf="show_authent"
         [title]="title"
+        [network]="network"
         (authent)="check_nft($event)"
         [connexion]="connexion">
 </app-authent>

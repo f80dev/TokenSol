@@ -388,15 +388,15 @@ def encrypt(text:str,secret_key_filename="./secret_key",format="str",short_code=
   return rc
 
 
-def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename=""):
+def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename="",with_log=False):
   if body is None or not is_email(_to):return False
   with smtplib.SMTP(SMTP_SERVER, SMTP_SERVER_PORT,timeout=10) as server:
     server.ehlo()
     server.starttls()
     try:
-      log("Tentative de connexion au serveur de messagerie")
+      if with_log: log("Tentative de connexion au serveur de messagerie")
       server.login(USERNAME, PASSWORD)
-      log("Connexion réussie. Tentative d'envoi")
+      if with_log: log("Connexion réussie. Tentative d'envoi")
 
       msg = MIMEMultipart()
       msg.set_charset("utf-8")
@@ -412,7 +412,7 @@ def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io
         part.add_header('Content-Disposition',"attachment",filename=filename)
         msg.attach(part)
 
-      log("Send to "+_to+" <br><div style='font-size:x-small;max-height:300px>"+body+"</div>'")
+      if with_log: log("Send to "+_to+" <br><div style='font-size:x-small;max-height:300px>"+body+"</div>'")
       server.sendmail(msg=msg.as_string(), from_addr=_from, to_addrs=[_to])
       return True
     except Exception as inst:

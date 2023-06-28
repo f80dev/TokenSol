@@ -2,7 +2,7 @@
     <div class="mat-headline-6">{{intro}}</div><br>
     <div style="width: 350px;display: inline-block;text-align: center;">
         <app-input label="votre adresse mail"
-                   value_type="email"
+                   value_type="text"
                    [value]="email" (valueChange)="email=$event" (validate)="ask_rescue()"
                    label_button="Envoyer"
                    help="Si votre email est connu de notre système, vous recevrez un lien vers votre wallet directement dans votre mail"

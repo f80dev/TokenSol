@@ -48,12 +48,24 @@ export class CollectionsComponent implements OnInit {
     options: this.collection_options.map((x:any)=>{return x.value})
   };
 
+  dispenser_obj=[
+    {label: "Style",value:"nfluent-dark.css",name:"style"},
+    {label: "Titre de la fenêtre",value:"Distributeur",name:"title"},
+    {label: "Message d'introduction",value:"Distribuer facilement vos NFTs",name:"claim"},
+    {label: "Nom de l'application",value:"Distributeur",name:"appname"},
+    {label: "Fond d'écran",value:"https://s.f80.fr/assets/wood.jpg",name:"background"},
+    {label: "FavIcon",value:"favicon.png",name:"favicon"},
+    {label: "Splash",value:"https://images.unsplash.com/photo-1579582943745-fb709f5697eb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80&h=600",name:"splashscreen"},
+  ];
+
+
   perms: any;
   types_collection=[{label:"Non fongible",value:"NonFungibleESDT"},{label:"Semi Fongible",value:"SemiFungibleESDT"}];
   collections: Collection[]=[]
   miner: CryptoKey | undefined;
   preview_nfts: NFT[]=[];
   params: any={}
+  appli=environment.appli;
 
   constructor(
     public network:NetworkService,
@@ -89,8 +101,10 @@ export class CollectionsComponent implements OnInit {
     if(addr && network){
       this.network.network=network;
       this.message="Récupération des collections";
+      debugger
       this.network.get_account(addr,network).subscribe((accounts:any[])=>{
         this.miner=accounts[0];
+        this.miner!.address=addr;
       })
 
       this.network.get_collections(addr,network,with_detail).subscribe((r:any)=>{
@@ -223,23 +237,20 @@ export class CollectionsComponent implements OnInit {
   }
 
   open_dealer(col: Collection,store_type="dispenser") {
-    this.network.encrypte_key("",this.network.network,this.miner!.secret_key!).subscribe(async (r)=>{
-      let params_dest:any=await _prompt(this,"Paramètres de la destinations",localStorage.getItem("params_dest") || "","clé du mineur, blockchain et collection","text","Ok","Annuler",false);
-      if(!params_dest)return;
-      localStorage.setItem("params_dest",params_dest)
-
-      params_dest=JSON.parse(params_dest)
-
-      let params={
+    this.network.encrypte_key("",this.network.network,this.miner!.secret_key!,this.miner!.address).subscribe(async (r)=>{
+      let params:any={
         network:this.network.network,
         collection:col.id,
         miner:r.encrypt,
         networks:this.network.networks_available.join(","),
-        miner_dest:params_dest.miner_dest,
-        network_dest:params_dest.network_dest,
-        collection_dest:params_dest.collection_dest,
-        miner_addr:r.address,
+        miner_dest:this.user.target_mint.miner_dest,
+        network_dest:this.user.target_mint.network_dest,
+        collection_dest:this.user.target_mint.collection_dest,
+        miner_addr:this.miner!.address,
         toolbar:false
+      }
+      for(let p of this.dispenser_obj){
+        params[p.name]=p.value;
       }
       this.router.navigate([store_type], {queryParams:{p:setParams(params,"","")}})
     })

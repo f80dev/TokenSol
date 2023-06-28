@@ -80,7 +80,8 @@
                 title="Flasher avec votre wallet nfluent"
                 [cdkCopyToClipboard]="nfluent_wallet_connect_qrcode"
                 [src]="nfluent_wallet_connect_qrcode"
-                style="cursor: copy;max-width: 90%;" [style.width]="size"><br>
+                style="cursor: copy;max-width: 90%;"
+                [style.width]="size"><br>
         <small>Flashez depuis votre wallet NFluent</small>
       </div>
 
@@ -125,20 +126,22 @@
         </app-input>
       </div>
     </mat-expansion-panel>
-    <mat-expansion-panel *ngIf="qrcode.length==0 && network.indexOf('polygon')>-1" class="polygon-background">
-      <mat-expansion-panel-header class="color-primary">Utiliser l'extension</mat-expansion-panel-header>
-      <button type="button" mat-raised-button class="polygon-button"
-              *ngIf="showWalletConnect && qrcode.length==0"
-              (click)="open_polygon_extension_wallet()">
-        Extension Chrome
-      </button>
-    </mat-expansion-panel>
+
+
+
   </mat-accordion>
 
   <!--  https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
 
+  <mat-expansion-panel *ngIf="network.indexOf('polygon')>-1 && showExtensionWallet" class="polygon-background">
+    <mat-expansion-panel-header class="color-primary">Authentification Polygon</mat-expansion-panel-header>
+    <button type="button" mat-raised-button class="polygon-button"
+            (click)="open_polygon_extension_wallet()">
+      Extension Chrome
+    </button>
+  </mat-expansion-panel>
 
-  <div *ngIf="directShowQRCode">
+  <div *ngIf="directShowQRCode && network.indexOf('elrond')>-1">
     <div *ngIf="nfluent_wallet_connect_qrcode.length>0 && showNfluentWalletConnect"
          [style.opacity]="qrcode_enabled ? 1 : 0.5" >
       <img

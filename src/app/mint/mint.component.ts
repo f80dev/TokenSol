@@ -69,6 +69,7 @@ export class MintComponent implements OnInit {
   //sel_target: { value:string,label:string }=this.targets[0];
   encrypt_nft: boolean = true;
   sel_key: CryptoKey | undefined;
+  sel_network:any;
   message: string="";
   collection_name: string = "";
   show_mint_section: boolean=false;
@@ -109,7 +110,8 @@ export class MintComponent implements OnInit {
     this.collection_name=local_config.collection_name || "";
 
     this.networks=this.network.networks_available.map((x:any)=>{return {label:x,value:x}});
-    let keys=await this.network.init_network(local_config.network || this.networks[0].value);
+    this.sel_network=this.networks[0]
+    let keys=await this.network.init_network(this.sel_network.value);
     if(!keys){
       showError(this,"Impossible de récupérer les clés");
       keys=[]
@@ -861,13 +863,18 @@ export class MintComponent implements OnInit {
 
 
 
-  updateChain($event:any) {
-    //updatenetwork update_network
-    this.network.network=$event;
-    let param="network="+this.network.network
+  async updateChain($event:any) {
+    //updatenetwork update_network updatenetwork init_network
+    this.sel_network=$event;
+    let param="network="+this.sel_network.value;
     if(this.sel_collection)param=param+"&collection="+this.sel_collection.id;
     this._location.replaceState("miner",param)
     this.token_creators=[];
+
+    let keys=await this.network.init_network($event.value);
+    this.update_miner(keys[0])
+
+
 
     // if(!this.network.isBlockchain()){
     //   this.sel_key=newCryptoKey(this.user.profil.email,this.user.name)
@@ -883,16 +890,21 @@ export class MintComponent implements OnInit {
 
   async update_miner($event: any) {
     this.sel_key=$event;
-    this.network.get_collections($event.address,this.network.network,false).subscribe((cols)=>{
+    this.network.get_collections($event.address,this.sel_network.value,false).subscribe((cols)=>{
       this.collections=cols;
-      if(cols.length>0)this.changeCollection(this.collections[0]);
+      if(cols.length>0)this.changeCollection(this.collections[0].id);
       this.local_save();
     })
   }
 
   changeCollection($event: any) {
     $$("Modification de la collection sélectionnée");
-    this.sel_collection=$event
+    this.sel_collection=undefined;
+    for(let c of this.collections) {
+      if (c.id == $event){
+        this.sel_collection=c
+      }
+    }
     for(let token of this.tokens){
       if(!token.address && this.sel_collection){
         token.collection=this.sel_collection;
@@ -977,5 +989,19 @@ export class MintComponent implements OnInit {
 
   login($event: { strong: boolean; nftchecked: boolean; address: string; provider: any }) {
     this.user.init($event.address,this.network.network,false,true);
+  }
+
+  save_as_miner_target() {
+    this.network.encrypte_key("",this.sel_network.value,this.sel_key!.secret_key!,this.sel_key!.address).subscribe({
+      next:(r:any)=>{
+        this.user.target_mint={
+          network_dest:this.sel_network.value,
+          miner_dest:r.encrypt,
+          collection_dest:this.sel_collection!.id
+        }
+        showMessage(this,"Cible de minage enregistré")
+      }
+    })
+
   }
 }

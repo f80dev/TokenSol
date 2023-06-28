@@ -39,7 +39,7 @@
                 </div>
 
                 <br>
-                <button type="button" mat-raised-button mat-button
+                <button mat-raised-button mat-button
                         color="primary"
                         (click)="create_collection()"
                         id="cmdBuild"
@@ -57,24 +57,29 @@
         </div>
     </mat-expansion-panel>
 
-    <button type="button" mat-raised-button (click)="open_inspire()" [disabled]="!miner" *ngIf="network.isElrond()">
+    <button mat-raised-button (click)="open_inspire()" [disabled]="!miner" *ngIf="network.isElrond()">
         Inspire.ART
     </button>
 
-    <button type="button" mat-raised-button (click)="create_with_wallet_elrond()" *ngIf="network.isElrond()">
+    <button mat-raised-button (click)="create_with_wallet_elrond()" *ngIf="network.isElrond()">
         Fabriquer avec<br>
         le wallet natif
     </button>
 
-    <button type="button" mat-raised-button (click)="refresh(miner!.address,network.network,false)">
+    <button mat-raised-button (click)="refresh(miner!.address,network.network,false)">
         Actualisation rapide
     </button>
 
-    <button type="button" mat-raised-button (click)="refresh(miner!.address,network.network,true)">
+    <button mat-raised-button (click)="refresh(miner!.address,network.network,true)">
         Actualisation
     </button>
 
     <br><br>
+
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>Fenetre de distribution</mat-expansion-panel-header>
+        <app-genlink [properties]="dispenser_obj" [domain]="appli"></app-genlink>
+    </mat-expansion-panel>
 
     <app-hourglass [message]="message"></app-hourglass>
 
@@ -114,46 +119,50 @@
 
 
             <td style="width: 300px;">
-                <button type="button" mat-icon-button (click)="open_miner(col)" title="Utiliser cette collection pour miner des NFT">
+                <button mat-icon-button (click)="open_miner(col)" title="Utiliser cette collection pour miner des NFT">
                     <mat-icon>build</mat-icon>
                 </button>
                 &nbsp;
-                <button type="button" mat-icon-button (click)="short_url(col)" title="Shorté un lien sur la base de la collection">
+                <button mat-icon-button (click)="short_url(col)" title="Shorté un lien sur la base de la collection">
                     <mat-icon>content_cut</mat-icon>
                 </button>
 
-                <button type="button" mat-icon-button (click)="add_validator(col)" title="Ajouter un validateur sur la collection">
+                <button mat-icon-button (click)="add_validator(col)" title="Ajouter un validateur sur la collection">
                     <mat-icon>checkmark</mat-icon>
                 </button>
 
 
 
-                <button type="button" mat-icon-button (click)="open_explorer(col)">
+                <button mat-icon-button (click)="open_explorer(col)">
                     <mat-icon>search</mat-icon>
                 </button>
 
-                <button type="button" mat-raised-button (click)="copy_parameters(col)">
-                    Parametres
+                <button mat-icon-button (click)="copy_parameters(col)" title="Copier les parametres">
+                    <mat-icon>tune</mat-icon>
                 </button>
 
-                <button type="button" mat-raised-button (click)="set_roles(col)">
-                    Roles
+                <button mat-icon-button (click)="set_roles(col)" title="Roles">
+                    <mat-icon>person</mat-icon>
                 </button>
 
-                <button type="button" mat-raised-button (click)="open_collection(col)">
-                    Voir les NFTs
+                <button mat-icon-button (click)="open_collection(col)">
+                    <mat-icon>visibility</mat-icon>
                 </button>
 
-                <button type="button" mat-raised-button (click)="open_analyser(col)">
-                    Analyse
+                <button mat-icon-button (click)="open_analyser(col)">
+                    <mat-icon>bar_chart</mat-icon>
                 </button>
 
-                <button type="button" mat-raised-button (click)="open_dealer(col,'dispenser')">
-                    Distribuer
+                <button mat-icon-button (click)="open_dealer(col,'dispenser')"
+                        [disabled]="!user.target_mint"
+                        title="Open store">
+                    <mat-icon>storefront</mat-icon>
                 </button>
 
-                <button type="button" mat-raised-button (click)="open_dealer(col,'cm')">
-                    CandyMachine
+                <button mat-icon-button (click)="open_dealer(col,'cm')"
+                        [disabled]="!user.target_mint"
+                        title="candy machine">
+                    <mat-icon>coffee_maker</mat-icon>
                 </button>
 
             </td>
@@ -164,7 +173,7 @@
     <div *ngIf="preview_nfts.length>0">
         <app-showroom [nfts]="preview_nfts" size="300px" [delay]="0.3"></app-showroom>
         <br>
-        <button type="button" mat-raised-button (click)="preview_nfts=[]">
+        <button mat-raised-button (click)="preview_nfts=[]">
             Effacer
         </button>
     </div>

@@ -47,7 +47,8 @@ from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, sen
   idx, generate_svg_from_fields, get_filename_from_content, queryPixabay, queryUnsplash, isLocal, is_email, get_hash, \
   apply_replace
 from flaskr.TransactionsGraph import TransactionsGraph
-from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation, create_account
+from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation, \
+  create_account,  airdrop
 from flaskr.dao import DAO
 from flaskr.ipfs import IPFS
 from flaskr.secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRETS_FILE, SECRET_ACCESS_CODE, ADMIN_EMAIL, \
@@ -148,12 +149,15 @@ def api_upload_batch():
 
 
 @bp.route('/getyaml/<name>/')
+@bp.route('/getyaml/')
 @bp.route('/getyaml/<name>/<format>/')
 #http://127.0.0.1:4242/api/getyaml/calvi22/txt/?dir=Operations
-def getyaml(name:str,format=None):
+def getyaml(name:str="",format=None):
   dir=request.args.get("dir",current_app.config["STATIC_FOLDER"])
   dir=dir+("" if dir.endswith("/") else "/")
   if format is None: format=request.args.get("format","json")
+  if len(name)==0 and len(request.args.get("url",""))>0:
+    name=request.args.get("url").replace("{{domain_appli}}",current_app.config["DOMAIN_APPLI"]).replace("{{domain_server}}",current_app.config["DOMAIN_SERVER"])
 
   if name.startswith("b64:"):name=str(base64.b64decode(name[4:]),"utf8")
   if name.startswith("http"):
@@ -770,6 +774,9 @@ def infos():
     "Database_Server":current_app.config["DB_SERVER"],
     "Database_Name":current_app.config["DB_NAME"],
     "Upload_Folder":dir,
+    "Fontes_Folder":"./Fonts",
+    "Configs_Folder":"./Configs",
+    "Operations_Folder":"./Operations",
     "Uploaded_files":files,
     "Uploaded_size":int(total/1024),
     "Activity_Report":current_app.config["ACTIVITY_REPORT"],
@@ -821,17 +828,8 @@ def api_refund(address:str,amount:str="1",token="egld"):
                                  subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account",histo=histo)
     address=key.address
 
-  rc={"address":address}
-  if histo:
-    total=0
-    for h in histo.get_histos(addr=address,start=now()-24*1000):
-      if h["command"]=="refund": total=total+int(h["params"][0])
-    if total>=limit:
-      return jsonify({"error":"Plafond de versement atteint pour la journée"})
-
-  tx_esdt=_network.transfer_money(token,_miner,address,int(amount),data=request.json["data"])
-  if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
-  rc["transaction_esdt"]=tx_esdt
+  tx_esdt=airdrop(address=address,token=token,_miner=_miner,amount=amount,histo=histo,limit=limit,network=request.json["network"])
+  if tx_esdt["status"]=="error": return jsonify(tx_esdt)
 
   if tx_esdt["status"]=="success" and len(email)>0:
     send_mail(open_html_file("mail_refund",{"token":_token["name"],"amount":str(amount)}),email,subject="Don de "+_token["name"])
@@ -839,9 +837,9 @@ def api_refund(address:str,amount:str="1",token="egld"):
   #Si le client n'a aucun egld on lui en envoi afin de payer les frais de réseau
   if _network.get_account(address).balance<_network.get_min_gas_for_transaction(3):
     tx_egld=_network.transfer_money("egld",_miner,address,_network.get_min_gas_for_transaction(4),"Dons en Egld pour paiement des frais de gaz")
-    rc["transaction_egld"]=tx_egld
+    tx_esdt["transaction_egld"]=tx_egld
 
-  return jsonify(rc)
+  return jsonify(tx_esdt)
 
 
 
@@ -1082,11 +1080,17 @@ def api_update_access_code(email:str,access_code:str,new_access_code:str):
 
 
 @bp.route('/tokens/<addr>/',methods=["GET"])
+@bp.route('/tokens/',methods=["GET"])
 def tokens(addr:str=""):
   if request.method=="GET":
+    _network=get_network_instance(request.args.get("network"))
     if len(addr)>0:
-      _network=get_network_instance(request.args.get("network"))
       return _network.get_token(addr)
+    else:
+      return _network.get_tokens(filter=request.args.get("filter",""),
+                                 _type=request.args.get("type","Fungible"),
+                                 with_detail=(request.args.get("with_detail","false")=="true"),
+                                 limit=int(request.args.get("type","200")))
 
 
 @bp.route('/transfer/',methods=["POST"])
@@ -1107,13 +1111,12 @@ def transfer_to():
   if is_email(to):
     key_to=to_network.create_account(to,domain_appli=current_app.config["DOMAIN_APPLI"],
                               subject="Ouverture de votre compte pour votre NFT",
-                              mail_new_wallet=request.json["mail_content"]
+                              mail_new_wallet=request.json["mail_content"],
                               )
     to=key_to.address
 
   key_target_miner=request.json["target_miner"]
-
-  target_miner=to_network.find_key(key_target_miner) if type(key_target_miner)==str else Key(obj=key_target_miner)
+  target_miner=Key(encrypted=key_target_miner["encrypt"])
 
   key_from_miner=request.json["from_miner"]
   from_miner=to_network.find_key(key_from_miner) if type(key_from_miner)==str else Key(obj=key_from_miner)
@@ -2043,7 +2046,12 @@ def keys(name:str=""):
 
     #dao.add_key_to_user(obj["email"],obj["access_code"],_network.network,secret_key,name)
 
-  return jsonify({"message":"ok","address":key.address,"explorer":_network.getExplorer(key.address,"address"),"secret_key":key.secret_key})
+  return jsonify({"message":"ok",
+                  "address":key.address,
+                  "explorer":_network.getExplorer(key.address,"address"),
+                  "secret_key":key.secret_key,
+                  "encrypt":key.encrypt()
+                  })
 
 #
 #
@@ -2319,7 +2327,7 @@ def encrypt_key(network:str):
     if len(address)==0: address=get_network_instance(network).toAddress(secret_key)
     key=Key(name=name,secret_key=secret_key,network=network,address=address)
 
-  return jsonify({"encrypt":key.encrypt(),"address":key.address,"private_key":key.encrypt(True)})
+  return jsonify({"encrypt":key.encrypt(),"address":key.address})
 
 
 
@@ -3044,6 +3052,76 @@ def api_search_image():
   return jsonify({"images":rc})
 
 
+@bp.route('/airdrops/',methods=["POST","GET"])
+def api_airdrops():
+  body=request.json
+  if request.method=="POST":
+    dao=DAO(config=current_app.config)
+    body["network"]=body["network"]["value"]
+    if type(body["token"])==dict: body["token"]=body["token"]["identifier"]
+    airdrop_id=str(dao.add_airdrop(body))
+
+    if "polygon" in body["network"]:
+      code_to_insert="""
+            <script>
+           let wallet=window.ethereum;
+           if(wallet) {wallet.enable().then((acc)=>{fetch(__server__,{headers:{'Content-Type':'application/json'},method:'POST',body:JSON.stringify({program:__program__,ts:Date.now().toString(),address:acc[0]})}).then(()=>{})})}}
+           </script>
+      """
+    else:
+      #voir https://hackernoon.com/how-to-interact-with-the-elrond-blockchain-in-a-simple-static-website
+      code_to_insert="""
+      <script>        
+		function send_airdrop(addr){
+            fetch(__server__,{headers:{'Content-Type':'application/json'},method:'POST',
+                body:JSON.stringify({program:__program__, ts:Date.now(), address:addr})})
+		}
+
+		if(!localStorage.getItem("address")) {
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://airdrop.nfluent.io/login?wallet_authent=true&toolbar=false';
+            iframe.style = 'position:fixed;top:20%;left:40%;z-index:1000;width:550px;height:500px;'
+            document.body.appendChild(iframe)
+
+            window.addEventListener('message', (event) => {
+                let address=event.data['address']
+                if (address){
+                    localStorage.setItem('address',address)
+	                document.body.removeChild(iframe)
+	                send_airdrop(address)
+                }
+            })
+        }else{
+            send_airdrop(localStorage.getItem("address"))
+		}
+
+	</script>
+
+      """
+    code_to_insert=code_to_insert.replace("__server__","\""+current_app.config["DOMAIN_SERVER"]+"/api/visit/\"").replace("__program__","\""+airdrop_id+"\"")
+    params={
+      "bank.network":body["network"],
+      "bank.token":body["token"],
+      "bank.miner":body["dealer_wallet"],
+      "bank.refund":body["amount"],
+      "bank.limit":body["limit_by_day"],
+      "bank.histo":"db-"+dao.domain_server+"-"+dao.dbname
+    }
+
+  return jsonify({"code":code_to_insert,"params":params})
+
+
+@bp.route('/visit/',methods=["POST"])
+def api_visit():
+  body=request.json
+  dao=DAO(config=current_app.config)
+  program=dao.get_airdrop(body["program"])
+  rc=airdrop(body["address"],program["token"],
+             Key(encrypted=program["dealer_wallet"]),float(program["amount"]),histo=dao,
+             limit=float(program["limit_by_day"]),network=program["network"])
+
+  return jsonify(rc)
+
 
 
 @bp.route('/remove_background/',methods=["POST"])
@@ -3054,12 +3132,13 @@ def api_remove_background():
   :return:
   """
   work_dir=current_app.config["UPLOAD_FOLDER"]
-  input:Image=Sticker(image=request.json["image"],work_dir=work_dir).image
+  input:Image=Sticker(image=request.json["file"],work_dir=work_dir).image
   domain_server=current_app.config["DOMAIN_SERVER"]
   if not isLocal(domain_server):
     log("Lancement de la suppression du fond")
     import rembg
     output=rembg.remove(input)
+    log("Fin de traitement")
     return jsonify({"image":Sticker(image=output,work_dir=work_dir).toBase64()})
   else:
     return jsonify({"image":Sticker(image=input,work_dir=work_dir).toBase64(),"error":"Impossible de supprimer le fond depuis windows"})

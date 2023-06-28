@@ -28,7 +28,7 @@
     </table>
 
     <mat-accordion>
-      <mat-expansion-panel  *ngFor="let tablename of ['nfts','collections','validators','users','histo','mintpool','account_settings','shortlinks']">
+      <mat-expansion-panel  *ngFor="let tablename of ['nfts','collections','validators','users','histo','mintpool','account_settings','shortlinks','airdrops']">
         <mat-expansion-panel-header class="color-accent">{{tablename}}</mat-expansion-panel-header>
         <app-dbtable excludes="attributes"
                      [title]="tablename"
@@ -43,7 +43,22 @@
 
     <div class="mat-subheading-1 color-primary">
       <table>
-        <tr><td>Répertoire</td><td>{{server_config.Upload_Folder}}</td></tr>
+        <tr><td>Répertoire Temp</td><td>{{server_config.Upload_Folder}}</td><td></td></tr>
+        <tr><td>Configurations</td><td>{{server_config.Configs_Folder}}</td>
+          <td>
+            <app-upload-file [maxsize]="100000000" extensions=".yaml" (uploaded)="upload_on_server('Configs',$event)">Charger</app-upload-file>
+          </td>
+        </tr>
+        <tr><td>Fontes</td><td>{{server_config.Fontes_Folder}}</td>
+          <td>
+            <app-upload-file [maxsize]="100000000" extensions=".ttf|.otf" (uploaded)="upload_on_server('Fonts',$event)">Charger</app-upload-file>
+          </td>
+        </tr>
+        <tr><td>Operations</td><td>{{server_config.Operations_Folder}}</td>
+          <td>
+            <app-upload-file [maxsize]="100000000" extensions=".yaml" (uploaded)="upload_on_server('Operations',$event)">Charger</app-upload-file>
+          </td>
+        </tr>
         <tr><td>Nombre de fichiers</td><td>{{server_config.Uploaded_files!.length}}</td></tr>
         <tr><td>Taille total</td><td>{{server_config.Uploaded_size}} Ko</td></tr>
         <tr><td>Fichiers sélectionnés</td><td>{{nb_selected_file}}</td></tr>
@@ -51,10 +66,10 @@
       </table>
     </div>
 
-    <div class="expansion-content">
+    <div class="expansion-content-left">
 
       <app-input [value]="sel_filter" value_type="text"
-                 width="150px"
+                 width="200px"
                  label="Filtre de sélection"
                  (valueChange)="sel_filter=$event;refresh_file_selection();"></app-input>
 
@@ -426,7 +441,12 @@
 
   </mat-expansion-panel>
 
-
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>Bank</mat-expansion-panel-header>
+    <app-genlink [properties]="bank_properties"
+                 domain="https://tokenforge.nfluent.com/bank/">
+    </app-genlink>
+  </mat-expansion-panel>
 
 </div>
 
