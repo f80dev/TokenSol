@@ -1,7 +1,7 @@
 <div class="mainform" style="text-align: center">
   <br>
-  <div class="mat-headline-3">{{user.appname}}</div>
-  <img src="assets/icons/icon_nfluent_512.png" style="width: 80%;max-width: 400px;margin: 30px;"><br>
+  <div class="mat-headline-3">{{user.params.appname}}</div>
+  <img [src]="logo" style="width: 80%;max-width: 400px;margin: 30px;"><br>
 
 
   <br><br>
@@ -9,7 +9,7 @@
           type="button" mat-raised-button color="primary"
           title="Fabriquer votre premier NFT"
           (click)="open_create()">
-    Fabriquer vos NFTs
+    Fabriquez vos NFTs
   </button>
 
 </div>

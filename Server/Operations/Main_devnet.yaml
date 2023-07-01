@@ -167,7 +167,7 @@ validate:
   #voir la description de cette section ci-dessus
   authentification:
     webcam: True
-    wallet_connect: False
+    wallet_connect: True
     google: False
     address: False
     nfluent_wallet_connect: True

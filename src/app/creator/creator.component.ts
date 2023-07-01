@@ -10,9 +10,8 @@ import {
   download_file,
   getParams,
   hashCode,
-  isLocal,
   normalize,
-  now,
+  now, open_image_banks,
   setParams,
   showError,
   showMessage
@@ -29,6 +28,7 @@ import {parse, stringify} from "yaml";
 import {DeviceService} from "../device.service";
 import {wait_message} from "../hourglass/hourglass.component";
 import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
+import {extract_merchant_from_param, Merchant} from "../payment/payment.component";
 
 
 @Component({
@@ -150,6 +150,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       }
       this.max_nft = rc;
       if(this.sel_config.limit>this.max_nft)this.sel_config.limit=this.max_nft;
+      if(this.sel_config.limit==0)this.sel_config.limit=this.max_nft/2;
     }
   }
 
@@ -175,9 +176,24 @@ export class CreatorComponent implements OnInit,OnDestroy {
       this.sel_palette=this.palette_names[0];
     })
 
+    this.network.list_config().subscribe((r:any)=> {
+      if(r){
+        this.configs = r.map((x:any)=>{return x.doc});
+        let item=localStorage.getItem("config");
+        if(item){
+          $$("Chargement de la configuration du localStorage")
+          this.sel_config=parse(item);
+          this.eval_max_nft();
+        }else{
+          $$("Initialisation d'une nouvelle configuration")
+          this.new_conf("localConfig",true);
+        }
+      }
+    },(err)=>{showError(this,err)});
+
     getParams(this.routes).then((params:any)=>{
       if(params.title_form)this.title_form=params.title_form;
-
+      this.claim=params.claim || environment.claim || "";
       this.sel_platform=this.network.stockage_available[0];
       this.stockage_available=this.network.stockage_available || params.stockage || "infura";
 
@@ -187,22 +203,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
           this.stockage_available[i]={label:s.split("-")[0],value:s}
         }
       }
-
-      this.network.list_config().subscribe((r:any)=> {
-        if(r){
-          this.configs = r.map((x:any)=>{return x.doc});
-          let item=localStorage.getItem("config");
-          if(item){
-            $$("Chargement de la configuration du localStorage")
-            this.sel_config=parse(item);
-            this.eval_max_nft();
-          }else{
-            $$("Initialisation d'une nouvelle configuration")
-            this.new_conf("localConfig",true);
-          }
-        }
-      },(err)=>{showError(this,err)});
-
 
       this.eval_max_nft();
       this.refresh();
@@ -242,8 +242,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
     });
   }
-
-
 
 
 
@@ -341,7 +339,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
             let seq=result.sequences[i];
             this.network.get_composition(seq,this.sel_config!.layers,this.sel_config?.data,size,"base64").subscribe((result:any)=>{
               $$("Récupération de "+result.images[0].substring(0,20)+"...")
-              this.add_to_preview([result.images[0]],[result.urls[0]])
+              this.add_to_preview([result.images[0]],[result.urls[0]],[result.files[0]],[result.indexes[0]])
 
               if(this.previews.length==real_limit){
                 this.message_preview="";
@@ -384,16 +382,16 @@ export class CreatorComponent implements OnInit,OnDestroy {
     this.save_config(false);
     if(!this.check_data())return;
 
-    this.message_preview="Avancement 0%";
     this.show_preview=true;
+    this.message_preview="Séquençage de la série"
 
     this.network.get_sequence(this.sel_config.layers,this.sel_config.limit).subscribe(async (result:any)=>{
       let sequences=result.sequences;
-
+      this.message_preview="Avancement 0%";
       let rep:any="ok";
       if(true || sequences.length>environment.visual_cost.quota && this.sel_config?.width!+this.sel_config?.height!>300){
         let nb_tokens_to_generate=sequences.length;
-        rep=await _ask_for_paiement(this,"NFLUCOIN-4921ed",
+        rep=await _ask_for_paiement(this,this.user.merchant.wallet!.token,
             nb_tokens_to_generate*(environment.visual_cost.price_in_fiat),
             nb_tokens_to_generate*(environment.visual_cost.price_in_crypto),
             this.user.merchant!,
@@ -402,40 +400,45 @@ export class CreatorComponent implements OnInit,OnDestroy {
             "",
             "",
             this.user.profil.email,
+            {contact: "contact@nfluent.io", description: "Génération de "+nb_tokens_to_generate+" visuels", subject: ""},
             this.user.buy_method)
       }
 
       if(rep){
+        this.user.init_wallet_provider(rep.provider,rep.address)
         this.user.nfts_to_mint=[];
         let step=Math.max(sequences.length/10,3);
 
         this.previews=[];
-        this.message_preview="Avancement "+Number(100*step/sequences.length)+"%";
 
         $$("Démarage du traitement")
         for(let i=0;i<sequences.length;i=i+step){
           setTimeout(()=>{
             let seq=sequences.slice(i,i+step);
-
+            $$("Fabrication de "+i+" à "+(i+step))
             this.network.get_composition(
                 seq,
                 this.sel_config?.layers!,
                 this.sel_config!.data,
                 this.sel_config?.width+"x"+this.sel_config?.height,
                 format).subscribe((result:any)=>{
+              $$("Réponse=",result.urls)
+              this.add_to_preview(result.urls,result.urls,result.files,result.indexes);
 
-              this.add_to_preview(result.urls,result.urls);
-
+              this.message_preview="Avancement "+Math.round(Number(100*i/sequences.length))+"%";
               if(this.previews.length==sequences.length){
                 this.message_preview="";
                 if(format.indexOf("mint")>-1)this.router.navigate(["mint"])
                 if(format.indexOf("zip")>-1){
-                  this.network.create_zip(result.files,this.user.profil.email).subscribe(()=>{
-                    showMessage(this, "Travail en cours ... consulter votre boite mail pour retrouver votre collection de visuels")
+                  let lst_file=this.previews.map((x: any) => {return x.file})
+                  this.network.create_zip(lst_file,this.user.profil.email).subscribe((result:any)=>{
+                    if(!this.user.profil.email){
+                     open(result.zipfile,"visuels")
+                    }else{
+                      showMessage(this, "Travail en cours ... consulter votre boite mail pour retrouver votre collection de visuels")
+                    }
                   })
                 }
-              }else{
-                this.message_preview="Avancement "+Math.round(Number(100*i/sequences.length))+"%";
               }
 
               if(format.indexOf("mint")>-1){
@@ -454,7 +457,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
           },i*delay);
         }
       } else {
-        showMessage(this,"Annulation du processus");
+        this.message_preview="";
+        showMessage(this,"Annulation du paiement");
       }
 
 
@@ -562,14 +566,17 @@ export class CreatorComponent implements OnInit,OnDestroy {
   }
 
 
+  delete_element(layer:any,pos:number):void {
+    layer.elements.splice(pos,1);
+    this.eval_max_nft();
+  }
 
   modify_element($event:MouseEvent, layer: Layer, element:any) {
     let pos=layer.elements.indexOf(element);
     if($event.button==0){
       $event.stopPropagation();
       if($event.ctrlKey){
-        layer.elements.splice(pos,1);
-        this.eval_max_nft();
+        this.delete_element(layer,pos)
       }
 
       if($event.altKey){
@@ -952,6 +959,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       this.network.upload(img, this.sel_platform, "image/svg").subscribe((r: any) => {
         layer.elements.push({"image": r.url, type: "image/svg","name":"svg_"+layer.name+"_"+idx});
         if (l_images.length == idx + 1) {
+          this.eval_max_nft();
           resolve(layer)
         } else {
           this.upload_image_in_correct_order(idx + 1, l_images, layer)
@@ -962,22 +970,13 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
 
   async find_image() {
-    showMessage(this,"Il est possible de faire directement glisser les images d'un site web vers le calque souhaité")
-    let resp=await _prompt(this,"Saisissez un mot clé (de préférence en anglais)",
-        "rabbit",
-        "Accéder directement à plusieurs moteurs de recherche d'image","text",
-        "Rechercher","Annuler",false)
-    open("https://www.google.com/search?q=google%20image%20"+resp+"&tbm=isch&tbs=ic:trans","search_google");
-    open("https://giphy.com/search/"+resp,"giphy")
-    open("https://pixabay.com/fr/vectors/search/"+resp+"/","search_vector")
-    open("https://thenounproject.com/search/icons/?iconspage=1&q="+resp,"search_vector")
-    open("https://pixabay.com/images/search/"+resp+"/?colors=transparent","search_transparent")
-    open("https://www.pexels.com/fr-fr/chercher/"+resp+"/","search_pexels")
+    open_image_banks(this)
   }
 
   //add_image_to_layer ajouter une image
-  //tag upload_file
+  //tag upload_file upload
   title_form="Générateur de visuels NFTs";
+  claim="";
   show_preview:boolean=false;
   show_conception: boolean=true;
   on_upload(evt: any,layer:Layer) {
@@ -990,8 +989,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
 
     if(body.filename.endsWith("svg")){
       this.network.generate_svg(evt.file,this.sel_config!.text.text_to_add,layer.name).subscribe(async (r:any)=>{
-        layer=await this.upload_image_in_correct_order(0,r,layer)
-        this.eval_max_nft();
+        try{
+          layer=await this.upload_image_in_correct_order(0,r,layer)
+        } catch (e){
+          showError(this,e)
+        }
       })
     }else{
       this.message="Chargement des visuels";
@@ -1200,9 +1202,9 @@ export class CreatorComponent implements OnInit,OnDestroy {
     this.previews[idx]=img;
   }
 
-  add_to_preview(images:any[],urls:any[]) {
+  add_to_preview(images:any[],urls:any[],files:any[],indexes:number[]) {
     for(let i=0;i<images.length;i++){
-      this.previews.push({src:images[i],url:urls[i],selected:true,style:{width: "100px","margin-left":"5px"}});
+      this.previews.push({src:images[i],url:urls[i],file:files[i],index:indexes[i],selected:true,style:{width: "100px","margin-left":"5px"}});
     }
   }
 

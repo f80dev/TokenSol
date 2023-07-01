@@ -1,0 +1,56 @@
+//lire https://blog.thoughtram.io/angular/2017/05/23/custom-themes-with-angular-material.html
+//version 0.4 - mise a jour pour Angular 15 - 25/01/2023
+@use '@angular/material' as mat;
+@include mat.core();
+@import "nfluent";
+
+//voir https://material.angular.io/guide/theming#application-background-color
+body,html {
+  margin: 0;
+  padding: 0;
+  background-color: #59591d;
+  color: yellow;
+}
+
+$nfluent-primary-color: mat.define-palette(mat.$yellow-palette, 700);
+$nfluent-secondary-color: mat.define-palette(mat.$yellow-palette, 700);
+$nfluent-accent-color:mat.define-palette(mat.$yellow-palette, 500);
+$nfluent-warn-color:mat.define-palette(mat.$yellow-palette, A200, A100, A400);
+
+$nfluent-dark-theme: mat.define-dark-theme((
+        color: (
+                primary:$nfluent-primary-color,
+                secondary:$nfluent-secondary-color,
+                accent: $nfluent-accent-color,
+                warn: $nfluent-warn-color,
+        ),
+        typography: $nfluent-typography
+));
+
+
+// Emit styles for MatButton based on `$my-theme`. Because the configuration
+// passed to `define-light-theme` omits typography, `button-theme` will not
+// emit any typography styles.
+@include mat.all-component-themes($nfluent-dark-theme);
+
+
+.color-primary {
+  color: mat.get-color-from-palette(mat.$yellow-palette, 500);
+}
+
+mat-expansion-panel-header {
+  @extend .mat-body-2, .color-primary;
+  font-weight: bold !important;
+}
+
+mat-card-title {
+  @extend .mat-body-1, .color-primary;
+  font-size: medium !important;
+  padding: 10px;
+}
+
+.background-component {
+  background-color: mat.get-color-from-palette(mat.$grey-palette, 900) !important;
+}
+
+

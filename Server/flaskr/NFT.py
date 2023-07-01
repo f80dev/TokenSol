@@ -4,7 +4,7 @@ import yaml
 from PIL import Image
 
 from flaskr.Keys import Key
-from flaskr.Tools import extract_from_dict, decrypt
+from flaskr.Tools import extract_from_dict, decrypt, hex_to_str
 
 
 class NFT:
@@ -30,7 +30,6 @@ class NFT:
   def __init__(self,
                name: str="",
                miner:str="",
-               owner:str="",
                symbol: str="",
                collection: dict={},
                attributes: list=list(),
@@ -45,7 +44,7 @@ class NFT:
                files:list=[],
                dtCreate:int=0,
                network="",
-               balances={},
+               balances:dict={},
                object=None) -> object:
 
     if not object is None:
@@ -57,7 +56,7 @@ class NFT:
 
       symbol=extract_from_dict(object,["symbol","identifier"],"")
       description=extract_from_dict(object,"description","")
-      visual=extract_from_dict(object,"visual,image,storage,url","")
+      visual=extract_from_dict(object,"url,visual,image,storage","")
 
       miner=extract_from_dict(object,["miner","creator"],"")
       if type(miner)==dict: miner=Key(obj=miner).address
@@ -85,8 +84,7 @@ class NFT:
 
       royalties=extract_from_dict(object,["seller_fee_basis_points","royalties"],0)
       address=extract_from_dict(object,["address","id","identifier"],"")
-
-      owner=object["owner"] if "owner" in object else ""
+      balances=object["balances"] if "balances" in object else {object["owner"]:1} if "owner" in object else {}
       self.other=object["other"] if "other" in object else {}
       self.tags=object["tags"] if "tags" in object else ""
 
@@ -101,7 +99,6 @@ class NFT:
     self.supply=supply
     self.price=price
     self.miner=miner
-    self.owner=owner
     self.symbol=symbol
     self.visual=visual
     self.creators=creators
@@ -109,11 +106,23 @@ class NFT:
     self.network=network
     self.tags=tags
     self.royalties=royalties
+    self.files=files
 
-    try:
-      self.files=[str(base64.b64decode(f),"utf8") for f in files]
-    except:
-      self.files=files
+    for i,f in enumerate(self.files):
+      if type(f)==dict:
+        if "file" in f: f=f["file"]
+        if "url" in f:f=f["url"]
+      if type(f)==str:
+        if not f.startswith("http"):
+          try:
+            f=str(base64.b64decode(self.files[i]),"utf8")
+          except:
+            try:
+              f=hex_to_str(f)
+            except:
+              pass
+
+      self.files[i]=f
 
     self.dtCreate=dtCreate
     if self.visual is None or len(self.visual)==0: self.visual="https://hackernoon.imgix.net/images/0*kVvpU6Y4SzamDGVF.gif"

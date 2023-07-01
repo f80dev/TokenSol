@@ -17,6 +17,7 @@ def create_app(config=None) -> (Flask,BackgroundScheduler):
   config_name peut prendre les valeurs : ["prod","dev","local"]
   :return:
   """
+
   r_scheduler = BackgroundScheduler()
   log("Initialisation du scheduler ok")
 
@@ -24,12 +25,14 @@ def create_app(config=None) -> (Flask,BackgroundScheduler):
   log("Initialisation de l'app ok")
 
   if type(config)==dict:
+    log("Utilisation de la configuration "+str(config))
     _app.config.from_mapping(config)
   else:
     if config is None: config="config.devConfig"
     if type(config)==str:
       if not config.endswith("onfig"):config=config+"Config"
-      if not config in ["localConfig","testConfig","devConfig","prodConfig","demoConfig"]: config="localConfig"
+      if not config in ["localConfig","testConfig","devConfig","prodConfig","demoConfig","akashConfig"]: config="localConfig"
+      log("Utilisation de la configuration "+config)
       _app.config.from_object("config."+config)
     else:
       _app.config.from_object(config)
@@ -42,21 +45,3 @@ def create_app(config=None) -> (Flask,BackgroundScheduler):
 
   return _app,r_scheduler
 
-
-#domain_server=sys.argv[1]
-#debug_mode=("debug" in sys.argv)
-#db_server=DBSERVER_SYSTEM if len(sys.argv)<=3 else sys.argv[3]
-#activity_report_dest=sys.argv[4] if len(sys.argv)>4 else ""
-# config={
-#   "DEBUG": debug_mode,                    # some Flask specific configs
-#   "CACHE_TYPE": "SimpleCache",      # Flask-Caching related configs
-#   "CACHE_DEFAULT_TIMEOUT": 300,
-#   "APPLICATION_ROOT":sys.argv[2],
-#   "DOMAIN_APPLI":sys.argv[2],
-#   "DOMAIN_SERVER":domain_server,
-#   "ACTIVITY_REPORT":activity_report_dest,
-#   "DB_SERVER":db_server,
-#   "DB_NAME":DBNAME_SYSTEM,
-#   "UPDLOAD_FOLDER":TEMP_DIR,
-#   "JWT_SECRET_KEY":SECRET_JWT_KEY
-# }

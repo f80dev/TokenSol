@@ -10,7 +10,7 @@ import {
   showError,
   showMessage,
   CryptoKey,
-  newCryptoKey, find_miner_from_operation
+  newCryptoKey, find_miner_from_operation, apply_params
 } from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
@@ -19,6 +19,7 @@ import {UserService} from "../user.service";
 import {NFT} from "../../nft";
 import {NFLUENT_WALLET} from "../../definitions";
 import {Operation, Connexion, get_in} from "../../operation";
+import {StyleManagerService} from "../style-manager.service";
 
 @Component({
   selector: 'app-dealermachine',
@@ -37,6 +38,7 @@ export class DealermachineComponent implements OnInit {
   prompt: string="Indiquer l'adresse ou l'email du destinataire";
   help_url: string="";
   section:string="dispenser";
+  params: any;
 
   constructor(
     public routes:ActivatedRoute,
@@ -44,6 +46,7 @@ export class DealermachineComponent implements OnInit {
     public network:NetworkService,
     public toast:MatSnackBar,
     public router:Router,
+    public style:StyleManagerService,
     public alias:AliasPipe
   ) { }
 
@@ -52,14 +55,17 @@ export class DealermachineComponent implements OnInit {
     hasWebcam(this.webcam);
 
     getParams(this.routes).then((params:any)=>{
-      this.nft=params["token"];
+      this.params=params;
+      this.nft=params["token"] || params["nft"];
       let ope=params["ope"];
-
-      this.section=params["section"];
-      if(!this.section)$$("!La section n'est pas renseignée");
+      apply_params(this,params)
 
       if(!this.nft){
-        $$("On va chercher les NFTs dans le fichier d'opération");
+        $$("Le NFT n'est pas indiqué, on va le chercher les NFTs dans le fichier d'opération");
+
+        this.section=params["section"];
+        if(!this.section)$$("!La section n'est pas renseignée");
+
         let address=params["address"] || "";
         let symbol=params["symbol"] || "";
 
@@ -70,7 +76,7 @@ export class DealermachineComponent implements OnInit {
         });
       }
 
-      this.selfWalletConnexion=params["selfWalletConnexion"] || (this.section=="lottery");
+      //this.selfWalletConnexion=params["selfWalletConnexion"] || (this.section=="lottery");
 
       if(ope){
         this.network.get_operations(ope).subscribe((result:any)=>{
@@ -82,6 +88,8 @@ export class DealermachineComponent implements OnInit {
             this.authentification=get_in(this.ope,this.section+".authentification",{showEmail:true})
           }
         })
+      }else{
+        this.authentification=params["authentification"]
       }
 
     })
@@ -128,7 +136,7 @@ export class DealermachineComponent implements OnInit {
     let addr=evt.address;
     this.address=addr.replace("'","");
     addr=this.alias.transform(addr,"address");
-    let target:any=find_miner_from_operation(this.ope,addr);
+    let target:any=this.ope ? find_miner_from_operation(this.ope,addr) : {miner:this.params.miner_dest,collection:this.params.collection_dest,network:this.params.network_dest}
 
     if(!target.miner){
       showError(this,{error:"On n'a pas de mineur pour le réseau cible"})

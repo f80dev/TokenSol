@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1920"
+   height="1080"
+   viewBox="0 0 508 285.75"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="canvas.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     inkscape:zoom="0.33540614"
+     inkscape:cx="779.65179"
+     inkscape:cy="702.13383"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="opacity:0.780619;fill:#f2f2f2;stroke:#f2f2f2;stroke-width:4.36499"
+       id="NFT"
+       width="200"
+       height="200"
+       x="60"
+       y="60" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:41.9474px;line-height:1.25;font-family:'Berlin Sans FB Demi';-inkscape-font-specification:'Berlin Sans FB Demi, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.264583"
+       x="475.49789"
+       y="83.083206"
+       id="text2852"
+       transform="scale(0.99981425,1.0001858)"><tspan
+         sodipodi:role="line"
+         id="tspan2850"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:41.9474px;font-family:'Berlin Sans FB Demi';-inkscape-font-specification:'Berlin Sans FB Demi, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:end;text-anchor:end;stroke:#000000;stroke-width:0.264583"
+         x="475.49789"
+         y="83.083206">NFluent</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:41.9474px;font-family:'Berlin Sans FB Demi';-inkscape-font-specification:'Berlin Sans FB Demi, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:end;text-anchor:end;stroke:#000000;stroke-width:0.264583"
+         x="475.49789"
+         y="135.51746"
+         id="tspan4656">Gallery</tspan></text>
+    <rect
+       style="opacity:0.780619;fill:#f2f2f2;stroke:#f2f2f2;stroke-width:4.36499"
+       id="rect3616"
+       width="75.72908"
+       height="59.95219"
+       x="388.90042"
+       y="175.91235" />
+  </g>
+</svg>

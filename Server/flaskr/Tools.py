@@ -252,11 +252,13 @@ def get_key_by_name(keys:[],name:str):
 
 
 def extract_title_from_html(name:str,replace=dict()):
-  body=requests.get(name).text
-  if not "<title>" in body: return ""
-  title=body.split("<title>")[1].split("</title>")[0]
-  for k in list(replace.keys()):
-    title=title.replace("{{"+k+"}}",str(replace.get(k)))
+  title=""
+  if name.startswith("http"):
+    body=requests.get(name).text
+    if not "<title>" in body: return ""
+    title=body.split("<title>")[1].split("</title>")[0]
+    for k in list(replace.keys()):
+      title=title.replace("{{"+k+"}}",str(replace.get(k)))
   return title
 
 
@@ -386,15 +388,15 @@ def encrypt(text:str,secret_key_filename="./secret_key",format="str",short_code=
   return rc
 
 
-def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename=""):
+def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io",subject="",attach=None,filename="",with_log=False):
   if body is None or not is_email(_to):return False
   with smtplib.SMTP(SMTP_SERVER, SMTP_SERVER_PORT,timeout=10) as server:
     server.ehlo()
     server.starttls()
     try:
-      log("Tentative de connexion au serveur de messagerie")
+      if with_log: log("Tentative de connexion au serveur de messagerie")
       server.login(USERNAME, PASSWORD)
-      log("Connexion réussie. Tentative d'envoi")
+      if with_log: log("Connexion réussie. Tentative d'envoi")
 
       msg = MIMEMultipart()
       msg.set_charset("utf-8")
@@ -410,7 +412,7 @@ def send_mail(body:str,_to="paul.dudule@gmail.com",_from:str="contact@nfluent.io
         part.add_header('Content-Disposition',"attachment",filename=filename)
         msg.attach(part)
 
-      log("Send to "+_to+" <br><div style='font-size:x-small;max-height:300px>"+body+"</div>'")
+      if with_log: log("Send to "+_to+" <br><div style='font-size:x-small;max-height:300px>"+body+"</div>'")
       server.sendmail(msg=msg.as_string(), from_addr=_from, to_addrs=[_to])
       return True
     except Exception as inst:
@@ -814,7 +816,8 @@ def extract_extension(s:str) -> str:
 
 
 def merge_animated_image(base:Image,to_paste:Image,prefix_for_temp_file="temp_merge",temp_dir="./temp"):
-  filename=temp_dir+prefix_for_temp_file+"_"+now("hex")+".gif"
+  filename=temp_dir+"/"+prefix_for_temp_file+"_"+now("hex")+".gif"
+  filename=filename.replace("//","/")
   wr=imageio.get_writer(filename,mode="I")
 
   frames_to_paste = [f.resize(base.size).convert("RGBA").copy() for f in ImageSequence.Iterator(to_paste)]
@@ -897,7 +900,8 @@ def importer_file(file):
   if type(data)==bytes:
     res = read_excel(data)
   else:
-    if data.endswith("xlsx"):
+    if data.endswith("xlsx") or data.endswith("xls"):
+      #voir https://openpyxl.readthedocs.io/en/stable/
       res = read_excel(data)
     else:
       delimiter = ";"
@@ -923,7 +927,7 @@ def importer_file(file):
     return None,0
   else:
     d.append(list(res))
-    for k in range(1, len(res)):
+    for k in range(0, len(res)):
       d.append(list(res.loc[k]))
     total_record = len(d) - 1
     log("Nombre d'enregistrements identifié " + str(total_record))

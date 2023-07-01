@@ -1,0 +1,43 @@
+//lire https://blog.thoughtram.io/angular/2017/05/23/custom-themes-with-angular-material.html
+//version 0.4 - mise a jour pour Angular 15 - 25/01/2023
+@use '@angular/material' as mat;
+@include mat.core();
+@import "nfluent";
+
+body,html {
+  margin: 0;
+  padding: 0;
+  background-color: #2a2a2a;
+  color: white;
+  overflow: scroll;
+  overflow-x: hidden;
+}
+::-webkit-scrollbar {width: 0;}
+
+@include mat.all-component-themes($nfluent-dark-theme);
+
+.color-primary {
+  color: mat.get-color-from-palette($nfluent-indigo-palette, 400);
+}
+
+//Réapplication des nouvelles couleurs
+
+mat-expansion-panel-header {
+  @extend .mat-body-2, .color-primary;
+  font-weight: bold !important;
+}
+
+mat-card-title {
+  @extend .mat-body-1, .color-primary;
+  font-size: medium !important;
+  padding: 10px;
+}
+
+
+
+.background-component {
+  background-color: mat.get-color-from-palette(mat.$grey-palette, 900) !important;
+}
+
+
+

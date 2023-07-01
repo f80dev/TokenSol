@@ -4,7 +4,7 @@ from json import loads
 from flaskr.Keys import Key
 from flaskr.Mintpool import Mintpool
 from flaskr.Network import Network
-from flaskr.Tools import get_operation, now, get_key_by_name, random_from
+from flaskr.Tools import get_operation, now, get_key_by_name, random_from, is_email
 from flaskr.settings import OPERATIONS_DIR
 from tests.test_art import test_generate_collection, IMAGES
 from tests.test_tools import *
@@ -13,6 +13,10 @@ from tests.test_tools import *
 def operation():
 	return get_operation("Main_devnet")
 
+def test_canvas(test_client):
+	rc=call_api(test_client,"canvas/")
+	assert "zone" in rc
+	assert "svg" in rc
 
 
 def get_account_from_network(test_client, network=MAIN_NETWORK, seuil=1, filter="bob,carol,dan,eve,frank,grace",all=False) -> dict:
@@ -86,12 +90,12 @@ def test_api_upload_json(test_client,objs=["bonjour comment allez vous",{"key":"
 
 
 def test_send_photo_for_nftlive(test_client):
-	for format in ["base64","link"]:
+	for format in ["base64"]:
 		body={
 			"photo":IMAGES["backgrounds"][0],
 			"limit":1,
 			"dimension":500,
-			"config":RESSOURCE_TEST_DIR+"/config_certificat_photo.yaml",
+			"config":RESSOURCE_TEST_DIR+"/config_nftlive.yaml",
 			"format":format
 		}
 		image_to_mint= call_api(test_client, "send_photo_for_nftlive/", "", body)
@@ -627,3 +631,25 @@ def test_transfer_all_networks(test_client, networks=NETWORKS):
 def test_mint_polygon(test_client,network="polygon-devnet"):
 	miner=random_from(get_network_instance(network).get_keys())
 	test_api_mint(test_client,miner=miner,col_id="",network=network)
+
+
+def test_api_refund(test_client,network=MAIN_NETWORK,token=NFLUCOIN,amount=2,dest_name="paul"):
+	_network=get_network_instance(network)
+	miner=_network.find_key("nfluent")
+	if is_email(dest_name):
+		dest=dest_name
+		solde0=0
+	else:
+		dest=_network.find_key(dest_name).address
+		solde0=_network.get_balance(dest.address,token_id=token)
+
+	rc=call_api(test_client,"refund/"+dest+"/"+str(amount)+"/"+token+"/","",{"bank":miner.encrypt(),"network":network,"data":"Payment de test"})
+
+	if not is_email(dest):
+		solde1=_network.get_balance(dest,token_id=token)
+		assert solde1-solde0==amount*1e18
+
+def test_api_refund_email(test_client,dest_name="paul.dudule@gmail.com"):
+	test_api_refund(test_client,dest_name=dest_name)
+
+

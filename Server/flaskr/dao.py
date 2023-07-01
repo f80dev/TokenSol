@@ -1,8 +1,10 @@
 import base64
 import hashlib
+import random
 from random import randint
 
 import requests
+from bson import ObjectId
 from pymongo import database, MongoClient, mongo_client
 
 from flaskr.Keys import Key
@@ -10,7 +12,7 @@ from flaskr.NFT import NFT
 from flaskr.NFluentAccount import NfluentAccount
 from flaskr.Network import Network
 from flaskr.Storage import Storage
-from flaskr.Tools import log, now, get_hash, encrypt, simplify_email
+from flaskr.Tools import log, now, get_hash, encrypt, simplify_email, is_email
 from flaskr.secret import MONGO_INITDB_ROOT_USERNAME, MONGO_INITDB_ROOT_PASSWORD, MONGO_CLUSTER_CONNECTION_STRING, MONGO_WEB3_CONNECTION_STRING
 
 #Voir les infos de connections du cloud sur
@@ -81,7 +83,7 @@ class DAO(Storage,Network):
     return ""
 
 
-  def add(self,content) -> dict:
+  def add(self,content,overwrite=True) -> dict:
     if type(content)==str:
       if content.startswith("http"):
         content=requests.get(content).content
@@ -94,7 +96,7 @@ class DAO(Storage,Network):
 
     id="db_"+str(base64.b64encode(bytes(id,"utf8")),"utf8")
     rc={"cid":id,"hash":get_hash(content)}
-    if self.domain_server: rc["url"]=self.domain_server+"/api/files/"+str(id)
+    if self.domain_server: rc["url"]=self.domain_server+"api/files/"+str(id)
     return rc
 
   def get_unity(self):
@@ -154,7 +156,19 @@ class DAO(Storage,Network):
 
 
 
-  def get_nfts(self,addr:str=None,limit=2000,with_attr=False,offset=0,with_collection=False):
+
+  def get_nfts_from_collections(self,collections:[str],with_attr=False,format="class"):
+    rc=[]
+    for col in collections:
+      for nft in list(self.db["nfts"].find({"collection":col})):
+        del nft["_id"]
+        _nft=NFT(object=nft)
+        if format=="json":_nft=_nft.__dict__
+        rc.append(_nft)
+
+    return rc
+
+  def get_nfts(self,addr:str=None,limit=2000,with_attr=False,offset=0,with_collection=False) -> [NFT]:
     rc=[]
 
     nfts=list(self.db["nfts"].find({"owner":addr}) if not addr is None else self.db["nfts"].find())
@@ -165,9 +179,9 @@ class DAO(Storage,Network):
     return rc
 
 
-  def mint(self, miner, title, description, collection, properties: list,
+  def mint(self, miner, title, description, collection:dict, properties: list,
            storage:str, files=[], quantity=1, royalties=0, visual="", tags="", creators=[],
-           domain_server="",price=0,symbol="NFluentToken"):
+           domain_server="",price=0,symbol="NFluentToken",simulation=False):
     """
     Opere un transfert du NFT dans la base de données
     :param _data:
@@ -178,8 +192,7 @@ class DAO(Storage,Network):
     """
     nft=NFT(name=title,
             miner=miner.address,
-            owner=miner.address,
-            collection={"id":collection["id"]},
+            collection=collection["id"],
             attributes=properties,
             description=description,
             tags=tags,
@@ -190,6 +203,7 @@ class DAO(Storage,Network):
             supply=quantity,
             price=price,
             files=files,
+            dtCreate=now("dec"),
             balances={miner.address:quantity}
             )
 
@@ -241,15 +255,19 @@ class DAO(Storage,Network):
     return self.db["nfts"].delete_one(filter={"id":id})
 
 
-  def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
+  def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible",simulation=False) -> (dict):
     col={"owner":owner.address,"name":collection_name,"type":type_collection}
-    rc=self.db["collections"].insert_one(col)
-    col["id"]=str(rc.inserted_id)
+    if not self.db["collections"].find_one({"name":collection_name}) is None: return None
+    if not simulation:
+        rc=self.db["collections"].insert_one(col)
+        col["id"]="col_"+str(rc.inserted_id)
+    else:
+      col["id"]=0
     return col
+
 
   def get_collection(self,collection_id):
     return self.db["collections"].find_one({"id":collection_id})
-
 
   def add_data(self, data):
     if type(data)==str:data=base64.b64decode(data)
@@ -257,10 +275,11 @@ class DAO(Storage,Network):
     rc=self.db["storage"].insert_one(data)
     return str(rc.inserted_id)
 
-  def get_collections(self,owner:str,detail:bool=False,type_collection="",special_role=""):
+  def get_collections(self,owner_or_collection:str,detail:bool=False,type_collection="",special_role="",limit=1000):
     rc=[]
-    for col in self.db["collections"].find({"owner":owner}):
-      col["id"]=str(col["_id"])
+    cols=self.db["collections"].find({"_id":ObjectId(owner_or_collection.replace("col_",""))}) if owner_or_collection.startswith("col") else self.db["collections"].find({"owner":owner_or_collection})
+    for col in cols:
+      if not "id" in col: col["id"]="col_"+str(col["_id"])
       del col["_id"]
       rc.append(col)
 
@@ -282,12 +301,12 @@ class DAO(Storage,Network):
   #   if id.startswith("db_"):id=id[3:]
   #   return self.db["storage"].find_one(filter={"_id":ObjectId(id)})
 
-  def add_histo(self, ope,command,account, collection_id,transaction_id,network="",comment="",params=list()):
+  def add_histo(self, command,addr,transaction_id,ope="", collection_id="",network="",comment="",params=list()):
     if not self.db is None:
       self.db["histo"].insert_one({
         "operation":ope,
         "command":command,
-        "addr":account,
+        "addr":addr,
         "collection":collection_id,
         "ts":now(),
         "transaction":transaction_id,
@@ -297,6 +316,7 @@ class DAO(Storage,Network):
       })
 
   def get_account(self,addr:str) -> NfluentAccount:
+    if is_email(addr): addr=DB_PREFIX_ID + get_hash(addr)
     obj=self.db["accounts"].find_one({"address":addr})
     if obj is None: return None
     return NfluentAccount(obj=obj)
@@ -343,35 +363,35 @@ class DAO(Storage,Network):
                      histo=None,send_real_email=True,solde=100) -> Key:
     name=email.split("@")[0]
     addr= DB_PREFIX_ID + get_hash(email)
-    obj=self.db["keys"].find_one({"address":addr})
-
-    for i in range(5):
-      seed=seed+str(now("hex"))+" "
-
-    if obj is None:
-      k=Key("privatekey_"+addr,name,addr,"db-"+self.domain+"-"+self.dbname,seed)
-      self.db["keys"].insert_one(k.__dict__) #Dans le cas d'une simulation de blockchain, la
-
-      acc=NfluentAccount(address=k.address,network=self.network,balance=solde)
-      self.db["accounts"].insert_one(acc.__dict__) #Dans le cas d'une simulation de blockchain, la
+    key=self.db["keys"].find_one({"address":addr})
+    if key is None:
+      for i in range(12): seed=seed+str(now("hex"))+" "
+      key=Key("privatekey_"+addr,name,addr,"db-"+self.domain+"-"+self.dbname,seed)
+      self.db["keys"].insert_one(key.__dict__) #Dans le cas d'une simulation de blockchain, la
     else:
-      k=Key(obj=obj)
+      key=Key(obj=key)
 
-    return k
+    if self.get_account(key.address) is None:
+      acc=NfluentAccount(address=key.address,network=self.network,balance=solde)
+      self.db["accounts"].insert_one(acc.__dict__) #Dans le cas d'une simulation de blockchain, la
+
+    return key
 
 
 
-  def burn(self,nft_addr:str,miner:Key,occ=1):
+  def burn(self,nft_addr:str,miner:Key,quantity=1):
     _miner=self.get_account(miner.address)
     if _miner is None: return False
 
-    nft=self.get_nft(nft_addr,True)
-    if miner.address in nft.balances:
-      nft.balances[miner.address]=nft.balances[miner.address]-occ
-    else:
-      nft.balances[miner.address]=0
+    _nft=self.get_nft(nft_addr,False)
 
-    self.save_nft(nft)
+    if _nft and not miner.address in _nft.balances or _nft.balances[miner.address]<quantity:
+      return self.create_transaction(error="Quantité insuffisante",hash="db_"+now("hex"),nft_addr=nft_addr)
+
+    _nft.balances[miner.address]-=quantity
+    #_miner.nfts_balances[nft_addr]=_miner.nfts_balances[nft_addr]-quantity
+
+    self.save_nft(_nft)
 
     return self.create_transaction(error="",hash="db_"+now("hex"),nft_addr=nft_addr)
 
@@ -433,7 +453,7 @@ class DAO(Storage,Network):
     """
     network=network.split("-")[0]
     encoded_email=hashlib.sha256(email.encode()).hexdigest()
-    self.db["account_by_emails"].insert_one({
+    self.db["account_settings"].insert_one({
       "email":encoded_email,
       "address":addr,
       "network":network
@@ -442,21 +462,22 @@ class DAO(Storage,Network):
   def get_address(self,email:str,network:str):
     network=network.split("-")[0]
     encoded_email=hashlib.sha256(email.encode()).hexdigest()
-    rc=self.db["account_by_emails"].find_one({"email":encoded_email,"network":network})
+    rc=self.db["account_settings"].find_one({"email":encoded_email,"network":network})
     if rc:return rc["address"]
     return rc
 
 
 
-  def add_validator(self, id,ask_for):
+  def add_validator(self, id,ask_for=""):
     """
     Ajout d'un nouveau validateur dans la liste
     :param ask_for contient une collection ou une liste de NFT
     :return:
     """
-    if ask_for is None or len(ask_for)==0:
-      log("Inscription rejetée car aucune demande de collection ou d'opération associée")
-      return False
+
+    # if ask_for is None or len(ask_for)==0:
+    #   log("Inscription rejetée car aucune demande de collection ou d'opération associée")
+    #   return False
 
     self.db["validators"].update_one({"id":id},{"$set":{
       "id":id,
@@ -542,6 +563,13 @@ class DAO(Storage,Network):
     acc.nfts_balances[_nft.address]+=occ
     self.save_account(acc)
 
+  def get_balance(self,addr,token_id=""):
+    if len(token_id)==0:
+      return 1000
+    else:
+      acc=self.get_account(addr)
+      return acc.nfts_balances[token_id] if token_id in acc.nfts_balances else 0
+
   def save_account(self, acc:NfluentAccount):
     a=acc.__dict__
     return self.db["accounts"].replace_one(filter={"address":acc.address},replacement=a,upsert=True)
@@ -549,6 +577,51 @@ class DAO(Storage,Network):
   def save_nft(self, nft):
     _nft=nft.__dict__
     return self.db["nfts"].replace_one(filter={"address":nft.address},replacement=_nft,upsert=True)
+
+  def get_histos(self, addr="",start=0,end=0):
+    """
+    Retourne l'histo entre deux dates
+    :param start:
+    :return:
+    """
+    if end==0:end=now()
+    rc=list()
+    for t in list(self.db["histo"].find({"addr":addr})):
+      if t["ts"]>start and t["ts"]<end: rc.append(t)
+    return rc
+
+  def set_account_settings(self, address:str, param:dict):
+    self.db["account_settings"].update_one({"address":address},{"$set":param},upsert=True)
+
+
+  def get_account_settings(self, address:str) -> dict :
+    rc=self.db["account_settings"].find_one({"address":address})
+    if rc and "_id" in rc: del rc["_id"]
+    return rc
+
+  def create_link(self, body:dict) -> str:
+      while True:
+        cid=hex(random.randint(0,9999999)).replace("0x","")
+        if not self.db["shortlinks"].find_one({"cid":cid}):
+          body["cid"]=cid
+          rc=self.db["shortlinks"].insert_one(body)
+          if rc.inserted_id:
+            return cid
+
+
+  def get_link(self, cid:str) -> str:
+    rc=self.db["shortlinks"].find_one({"cid":cid})
+    del rc["_id"]
+    return rc
+
+  def add_airdrop(self, body):
+    rc=self.db["airdrops"].insert_one(body)
+    return rc.inserted_id
+
+
+  def get_airdrop(self, program):
+    rc=self.db["airdrops"].find_one(ObjectId(program))
+    return rc
 
 
 

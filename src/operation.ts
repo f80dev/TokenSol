@@ -1,7 +1,11 @@
 //Description d'une collection
 import {CryptoKey} from "./tools";
 
+
+
+
 export interface Collection {
+  gallery: any;
   name:string
   id: string
   visual: string | undefined
@@ -11,6 +15,7 @@ export interface Collection {
   type: string | undefined
   roles: any[] | undefined
   link: string | ""
+  supply: number
   options: string[] | []
 }
 
@@ -21,6 +26,9 @@ export interface Connexion {
   email: boolean | false
   google: boolean | false
   webcam: boolean | false
+  extension_wallet:boolean | false
+  web_wallet:boolean | false
+  direct_connect: boolean | false
   nfluent_wallet_connect: boolean | false            //QRCode proposé par nfluent en substitution de Wallet Connect à utiliser depuis le wallet nfluent
 }
 
@@ -335,8 +343,10 @@ export function newCollection(name:string,owner:CryptoKey,id="",type_collection=
   return {
     description: "",
     id: id,
+    gallery:true,
     link: "",
     name: name,
+    supply:1,
     options: [],
     owner: owner,
     price: 0,
@@ -367,6 +377,25 @@ export function get_in(obj:any | null,fields:string,_default:any=null) : any {
     }
   }
   return rc;
+}
+
+
+export function check_nft(ope:Operation){
+  let checknft=get_in(ope,"validate.filters.collections",get_in(ope,"validate.collections",[]))
+  if(checknft.length==0){
+    //Recherche de collection dans les sources
+    for(let src of ope.data.sources){
+      checknft=get_in(src,"collection",get_in(src,"filter.collection",[]))
+      if(checknft.length>0)break
+    }
+    if(checknft.length==0){
+      //Recherche de collection dans le lazy_mining
+      for(let network of get_in(ope,"lazy_mining.networks",[])){
+        checknft=get_in(network,"collection",[])
+        if(checknft.length>0)break;
+      }
+    }
+  }
 }
 
 

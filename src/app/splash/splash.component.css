@@ -1,0 +1,14 @@
+
+.splash-screen {
+    background-position:center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    width:100vw;
+    height: 100vh;
+    text-align: center;
+    position: fixed;
+    display: block;
+    left:0;
+    top:0;
+    z-index: 1000;
+}

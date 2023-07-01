@@ -12,6 +12,13 @@ MAIN_ADDR_ACCOUNT="db_5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3
 def db():
 	return get_network_instance(DB_NETWORK)
 
+def get_miner(db:DAO):
+	key=db.get_keys()[0]
+	rc=db.get_account(key.address)
+	if rc is None:rc= db.create_account(key.name+"@gmail.com")
+	return rc
+
+
 def test_reset(db:DAO):
 	db.reset()
 
@@ -30,8 +37,8 @@ def test_create_account(db:DAO,email=MAIN_DB_ACCOUNT):
 	return account
 
 def test_mint(db:DAO,miner=None,description="description",supply=10) -> NFT:
-	if miner is None: miner=db.get_account(MAIN_ADDR_ACCOUNT)
-	assert not miner is None
+	if not miner: miner=get_miner(db)
+
 	tx=db.mint(miner,"titre NFT",description,{"id":"macollect"},[],"ipfs",[],supply,0)
 
 	_nft=db.get_nft(tx["result"]["mint"])
@@ -42,8 +49,7 @@ def test_mint(db:DAO,miner=None,description="description",supply=10) -> NFT:
 	return _nft
 
 def test_burn(db:DAO):
-	miner=db.get_account(MAIN_ADDR_ACCOUNT)
-	if miner is None: miner=test_create_account("paul.dudule@gmail.com")
+	miner=get_miner(db)
 	nft:NFT=test_mint(db,miner)
 	before=db.get_balances(miner.address,nft.address)
 	db.burn(nft.address,miner,3)

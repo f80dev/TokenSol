@@ -1,14 +1,37 @@
-<div class="mainform">
+<div class="mainform" style="text-align: center;">
   
-  <div class="titleform" style="margin: 30px;">{{appname}}</div>
-  <img src="./assets/icons/icon_nfluent_256.png" style="margin: 50px;">
+  <div class="mat-headline-2 color-primary" style="margin: 30px;" *ngIf="user && user.params">{{user.params.appname}}</div>
+  <div style="margin-top: -20px">version {{version}}</div>
   <br>
 
-  {{appname}} repose sur plusieurs brique technique:<br>
-  <ul>
-    <li>MetaBoss (<a href="https://github.com/samuelvanderwaal/metaboss/releases">Download</a>)</li>
-    <li>Angular / Angular Material</li>
-  </ul>
+  <img [src]="logo" style="margin: 50px;max-width:300px;max-height:300px;">
+  <br><br>
+  <button mat-icon-button (click)="_location.back()">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
 
+  <button mat-icon-button (click)="open_faqs()" *ngIf="exist_faqs">
+    <mat-icon>help</mat-icon>
+  </button>
+
+  <button mat-icon-button (click)="open_admin()" *ngIf="show_admin">
+    <mat-icon>build</mat-icon>
+  </button>
+
+  <br><br><br>
+
+  <div style="display: flex;align-items: center;width:100%;justify-items: center;display: inline-block;">
+    Made with <mat-icon style="display: inline-block;color: darkred;">favorite</mat-icon> by <a [href]="website">{{company}}</a>
+  </div>
+
+  <div style="width: 80%;margin-left: 10%;position:absolute;display:block;bottom: 20px;font-variant-caps: all-petite-caps;"
+       class="mat-headline-6">
+
+    <span style="margin: 20px;">© {{company}} 2023    ·    v{{version}}   ·   Tous droits réservés</span> ·
+    <a [href]="cgu" target="_blank" style="margin: 5px;">
+      Mentions légales
+    </a> ·
+
+  </div>
 
 </div>

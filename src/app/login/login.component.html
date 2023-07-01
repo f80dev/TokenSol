@@ -1,5 +1,6 @@
 <div class="mainform">
   <div class="titleform">{{title}}</div>
+  <div id="address"></div>
   <div *ngIf="!show_registration && !show_wallet_authent" style="width: 100%;text-align: center;">
     <p>Déjà inscrit ?<br><br>
 
@@ -53,7 +54,6 @@
   <app-authent [showExtensionWallet]="true"
                [showWalletConnect]="true"
                style="max-width: 700px;width: 80%;display: inline-block;"
-               intro_message="Indiquer votre mail pour recevoir votre code d'accès"
                *ngIf="show_wallet_authent"
                [showCancel]="true"
                (cancel)="show_wallet_authent=false"

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable, OnDestroy} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
 import {Router} from "@angular/router";
 import {$$, CryptoKey, detect_network, isLocal} from "../tools";
@@ -22,17 +22,14 @@ export interface UserProfil {
 @Injectable({
   providedIn: 'root'
 })
-export class UserService {
+export class UserService implements OnDestroy {
   addr: string = "";              //Adresse sur la blockchain
 
   addr_change = new Subject<string>();
   profil_change = new Subject<UserProfil>();
+  params_available=new Subject<any>()
 
   buy_method: "crypto" | "fiat" | "" = "";
-
-  //Ces prix sont utilisables dans différents services: minage, signature de document, ...
-  price:number=0;
-  price_in_fiat:number=0;
 
   key: CryptoKey | undefined;
   provider: any | undefined;
@@ -57,9 +54,12 @@ export class UserService {
   nfts_to_mint: any[] = []
   advance_mode: boolean = false;
   toolbar_visible: boolean = true;
-  appname: string = environment.appname;
+
+  params:any={appname:""}                             //Enregistrement des parametres au lancement de l'appli
   verified_address: Boolean=false;
   wallet_provider: any;                   //Instance d'acces au wallet distant
+  theme_mode: boolean=false;
+  target_mint: any;
 
   constructor(
       private httpClient: HttpClient,
@@ -85,8 +85,8 @@ export class UserService {
 
   get_collection(addr: string, network: string) {
     //Retourne l'ensemble des collections disponibles
-    return new Promise((resolve, reject) => {
-      this.network.get_collections(addr, network, false).subscribe((cols: any) => {
+    return new Promise<Collection[]>((resolve, reject) => {
+      this.network.get_collections(addr, network, false).subscribe((cols: Collection[]) => {
         this.collections = cols;
         resolve(cols);
       }, (err: any) => {
@@ -134,7 +134,7 @@ export class UserService {
         this.verified_address=verified_address;
         this.network.get_account(addr!, network).subscribe((result: any) => {
           let r=result[0];
-          this.balance = r.amount;
+          this.balance = r.amount || 0;
           this.key=this.network.find_key_by_address(r.address);
           if(!this.key){
             this.key = {
@@ -142,7 +142,7 @@ export class UserService {
               encrypt: "",
               explorer: "",
               name: r.name,
-              privatekey: r.private_key,
+              secret_key: r.secret_key,
               address: r.address,
               qrcode: "",
               unity: r.unity
@@ -150,7 +150,8 @@ export class UserService {
           }
           this.addr = r.address;
           if (with_collections) {
-            this.get_collection(this.addr, network).then(() => {
+            this.get_collection(this.addr, network).then((cols:Collection[]) => {
+              this.collections=cols;
               this.addr_change.next(r.address);
               resolve(r.address);
             });
@@ -177,6 +178,10 @@ export class UserService {
 
 
   logout() {
+    $$("Déconnexion / Logout");
+    try {
+      if(this.wallet_provider)this.wallet_provider.logout()
+    }  catch (e) {}
     this.addr = "";
     this.profil = {
       alias: "", email: "", perms: [], routes: [], access_code: "",message:""
@@ -267,6 +272,10 @@ export class UserService {
   change_access_code(new_password: string) {
     this.network.update_access_code(this.profil.access_code, new_password).subscribe(() => {
     })
+  }
+
+  ngOnDestroy(): void {
+    this.logout();
   }
 
 }

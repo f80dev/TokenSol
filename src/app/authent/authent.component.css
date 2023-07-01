@@ -1,3 +1,4 @@
+
 button {
   margin: 10px;
   width: 150px
@@ -8,11 +9,26 @@ button {
 }
 
 .multiversx-text {
+  font-size: small;
   color: #44f8e2;
 }
 
 .multiverx-background {
   background-color: #343a40;
+  padding: 20px;
+}
+
+
+.polygon-button {
+  background-color: #8044df;
+}
+
+.polygon-text {
+  color: #8044df;
+}
+
+.polygon-background {
+  background-color: #414141;
   padding: 20px;
 }
 

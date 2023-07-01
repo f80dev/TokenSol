@@ -5,15 +5,20 @@
 
 @font-face {
   font-family: Helvetica;
-  src: url("assets/HelveticaInseratLT.ttf") format("ttf");
+  src: url("assets/webFonts/HelveticaInseratLT.ttf") format("ttf");
 }
 
+html {
+  font-size: 1vw;
+  overflow: scroll;
+  overflow-x: hidden;
+}
+::-webkit-scrollbar {width: 0;}
 
-html {font-size: 1vw;}
 @media(max-width: 1500px) { html {font-size: 1.3vw;} }
 @media(max-width: 1000px) { html {font-size: 1.8vw;} }
 @media(max-width: 800px) { html {font-size: 2.2vw;} }
-@media(max-width: 500px) { html {font-size: 3.3vw;} }
+@media(max-width: 500px) { html {font-size: 4vw;} }
 
 //voir https://material.angular.io/guide/typography#typography-config
 /* Argument de mat.define-typography-level
@@ -39,10 +44,6 @@ $nfluent-typography: mat.define-typography-config(
         $button: mat.define-typography-level(16px, 16px, 500, GilroyRegular, $letter-spacing: -0.03em),
         $caption: mat.define-typography-level(14px, 14px, 500, GilroyRegular, $letter-spacing: -0.03em)
 );
-
-
-
-
 
 
 //voir https://material.angular.io/guide/theming#palettes
@@ -102,6 +103,7 @@ $nfluent-secondary-color: mat.define-palette($nfluent-green-palette, 700);
 $nfluent-accent-color:mat.define-palette($nfluent-green-palette, 500);
 $nfluent-warn-color:mat.define-palette(mat.$red-palette, A200, A100, A400);
 
+
 $nfluent-theme: mat.define-light-theme((
         color: (
                 primary:$nfluent-primary-color,
@@ -109,8 +111,9 @@ $nfluent-theme: mat.define-light-theme((
                 accent: $nfluent-accent-color,
                 warn: $nfluent-warn-color,
         ),
-        typography: $nfluent-typography,
+        typography: $nfluent-typography
 ));
+
 
 $nfluent-dark-theme: mat.define-dark-theme((
         color: (
@@ -121,31 +124,6 @@ $nfluent-dark-theme: mat.define-dark-theme((
         ),
         typography: $nfluent-typography
 ));
-
-
-ul {
-  list-style: none; /* Remove default bullets */
-}
-
-
-ul li::before {
-  content: "\2022";
-  font-weight: bold; /* If you want it to be bold */
-  display: inline-block; /* Needed to add space between the bullet and the text */
-  width: 1em; /* Also needed for space (tweak if needed) */
-  margin-left: -1em;
-  color: #00e726;
-}
-
-.greenline {
-  z-index: -1;
-  width: 100%;
-  height: 22px;
-  margin-top: -16px;
-  display: block;
-  background-color: #00e726 !important;
-}
-
 
 
 // Emit styles for MatButton based on `$my-theme`. Because the configuration
@@ -163,7 +141,7 @@ body,html {
 }
 
 .color-accent {
-  color: mat.get-color-from-palette($nfluent-accent-color, 500);
+  color: mat.get-color-from-palette($nfluent-green-palette, 500);
 }
 
 .color-warm {
@@ -171,7 +149,7 @@ body,html {
 }
 
 .color-primary {
-  color: mat.get-color-from-palette($nfluent-primary-color, 500);
+  color: mat.get-color-from-palette($nfluent-indigo-palette, 500);
 }
 
 .colorize-accent {
@@ -194,17 +172,34 @@ body,html {
 
 .titleform {
   @extend .mat-headline-5, .color-primary;
-  margin: 20px;
+  margin: 8px;
+  margin-bottom: 15px;
 }
 
 .subtitleform {
   @extend .mat-subtitle-1, .color-primary;
   margin-top: -10px;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .background-component {
-  background-color: mat.get-color-from-palette(mat.$grey-palette, 800);
+  background-color: mat.get-color-from-palette(mat.$grey-palette, 300) !important;
 }
 
+mat-vertical-stepper {
+  background: none !important;
+}
+
+
+mat-expansion-panel-header {
+  @extend .mat-body-2, .color-primary;
+  font-weight: bold !important;
+}
+
+
+mat-card-title {
+  @extend .mat-body-1, .color-primary;
+  font-size: medium !important;
+  padding: 10px;
+}
 

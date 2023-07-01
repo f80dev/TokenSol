@@ -16,7 +16,7 @@ from flaskr.secret import GITHUB_TOKEN
 from flaskr.settings import IPFS_SERVER
 
 
-def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server="") -> dict:
+def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server="",api_key="") -> dict:
   """
   Charge une image sur une platforme
   :param data:
@@ -46,6 +46,8 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
     else:
       b=bytes(data,"utf8")
 
+  if type(data)==dict and "file" in data and "filename" in data: data["content"]=data["file"]
+
   if type(data)==dict and "content" in data:
     if data["content"].startswith("data:"):
       b=base64.b64decode(data["content"].split("base64,")[1])
@@ -66,7 +68,7 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
     if "filename" in cid: rc["filename"]=cid["filename"]
 
 
-  if platform.startswith("db-"):
+  if platform.startswith("db-") or platform.startswith("dao-"):
     cid=DAO(network=platform,domain_server=domain_server).add(data)
     url=cid["url"]
     if "filename" in data:url=url+"?f="+str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "url" in cid else ""
@@ -77,12 +79,15 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
 
 
   if platform.startswith("server") or platform.startswith("nfluent") or platform=="file":
-    if b and type(data)==dict and "content" in data:
+    if b and type(data)==dict and "filename" in data:
       #Encodage du nom du fichier
       filename_encoded=str(base64.b64encode(bytes(data["filename"],"utf8")),"utf8") if "filename" in data and not "image" in data["type"] else ""
+      if "file" in data: data["content"]=data["file"]
       filename=get_filename_from_content(data["content"],"store",data["type"])
+      if "/" in platform and exists("./"+platform.split("/")[1]):
+        upload_dir="./"+platform.split("/")[1]+"/"
       with open(upload_dir+filename,"wb") as file: file.write(b)
-      return {"cid":filename,"url":domain_server+"/api/images/"+filename+("?f="+filename_encoded if len(filename_encoded)>0 else "")}
+      return {"cid":filename,"url":domain_server+"/api/files/"+filename+("?f="+filename_encoded if len(filename_encoded)>0 else "")}
 
       # else:
       #   img=Image.open(BytesIO(b))
@@ -92,8 +97,12 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
       #   if not exists(TEMP_DIR+filename):
       #     img.save(TEMP_DIR+filename,save_all=True)
 
-    else:
-      return StoreFile(domain_server=domain_server).add(data.__dict__)
+    if type(data)!=dict: data=data.__dict__
+    return StoreFile(domain_server=domain_server).add(data)
+
+
+
+
 
 
   if platform=="nftstorage":
@@ -111,13 +120,14 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
 
   if platform.startswith("github"):
     try:
-      github_storage=GithubStorage(platform=platform)
+      github_storage=GithubStorage(platform=platform,token=api_key)
     except:
       log("La syntaxe doit être github-<account>-<repository>")
       return None
     try:
       rc=github_storage.add(data,id,overwrite=True)
-    except:
+    except Exception as inst:
       log("Impossible de pousser le contenu. Pour obtenir un token valide voir https://github.com/settings/tokens et accorder les propriétés admin:org et repo")
+      rc={"error":str(inst.args)}
 
   return rc

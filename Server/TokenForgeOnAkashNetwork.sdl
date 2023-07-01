@@ -1,37 +1,33 @@
-version: "2.0"
+---
+version: '2.0'
 services:
-  web:
-    image: f80hub/tokensol:latest
+  nfluent:
+    image: 'f80hub/tokensol:latest'
     expose:
       - port: 4242
         as: 4242
         to:
           - global: true
+    env:
+      - "SECRET=min"
 profiles:
   compute:
-    web:
+    nfluent:
       resources:
         cpu:
-          units: 0.5
+          units: 1
         memory:
-          size: 512Mi
+          size: 1Gi
         storage:
-          size: 512Mi
-
+          - size: 2Gi
   placement:
-    westcoast:
-      attributes:
-        organization: ovrclk.com
-      signedBy:
-        anyOf:
-          - "akash1vz375dkt0c60annyp6mkzeejfq0qpyevhseu05"
+    dcloud:
       pricing:
-        web:
+        nfluent:
           denom: uakt
           amount: 1000
-
 deployment:
-  web:
-    westcoast:
-      profile: web
+  nfluent:
+    dcloud:
+      profile: nfluent
       count: 1

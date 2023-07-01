@@ -242,6 +242,9 @@ export class BuildOpeComponent implements OnInit {
         _prompt(this,"Nom du validateur","dudule").then((name:string)=>{
           appli="autovalidate";
           add_param["validator_name"]=name;
+          add_param["network"]=this.operation.sel_ope!.network
+          add_param["authentification"]=this.operation.sel_ope!.validate?.authentification
+          add_param["collections"]=this.operation.sel_ope!.validate?.filters.collections
           open(this.get_url_for_appli(appli,add_param),"_self");
         })
         return;
@@ -280,7 +283,13 @@ export class BuildOpeComponent implements OnInit {
 
   open_validate() {
     if(this.operation.sel_ope){
-      let url=environment.appli+"/autovalidate?"+setParams({toolbar:false,ope:this.operation.sel_ope.id});
+      let params=setParams({
+        toolbar:false,
+        authentification:this.operation.sel_ope.validate?.authentification,
+        collections:this.operation.sel_ope.validate?.filters.collections,
+        ope:this.operation.sel_ope.id
+      })
+      let url=environment.appli+"/autovalidate?"+params;
       if(this.operation.sel_ope.validate && this.operation.sel_ope.validate?.users.length>0){
         url=this.operation.sel_ope.validate!.application+"?"+setParams({
           toolbar:false,

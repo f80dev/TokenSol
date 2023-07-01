@@ -7,6 +7,7 @@ from time import sleep
 from flaskr import GitHubStorage
 from flaskr.GitHubStorage import GithubStorage
 from flaskr.Keys import Key
+from flaskr.MegaUpload import MegaUpload
 from flaskr.Network import Network
 from flaskr.Polygon import Polygon
 from flaskr.StoreFile import StoreFile
@@ -19,7 +20,7 @@ from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
 
 
-from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt, is_email
+from flaskr.Tools import log, send_mail, open_html_file, get_operation, returnError, encrypt, decrypt, is_email, now
 
 from flaskr.dao import DAO
 from flaskr.infura import Infura
@@ -27,6 +28,7 @@ from flaskr.ipfs import IPFS
 from flaskr.nftstorage import NFTStorage
 
 from flaskr.settings import IPFS_SERVER, OPERATIONS_DIR
+from flaskr.storj import Storj
 
 
 def get_operations() -> [dict]:
@@ -113,6 +115,28 @@ def extract_keys_from_operation(ope):
     rc.append(Key(name=k,secret_key=private_key))
   return rc
 
+
+def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,network:str,comment="airdrop") -> dict :
+  rc={"address":address}
+  if histo:
+    total=0
+    for h in histo.get_histos(addr=address,start=now()-24*1000):
+      if h["command"]=="refund": total=total+int(h["params"][0])
+    if total>=limit:
+      return {"error":"Plafond de versement atteint pour la journée","status":"error"}
+
+  _network=get_network_instance(network)
+  if type(token)==dict and "identifier" in token:token=token["identifier"]
+  tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
+  if tx_esdt["status"]!="success":
+    return {"error":tx_esdt["error"],"status":"error"}
+
+  if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
+  rc["transaction_esdt"]=tx_esdt
+  rc["status"]="success"
+  return rc
+
+
 def get_network_instance(network:str):
   if type(network)==Network: return network
   _network=None
@@ -147,19 +171,37 @@ def get_network_from_address(addr:str):
 
 def get_storage_instance(platform="nftstorage",domain_server="http://localhost:4242/"):
   name=platform.lower().split("-")[0]
+  if name.startswith("storj"): return Storj(network=platform,domain_server=domain_server)
   if name.startswith("file"): return StoreFile(network=platform,domain_server=domain_server)
   if name.startswith("github"): return GithubStorage(platform=domain_server)
   if name.startswith("dao") or name=="db": return DAO(network=platform,domain_server=domain_server)
   if name.startswith("infura"):return Infura()
   if name.startswith("ipfs"):return IPFS(IPFS_SERVER)
+  if name.startswith("megaupload"):return MegaUpload(directory=domain_server)
   return NFTStorage()
 
 
-def create_account(email,network,domain_appli,dao,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True) -> Key:
+def create_account(email,network,domain_appli,histo,mail_new_wallet,mail_existing_wallet,dictionnary={},send_real_email=True,subject="") -> Key:
+  """
+  Créé un compte en multiréseau
+  :param email:
+  :param network:
+  :param domain_appli:
+  :param histo:
+  :param mail_new_wallet: {{network}} est remplacé par le nom du réseau
+  :param mail_existing_wallet:
+  :param dictionnary:
+  :param send_real_email:
+  :param subject:
+  :return:
+  """
   _network=get_network_instance(network)
   if _network.is_blockchain() and not is_email(email): return Key(address=email)
+  if not mail_new_wallet.endswith(".html"):mail_new_wallet=mail_new_wallet+".html"
+  mail_new_wallet=mail_new_wallet.replace("{{network}}",_network.network_name)
   key=_network.create_account(email=email,
-                              histo=dao,
+                              histo=histo,
+                              subject=subject,
                               domain_appli=domain_appli,
                               mail_new_wallet=mail_new_wallet,
                               mail_existing_wallet=mail_existing_wallet,
@@ -178,6 +220,7 @@ def transfer(addr:str,
              target_network_owner:str=None,
              target_network:str=None,
              collection:dict=None,
+             quantity=1,
              metadata_storage_platform="nftstorage"):
   """
   Transfer un NFT d'un réseau à un autre
@@ -210,13 +253,13 @@ def transfer(addr:str,
     _storage=get_storage_instance(metadata_storage_platform)
 
     rc=_target_network.mint(target_network_miner,nft.name,nft.description,collection,nft.attributes,_storage,nft.files,
-                    nft.supply,nft.royalties,nft.visual,nft.tags,nft.creators)
+                    quantity,nft.royalties,nft.visual,nft.tags,nft.creators)
     if rc["error"]=="":
       nft.address=rc["result"]["mint"]
-      get_network_instance(from_network).burn(addr,from_network_miner,1)
+      get_network_instance(from_network).burn(addr,from_network_miner,quantity=quantity)
     return rc
   else:
-    rc=_target_network.transfer(addr,from_network_miner,target_network_owner)
+    rc=_target_network.transfer(addr,from_network_miner,target_network_owner,quantity=quantity)
     return {"error":"probleme technique au transfert" if not rc else "","result":{"mint":nft.address}}
 
 
@@ -226,7 +269,7 @@ def transfer(addr:str,
 def mint(nft:NFT,miner:Key,owner,network:Network,
          offchaindata_platform:str="IPFS",
          domain_server=None,
-         operation=None,
+         operation=None,simulation=False,
          dao=None,encrypt_nft=False,price=0):
   """
   minage du NFT
@@ -272,6 +315,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
                      visual=nft.visual,
                      creators=nft.creators,
                      domain_server=domain_server,
+                  simulation=simulation,
                     price=price,
                     symbol=nft.symbol)
 
@@ -285,7 +329,7 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
       rc={"error":"Mint error: "+rc["error"],"hash":rc["hash"]}
 
   if miner.address!=owner:
-    tx_transfer=network.transfer(nft.address,miner,owner)
+    tx_transfer=network.transfer(nft.address,miner,owner,nft.supply)
     if not tx_transfer or len(tx_transfer["error"])>0:
       rc["error"]=tx_transfer["error"]
       return rc
@@ -325,7 +369,14 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
   #   }
 
   if ("result" in rc) and ("transaction" in rc["result"]) and (network.network!="file") and not dao is None:
-    dao.add_histo(request.args.get("ope",""),"mint",miner.address,collection["id"],rc["result"]["transaction"],network.network,"Minage")
+    dao.add_histo(
+      ope=request.args.get("ope",""),
+      command="mint",
+      addr=miner.address,
+      collection_id=collection["id"],
+      transaction_id=rc["result"]["transaction"],
+      network=network.network,
+      comment="Minage")
 
   return rc
 

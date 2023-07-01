@@ -1,13 +1,14 @@
-<app-splash *ngIf="showSplash"
-            [appname]="user!.appname"
+<app-splash
+            [appname]="appname"
+            [duration]="2500"
             [image]="visual"
             [description]="claim"></app-splash>
 
-<mat-toolbar class="mat-body-2" color="primary" *ngIf="user.toolbar_visible && !showSplash">
+<mat-toolbar class="mat-body-2" color="primary" *ngIf="user.toolbar_visible">
   <mat-icon (click)="drawer!.toggle()" *ngIf="device.isHandset$ | async">menu</mat-icon>
 
   <div *ngIf="!(device.isHandset$ | async) && network_service.online" style="margin-left: 10px;">
-      {{user!.appname}}<br>
+      {{user!.params!.appname}}<br>
       <small *ngIf="network_service.config.version?.length>0">v{{network_service.config.version | async}}</small>
   </div>
 
@@ -45,7 +46,7 @@
 </mat-toolbar>
 
 
-<mat-sidenav-container class="sidenav-container" *ngIf="!showSplash">
+<mat-sidenav-container class="sidenav-container">
   <mat-sidenav #drawer class="sidenav sidemenu"
                [attr.role]="(device.isHandset$ | async) ? 'dialog' : 'navigation'"
                [mode]="(device.isHandset$ | async) ? 'over' : 'side'"
@@ -57,10 +58,14 @@
               (select)="menuSelect($event)"></app-menu>
     <br><br>
 
-    <div style="width:100%;text-align: center;">
+    <div style="width:100%;text-align: left;margin:20px;">
       <mat-slide-toggle color="primary" (ngModelChange)="save_mode($event)" style="display: inline;"
                         [(ngModel)]="user.advance_mode">
         <small style="color: white;" *ngIf="full_menu">Avancé</small>
+      </mat-slide-toggle>
+<br><br>
+     <mat-slide-toggle color="primary" [(ngModel)]="user.theme_mode" (ngModelChange)="theme_mode($event)" style="display: inline;">
+        <small style="color: white;" *ngIf="full_menu">Dark mode</small>
       </mat-slide-toggle>
 
     </div>

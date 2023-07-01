@@ -8,11 +8,10 @@
 
 
 
-
 <table mat-table style="text-align: center;width:100%;" [dataSource]="rows" [title]="table">
     <ng-container *ngFor="let col of cols" [matColumnDef]="col">
       <div *ngIf="!col.startsWith('i_')">
-        <th mat-header-cell *matHeaderCellDef >{{col}}</th>
+        <th mat-header-cell class="color-primary" *matHeaderCellDef >{{col}}</th>
       </div>
       <div *ngIf="col.startsWith('i_')">
         <th mat-header-cell *matHeaderCellDef [title]="col.split('|')[1]">
@@ -21,7 +20,7 @@
           </mat-icon>
         </th>
       </div>
-      <td mat-cell *matCellDef="let element">{{truncate(element[col])}}</td>
+      <td mat-cell [title]="element[col]" *matCellDef="let element">{{truncate(element[col])}}</td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="cols"></tr>

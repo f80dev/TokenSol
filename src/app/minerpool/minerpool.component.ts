@@ -48,7 +48,6 @@ export class MinerpoolComponent implements OnInit {
 
   refresh(){
     this.network.get_minerpool().subscribe((r:any)=>{
-      debugger
       if(!this.showAll && r.length<10)this.showAll=true;
       this.asks=[];
       for(let ask of r){
@@ -78,7 +77,7 @@ export class MinerpoolComponent implements OnInit {
       if(all || (ask.dtWork && ask.dtWork>0)){
         this.network.delete_ask(ask.id).subscribe(()=>{
           i=i-1;
-          if((i==0 && all) || (i>0 && !all)){
+          if((i<=0 && all) || (i>0 && !all)){
             this.refresh();
           }
         });

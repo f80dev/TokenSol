@@ -1,0 +1,14 @@
+<div *ngIf="collections.length>0">
+    {{explain_message}}
+    <span *ngFor="let col of _collections">
+      <a [href]="col.link" target="_blank">{{col.name}}</a>,
+    </span>
+</div>
+
+<app-authent
+        *ngIf="show_authent"
+        [title]="title"
+        [network]="network"
+        (authent)="check_nft($event)"
+        [connexion]="connexion">
+</app-authent>

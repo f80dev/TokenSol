@@ -13,6 +13,8 @@ from os import listdir
 from os.path import exists
 from random import random
 from shutil import copyfile
+from xml.dom.minidom import parse, parseString, Document
+from xml.sax.xmlreader import XMLReader
 from zipfile import ZipFile
 
 import py7zr
@@ -21,8 +23,9 @@ import requests
 import yaml
 from PIL.Image import Image
 from bson import ObjectId
-from flask import request, jsonify, send_file, make_response, Blueprint, current_app
+from flask import request, jsonify, send_file, make_response, Blueprint, current_app, redirect
 from flask_jwt_extended import create_access_token
+from numpy import isnan
 from werkzeug.datastructures import FileStorage
 from yaml import dump, Dumper
 
@@ -44,7 +47,8 @@ from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, sen
   idx, generate_svg_from_fields, get_filename_from_content, queryPixabay, queryUnsplash, isLocal, is_email, get_hash, \
   apply_replace
 from flaskr.TransactionsGraph import TransactionsGraph
-from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation, create_account
+from flaskr.apptools import get_network_instance, get_nfts_from_src, mint, transfer, extract_keys_from_operation, \
+  create_account,  airdrop
 from flaskr.dao import DAO
 from flaskr.ipfs import IPFS
 from flaskr.secret import GITHUB_TOKEN, GITHUB_ACCOUNT, PERMS, SECRETS_FILE, SECRET_ACCESS_CODE, ADMIN_EMAIL, \
@@ -67,6 +71,48 @@ def update():
 def get_palettes():
   palette=json.load(open("./palettes.json","r"))
   return jsonify(palette)
+
+
+def create_sublevel(obj:dict,fields:str,value:str):
+  if fields.startswith("."):fields=fields[1:]
+  for k in fields.split("."):
+    if fields.endswith(k):    #on est sur la feuille
+      obj[k]=value
+      return obj
+    else:
+      if not k in obj: obj[k]=dict()
+      obj=create_sublevel(obj[k],fields.replace(k,"").replace("..","."),value)
+
+
+
+@bp.route('/upload_excel/',methods=["POST"])
+#http://127.0.0.1:4242/api/upload_batch/
+def api_upload_excel_file():
+  data=request.json["content"]
+  rows,n_rows=importer_file(data)
+  rc=list()
+  header=rows[0]
+  for row in rows[1:]:
+    obj=dict()
+
+    for j in range(len(header)):
+      if str(row[j])!="nan":
+        if row[j]=="oui":row[j]=True
+        if row[j]=="non":row[j]=False
+        k:str=header[j]
+        if not k.startswith("Unnamed"):
+          if k.startswith("params_to_add") or k=='support':
+            for l in row[j].split("\n"):
+              if "=" in l:
+                obj[l.split("=")[0]]=l.split("=")[1]
+              else:
+                log("Syntax error "+l)
+          else:
+            obj[k]=row[j]
+
+    rc.append(obj)
+
+  return jsonify(rc)
 
 
 
@@ -103,12 +149,15 @@ def api_upload_batch():
 
 
 @bp.route('/getyaml/<name>/')
+@bp.route('/getyaml/')
 @bp.route('/getyaml/<name>/<format>/')
 #http://127.0.0.1:4242/api/getyaml/calvi22/txt/?dir=Operations
-def getyaml(name:str,format=None):
+def getyaml(name:str="",format=None):
   dir=request.args.get("dir",current_app.config["STATIC_FOLDER"])
   dir=dir+("" if dir.endswith("/") else "/")
   if format is None: format=request.args.get("format","json")
+  if len(name)==0 and len(request.args.get("url",""))>0:
+    name=request.args.get("url").replace("{{domain_appli}}",current_app.config["DOMAIN_APPLI"]).replace("{{domain_server}}",current_app.config["DOMAIN_SERVER"])
 
   if name.startswith("b64:"):name=str(base64.b64decode(name[4:]),"utf8")
   if name.startswith("http"):
@@ -297,6 +346,24 @@ def generate_svg():
   return jsonify(rc)
 
 
+@bp.route('/short_link/',methods=["POST","GET"])
+@bp.route('/sl/<cid>',methods=["GET"])
+def api_short_link(cid=""):
+  dao=DAO(network=request.args.get("database","db-server-nfluent"))
+  if request.method=="POST":
+    cid=dao.create_link(request.json)
+    return jsonify({"cid":cid,"url":"https://s.f80.fr/"+cid})
+
+  if request.method=="GET":
+    body=dao.get_link(cid)
+    if (not "collection" in body or not body["collection"]) and body["price"]==0 :
+      log("Aucun critère de filtrage, on redirige directement")
+      if not body["redirect"].startswith("http"): body["redirect"]="https://"+body["redirect"]
+      return redirect(body["redirect"])
+    else:
+      return jsonify(body)
+
+
 @bp.route('/collections/<addresses>/')
 #test http://127.0.0.1:4242/api/collection/herve
 def api_get_collections(addresses:str):
@@ -304,14 +371,17 @@ def api_get_collections(addresses:str):
   retourne l'ensemble des collections appartenant à un utilisateur
   :return:
   """
+
   bl=get_network_instance(request.args.get("network","elrond-devnet"))
+  if ":" in addresses: addresses=Key(encrypted=addresses).address
   detail=(request.args.get("detail","true")=="true")
   operations=request.args.get("operations","canCreate")
+  limit=int(request.args.get("limit","200"))
 
   cols=[]
   for addr in addresses.split(","):
     filter_type=request.args.get("filter_type","")
-    cols=cols+bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations)
+    cols=cols+bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations,limit=limit)
 
   return jsonify(cols)
 
@@ -354,15 +424,16 @@ def get_sequence_collection():
 
   limit=int(request.json["limit"] or 10)
   log("Lancement de la génération de "+str(limit)+" images")
-  sequences=gen_seq.generate_sequences(limit=limit,_seed=seed)
+
+  sequences=[]
+  for idx,item in enumerate(gen_seq.generate_sequences(limit=limit,_seed=seed)):
+    item={"index":idx,"items":item}
+    sequences.append(item)
   return jsonify({"sequences":sequences})
 
 
 @bp.route('/get_composition/',methods=["POST"])
 def get_composition():
-
-  work_dir=current_app.config["UPLOAD_FOLDER"]
-
   name=request.args.get("name","mycollection").replace(".png","")
   gen=ArtEngine(name=name,
                 work_dir=current_app.config["UPLOAD_FOLDER"],
@@ -370,11 +441,12 @@ def get_composition():
                 )
   data=request.json["data"]
   size=request.json["size"].split("x")
-  platform=request.json["platform"]
+
   format=request.json["format"]
   sequences=request.json["items"]
+  if type(sequences)!=list: sequences=[sequences]
   if len(sequences)==0: return returnError("Liste vide")
-  if type(sequences[0])!=list: sequences=[sequences]
+  #if type(sequences["items"][0])!=list: sequences=[sequences]
 
   log("Traitement de la data")
   if type(data)!=dict:
@@ -386,55 +458,63 @@ def get_composition():
   urls=[]
   direct=[]
   files=[]
+  indexes=[]
   for i,seq in enumerate(sequences):
-    image=gen.compose(seq,width=int(size[0]),height=int(size[1]),ext="webp",data=data,replacements={"__idx__":str(i)})
+    image=gen.compose(seq["items"],width=int(size[0]),height=int(size[1]),ext="webp",data=data,replacements={"__idx__":str(seq["index"])})
+    filename=image.get_filename()
+    files.append(filename)
+    indexes.append(seq["index"])
+
     if "base64" in format:
       b64=image.toBase64(format="webp")
       direct.append(b64)
 
-    if "files" in format:
-      filename=image.get_filename()
+    if "files" in format or "zip" in format:
       if not exists(current_app.config["UPLOAD_FOLDER"]+filename): image.save(current_app.config["UPLOAD_FOLDER"]+filename)
       urls.append(current_app.config["DOMAIN_SERVER"]+"/api/images/"+filename)
-      files.append(filename)
 
-  return jsonify({"images":direct,"urls":urls,"files":files})
+  return jsonify({"images":direct,"urls":urls,"files":files,"indexes":indexes})
 
 
 
 @bp.route('/create_zip/',methods=["POST"])
-def create_zip():
-
+def api_create_zip():
   email=request.json["email"]
   files=request.json["files"]
 
-  copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection","./README")
+  copyfile(current_app.config["STATIC_FOLDER"]+"README_forzipcollection",current_app.config["UPLOAD_FOLDER"]+"/README")
   files.append("README")
 
   filename="collection.7z"
-  archive_file=open(current_app.config["UPLOAD_FOLDER"]+filename,"wb") if is_email(email) else BytesIO()
+  archive_file=open(current_app.config["UPLOAD_FOLDER"]+filename,"wb") if not is_email(email) else BytesIO()
   with py7zr.SevenZipFile(archive_file, 'w') as archive:
     for f in files:
       if exists(current_app.config["UPLOAD_FOLDER"]+f):
         archive.write(current_app.config["UPLOAD_FOLDER"]+f)
 
+  archive_file.close()
+  url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
+
   if is_email(email):
-    archive_file.close()
-    url_file=current_app.config["DOMAIN_SERVER"]+"/api/files/"+filename
-    send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection")
+    send_mail(open_html_file("mail_nft_collection",{"url_collection":url_file}),email,subject="Votre collection",attach=archive_file)
     return jsonify({"message":"mail contenant la collection envoyé a "+email})
-  # else:
-  #   archive_file.seek(0)
-  #   return send_file(archive_file,as_attachment=True,download_name="collection.7z")
+  else:
+    return jsonify({"zipfile":url_file})
 
 
 
 
 @bp.route('/send_bill/',methods=["POST"])
-def send_bill():
+def api_send_bill():
   body=request.json
   model="mail_facture.html" if not "model" in body else body["model"]
-  replacements={"amount":body["amount"],"label":body["label"],"message":body["message"]}
+  replacements={
+    "amount":body["amount"],
+    "reference":body["reference"],
+    "message":body["message"],
+    "description":body["description"],
+    "contact":body["contact"]
+  }
   rc=send_mail(open_html_file(model,replace=replacements,domain_appli=current_app.config["DOMAIN_APPLI"]),
             _to=body["dest"],subject=body["subject"])
   return jsonify({"message":"Facture envoyé"})
@@ -562,19 +642,23 @@ def get_collection(limit=100,format=None,seed=0,size=(500,500),quality=100,data=
 
 
 
-@bp.route('/send_photo_for_nftlive/<conf_id>/',methods=['POST'])
+
 @bp.route('/send_photo_for_nftlive/',methods=['POST'])
 def send_photo_for_nftlive(conf_id:str=""):
+  conf=request.json["config"]
+  log("Chargement de la configuration"+str(conf))
+  if type(conf)==str:
+    confs=configs(conf,format="dict",dictionnary={"DOMAIN_APPLI":current_app.config["DOMAIN_APPLI"]})
+    if len(confs)==0:
+      return returnError("Configuration "+conf+" introuvable")
+    else:
+      config=confs[0]
+  if type(conf)==dict: config=conf
 
-  if len(conf_id)==0:
-    conf=request.json["config"]
-    if type(conf)==str:
-      confs=configs(conf,format="dict",dictionnary={"DOMAIN_APPLI":current_app.config["DOMAIN_APPLI"]})
-      if len(confs)==0:
-        return returnError("Configuration "+conf_id+" introuvable")
-      else:
-        config=confs[0]
-    if type(conf)==dict: config=conf
+  dyna_fields=dict()
+  for field in request.json["dynamic_fields"] if "dynamic_fields" in request.json else []:
+    dyna_fields[field["name"]]=field["value"]
+
 
   image=request.json["photo"] if "photo" in request.json else None
   if type(image)==dict:
@@ -588,20 +672,19 @@ def send_photo_for_nftlive(conf_id:str=""):
   seed=request.json["seed"] if "seed" in request.json else 0
   format=request.json["format"]
 
-  dyna_fields=dict()
-  for field in request.json["dynamic_fields"] if "dynamic_fields" in request.json else []:
-    dyna_fields[field["name"]]=field["value"]
-
   nft=ArtEngine()
   nft.reset()
 
-  nft.add(Layer("maphoto"+now("hex")))
-  nft.add_image_to_layer("maphoto"+now("hex"),image)
+  log("Création de la config")
+  layer_name="maphoto"+now("hex")
+  nft.add(Layer(layer_name))
+  nft.add_image_to_layer(layer_name,image)
 
   for layer in config["layers"]:
     if not "name" in layer: layer["name"]="layer_"+now("hex")
-    nft.add(Layer(object=layer,elements=layer["elements"]))
+    nft.add(Layer(object=layer,elements=layer["elements"],replacements=dyna_fields))
 
+  log("Génération des séquences")
   width=int(dim.split("x")[0])
   height=int(dim.split("x")[1])
   seqs=nft.generate_sequences(limit=limit,_seed=seed)
@@ -609,6 +692,7 @@ def send_photo_for_nftlive(conf_id:str=""):
 
   seq_idx:[int]=request.json["sequences"] if "sequences" in request.json else range(len(seqs))
 
+  log("Préparation de la réponse")
   for i in seq_idx:
     if i<len(seqs):
       stickers.append(nft.compose(seqs[i],width=width,height=height,data=data,replacements=dyna_fields))
@@ -663,18 +747,38 @@ def appli_configs():
 
 
 @bp.route('/infos/')
+@bp.route('/info/')
+@bp.route('/info_server/')
 #test http://127.0.0.1:4242/api/infos/
 #test http://75.119.159.46:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
 #test https://api.nfluent.io:4242/api/infos/
 def infos():
   dao=DAO(config=current_app.config)
+
+  files=[]
+  total=0
+  dir=current_app.config["UPLOAD_FOLDER"]
+  for f in os.listdir(dir):
+    total=total+os.path.getsize(dir+f)
+    dt=os.path.getmtime(dir+f)
+    files.append({
+      "name":f,
+      "size":int(os.path.getsize(dir+f)/1024),
+      "date":datetime.datetime.fromtimestamp(dt).strftime("%d/%m/%y"),
+      "delay":int((now()-dt)/(3600*24))
+    })
   rc={
     "Server":current_app.config["DOMAIN_SERVER"],
     "Client":current_app.config["DOMAIN_APPLI"],
     "Database_Server":current_app.config["DB_SERVER"],
     "Database_Name":current_app.config["DB_NAME"],
-    "Upload_Folder":current_app.config["UPLOAD_FOLDER"],
+    "Upload_Folder":dir,
+    "Fontes_Folder":"./Fonts",
+    "Configs_Folder":"./Configs",
+    "Operations_Folder":"./Operations",
+    "Uploaded_files":files,
+    "Uploaded_size":int(total/1024),
     "Activity_Report":current_app.config["ACTIVITY_REPORT"],
     "Static_Folder":current_app.config["STATIC_FOLDER"],
     "Menu":current_app.config["MENU"],
@@ -686,6 +790,7 @@ def infos():
     "PLATFORMS":current_app.config["PLATFORMS"],
     "NETWORKS":current_app.config["NETWORKS"]
     }
+
   return jsonify(rc)
 
 
@@ -705,6 +810,38 @@ def get_nft_from_db():
 #http://127.0.0.1:4242/api/test
 def test():
   pass
+
+
+
+@bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
+def api_refund(address:str,amount:str="1",token="egld"):
+  _network=get_network_instance(request.json["network"])
+  _miner=Key(obj=request.json["bank"])
+  histo=DAO(network=request.json["histo"]) if "histo" in request.json else None
+  limit=int(request.json["limit"]) if "limit" in request.json and not histo is None else 0
+  email=""
+
+  if is_email(address):
+    email=address
+    _token=_network.get_token(token)
+    key=_network.create_account(address,domain_appli=current_app.config["DOMAIN_APPLI"],
+                                 subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account",histo=histo)
+    address=key.address
+
+  tx_esdt=airdrop(address=address,token=token,_miner=_miner,amount=amount,histo=histo,limit=limit,network=request.json["network"])
+  if tx_esdt["status"]=="error": return jsonify(tx_esdt)
+
+  if tx_esdt["status"]=="success" and len(email)>0:
+    send_mail(open_html_file("mail_refund",{"token":_token["name"],"amount":str(amount)}),email,subject="Don de "+_token["name"])
+
+  #Si le client n'a aucun egld on lui en envoi afin de payer les frais de réseau
+  if _network.get_account(address).balance<_network.get_min_gas_for_transaction(3):
+    tx_egld=_network.transfer_money("egld",_miner,address,_network.get_min_gas_for_transaction(4),"Dons en Egld pour paiement des frais de gaz")
+    tx_esdt["transaction_egld"]=tx_egld
+
+  return jsonify(tx_esdt)
+
+
 
 
 
@@ -943,11 +1080,17 @@ def api_update_access_code(email:str,access_code:str,new_access_code:str):
 
 
 @bp.route('/tokens/<addr>/',methods=["GET"])
+@bp.route('/tokens/',methods=["GET"])
 def tokens(addr:str=""):
   if request.method=="GET":
+    _network=get_network_instance(request.args.get("network"))
     if len(addr)>0:
-      _network=get_network_instance(request.args.get("network"))
       return _network.get_token(addr)
+    else:
+      return _network.get_tokens(filter=request.args.get("filter",""),
+                                 _type=request.args.get("type","Fungible"),
+                                 with_detail=(request.args.get("with_detail","false")=="true"),
+                                 limit=int(request.args.get("type","200")))
 
 
 @bp.route('/transfer/',methods=["POST"])
@@ -959,6 +1102,7 @@ def transfer_to():
   """
 
   nft_addr=request.json["token_id"]
+  quantity=request.json["quantity"] if "quantity" in request.json else 1
 
   from_network=get_network_instance(request.json["from_network"])
   to_network=get_network_instance(request.json["to_network"])
@@ -967,13 +1111,13 @@ def transfer_to():
   if is_email(to):
     key_to=to_network.create_account(to,domain_appli=current_app.config["DOMAIN_APPLI"],
                               subject="Ouverture de votre compte pour votre NFT",
-                              mail_new_wallet=request.json["mail_content"]
+                              mail_new_wallet=request.json["mail_content"],
+                                     histo=DAO(config=current_app.config)
                               )
     to=key_to.address
 
   key_target_miner=request.json["target_miner"]
-
-  target_miner=to_network.find_key(key_target_miner) if type(key_target_miner)==str else Key(obj=key_target_miner)
+  target_miner=Key(encrypted=key_target_miner["encrypt"])
 
   key_from_miner=request.json["from_miner"]
   from_miner=to_network.find_key(key_from_miner) if type(key_from_miner)==str else Key(obj=key_from_miner)
@@ -989,7 +1133,8 @@ def transfer_to():
               collection=collection,
               from_network=from_network.network,
               target_network=to_network.network,
-              target_network_miner=target_miner)
+              target_network_miner=target_miner,
+              quantity=quantity)
 
   #Création des comptes
   # if "solana" in to_network:
@@ -1088,14 +1233,13 @@ def action():
           tx_log=tx["error"] if len(tx["error"])>0 else tx["result"]["transaction"]
 
           DAO(config=current_app.config).add_histo(
-            operation["id"],
-            "update_nft",
-            keyfile,
-            "",
-            tx_log,
-            body["network"],
-            "MAJ du lien data offchain par "+body["operateur"],
-            [body["token"],body["operateur"]]
+            ope=operation["id"],
+            command="update_nft",
+            addr=keyfile,
+            transaction_id=tx_log,
+            network=body["network"],
+            comment="MAJ du lien data offchain par "+body["operateur"],
+            params=[body["token"],body["operateur"]]
           )
 
           if len(tx["error"])>0: return jsonify({"error":"2","message":tx["error"]})
@@ -1103,13 +1247,14 @@ def action():
           log("Modification direct du fichier")
           if section_method["storage"]=="github":
             rc=GithubStorage(section_method["repository"],"main",GITHUB_ACCOUNT,GITHUB_TOKEN).add(body["offchain"],body["uri"],True)
-            DAO(config=current_app.config).add_histo(operation["id"],
-                          "update_metadata_file",
-                          GITHUB_ACCOUNT,"",
-                          rc,
-                          operation["network"],
-                          "MAJ direct du data offchain",
-                          [body["token"]]
+            DAO(config=current_app.config).add_histo(
+                          ope=operation["id"],
+                          command="update_metadata_file",
+                          addr=GITHUB_ACCOUNT,
+                          transaction_id=rc,
+                          network=operation["network"],
+                          comment="MAJ direct du data offchain",
+                          params=[body["token"]]
                           )
 
         return jsonify({
@@ -1139,6 +1284,17 @@ def analyse_operation(ope):
         if account.balance<0.1: ope["warning"]="Balance du miner très faible"
 
   return ope
+
+
+@bp.route('/yaml/',methods=["GET"])
+def api_get_yaml():
+  url=request.args.get("file")
+  req=requests.get(url)
+  if req.status_code==200:
+    return jsonify(yaml.load(req.text,Loader=yaml.FullLoader))
+  else:
+    return returnError("Fichier "+url+" introuvable")
+
 
 
 @bp.route('/operations/',methods=["GET","POST"])
@@ -1658,7 +1814,11 @@ def mint_for_contest(confirmation_code=""):
 
   if len(rc["error"])==0:
     if not _ope is None:
-      dao.add_histo(_ope["id"],"mint",account,nft.collection["name"],rc["result"]["transaction"],_ope["network"],"minage pour loterie")
+      dao.add_histo(command="mint",
+                    addr=account,ope=_ope["id"],
+                    transaction_id=rc["result"]["transaction"],
+                    network=_ope["network"],
+                    comment="minage pour loterie")
 
     DAO(_data["domain"],_data["dbname"]).update(_data.toJson(),"quantity")
 
@@ -1788,6 +1948,37 @@ def api_users(email=""):
   _network=get_network_instance(request.args.get("network","elrond-devnet"))
   u=dao.get_user(email,access_code,network_for_keys=_network.network)
 
+# test : http://localhost:4242/api/canvas/
+@bp.route('/canvas/',methods=["GET"])
+def api_canvas():
+  svg_url=request.args.get("svg","https://raw.githubusercontent.com/f80dev/NGallery/master/src/assets/canvas.svg")
+  svg_code=requests.get(svg_url).text
+  document:Document=parseString(svg_code)
+  zone=None
+
+  new_width=request.args.get("width","")
+  new_height=request.args.get("height","")
+  if len(new_width)>0 and len(new_height)>0:
+    document.documentElement._attrs["width"].value=new_width
+    document.documentElement._attrs["height"].value=new_height
+  else:
+    w=int(document.documentElement._attrs["width"].value)
+    h=int(document.documentElement._attrs["height"].value)
+
+    for rect in document.getElementsByTagName("rect"):
+      props=rect._attrs
+      if "id" in props and props["id"].value=="NFT":
+        zone={
+          "left":str(100*float(props["x"].value)/w)+"vw",
+          "top":str(100*float(props["y"].value)/h)+"vh",
+          "size":str(100*float(props["height"].value)/h)+"vh"
+        }
+
+  return jsonify({"zone":zone,"svg":document.toxml()})
+
+
+
+
 
 
 
@@ -1808,8 +1999,8 @@ def keys(name:str=""):
   """
   dao=DAO(config=current_app.config)
 
-  network=request.args.get("network","")
-  if len(network)==0: return returnError("Le réseau doit être précisé")
+  network=request.args.get("network","").strip()
+  if network=="undefined" or len(network)==0: return returnError("Le réseau doit être précisé")
   _network=get_network_instance(network)
 
   if request.method=="GET":
@@ -1822,6 +2013,7 @@ def keys(name:str=""):
       for k in keys:
         item=k.__dict__
         item["balance"]=_network.get_balance(k.address,request.args.get("token_id",""))
+        if item["balance"] is None:item["balance"]=0
         items.append(item)
     else:
       items=[key.__dict__ for key in keys]
@@ -1843,7 +2035,11 @@ def keys(name:str=""):
     else:
       email=obj["email"]
 
-      key:Key=create_account(email,dao=dao,network=_network.network,
+    subject=obj["subject"] if "subject" in obj else "NFLUENT"
+
+    key:Key=create_account(email,
+                             histo=dao if not request.json["force"] else None,
+                             network=_network.network,subject=subject,
                               domain_appli=current_app.config["DOMAIN_APPLI"],
                               mail_new_wallet=obj["mail_new_wallet"] if "mail_new_wallet" in obj else None,
                               mail_existing_wallet=obj["mail_existing_wallet"] if "mail_existing_wallet" in obj else None
@@ -1851,7 +2047,12 @@ def keys(name:str=""):
 
     #dao.add_key_to_user(obj["email"],obj["access_code"],_network.network,secret_key,name)
 
-  return jsonify({"message":"ok","address":key.address,"explorer":_network.getExplorer(key.address,"address"),"secret_key":key.secret_key})
+  return jsonify({"message":"ok",
+                  "address":key.address,
+                  "explorer":_network.getExplorer(key.address,"address"),
+                  "secret_key":key.secret_key,
+                  "encrypt":key.encrypt()
+                  })
 
 #
 #
@@ -1913,12 +2114,17 @@ def get_image(cid:str=""):
       if cid.startswith("db_"):
         r=DAO(cid=cid).get(cid)
         if not r is None:
-          if "content" in r and "base64," in r["content"]:
-            data=r["content"]
-            format=data.split("base64,")[0].replace("data:","")
-            f=BytesIO(base64.b64decode(data.split("base64,")[1]))
+          if type(r)==dict:
+            if "content" in r and "base64," in r["content"]:
+              data=r["content"]
+              format=data.split("base64,")[0].replace("data:","")
+              f=BytesIO(base64.b64decode(data.split("base64,")[1]))
+            else:
+              return jsonify(r)
           else:
-            return jsonify(r)
+            f=BytesIO(r)
+            format="application/octet"
+
         else:
           return returnError("Image introuvable")
       else:
@@ -1951,7 +2157,8 @@ def get_image(cid:str=""):
 
   if request.method=="DELETE":
     if "/api/images/" in cid:cid=cid.split("/api/images/")[1].split("?")[0]
-    if exists(current_app.config["UPLOAD_FOLDER"]+cid):rc=os.remove(current_app.config["UPLOAD_FOLDER"]+cid)
+    if exists(current_app.config["UPLOAD_FOLDER"]+cid):
+      rc=os.remove(current_app.config["UPLOAD_FOLDER"]+cid)
     return "Ok",200
 
 
@@ -2121,7 +2328,7 @@ def encrypt_key(network:str):
     if len(address)==0: address=get_network_instance(network).toAddress(secret_key)
     key=Key(name=name,secret_key=secret_key,network=network,address=address)
 
-  return jsonify({"encrypt":key.encrypt(),"address":key.address,"private_key":key.encrypt(True)})
+  return jsonify({"encrypt":key.encrypt(),"address":key.address})
 
 
 
@@ -2166,6 +2373,20 @@ def send_transaction_confirmation(email:str):
 @bp.route('/extract_zip/',methods=["POST"])
 def extract_zip():
   pass
+
+
+@bp.route('/account_settings/<address>',methods=["POST","GET"])
+def api_account_settings(address:str):
+  dao=DAO(config=current_app.config)
+  if request.method=="POST":
+    dao.set_account_settings(address,request.json)
+    return jsonify({"message":"collections a exclure ajoutées"})
+
+  if request.method=="GET":
+    settings=dao.get_account_settings(address)
+    if settings is None:settings=dict()
+    return jsonify(settings)
+
 
 
 @bp.route('/upload/',methods=["POST"])
@@ -2223,8 +2444,6 @@ def upload():
     body["type"]="image/png"
 
 
-
-
   #TODO: probablement a revoir
   # if body["type"].startswith("image/zip"):
   #   rc=[]
@@ -2238,6 +2457,7 @@ def upload():
   #       },platform))
 
   rc=upload_on_platform(body,platform,
+                        api_key=request.args.get("api_key",""),
                         domain_server=current_app.config["DOMAIN_SERVER"],
                         upload_dir=current_app.config["UPLOAD_FOLDER"])
 
@@ -2276,15 +2496,18 @@ def api_create_collection():
   """
   _data=request.json
   network=request.args.get("network","elrond-devnet")
+  simulation=(request.args.get("simulation","false")=="true")
 
   _net=get_network_instance(network) #DAO(config=current_app.config).get_user_from_access_code(request.args.get("access_code"))
 
   miner=Key(obj=_data["owner"])
 
   solde=_net.balance(miner.address)
-  collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"])
+  collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"],simulation=simulation)
   if collection is None:
-    return returnError("Cette collection existe déjà")
+    return returnError("Probleme de création de la collection "+_data["name"]+". Vérifier notamment son nom qui doit être unique")
+
+  if simulation: return jsonify({"simulation":"ok"})
 
   new_collection=_net.get_collection(collection["id"])
   new_solde=_net.balance(miner.address)
@@ -2539,7 +2762,7 @@ def api_mint():
             network=network,
             offchaindata_platform=offchaindata_platform,
             domain_server=current_app.config["DOMAIN_SERVER"],
-            dao=dao,
+            dao=dao,simulation=(request.args.get("simulation","false")=="true"),
             encrypt_nft=(request.args.get("encrypt_nft")=="true"))
   except Exception as inst:
     return returnError(inst)
@@ -2735,9 +2958,15 @@ def validators(validator=""):
           nfts.append(nft)
       owners=[x.owner for x in nfts]
     else:
-      log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
-      elrond=Elrond(request.json["network"])
-      owners=list(set([x.owner for x in elrond.get_nfts_from_collections(ask_for.split(","))]))
+      if ask_for=="":
+        owners=[]
+      else:
+        log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
+        _network=get_network_instance(request.json["network"])
+        owners=[]
+        for nft in _network.get_nfts_from_collections(ask_for.split(",")):
+          for owner in nft.balances.keys():
+            if nft.balances[owner]>0 and not owner in owners: owners.append(owner)
 
     return jsonify({
       "access_code":access_code,
@@ -2824,6 +3053,98 @@ def api_search_image():
   return jsonify({"images":rc})
 
 
+@bp.route('/airdrops/',methods=["POST","GET"])
+def api_airdrops():
+  body=request.json
+  if request.method=="POST":
+    dao=DAO(config=current_app.config)
+    body["network"]=body["network"]["value"]
+    if type(body["token"])==dict: body["token"]=body["token"]["identifier"]
+    airdrop_id=str(dao.add_airdrop(body))
+
+    if "polygon" in body["network"]:
+      code_to_insert="""
+            <script>
+           let wallet=window.ethereum;
+           if(wallet) {wallet.enable().then((acc)=>{fetch(__server__,{headers:{'Content-Type':'application/json'},method:'POST',body:JSON.stringify({program:__program__,ts:Date.now().toString(),address:acc[0]})}).then(()=>{})})}}
+           </script>
+      """
+    else:
+      #voir https://hackernoon.com/how-to-interact-with-the-elrond-blockchain-in-a-simple-static-website
+      code_to_insert="""
+      <script>        
+		async function send_airdrop(addr){
+		  if(Math.random()>__random__){
+            let resp=await fetch(__server__,{headers:{'Content-Type':'application/json'},method:'POST',
+                body:JSON.stringify({program:__program__, ts:Date.now(), address:addr})});
+            
+            if(resp.status==200){
+              let r=await resp.json();
+              if(__showdeal__ && r.status!='error'){
+                      const img = document.createElement('img');
+                      img.src='https://airdrop.nfluent.io/assets/gift.webp';
+                      img.style='position:fixed;left:0;top:0;width:50px;height:50px;';
+                      document.body.appendChild(img);
+                      setTimeout(()=>{document.body.removeChild(img);},2000);
+                    }
+            }        
+          }
+		}
+
+		if(!localStorage.getItem("address")) {
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://airdrop.nfluent.io/login';
+            iframe.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;width:550px;height:500px;'
+            document.body.appendChild(iframe);
+
+            window.addEventListener('message', (event) => {
+                let address=event.data['address'];
+                if (address){
+                    localStorage.setItem('address',address);
+	                document.body.removeChild(iframe);
+	                send_airdrop(address);
+                }
+            })
+        }else{
+          setTimeout(()=>{send_airdrop(localStorage.getItem("address"))},__delay__);
+		}
+
+	</script>
+
+      """
+    code_to_insert=code_to_insert.replace("__server__","\""+current_app.config["DOMAIN_SERVER"]+"/api/visit/\"").replace("__program__","\""+airdrop_id+"\"")
+    code_to_insert=code_to_insert.replace("__delay__",str(body["authent_delay"]*1000)).replace("__random__",str(1-int(body["random"])/100))
+    code_to_insert=code_to_insert.replace("__showdeal__","true" if body["show_deal"] else "false").replace(";\n",";").replace("\t","")
+
+    for i in range(20):
+      code_to_insert=code_to_insert.replace("  "," ")
+
+    params={
+      "bank.network":body["network"],
+      "bank.token":body["token"],
+      "bank.miner":body["dealer_wallet"],
+      "bank.refund":body["amount"],
+      "bank.limit":body["limit_by_day"]
+    }
+
+  return jsonify({"code":code_to_insert,"params":params})
+
+
+@bp.route('/visit/',methods=["POST"])
+def api_visit():
+  body=request.json
+  dao=DAO(config=current_app.config)
+  program=dao.get_airdrop(body["program"])
+  if not program is None:
+    rc=airdrop(body["address"],program["token"],
+               Key(encrypted=program["dealer_wallet"]),float(program["amount"]),histo=dao,
+               limit=float(program["limit_by_day"]),network=program["network"])
+  else:
+    log("Appel d'un programme d'airdrop inconnu")
+    rc={"error":"Program "+body["program"]+" inconnu ou obsolete","status":"error"}
+
+  return jsonify(rc)
+
 
 
 @bp.route('/remove_background/',methods=["POST"])
@@ -2834,17 +3155,16 @@ def api_remove_background():
   :return:
   """
   work_dir=current_app.config["UPLOAD_FOLDER"]
-  input:Image=Sticker(image=request.json["image"],work_dir=work_dir).image
+  input:Image=Sticker(image=request.json["file"],work_dir=work_dir).image
   domain_server=current_app.config["DOMAIN_SERVER"]
   if not isLocal(domain_server):
     log("Lancement de la suppression du fond")
     import rembg
     output=rembg.remove(input)
+    log("Fin de traitement")
     return jsonify({"image":Sticker(image=output,work_dir=work_dir).toBase64()})
   else:
     return jsonify({"image":Sticker(image=input,work_dir=work_dir).toBase64(),"error":"Impossible de supprimer le fond depuis windows"})
-
-
 
 
 
@@ -2878,17 +3198,16 @@ def scan_for_access():
 #voir https://metaboss.rs/burn.html
 #http://127.0.0.1:9999/api/burn/?account=GwCtQjSZj3CSNRbHVVJ7MqJHcMBGJJ9eHSyxL9X1yAXy&url=
 #TODO: ajouter les restrictions d'appel
-@bp.route('/burn/')
-def burn():
-  account=request.args.get("account")
-  keyfile=request.args.get("keyfile")
-  delay=request.args.get("delay","1.0")
-  network=request.args.get("network","solana-devnet")
+@bp.route('/burn/',methods=["POST"])
+def api_burn():
+  address=request.args.get("nft_addr")
+  quantity=int(request.args.get("quantity","1"))
+  miner=Key(obj=request.json["miner"])
 
-  if "elrond" in network:
-    rc=Elrond(network).burn(keyfile,account)
-  # else:
-  #   rc=Solana(network).exec("burn one",account=account,keyfile=keyfile,delay=int(delay))
+  _network=get_network_instance(request.args.get("network",""))
+  rc=_network.burn(address,miner,quantity=quantity,backup_address="erd1w5rdhzmmu890kry09etqzqp66uyyx6dg6uzgdmt7e860xq2v072sskjgha")
 
-  return jsonify(rc)
-
+  if rc["error"]=="":
+    return jsonify({"message":"burn de "+address})
+  else:
+    return jsonify({"error":rc["error"]})

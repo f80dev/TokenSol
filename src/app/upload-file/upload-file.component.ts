@@ -28,7 +28,8 @@ export class UploadFileComponent implements OnInit, OnChanges {
   @Output("uploaded") onupload: EventEmitter<any> = new EventEmitter();
   @Output("canceled") oncancel: EventEmitter<any> = new EventEmitter();
   @Input("extensions") extensions: string = "*"; //format: accept=".doc,.docx"  ou "accept="audio/*"
-  style_border: any = {padding:0,margin:0,width:'150px',height:'37px',display:'inline-block',position:"relative",border: 'none', background: 'none'}
+  style_border: any = {padding:0,margin:0,height:'37px',display:'inline-block',position:"relative",border: 'none', background: 'none'}
+  @Input() src="";
 
 
   constructor(
@@ -40,7 +41,7 @@ export class UploadFileComponent implements OnInit, OnChanges {
   refresh(){
     if(this.icon.length>0 && this.zone==false){
       this.width="min-content";
-      this.style_border="display:inline;"
+      this.style_border["display"]="inline"
     }
     if(this.zone){
       this.style_border={position:"relative",border:"dashed red",height:this.height}

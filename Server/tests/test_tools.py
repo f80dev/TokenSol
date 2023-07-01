@@ -9,9 +9,10 @@ from flaskr.NFT import NFT
 MAIN_POLYGON_ACCOUNT="0xa617546acC33A600f128051455e6aD2a628f4a79" #faucet https://mumbaifaucet.com/ et
 MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  #nfluent voir http://127.0.0.1:4200/collections?owner=erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt&network=elrond-devnet
 MAIN_NETWORK = "elrond-devnet"
+NFLUCOIN="NFLUCOIN-4921ed"
 MAIN_MINER="bob"
 
-NETWORKS=["db-server-nfluent_test","polygon-devnet","elrond-devnet","file-testnet"]
+NETWORKS=["db-server-nfluent_test","elrond-devnet","polygon-devnet"]
 PLATFORMS=["db-server-nfluent_test","nftstorage","file","infura"] #ipfs
 MAIN_STORAGE_PLATFORM=PLATFORMS[0]
 

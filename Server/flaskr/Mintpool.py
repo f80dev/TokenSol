@@ -12,6 +12,7 @@ class Mintpool:
 	def __init__(self,config=None):
 		self.config=config
 		self.pool=DAO(config=config).db["mintpool"]
+		log("Mise en place de la mintPool sur "+str(config))
 
 	def get_mintpool(self):
 		return list(self.pool.find())
@@ -155,17 +156,23 @@ class Mintpool:
 		
 					nft_to_mint=None
 					_target_network=get_network_instance(ask["target"]["network"])
-					_target_miner=_target_network.find_key(ask["target"]["miner"]) if type(ask["target"]["miner"])==str else Key(obj=ask["target"]["miner"])
+					if len(ask["target"]["miner"])>100:
+						_target_miner=Key(encrypted=ask["target"]["miner"])
+					else:
+						_target_miner=_target_network.find_key(ask["target"]["miner"]) if type(ask["target"]["miner"])==str else Key(obj=ask["target"]["miner"])
 
 					_from_network=get_network_instance(src["connexion"])
-					_from_miner:Key=_from_network.find_key(src["miner"]) if type(src["miner"])==str else Key(obj=src["miner"])
+					if len(src["miner"])>100:
+						_from_miner=Key(encrypted=src["miner"])
+					else:
+						_from_miner:Key=_from_network.find_key(src["miner"]) if type(src["miner"])==str else Key(obj=src["miner"])
 		
 					if len(nfts)>0:
 						log("Tirage au sort d'un NFT parmis la liste de "+str(len(nfts)))
 		
 						for _try in range(20):
 							nft_to_mint:NFT=random_from(nfts)
-							if nft_to_mint.balances[_from_miner.address]>0: break
+							if _from_miner.address in nft_to_mint.balances and nft_to_mint.balances[_from_miner.address]>0: break
 
 						if nft_to_mint.balances[_from_miner.address]==0:
 
@@ -210,7 +217,7 @@ class Mintpool:
 							            target_network_miner=_target_miner,
 							            from_network=_from_network.network,
 							            target_network=_target_network.network,
-							            target_network_owner=dest.address,
+							            target_network_owner=dest,
 							            collection={"id":ask["target"]["collection"]})
 
 							if not rc or rc["error"]!="":

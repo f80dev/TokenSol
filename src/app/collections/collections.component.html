@@ -1,120 +1,185 @@
 <div class="mainform">
 
+    <div class="titleform" *ngIf="miner">
+        Gestion des collections de <strong>{{miner!.address | alias}}</strong> sur <strong>{{network.network}}</strong>
+    </div>
 
-    <div class="titleform">Gestion des collections de <strong>{{user.addr | alias}}</strong> sur <strong>{{network.network}}</strong></div>
+    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;">
+        <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
+        <div class="expansion-content">
+            <app-input [value]="new_collection.name" (valueChange)="new_collection.name=$event"
+                       id="txtCollectionName" style="max-width: 200px"
+                       label="Nom de la collection" maxlength="20"
+                       help="Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux ou espace"></app-input>
 
-    <mat-expansion-panel [expanded]="false" style="width: 96%;margin:2%;" *ngIf="!network.isPolygon()">
-      <mat-expansion-panel-header>Fabriquer une collection</mat-expansion-panel-header>
-      <div style="width: fit-content;display: flex;flex-wrap:wrap;margin-left: 15px;">
-        <app-input [value]="new_collection.name" (valueChange)="new_collection.name=$event"
-                   id="txtCollectionName" style="max-width: 200px"
-                   label="Nom de la collection" maxlength="20"
-                   help="Le nom doit avoir entre 3 et 20 caractères, aucun caractère spéciaux ou espace"></app-input>
+            <div *ngIf="network.isElrond()">
+                <app-input [value]="new_collection.type" (valueChange)="new_collection.type=$event"
+                           [options]="types_collection" value_field="value"
+                           label="Type de collection" ></app-input>
 
-        <app-input [value]="new_collection.type" (valueChange)="new_collection.type=$event"
-                   [options]="types_collection" value_field="value"
-                   label="Type de collection" ></app-input>
+                <app-input [value]="new_collection.options" (valueChange)="new_collection.options=$event"
+                           [options]="collection_options" [multiselect]="true" width="300px" value_field="value"
+                           label="Options de la collection" ></app-input>
 
-        <app-input [value]="new_collection.options" (valueChange)="new_collection.options=$event"
-                   [options]="collection_options" [multiselect]="true" width="300px" value_field="value"
-                   label="Options de la collection" ></app-input>
+            </div>
+            <div *ngIf="!network.isElrond()">
+                <app-input [value]="new_collection.supply" (valueChange)="new_collection.supply=$event"
+                           value_type="number"
+                           label="Supply max" ></app-input>
 
-<!--        <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">-->
-<!--          {{collection_option.label}}-->
-<!--        </mat-checkbox>-->
+            </div>
 
-        <div *ngIf="user.balance==0">
-          Vous devez abonder le compte pour créer une collection
+            <!--        <mat-checkbox *ngFor="let collection_option of collection_options" [(ngModel)]="collection_option.value" style="margin: 10px;">-->
+            <!--          {{collection_option.label}}-->
+            <!--        </mat-checkbox>-->
+
+            <div *ngIf="miner">
+                <div *ngIf="miner?.balance==0 && network.isElrond()">
+                    Vous devez abonder le compte pour créer une collection
+                </div>
+
+                <br>
+                <button mat-raised-button mat-button
+                        color="primary"
+                        (click)="create_collection()"
+                        id="cmdBuild"
+                        *ngIf="user && message.length==0">
+                    Fabriquer
+                </button>
+
+                <span *ngIf="network.isElrond() && miner && miner.balance">
+            avec {{miner!.address | alias}} ({{miner!.balance/1e18 | number}} Egld)
+          </span>
+
+
+            </div>
+
         </div>
-
-        <br>
-        <button type="button" mat-raised-button mat-button
-                color="primary"
-                (click)="create_collection()"
-                id="cmdBuild"
-                *ngIf="user.addr && message.length==0">
-          Fabriquer
-        </button>
-
-      </div>
     </mat-expansion-panel>
 
-    <button type="button" mat-raised-button (click)="open_inspire()" [disabled]="!user.addr" *ngIf="network.isElrond()">
-      Inspire.ART
+    <button mat-raised-button (click)="open_inspire()" [disabled]="!miner" *ngIf="network.isElrond()">
+        Inspire.ART
     </button>
 
-    <button type="button" mat-raised-button (click)="create_with_wallet_elrond()" *ngIf="network.isElrond()">
-      Fabriquer avec<br>
-      le wallet natif
+    <button mat-raised-button (click)="create_with_wallet_elrond()" *ngIf="network.isElrond()">
+        Fabriquer avec<br>
+        le wallet natif
     </button>
 
-    <button type="button" mat-raised-button (click)="refresh(user.addr,network.network)">
-      Actualiser
+    <button mat-raised-button (click)="refresh(miner!.address,network.network,false)">
+        Actualisation rapide
+    </button>
+
+    <button mat-raised-button (click)="refresh(miner!.address,network.network,true)">
+        Actualisation
     </button>
 
     <br><br>
 
+    <mat-expansion-panel>
+        <mat-expansion-panel-header>Fenetre de distribution</mat-expansion-panel-header>
+        <app-genlink [properties]="dispenser_obj" [domain]="appli"></app-genlink>
+    </mat-expansion-panel>
+
     <app-hourglass [message]="message"></app-hourglass>
 
     <table style="width: 96%;text-align: center;padding: 1%;margin:1%;" class="mat-elevation-z4">
-      <tr>
-        <th>Name</th>
-        <th>Identifiant</th>
-        <th>SemiFongible</th>
+        <tr>
+            <th style="width: 100px">Name</th>
+            <th style="width: 80px">Identifiant</th>
+            <th style="width: 50px">SemiFongible / Supply</th>
 
-        <th *ngIf="user.advance_mode">{{"Propriétés de la collection" | screencutter}}</th>
-        <th *ngIf="user.advance_mode">Roles</th>
-        <th>Actions</th>
-      </tr>
+            <th style="width: 100px" *ngIf="user.advance_mode">{{"Propriétés de la collection" | screencutter}}</th>
+            <th style="width: 100px" *ngIf="user.advance_mode">Roles</th>
+            <th>Actions</th>
+        </tr>
 
-      <tr *ngFor="let col of user.collections">
-        <td style="width: 50px;" title="Nom de la collection">{{col.name}}</td>
-        <td style="width: 50px;overflow: hidden;" title="Identifiant"><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
-        <td style="width: 20px;"><mat-icon *ngIf="col.type?.startsWith('SemiFungible')">checkmark</mat-icon></td>
+        <tr *ngFor="let col of collections">
+            <td style="width: 50px;" title="Nom de la collection">{{col.name}}</td>
+            <td style="width: 50px;overflow: hidden;" title="Identifiant"><span *ngIf="col.id" [cdkCopyToClipboard]="col.id" style="cursor: copy">{{col.id}}</span></td>
+            <td style="width: 20px;">
+                <span *ngIf="col?.supply">{{col.supply}}</span>
+                <mat-icon *ngIf="col.type?.startsWith('SemiFungible') && network.network.indexOf('elrond')>-1">checkmark</mat-icon>
+            </td>
 
-        <td style="overflow: hidden;font-size: small;" *ngIf="user.advance_mode">
-          <app-json-to-list style="text-align: left;" [data]="col.options"></app-json-to-list>
-        </td>
+            <td style="overflow: hidden;font-size: small;" *ngIf="user.advance_mode">
+                <app-json-to-list style="text-align: left;" [data]="col.options"></app-json-to-list>
+            </td>
 
-        <td style="max-width: 350px;overflow: hidden;font-size: x-small;" *ngIf="user.advance_mode">
-          <app-dbtable [dictionnary]="{
-          canAddQuantity:'i_add_circle|ajouter des quantité',
-          canAddUri:'i_link|ajouter des liens',
-          canBurn:'i_delete_forever|brulé',
-          canCreate:'i_build|Miner',
-          canUpdateAttributes: 'i_edit|Mettre a jour les attributs'
-        }" [source]="col.roles">
-          </app-dbtable>
-        </td>
-
-
-        <td style="width: 300px;">
-          <button type="button" mat-raised-button (click)="set_roles(col)">
-            Roles
-          </button>
+            <td style="max-width: 350px;overflow: hidden;font-size: x-small;" *ngIf="user.advance_mode">
+                <app-dbtable [dictionnary]="{
+                    canAddQuantity:'i_add_circle|ajouter des quantités',
+                    canAddUri:'i_link|ajouter des liens',
+                    canBurn:'i_delete_forever|bruler',
+                    canTransfer:'i_swap_horiz|Transferer',
+                    canCreate:'i_build|Miner',
+                    canUpdateAttributes: 'i_edit|Mettre a jour les attributs'}" [source]="col.roles">
+                </app-dbtable>
+            </td>
 
 
-          <button type="button" mat-raised-button (click)="open_collection(col)">
-            Voir les NFTs
-          </button>
-          &nbsp;
-          <button type="button" mat-raised-button (click)="open_miner(col)" title="Utiliser cette collection pour miner des NFT">
-            Miner
-          </button>
-          &nbsp;
-          <button type="button" mat-raised-button (click)="open_explorer(col)">
-            Explorer
-          </button>
+            <td style="width: 300px;">
+                <button mat-icon-button (click)="open_miner(col)" title="Utiliser cette collection pour miner des NFT">
+                    <mat-icon>build</mat-icon>
+                </button>
+                &nbsp;
+                <button mat-icon-button (click)="short_url(col)" title="Shorté un lien sur la base de la collection">
+                    <mat-icon>content_cut</mat-icon>
+                </button>
 
-          <button type="button" mat-raised-button (click)="open_analyser(col)">
-            Analyse
-          </button>
+                <button mat-icon-button (click)="add_validator(col)" title="Ajouter un validateur sur la collection">
+                    <mat-icon>checkmark</mat-icon>
+                </button>
 
-        </td>
-      </tr>
+
+
+                <button mat-icon-button (click)="open_explorer(col)">
+                    <mat-icon>search</mat-icon>
+                </button>
+
+                <button mat-icon-button (click)="copy_parameters(col)" title="Copier les parametres">
+                    <mat-icon>tune</mat-icon>
+                </button>
+
+                <button mat-icon-button (click)="set_roles(col)" title="Roles">
+                    <mat-icon>person</mat-icon>
+                </button>
+
+                <button mat-icon-button (click)="open_collection(col)">
+                    <mat-icon>visibility</mat-icon>
+                </button>
+
+                <button mat-icon-button (click)="open_analyser(col)">
+                    <mat-icon>bar_chart</mat-icon>
+                </button>
+
+                <button mat-icon-button (click)="open_dealer(col,'dispenser')"
+                        [disabled]="!user.target_mint"
+                        title="Open store">
+                    <mat-icon>storefront</mat-icon>
+                </button>
+
+                <button mat-icon-button (click)="open_dealer(col,'cm')"
+                        [disabled]="!user.target_mint"
+                        title="candy machine">
+                    <mat-icon>coffee_maker</mat-icon>
+                </button>
+
+            </td>
+        </tr>
     </table>
 
+    <br>
+    <div *ngIf="preview_nfts.length>0">
+        <app-showroom [nfts]="preview_nfts" size="300px" [delay]="0.3"></app-showroom>
+        <br>
+        <button mat-raised-button (click)="preview_nfts=[]">
+            Effacer
+        </button>
+    </div>
 
 
-  <app-signature style="position: absolute;display: block; bottom: 5px;width: 350px;left: 5px;" faq="collections"></app-signature>
+
+
+    <app-signature style="position: absolute;display: block; bottom: 5px;width: 350px;left: 5px;" faq="collections"></app-signature>
 </div>

@@ -2,9 +2,14 @@
 APP_SECRET_KEY="hh4271"
 CRYPT_KEY_FOR_NFT=""
 
-STORJ_API_KEY="122VG2geFi1BY9bcHu2PpU4Na6YAQUTYdT2jLYNAgmhxdNa5irTAV11b6EG5TRZQ48i91jWDAxiBZLC32VQkCtdLNqbqCkvj9YAhPCyAHz8dTSYPDtSLf7iFGF2tyro3Rc8pX9N7"
+STORJ_API_KEY="jwgbxe2zddyhr2icqwmoh4wcuaaa"
 STORJ_SATTELITE_ADDR="12L9ZFwhzVpuEKMUNUqkaTLGzwY9G24tbiigLiXpmZWKwmcNDDs@eu1.storj.io:7777"
 STORJ_PASSPHRASE="hh4271!!"
+STORJ_SECRETKEY="jyeawbsgiqzc3cqq3ayr3oue5w2rdwzn5swm6zs2z3znpl64gshbs"
+STORJ_ENDPOINT="https://gateway.storjshare.io"
+
+MEGAUPLOAD_EMAIL="rv@f80.fr"
+MEGAUPLOAD_PASSWORD="hh4271!!"
 
 #Initialisation de la base sur le serveur:
 #ouverture du firewall : firewall-cmd --zone=public --add-port=27017/tcp ou "ufw allow 27017/tcp" si on utilise ufw
@@ -18,8 +23,6 @@ WEB3_PASSWORD="hh4271!!"
 MONGO_CLUSTER_CONNECTION_STRING= "mongodb+srv://Hhoareau:hh4271@cluster0.mr2j9.mongodb.net/?retryWrites=true&w=majority"
 MONGO_WEB3_CONNECTION_STRING="mongodb://root:rootpassword@provider.bdl.computer:32754/"
 MONGO_SERVER_CONNECTION_STRING="mongodb://root:rootpassword@109.205.183.200:27017/"
-
-GITHUB_TOKEN=""
 
 
 USERNAME="contact@nfluent.io"
@@ -46,7 +49,11 @@ GITHUB_CLIENT_ID="5efede032a49331cf372"
 GITHUB_SECRET_ID="37e45ea6679fdd0c87623874da835c732872a71f"
 
 #voir https://docs.github.com/fr/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
-GITHUB_TOKEN="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"
+#procédure : https://github.com/settings/tokens/new et accorder toutes les permissions du repo
+#Accorder les permissions
+GITHUB_TOKEN="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"
+#GITHUB_TOKEN="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" #obtenu sur https://github.com/settings/tokens?type=beta
+
 GITHUB_ACCOUNT="nfluentdev"
 SALT='sel'
 ENCRYPTION_KEY="nfluentkey"

@@ -29,9 +29,13 @@ import {ValidatorsComponent} from "./validators/validators.component";
 import {AnalyticsComponent} from "./analytics/analytics.component";
 import {RescuewalletComponent} from "./rescuewallet/rescuewallet.component";
 import {SettingsComponent} from "./settings/settings.component";
-
+import {BankComponent} from "./bank/bank.component";
+import {RaffleComponent} from "./raffle/raffle.component";
+import {TestsComponent} from "./tests/tests.component";
 
 const routes: Routes = [
+  { path: 'tests', component: TestsComponent },
+  { path: 'test', component: TestsComponent },
   { path: 'wallet', component: MywalletComponent },
   { path: 'autovalidate', component: AutovalidateComponent },
   { path: 'mywallet', component: MywalletComponent },
@@ -51,6 +55,9 @@ const routes: Routes = [
   { path: 'keys', component: KeysComponent },
   { path: 'admin', component: AdminComponent },
   { path: 'contest', component: ContestComponent },
+  { path: 'bank', component: BankComponent },
+
+  { path: 'raffle', component: RaffleComponent },
   { path: 'lottery', component: ContestComponent },
   { path: 'settings', component: SettingsComponent },
   { path: 'pool', component: MinerpoolComponent },

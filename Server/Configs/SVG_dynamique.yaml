@@ -25,6 +25,12 @@ layers:
         name: plan_de_travail_(20)
       - image: https://bafkreiduyt5athc46uwtb6k3am7ynhesftacjwydefp5whpzbrwuhnvgtu.ipfs.nftstorage.link
         name: plan_de_travail_(22)
+      - image: http://127.0.0.1:4242/api/files/store_103e02ee852067ea3b4c28c16872c7d517615f1df29f8a3dea33f32a30810b5f.png
+        name: plan_de_travail_(24)
+      - image: http://127.0.0.1:4242/api/files/store_bcb513e207d2c771dd3d843fa66dd9e73779eda3f583edf6bf6ceee8514649f5.png
+        name: plan_de_travail_(25)
+      - image: http://127.0.0.1:4242/api/files/store_6413e21ba69647fe2acd4c351decf9f8b5ca5c8df153f7d6334be723dd4400df.png
+        name: plan_de_travail_(36)
     height: 800
     indexed: true
     name: fond
@@ -44,6 +50,10 @@ layers:
         name: graphisme((10)
       - image: https://bafybeihyv6sycdkc4uo2ahhxxfwsxp3mt7u2qedcpo3s3uewphjoqwvcui.ipfs.nftstorage.link
         name: graphisme((11)
+      - image: http://127.0.0.1:4242/api/files/store_b33f81e22eec3b2de08d9c64116b0ec3a38c8957439b88825e708df5c10c1b6f.png
+        name: graphisme((50)
+      - image: http://127.0.0.1:4242/api/files/store_c3818c163db44f95456761b4edd5d7398966ed424c6b6112923912d74a570a18.png
+        name: graphisme((40)
     height: 800
     indexed: true
     name: motif
@@ -55,70 +65,99 @@ layers:
     unique: false
     width: 800
   - elements:
-      - image: https://bafkreibtuliy2bg6ysupjk3h5woh5ilsdyaxousvgija7tc2m3wy4dkwxu.ipfs.nftstorage.link
+      - image: http://127.0.0.1:4242/api/files/store_284bde291a3146983eb4eb1021b9a499f1c360482c71f414e86c0afd90550b39.svg
         type: image/svg
-        name: item1
-      - image: https://bafkreiby4amr6jrjivdmwwr7ect4eoovnv6tc24k5v3awgcomswie2feiq.ipfs.nftstorage.link
+        name: svg_texte_0
+      - image: http://127.0.0.1:4242/api/files/store_a1f11c1537a94374dfc3f1b9ac34f06d723c3675181c191155c944b2fc4d66a7.svg
         type: image/svg
-        name: item2
-
-      - image: https://bafkreidec34l7r2dan7mwo5q534gw2y22ctlav5lfk26uxmocdaxxciwlm.ipfs.nftstorage.link
+        name: svg_texte_1
+      - image: http://127.0.0.1:4242/api/files/store_73ae9cf3623ec09683bb0267d87226481395dff1bb99540242e04fbcf1e43bd4.svg
         type: image/svg
-        name: item3
-
-      - image: https://bafkreibn6yrsscw4di6pg2fnficvigqbynlz7gsvix7lgrhwqb5tdlodly.ipfs.nftstorage.link
+        name: svg_texte_2
+      - image: http://127.0.0.1:4242/api/files/store_140f7eb6062a82812dc273195c45f994e069eaa58db688c1789ade13766d5f94.svg
         type: image/svg
-        name: item4
-
-      - image: https://bafkreihfnbct2fq6ksx2rxnatggxjxttoixkwce5go7atnhdd6fvemqxva.ipfs.nftstorage.link
+        name: svg_texte_3
+      - image: http://127.0.0.1:4242/api/files/store_4273b877cc611bb264375e98e2a49c67d629ba3029456429bce36bf09969049b.svg
         type: image/svg
-        name: item4
-
-      - image: https://bafkreia7km4ny4bkvuo2yclmog3hy5ogwvn6i4npztfkugoqgyxpbioqdm.ipfs.nftstorage.link
+        name: svg_texte_4
+      - image: http://127.0.0.1:4242/api/files/store_abf988c53b4b8ccb4105bc8c30257a0404bff6a3eefbdf3944e39c1d1716053f.svg
         type: image/svg
-        name: item5
-
-      - image: https://bafkreianxd7yr2jft5jl5ybe4jnwkjatamy4ox6g7l7in3ahfjzesv5qtq.ipfs.nftstorage.link
+        name: svg_texte_5
+      - image: http://127.0.0.1:4242/api/files/store_b755070f32d28ac147831c719314e2c2d35cd758c785a3e808577bf0041da5ed.svg
         type: image/svg
-        name: item6
-
-      - image: https://bafkreifdfma46aje5cy7sw5dvhidfnswes7mtegr246ngbmdx2dals4n7i.ipfs.nftstorage.link
+        name: svg_texte_6
+      - image: http://127.0.0.1:4242/api/files/store_4fdd62f7a9c6f18e8744f6583f80335d85269ac8243938ef0de7c3f87531f715.svg
         type: image/svg
-        name: item7
-
-      - image: https://bafkreif3a4mfjlsxx5zdbxlg7rfr5xpnadwc5tomd2ychiigwtb2u2mwfy.ipfs.nftstorage.link
+        name: svg_texte_7
+      - image: http://127.0.0.1:4242/api/files/store_8c81e573790f35fc4749bae43a355ed170cda5eea779e83f5af6127bfc3b3e3b.svg
         type: image/svg
-        name: item8
-
-      - image: https://bafkreigwqpquc2attbj534jv352v7anyzaw42zeckny5vzcses6m2hdo3a.ipfs.nftstorage.link
+        name: svg_texte_8
+      - image: http://127.0.0.1:4242/api/files/store_8c407d5c6abcd425d9792f2bab12f9c3bb70dc01b560232b86c23f9239912756.svg
         type: image/svg
-        name: item9
-
-      - image: https://bafkreieciapfbj2uo44hcojo65vihpqam63aoqhzntfcupugnrpn7ou3aq.ipfs.nftstorage.link
+        name: svg_texte_9
+      - image: http://127.0.0.1:4242/api/files/store_33bca104dd0e0149d48404bc70e7132670d74b37b26bfd7d0053865286c92d90.svg
         type: image/svg
-        name: item10
-
-      - image: https://bafkreib22qvx2r4ib6owqefgmddomd2m6cc74m4urjkj2373h2pi6ghhba.ipfs.nftstorage.link
+        name: svg_texte_10
+      - image: http://127.0.0.1:4242/api/files/store_7ea9edcdb9b635adaa0b735a2994123940a819004fd088a51a09fc7965926b27.svg
         type: image/svg
-        name: item11
-
-      - image: https://bafkreidaghhrhaapevcxywlbnlvh5m5w366hw4mhnoi4nlikpcxodxgyta.ipfs.nftstorage.link
+        name: svg_texte_11
+      - image: http://127.0.0.1:4242/api/files/store_8469e9a5af1a37a3d983fe2304e584202d6aa60b74b8a910710bb42e587154c2.svg
         type: image/svg
-        name: item13
-
-      - image: https://bafkreie77uvyp2gi6nhzdcgmijif7zsbxcx7jwgf6xruwn5jow7py7vdti.ipfs.nftstorage.link
+        name: svg_texte_12
+      - image: http://127.0.0.1:4242/api/files/store_1d6279ef6b42a07caccd5e8a15c2f10a6b59e4dabd25c0fe203b4ae7c519fce0.svg
         type: image/svg
-        name: item14
-
-      - image: https://bafkreic6rrvhh5cakrwe6hwavzpwfzorwqewxyu7sokfibvnaag27mwzpa.ipfs.nftstorage.link
+        name: svg_texte_13
+      - image: http://127.0.0.1:4242/api/files/store_d959564bddacdf3322aa2713b640d5c4d5fcf3175b045f9cb04ade3124a9497c.svg
         type: image/svg
-        name: item16
-
-      - image: https://bafkreihihnu7zzxkwcz7cwzzrs7d3y3levr5dqicgqc7hwohgel4jmwqum.ipfs.nftstorage.link
+        name: svg_texte_14
+      - image: http://127.0.0.1:4242/api/files/store_160687d142587a11c45e2e581b9aab9c0cf98638efe2c14a0d7a13a7c93a013a.svg
         type: image/svg
-        name: item17
-
-
+        name: svg_texte_15
+      - image: http://127.0.0.1:4242/api/files/store_8883fc1171be203a3e3820d074b804fc7aecbb80a7ce7ec302ba1967afc59d7b.svg
+        type: image/svg
+        name: svg_texte_16
+      - image: http://127.0.0.1:4242/api/files/store_7b2eef13709284dde262158a3cd45d0d964997c3dc141d220e20db9f28d4d5fc.svg
+        type: image/svg
+        name: svg_texte_17
+      - image: http://127.0.0.1:4242/api/files/store_76c3839b7b090d62c936317b0fb58a5f28537fe0f848005a9f428aade62e862d.svg
+        type: image/svg
+        name: svg_texte_18
+      - image: http://127.0.0.1:4242/api/files/store_411801fd4443aadbe09a2a77c1416474428c9fb56bb06d52a320a5c4e721fb55.svg
+        type: image/svg
+        name: svg_texte_19
+      - image: http://127.0.0.1:4242/api/files/store_4b8e5941e5c3aa985d2cbb4f8c9d335a4a5e0f70cec557873cb47a93ce4d5f1a.svg
+        type: image/svg
+        name: svg_texte_20
+      - image: http://127.0.0.1:4242/api/files/store_cb6cc651da308234a5fbd520124c402e089d0905f7e53bc06859cf8d0ecbcaac.svg
+        type: image/svg
+        name: svg_texte_21
+      - image: http://127.0.0.1:4242/api/files/store_6b75b8e8200d9223669e68f2f18a053bc00d32eb5c96c65d344b875a915432ad.svg
+        type: image/svg
+        name: svg_texte_22
+      - image: http://127.0.0.1:4242/api/files/store_918db78f0321669a923ab912c84f339d0547d96a4eae85c169254df9e828a733.svg
+        type: image/svg
+        name: svg_texte_23
+      - image: http://127.0.0.1:4242/api/files/store_830630410cf0bf4e4aeae697a0447cec8cfea7775ed69c04c77336714dbd7365.svg
+        type: image/svg
+        name: svg_texte_24
+      - image: http://127.0.0.1:4242/api/files/store_6b2e5818e2d293be7a80d404be2d089da60815c58f573161c8c166f8e4935e31.svg
+        type: image/svg
+        name: svg_texte_25
+      - image: http://127.0.0.1:4242/api/files/store_8b1080df450e09d67b1af139cd6a8851900d9afb451397b2072f6f76fe7cc58e.svg
+        type: image/svg
+        name: svg_texte_26
+      - image: http://127.0.0.1:4242/api/files/store_27bf59382ebab091e18278224ddf50a1c61696db3da170ebdae55a40590b63f0.svg
+        type: image/svg
+        name: svg_texte_27
+      - image: http://127.0.0.1:4242/api/files/store_0a3980c07651285233cf6d1ba5ca7d91d330c8ff67b99084dff7d7f4f8c0730a.svg
+        type: image/svg
+        name: svg_texte_28
+      - image: http://127.0.0.1:4242/api/files/store_11aac3e501f814d6f7f5e96106d583ddf01bcf42ba162b96aca6edfb6d4dffb3.svg
+        type: image/svg
+        name: svg_texte_29
+      - image: http://127.0.0.1:4242/api/files/store_716609402fb1848b9420b159903e8ee1674f8cc9676cf89121d6607b2e6a92b4.svg
+        type: image/svg
+        name: svg_texte_30
     height: 800
     indexed: false
     name: texte
@@ -129,9 +168,9 @@ layers:
     translation: 0,0
     unique: true
     width: 800
-limit: 5
+limit: 0
 location: LeChien.yaml
-max_items: 11
+max_items: 1000
 message: Exemple d'utilisation d'un fichier SVG dynamique
 platform:
   label: ""

@@ -1,11 +1,9 @@
 import {
-  AfterContentInit,
-  AfterViewInit,
+    AfterViewInit,
   Component,
   EventEmitter,
   Input,
   OnChanges,
-  OnInit,
   Output,
   SimpleChanges
 } from '@angular/core';
@@ -21,7 +19,7 @@ import {Router} from "@angular/router";
   templateUrl: './selkey.component.html',
   styleUrls: ['./selkey.component.css']
 })
-export class SelkeyComponent implements AfterViewInit,OnChanges {
+export class SelkeyComponent implements OnChanges {
 
   @Input("network") network:string="";
   @Input() label:string="Clés disponibles";
@@ -36,10 +34,15 @@ export class SelkeyComponent implements AfterViewInit,OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if(changes["sel_key"] && changes["sel_key"].previousValue!=changes["sel_key"].currentValue){
-        let k=this.network_service.find_key_by_address(changes["sel_key"].currentValue.address)
-        if(k)this.sel_key=this.network_service.keys[this.network_service.keys.indexOf(k)];
-    }
+    debugger
+    // if(changes["sel_key"] && changes["sel_key"].previousValue!=changes["sel_key"].currentValue){
+    //       setTimeout(()=> {
+    //         let k = this.network_service.find_key_by_address(changes["sel_key"].currentValue.address)
+    //         if (k) {
+    //           this.sel_key = this.network_service.keys[this.network_service.keys.indexOf(k)];
+    //         }
+    //       },1000);
+    // }
   }
 
 
@@ -49,15 +52,9 @@ export class SelkeyComponent implements AfterViewInit,OnChanges {
     return this.network.indexOf("devnet")>-1 || this.network.startsWith("db-") || this.network.startsWith("file-");
   }
 
-  ngAfterViewInit(): void {
-      // for(let k of this.network_service.keys){
-      //   if(k.address==localStorage.getItem("key"))
-      //     this.sel_key=k;
-      // }
-    }
-
 
   onChangeKey(new_key:any) {
+    debugger
     if(new_key){
       localStorage.setItem("key",new_key.address);
       this.onAddrChange.emit(new_key);

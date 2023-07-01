@@ -70,7 +70,7 @@ class devConfig(Config):
   TESTING = False
   DB_NAME="nfluent_dev"
   DOMAIN_APPLI="https://tokenfactory.nfluent.io"
-  DOMAIN_SERVER="https://server.f80lab.com:4242"          #address du serveur ou s'execute flask
+  DOMAIN_SERVER="http://192.168.1.62:4242"          #address du serveur ou s'execute flask
 
 
 
@@ -81,9 +81,18 @@ class localConfig(Config):
   FLASK_ENV = 'development'
   DEBUG = True
   TESTING = True
-  DB_NAME="nfluent_local"
+  DB_NAME="nfluent"
   DOMAIN_APPLI="http://localhost:4200"
   DOMAIN_SERVER="http://127.0.0.1:4242"          #address du serveur ou s'execute flask
+
+
+class akashConfig(prodConfig):
+  """
+  configuration local
+  """
+  TESTING = False
+  DEBUG = False
+  DOMAIN_SERVER="http://provider.serverjuice.org:32424"          #address du serveur ou s'execute flask
 
 
 class testConfig(localConfig):

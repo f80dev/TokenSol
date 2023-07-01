@@ -1,5 +1,4 @@
 import time
-from random import randint
 
 from flaskr.Polygon import Polygon
 from flaskr.Tools import log, random_from
@@ -81,8 +80,7 @@ def test_transfer(addr:str="admin"):
 	nfts=_polygon.get_nfts(key.address,with_attr=False,limit=5)
 	nft=random_from(nfts)
 	_polygon.transfer(nft.address,key,dest.address,1)
-	balances=_polygon.get_balances(dest.address, nft.address)
-	assert balances[nft.address] >= 1
+	assert _polygon.get_balances(dest.address, nft.address)[nft.address] >= 1
 
 
 

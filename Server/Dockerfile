@@ -3,7 +3,6 @@
 #effacer toutes les images : docker rmi $(docker images -a -q)
 #effacer tous les containers : docker rm  $(docker ps -a -f status=exited -q)
 
-
 #install docker :
 #sudo curl -sSL get.docker.com | sh
 #systemctl start docker
@@ -17,11 +16,13 @@
 #Pour le server F80: certbot certonly --standalone --email hhoareau@gmail.com -d server.f80lab.com && cp /etc/letsencrypt/live/server.f80lab.com/* /root/certs
 #Pour le serveur NFluent: certbot certonly --standalone --email hhoareau@gmail.com -d api.nfluent.io && cp /etc/letsencrypt/live/api.nfluent.io/* /root/certs
 #cp /etc/letsencrypt/live/server.f80lab.com/* /root/certs
+#cp /etc/letsencrypt/live/api.nfluent.io/* /root/certs
 
 #fabrication: docker build -t f80hub/tokensol . && docker push f80hub/tokensol:latest
 #installation: docker rm -f tokensol && docker pull f80hub/tokensol:latest
-#Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp
+#Ouverture des ports : firewall-cmd --zone=public --add-port=4242/tcp ou ufw allow 4242/tcp
 #démarrage prod : docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 wsgi.py devConfig ssl
+#démarrage prod sans répertoires: docker rm -f tokensol && docker pull f80hub/tokensol && docker run --restart=always -v /root/Configs:/Configs -v /root/Fonts:/Fonts -v /root/Operations:/Operations -v /root/temp:/temp  -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 wsgi.py prodConfig
 
 
 
@@ -99,6 +100,9 @@ RUN pip3 -v install multiversx-sdk-core
 RUN pip3 -v install multiversx-sdk-wallet
 RUN pip3 -v install multiversx-sdk-network-providers
 RUN pip3 -v install pyopenssl
+RUN pip3 -v install openpyxl
+RUN pip3 -v install mega.py
+RUN pip3 -v install bitcoinlib
 
 WORKDIR /
 RUN mkdir Solana
@@ -149,4 +153,6 @@ RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 WORKDIR $APP_HOME
 
-CMD ["python3", "wsgi.py","devConfig","ssl"]
+#On peut utiliser la ligne ci-dessous (prioritaire) ou passer les commandes en argument de docker
+#CMD ["python3", "wsgi.py","devConfig","ssl"]
+CMD ["python3", "wsgi.py","prodConfig","ssl"]

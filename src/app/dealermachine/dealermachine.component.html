@@ -1,4 +1,4 @@
-<div class="mainform" [ngStyle]="ope?.branding?.style" *ngIf="final_message==''">
+<div class="mainform" *ngIf="final_message==''">
   <app-hourglass [message]="message"></app-hourglass>
 
   <div *ngIf="message.length==0 && wallet_link=='' && nft">
@@ -8,28 +8,6 @@
          style="max-width: 200px;width:80%;margin-bottom: 10px;"
          class="mat-elevation-z4">
     <br>
-
-    <div *ngIf="!selfWalletConnexion" style="max-width: 450px;display: inline-block;">
-
-      <app-input style="width:50%;max-width: 300px;" label_button="Envoyer"
-                 (valueChange)="address=$event" [value]="address"
-                 [label]="prompt" (validate)="validate_input_address()"
-                 value_type="text" ></app-input>
-
-      <button type="button" mat-raised-button mat-button
-              title="Aide / FAQ"
-              *ngIf="help_url.length>5"
-              (click)="open_help()">
-        Aide
-      </button>
-      <br>
-
-      <div *ngIf="authentification?.webcam">
-        <br>
-        Capturez l'adresse d'un wallet<br>
-        <app-scanner size="250px" (flash)="onflash($event)"></app-scanner>
-      </div>
-    </div>
 
 
     <!--    gestion de la facture -->
@@ -50,17 +28,15 @@
 
     </div>
 
-    <app-authent *ngIf="selfWalletConnexion && authentification"
-                 [showGoogle]="authentification.google"
-                 [showAddress]="authentification.address"
-                 [showWebcam]="authentification.webcam"
-                 [showEmail]="authentification.email"
-                 [showWalletConnect]="authentification.wallet_connect"
-                 (authent)="valide($event)"
-                 [prompt]="prompt"
-                 (cancel)="cancel()"
-                 style="max-height: 300px;max-width: 350px;">
-    </app-authent>
+    <div   style="max-height: 300px;max-width: 350px;display: inline-block;">
+      <app-authent
+              [connexion]="authentification"
+              (authent)="valide($event)"
+              [prompt]="prompt"
+              (cancel)="cancel()">
+      </app-authent>
+    </div>
+
 
 
   </div>

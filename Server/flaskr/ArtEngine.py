@@ -61,13 +61,15 @@ class Sticker(Element):
   file:str=None
   dimension=None
   work_dir="./temp/"
+  replacements=dict()
 
   def __init__(self,name="",image=None,
                dimension=None,text:str=None,x:int=None,y:int=None,
                fontstyle={"color":(0,0,0,255),"size":100,"name":"corbel.ttf"},
-               ext=None,data="",work_dir="./temp/"):
+               ext=None,data="",work_dir="./temp/",replacements=dict()):
 
     self.work_dir=work_dir
+    self.replacements=replacements
     if not exists(work_dir): raise RuntimeError("Répertoire de travail inexistant")
 
     #voir https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
@@ -177,7 +179,7 @@ class Sticker(Element):
         self.text={"text":"\n".join(content)}
 
     self.text["dimension"]=self.extract_dimension_from_svg(self.text["text"])
-    self.render_svg(with_picture=True)
+    self.render_svg(dictionnary=self.replacements,with_picture=True,)
     return True
 
   def is_animated(self):
@@ -265,7 +267,7 @@ class Sticker(Element):
         self.image=image.copy()
         image.close()
       else:
-        log("Rendering d'un SVG "+filename)
+        log("Rendering d'un SVG "+filename+" en PNG "+png_filename)
         svg=svg2rlg(self.work_dir+filename)
         s=renderPM.drawToString(svg,fmt=format,dpi=72)
 
@@ -636,8 +638,10 @@ class TextElement(Element):
 
 
 class Layer:
+
+  replacements=dict()
   def __init__(self,name="",elements=[],position=0,unique=False,indexed=True,scale="1,1",
-               translation="0,0",margin="0,0",work_dir="./temp",object=None):
+               translation="0,0",margin="0,0",work_dir="./temp",object=None,replacements=dict()):
 
     if object:
       for k, v in object.items():
@@ -652,14 +656,19 @@ class Layer:
       self.position=position
       self.work_dir=work_dir
 
+    if self.replacements==dict(): self.replacements=replacements
+
     self.elements:[Element]=[]
     for element in elements:
       e=Sticker(name=element["name"] if "name" in element else "name_"+now("rand"),
                 ext=element["ext"] if "ext" in element else extract_extension(element["image"]),
-                image=element["image"]
+                image=element["image"],replacements=self.replacements,
                 )
       self.add(e)
 
+
+  def __str__(self):
+    return self.name+"("+str(len(self.elements))+" éléments)"
 
   def find_element(self,name) -> Sticker:
     for e in self.elements:
@@ -766,7 +775,8 @@ class ArtEngine:
       layers=config["layers"]
     for l in layers:
       self.add(Layer(name=l["name"],unique=l["unique"],indexed=l["indexed"],
-                     translation=l["translation"],position=l["position"],
+                     translation=l["translation"] if "translation" in l else "0,0",
+                     position=l["position"]  if "position" in l else "0,0",
                      elements=l["elements"]))
 
 
@@ -809,7 +819,15 @@ class ArtEngine:
     while len(sequences)<limit and _try<200:
       seq=[]
       for layer in self.layers:
-        elt:Sticker=None if len(layer.elements)==0 else (layer.random() if not layer.unique else layer.elements[0])
+
+        elt:Sticker=None
+        if len(layer.elements)>0:
+          if layer.unique:
+            elt=layer.elements[0]
+            layer.remove(elt)
+          else:
+            elt=layer.random()
+
         if elt:
           seq.append({"layer":layer.name,"sticker":elt.name})
           if layer.unique:
@@ -840,6 +858,7 @@ class ArtEngine:
     for item in items:
       layer=self.get_layer(item["layer"])
       elt=layer.find_element(item["sticker"])
+      if elt is None: raise RuntimeError(str(item["sticker"])+" est introuvable dans "+str(layer))
       elt.open()
       elt.transform(layer.scale,layer.translation,layer.margin)
       log("Collage de "+str(elt)+" sur "+str(collage))

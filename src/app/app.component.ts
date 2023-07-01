@@ -1,23 +1,27 @@
-import {ActivatedRoute, Router} from "@angular/router";
-import {Component, HostListener, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, NavigationEnd, Router} from "@angular/router";
+import {AfterViewInit, Component, HostListener, OnInit, ViewChild} from '@angular/core';
 import {UserProfil, UserService} from "./user.service";
 import {NetworkService} from "./network.service";
 import {environment} from "../environments/environment";
 import {Location} from "@angular/common";
-import {$$, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
+import {$$, apply_params, convert_to_list, find, getBrowserName, getParams, setParams, showMessage} from "../tools";
 import {OperationService} from "./operation.service";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {DeviceService} from "./device.service";
 import {MatSidenav} from "@angular/material/sidenav";
 import {menu_items} from "./menu/menu.component";
+import {StyleManagerService} from "./style-manager.service";
+
+
+declare const gtag: Function;
+
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
-  showSplash=true;
+export class AppComponent implements OnInit,AfterViewInit {
   @ViewChild('drawer', {static: false}) drawer: MatSidenav | undefined;
 
   networks:any[]=[];
@@ -31,6 +35,7 @@ export class AppComponent implements OnInit {
     keys:{label:"Clés",title:"",actif:true,icon:"key",queryParam:{}},
     mint:{label:"Miner",title:"",actif:true,icon:"build",queryParam:{}},
     build:{label:"Opérations",title:"",actif:true,icon:"edit",queryParam:{}},
+    validators:{label:"Validateurs",title:"",actif:true,icon:"checkmark",queryParam:{}},
     analytics:{label:"Analytics",title:"",actif:true,icon:"analytics",queryParam:{}},
     wallet:{label:"Wallet",title:"",actif:false,icon:"dollar",queryParam:{}},
     pool:{label:"Pool de minage",title:"",actif:true,icon:"list",queryParam:{}},
@@ -44,6 +49,7 @@ export class AppComponent implements OnInit {
   }
   status="disconnect";
   full_menu: boolean = true;
+  appname: string="";
 
   constructor(
     public user:UserService,
@@ -52,17 +58,21 @@ export class AppComponent implements OnInit {
     public router:Router,
     public _location:Location,
     public toast:MatSnackBar,
+    public style:StyleManagerService,
     public operation:OperationService,
     public device:DeviceService
   ) {
 
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        gtag('config', 'G-FLYQ98Q9W9', { 'page_path': event.urlAfterRedirects });
+      }
+    })
 
-    this.user.profil_change.subscribe(()=>{
-      this.update_menu();
-    })
-    this.user.addr_change.subscribe(()=>{
-      this.update_menu();
-    })
+
+    this.user.profil_change.subscribe(()=>{this.update_menu();})
+    this.user.addr_change.subscribe(()=>{this.update_menu();})
+    this.network_service.network_change.subscribe(()=>{this.update_menu()})
 
     this.device.isHandset$.subscribe((r:boolean)=>{if(r && this.drawer && this.user.toolbar_visible)this.drawer.toggle();})
     this.device.smallScreen.subscribe((r:boolean)=>{this.full_menu=!r;})
@@ -92,18 +102,21 @@ export class AppComponent implements OnInit {
     })
   }
 
+  ngAfterViewInit(): void {
+    setTimeout(()=>{this.init_form();},200);
+  }
+
   ngOnInit(): void {
     if(getBrowserName()=="firefox"){
       showMessage(this,"Le fonctionnement de TokenForge est optimisé pour Chrome, Edge ou Opéra. L'usage de Firefox peut entraîner des dysfonctionnement",8000,()=>{},"Ok");
     }
-    this.init_form();
   }
 
 
   update_menu(){
     let connected=this.user.isConnected();
     this.items["settings"].actif=connected;
-    this.items["keys"].actif=connected && (this.network_service.network!="");
+    this.items["keys"].actif=connected;
     this.items["build"].actif=connected;
     this.items["analytics"].actif=connected;
     this.items["login"].actif=!connected;
@@ -141,64 +154,54 @@ export class AppComponent implements OnInit {
   }
 
 
-  // set_key($event: string) {
-  //   this.user.init($event,this.network_service.network).then(()=>{
-  //     localStorage.setItem("key",this.user.key?.address!);
-  //   })
-  // }
+  async init_form() {
+    debugger
+    let params:any = await getParams(this.routes, "params", true)
+    apply_params(this,params,environment)
 
+    this.user.params = params;
+    if (params.hasOwnProperty("toolbar")) {
+      this.user.toolbar_visible = params["toolbar"]
+    } else {
+      this.user.toolbar_visible = true;  //Par défaut on ne montre pas la toolbar
+    }
 
-  init_form(){
-    getParams(this.routes,"params",true).then((params:any)=>{
-      $$("Analyse des paramètres par la fenetre principale ",params);
-      this.user.appname=params["appname"] || environment.appname;
-      if(params.hasOwnProperty("toolbar")){
-        this.user.toolbar_visible=params["toolbar"]
-      }else{
-        this.user.toolbar_visible=true;  //Par défaut on ne montre pas la toolbar
-      }
+    this.network_service.server_nfluent = params["server"] || environment.server;
 
-      this.visual=params["visual"] || environment.splash_visual;
-      this.claim=params["claim"] || environment.claim;
-      this.network_service.server_nfluent=params["server"] || environment.server;
+    this.user.advance_mode = params["server"] || false;
+    this.user.merchant = params["merchant"] || environment.merchant;
 
-      this.user.advance_mode=params["server"] || false;
-      this.user.merchant=params["merchant"] || environment.merchant;
+    $$("Préparation des réseaux disponibles")
+    this.network_service.networks_available = convert_to_list(params["networks"] || environment.networks_available)
+    this.network_service.stockage_available = convert_to_list(params["stockage"] || environment.stockage.split(","));
+    this.network_service.stockage_document_available = convert_to_list(params["stockage_document"] || environment.stockage_document)
 
-      $$("Préparation des réseaux disponibles")
-      this.network_service.networks_available=params["networks"] ? params["networks"].split(",") : environment.networks_available.split(",");
-      this.network_service.stockage_available=params["stockage"] ? params["stockage"].split(",") : environment.stockage.split(",");
-      this.network_service.stockage_document_available=params["stockage_document"] ? params["stockage_document"].split(",") : environment.stockage_document.split(",");
+    this.networks = this.network_service.networks_available.map((x: any) => {
+      return {label: x, value: x}
+    });
 
-      this.networks=this.network_service.networks_available.map((x:any)=>{return {label:x,value:x}});
-      let network_name=params["network"]
-      if(this.network_service.networks_available.indexOf(network_name)==-1)network_name=this.networks[0].value;
-      let index=find(this.networks,{value:network_name,label:network_name},"value");
-      this.network_service.network=network_name;
-      this.sel_network=this.networks[index];
+    // if(this.network_service.networks_available.indexOf(network_name)==-1)network_name=this.networks[0].value;
+    // let index=find(this.networks,{value:network_name,label:network_name},"value");
+    // if (this.networks.length > 0) {
+    //   this.network_service.network = this.networks[0].value;
+    //   this.sel_network = this.networks[0].value;
+    //   if (params.hasOwnProperty("addr") || params.hasOwnProperty("miner")) {
+    //     this.user.init(params["addr"] || params["miner"], this.network_service.network).then(() => {
+    //       // this.network_service.init_keys().then(()=>{
+    //       //
+    //       // });
+    //     });
+    //   }
+    // }
 
-      if(params.hasOwnProperty("addr") || params.hasOwnProperty("miner")){
-        this.user.init(params["addr"] || params["miner"],this.network_service.network).then(()=>{
-          this.network_service.init_keys(this.network_service.network).then(()=>{
-            this.showSplash=false;
-          });
-        });
-      } else {
-        this.showSplash=false;
-      }
+    this.user.addr = params["addr"]
+    this.network_service.version = params["version"] || "main";
 
-      this.user.addr=params["addr"]
-      this.network_service.version=params["version"] || "main";
+    $$("Message de disponibilité des parametres")
+    this.user.params_available.next(params);
 
-      // if(!params.hasOwnProperty("appname") && !params.hasOwnProperty("toolbar")){
-      //   this.router.navigate(["pagenotfound"],{queryParams:{message:"Parametre de l'application incorrect"}})
-      // }
+    this.update_menu();
 
-      this.update_menu();
-
-    }).catch(
-        ()=>{}
-    );
   }
 
   logout(){
@@ -243,5 +246,12 @@ export class AppComponent implements OnInit {
   }
 
 
+  theme_mode($event: any) {
+    if($event){
+      this.style.setStyle("theme","nfluent-dark.css")
+    } else {
+      this.style.setStyle("theme","nfluent.css")
+    }
+  }
 }
 

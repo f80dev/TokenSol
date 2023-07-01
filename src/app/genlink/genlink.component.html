@@ -1,0 +1,45 @@
+<div *ngIf="title!=''" class="mat-headline-6 color-primary">{{title}}</div>
+<div class="expansion-content-left">
+    <div *ngFor="let property of properties" [style.max-width]="property.width || '350px'" >
+        <app-input [label]="property.label"
+                   [value]="property.value"
+                   [options]="property.options || []"
+                   [value_type]="property.type || 'text'"
+                   [title]="property.help || ''"
+                   [width]="property.width || 'auto'"
+                   (valueChange)="update_value(property,$event)">
+        </app-input>
+    </div>
+</div>
+
+<br>
+
+<div *ngIf="show_command_panel">
+    <button mat-raised-button (click)="search_image()" style="font-size: small;">
+       Banques d'images
+    </button>
+
+    <button mat-raised-button (click)="load_local()" style="font-size: small;">
+        Charger une<br>configuration
+    </button>
+
+    <button mat-raised-button (click)="save_local()" style="font-size: small;">
+        Enregistrer une<br>configuration
+    </button>
+
+    <button mat-raised-button
+            color="primary"
+            (click)="open_test()" *ngIf="url.length>0" >
+        Tester
+    </button>
+
+    <button mat-raised-button
+            (click)="share_url()" *ngIf="url.length>0">
+        Partager
+    </button>
+
+</div>
+
+
+
+

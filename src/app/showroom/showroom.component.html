@@ -1,6 +1,28 @@
-<div style="display: inline-block;position: relative;" [style.width]="size" [style.height]="size" >
-  <app-hourglass style="margin-top: 200px" [message]="message"></app-hourglass>
-  <img *ngIf="message.length==0" [src]="image_to_show" style="width: 100%;height: 100%">
+<div *ngIf="type_animation=='crossfade'">
+  <div style="display: inline-block;position: relative;padding:0;margin:0;" *ngIf="image_to_show"
+       [style.width]="size" [style.height]="size"  [ngStyle]="transition" >
+    <div [style.border]="border" style="width: 100%;height: 100%;margin:0;">
+      <img [src]="image_to_show"
+           style="width: 100%;height: 100%;"
+           class="mat-subheading-1"
+           alt="Cette image n'est pas disponible">
+    </div>
+
+    <div style="position:absolute;top:10px;left:10px;" *ngIf="show_title">{{title}}</div>
+  </div>
+</div>
+
+
+<div *ngIf="type_animation=='mosaic'">
+  <div style="display: inline-block;position: relative;padding:0;margin:0;"
+       *ngFor="let nft of nfts" [style.width]="size" [style.height]="size" >
+    <div [style.border]="border" style="width: 100%;height: 100%;margin:0;">
+      <img [src]="nft"
+           style="width: 100%;height: 100%;"
+           class="mat-subheading-1"
+           alt="Cette image n'est pas disponible">
+    </div>
+  </div>
 </div>
 
 

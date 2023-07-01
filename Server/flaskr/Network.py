@@ -54,14 +54,14 @@ class Network():
     return not self.network is None and not self.network.startswith("file-") and not self.network.startswith("db-")
 
 
-  def mint(self, miner:Key, title,description, collection:dict, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken"):
+  def mint(self, miner:Key, title,description, collection:dict, properties: dict,ipfs:IPFS,files=[], quantity=1, royalties=0, visual="", tags="",price=0,symbol="NFluentToken",simulation=False):
     raise NotImplementedError()
 
 
   def canMintOnCollection(self,miner_addr:str,collection:dict,quantity=1):  #Pour l'ensemble des réseaux excepté Elrond c'est toujours vrai
     return True
 
-  def transfer(self,addr:str,miner:Key,owner:str):
+  def transfer(self,addr:str,miner:Key,owner:str,quantity=1):
     raise NotImplementedError("Fonction transfer")
 
   def create_account(self,email="",seed="",domain_appli="",
@@ -73,12 +73,19 @@ class Network():
 
 
   def get_balance(self,address,token_id=""):
-    raise NotImplementedError()
+   raise NotImplementedError()
+
 
   def nfluent_wallet_url(self,address:str,domain_appli=""):
     if type(address)!=str: address=address.address.bech32()
     url=domain_appli+"/wallet/?" if "localhost" in domain_appli or "127.0.0.1" in domain_appli else "https://wallet.nfluent.io/?"
-    return url+setParams({"toolbar":"false","network":self.network,"addr":address})
+    return url+setParams({
+      "toolbar":"false",
+      "network":self.network,
+      "addr":address,
+      "appname":"Nfluent Wallet",
+      "visual":"https://wallet.nfluent.io/assets/wallet.jpg"
+    })
 
 
   def get_balances(self, address,nft_addr=None):
@@ -99,7 +106,7 @@ class Network():
   def add_collection(self, owner:Key, collection_name:str,options:list=[],type_collection="SemiFungible") -> (dict):
     return {"id":collection_name,"name":collection_name}
 
-  def burn(self,addr:str,miner:Key,n_token=1):
+  def burn(self,addr:str,miner:Key,n_token=1,backup_address=""):
     return True
 
 

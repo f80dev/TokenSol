@@ -13,7 +13,6 @@ export class ImageSelectorComponent implements OnInit {
   icons=[];
   showIcons=false;
   pictures=[];
-  imagesearchengine_token="";
   ratio=1;
   original:any={};
   types=[{label:"Sticker",value:"sticker"},{label:"Animés",value:"gif"},{label:"Photos",value:"pictures"},{label:"Emoji",value:"emoji"}];

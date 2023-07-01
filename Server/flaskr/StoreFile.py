@@ -47,7 +47,7 @@ class StoreFile(Network,Storage):
     return False
 
 
-  def add(self,content,domain_server=None):
+  def add(self,content,overwrite=False):
     self.read()
 
     content_for_key=json.dumps(content) if type(content)==dict else content
@@ -150,7 +150,7 @@ class StoreFile(Network,Storage):
     return rc
 
 
-  def burn(self,nft_addr:str,miner:Key,n_burn=1):
+  def burn(self,nft_addr:str,miner:Key,n_burn=1,backup_address=""):
     """
     Diminution du nombre de SFR (ou suppression pour les NFTs)
     :param nft_addr:

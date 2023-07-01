@@ -2,6 +2,8 @@
 
 <div class="mainform" style="margin:0px;">
   <div class="titleform">{{title_form}}</div>
+  <div class="subtitleform">{{claim}}</div>
+
   <div class="subtitleform" *ngIf="sel_config && sel_config.message && sel_config.message!.length>0">
     {{sel_config!.message}}
     <a *ngIf="sel_config && sel_config.help && sel_config.help.length>0" [href]="sel_config!.help"><mat-icon>help</mat-icon></a>
@@ -150,28 +152,29 @@
         </button>
 
         <button type="button" mat-raised-button mat-button
-                color="primary" *ngIf="total_picture()>1"
+                color="primary" *ngIf="total_picture()>3"
                 title="Voir un aperçu des 10 premiers NFT"
                 (click)="preview(20,'75x75',100)">
           Aperçu rapide
         </button>
 
         <button type="button" mat-raised-button mat-button
-                *ngIf="total_picture()>0"
+                *ngIf="total_picture()>10 && user.advance_mode"
                 title="Permet de voir tous les visuels d'un calque"
                 (click)="show_max_item()">
           Voir toutes les images
         </button>
         <button type="button" mat-raised-button mat-button
                 title="Afficher la transparence en noir (pour faire resortir les éléments blancs)"
-                *ngIf="total_picture()>0"
+                *ngIf="total_picture()>0 && user.advance_mode"
                 (click)="backcolor=(backcolor=='white' ? 'black' : 'white')">
           Inverser le fond
         </button>
         <button style="width: fit-content" mat-raised-button mat-button
                 title="Ouvrir des banques d'images"
                 (click)="find_image()">
-          Trouver des images
+          Trouver des images<br>
+          sur internet
         </button>
 
         <app-input label="Stockage visuels et metadata" *ngIf="user.advance_mode"
@@ -219,8 +222,8 @@
                 <mat-icon style="cursor: pointer;" (click)="generate_with_color(layer)" title="Générer des copies par variation de couleurs">palette</mat-icon>
                 <mat-icon style="cursor: pointer;" (click)="transform(layer)" [title]="'Bordure (px) '+layer.margin">edit</mat-icon>
               </div>
-              <mat-icon style="cursor: pointer;" *ngIf="layer.position>0" (click)="update_position(layer,-1)">arrow_circle_up</mat-icon>
-              <mat-icon style="cursor: pointer;" *ngIf="layer.position<sel_config!.layers.length-1"  (click)="update_position(layer,+1)">arrow_circle_down</mat-icon>
+              <mat-icon style="cursor: pointer;" *ngIf="layer.position>0" (click)="update_position(layer,-1)" title="faire remonter le calque">arrow_circle_up</mat-icon>
+              <mat-icon style="cursor: pointer;" *ngIf="layer.position<sel_config!.layers.length-1"  (click)="update_position(layer,+1)" title="faire descendre le calque">arrow_circle_down</mat-icon>
               <mat-icon style="cursor: pointer;" (click)="search_images(layer)" title="Chercher des images sur Internet pour intégrer directement dans le calque">image_search</mat-icon>
               <mat-icon style="cursor: pointer;" (click)="delete_layer(layer)" *ngIf="layer.elements!.length==0" title="Effacer la ligne">cancel</mat-icon>
               <mat-icon style="cursor: pointer;" (click)="clear_layer(layer)" *ngIf="layer.elements!.length>0" title="Effacer tous les éléments">delete</mat-icon>
@@ -248,7 +251,7 @@
 
             <div *ngFor="let elt of layer.elements?.slice(0,sel_config.max_items)"
                  [title]="elt.name+'\n'+elt.image.substring(0,100)+'\n\nCliquer pour voir à échelle 1:1'"
-                 style="display: inline-block;margin: 5px;max-width: 100px;max-height: 100px;cursor: pointer;width:20%;height:100%;">
+                 style="display: inline-block;margin: 5px;max-width: 100px;max-height: 100px;cursor: pointer;width:20%;height:100%;position:relative;">
               <img *ngIf="elt?.image?.length>0"
                    [src]="elt.image"
                    alt="En cours de chargement"
@@ -256,6 +259,9 @@
                    [style.background-color]="backcolor" class="mat-elevation-z4"
                    (mousedown)="modify_element($event,layer,elt)"
                    (dblclick)="open_file(elt)">
+              <mat-icon style="position: absolute;left:5px;top:5px;display: block;z-index: 10;font-size: small;cursor: pointer;"
+                        (click)="delete_element(layer,layer.elements.indexOf(elt))">cancel
+              </mat-icon>
             </div>
             <span *ngIf="layer.elements && sel_config.max_items<1000 && layer.elements.length>sel_config.max_items" style="font-size: xx-large;cursor: pointer;" (click)="sel_config.max_items=1000">...</span>
           </td>
@@ -283,14 +289,14 @@
 
       <div style="font-size:x-small;width: 100px;margin:5px;display: inline-block;text-align: center;line-height: 85%;cursor: pointer;" *ngFor="let img of previews">
         <img [src]="img.src" [ngStyle]="img.style"
-             [title]="img.url"
+             [title]="img.url || img.index"
              (dblclick)="save_file(img)"
              (click)="select_file(img)">
       </div>
 
       <div *ngIf="previews.length>0">
         <br>
-        Cliquer sur une image pour la voir en taille standard
+        double cliquer sur un visuel pour le télécharger
       </div>
 
 
@@ -300,7 +306,7 @@
 
 
     <mat-expansion-panel [(expanded)]="show_generate">
-      <mat-expansion-panel-header>Génération</mat-expansion-panel-header>
+      <mat-expansion-panel-header>Fabriquer la série de NFT</mat-expansion-panel-header>
 
       <app-input class="input-number" label="Nombre de NFT à générer"
                  *ngIf="max_nft>0"
@@ -358,7 +364,7 @@
           <mat-card-title>Fabrication</mat-card-title>
           <mat-card-content>
 
-            <button (click)="generate_collection('files')" mat-raised-button
+            <button (click)="generate_collection('zip')" mat-raised-button
                     title="Télécharger l'ensemble des visuels dans un fichier zip"
                     style="width: 100%">
               Générer
@@ -414,15 +420,18 @@
       <small>Les données du NFT peuvent être inclusent dans les images pour utilisation au moment du minage</small>
 
       <br><br>
-      <app-upload-file (uploaded)="on_upload_attributs($event)"
-                       title="Associer aux visuels un fichier de descriptions / attributs"
-                       extensions=".csv,.txt">
-        Associer des propriétés
-      </app-upload-file>
+      <div class="expansion-content">
+        <app-upload-file (uploaded)="on_upload_attributs($event)" height="35px"
+                         title="Associer aux visuels un fichier de descriptions / attributs"
+                         extensions=".csv,.txt">
+          Associer des propriétés
+        </app-upload-file>
 
-      <button type="button" mat-raised-button (click)="clear_data()">
-        Effacer tout
-      </button>
+        <button type="button" mat-raised-button (click)="clear_data()" style="margin-left: 20px;">
+          Effacer tout
+        </button>
+
+      </div>
 
       <br><br>
 
@@ -444,6 +453,7 @@
         <app-input label="Description"
                    help="le champs __idx__ permet d'intégrer le numéro du NFT"
                    [value]="sel_config.data.description"
+                   (focusout)="save_config()"
                    [width]="w_data_field"
                    (valueChange)="sel_config.data.description=$event">
         </app-input>
@@ -451,46 +461,27 @@
 
         <app-input *ngIf="!network.isElrond()" label="Symbole"
                    [value]="sel_config.data.symbol"
+                   (focusout)="save_config()"
                    (valueChange)="sel_config.data.symbol=$event">
         </app-input>
 
         <app-input label="Propriétés / Attributs" [value]="sel_config!.data.properties"
                    (valueChange)="sel_config!.data.properties=$event" [width]="w_data_field"
+                   (focusout)="save_config()"
                    help="Respectez le format est '<nom_attribut>=<valeur_attribut>' et un seul attribut par ligne"
                    [rows]="4"></app-input>
 
         <app-input label="Liens / Fichiers" help="Placer un seul lien par ligne" [width]="w_data_field"
+                   (focusout)="save_config()"
                    [value]="sel_config!.data.files" (valueChange)="sel_config!.data.files=$event"
                    [rows]="4"></app-input>
 
-        <app-input label="Créateurs" [value]="sel_config!.data.creators"
-                   (valueChange)="sel_config!.data.creators=$event" [width]="w_data_field"
+        <app-input label="Créateurs et royalties associées" [value]="sel_config!.data.creators"
+                   (valueChange)="sel_config!.data.creators=$event" [width]="w_data_field" (focusout)="save_config()"
                    help="Chaque ligne contient <adresse du créateur>=<pourcentage de royalties>%"
                    [rows]="4" ></app-input>
       </div>
 
-
-
-      <br>
-      <!--    <mat-expansion-panel>-->
-      <!--      <mat-expansion-panel-header>NFT Live</mat-expansion-panel-header>-->
-
-      <!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
-      <!--        <mat-label>Date de début</mat-label>-->
-      <!--        <input matInput type="date" [(ngModel)]="data!.nftlive!.datestart">-->
-      <!--      </mat-form-field>-->
-
-      <!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
-      <!--        <mat-label>Heure de début</mat-label>-->
-      <!--        <input matInput type="time" [(ngModel)]="data!.nftlive!.timestart">-->
-      <!--      </mat-form-field>-->
-
-      <!--      <mat-form-field appearance="fill" style="max-width: 200px">-->
-      <!--        <mat-label>Durée de l'événement (en heure)</mat-label>-->
-      <!--        <input matInput type="number" [(ngModel)]="data!.nftlive!.duration">-->
-      <!--      </mat-form-field>-->
-      <!--    </mat-expansion-panel>-->
-      <!--    -->
 
     </mat-expansion-panel>
 
