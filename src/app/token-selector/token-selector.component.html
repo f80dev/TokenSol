@@ -1,15 +1,12 @@
-<div *ngIf="sel_token.id==''" class="expansion-content-left" >
-
+<div *ngIf="sel_token.id==''" class="expansion-content-left background-element" style="min-height: 40px;">
     <div class="expansion-content-left" style="display: inline-block;position:relative;">
 
             <table style="position:absolute;right:10px;top:4px;width:80px;z-index: 10;text-align: right;"><tr>
                 <td style="width: 20px;"><app-hourglass style="display: inline-block" [message]="message"></app-hourglass></td>
-                <td><input [(ngModel)]="filter" title="Filtre par nom de la monnaie ou par propriétaire"
+                <td *ngIf="message==''"><input [(ngModel)]="filter" title="Filtre par nom de la monnaie ou par propriétaire"
                            style="background: none;color:gray;width:50px;display: inline;"
                            (ngModelChange)="update_filter()"></td>
             </tr></table>
-
-
 
 
         <app-input [options]="tokens" [label]="label" [multiselect]="false"
@@ -19,17 +16,23 @@
 
     </div>
 
-    <div *ngIf="show_detail && sel_token" class="expansion-content-left">
-        <img style="width: 50px" [src]="sel_token.image">
-        <span style="margin-left: 5px">{{sel_token.description}}</span>
-    </div>
+<!--    <div *ngIf="show_detail && sel_token" class="expansion-content-left">-->
+<!--        <img [src]="sel_token.image" [style.width]="size"  [style.height]="size" >-->
+<!--        <span style="margin-left: 5px">{{sel_token.description}}</span>-->
+<!--    </div>-->
 </div>
 
-<div *ngIf="sel_token?.id?.length>0" class="mat-elevation-z2" style="padding: 8px;text-align: left;" >
-    <div class="mat-caption" style="opacity: 0.8;margin: 5px;">{{label}}</div>
+<div *ngIf="sel_token?.id?.length>0" class="mat-elevation-z2" style="margin-left:8px;padding: 8px;text-align: left;" >
+    <table style="width: 100%;"><tr>
+        <td style="text-align: left;">
+            <div class="mat-caption" style="opacity: 0.8;margin: 5px;display: flex;justify-items: stretch;">{{label}}</div>
+        </td>
+        <td style="text-align: right"><mat-icon style="margin-left:10px" (click)="reset()">refresh</mat-icon></td>
+    </tr></table>
+
     <div class="expansion-content-left">
-        <img [src]="sel_token.image" style="width: 40px;margin-right: 10px;">
+        <img [src]="sel_token.image" style="margin-right: 10px;" [style.width]="size"  [style.height]="size" >
         <span [title]="sel_token.id">{{sel_token.name}}</span>
-        <mat-icon style="margin-left:10px" (click)="reset()">refresh</mat-icon>
+
     </div>
 </div>

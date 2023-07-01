@@ -37,5 +37,9 @@ mat-card-title {
   background-color: mat.get-color-from-palette(mat.$grey-palette, 900) !important;
 }
 
+.background-element {
+  background-color: mat.get-color-from-palette(mat.$grey-palette, 800) !important;
+}
+
 
 

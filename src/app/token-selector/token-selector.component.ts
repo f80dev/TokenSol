@@ -8,12 +8,12 @@ const BACKUP_IMG="https://tokenforge.nfluent.io/assets/icons/egld-token-logo.web
   templateUrl: './token-selector.component.html',
   styleUrls: ['./token-selector.component.css']
 })
-export class TokenSelectorComponent implements OnChanges,AfterViewInit {
+export class TokenSelectorComponent implements OnChanges {
   @Input() network:string="elrond-devnet"
   @Input() filter:string=""
   @Input() type:string="Fungible";
-  @Input() size:string="40px";
-  @Input("value") sel_token: any
+  @Input() size:string="30px";
+  @Input("value") sel_token:any={id:""}
   @Input() label="Sélectionner un token"
   @Input() with_detail=false
   @Output() valueChange: EventEmitter<any> = new EventEmitter();
@@ -24,17 +24,14 @@ export class TokenSelectorComponent implements OnChanges,AfterViewInit {
   constructor(
       public api:NetworkService
   ) {
-    this.reset();
+
   }
 
-  ngAfterViewInit(): void {
-
-    }
 
   ngOnChanges(changes: SimpleChanges): void {
     if(changes["network"] || changes["filter"]){
       //wait_message(this,"Recherche des monnaies")
-      setTimeout(()=>{this.refresh();},1500);
+      setTimeout(()=>{this.refresh();},1000);
     }
     if(!this.sel_token){
       this.sel_token={id:""}
@@ -64,7 +61,7 @@ export class TokenSelectorComponent implements OnChanges,AfterViewInit {
           if(t["balance"]!="")t["label"]=t["label"]+" ("+t["balance"]+")"
           this.tokens.push(t)
         }
-      }
+      },error:()=>{this.message="";}
     })
   }
 
@@ -74,7 +71,8 @@ export class TokenSelectorComponent implements OnChanges,AfterViewInit {
   }
 
   reset() {
-    this.update_sel({id:''})
+    this.tokens=[]
+    this.sel_token={id:""}
     this.refresh();
   }
 

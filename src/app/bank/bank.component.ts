@@ -65,6 +65,9 @@ export class BankComponent implements OnInit {
     if(this.bank){
       this.fiat_price=Number(params.fiat_price || "0")
       if(params.claim)this.bank!.title=params.claim;
+      if(typeof(this.bank.token)=="object"){
+        this.bank.token=this.bank.token["identifier"]
+      }
       this.network.get_token(this.bank.token,this.bank.network).subscribe((r)=>{
         this.token=r;
         apply_params(this,params,environment.bank)

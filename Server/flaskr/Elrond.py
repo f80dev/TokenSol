@@ -1169,7 +1169,7 @@ class Elrond(Network):
       if filter.startswith("erd") and len(filter)>15:
         url=self._proxy.url+"/accounts/"+filter+"/tokens?includeMetaESDT=true"
       else:
-        url=self._proxy.url+"/tokens?from="+str(offset)+"&size="+str(size)+"&search="+filter+"&type="+_type+"&includeMetaESDT=true"
+        url=self._proxy.url+"/tokens?from="+str(offset)+"&size="+str(size)+("&search="+filter if filter!='' else "")+"&type="+_type
       if with_detail: url=url+"&includeMetaESDT=true"
       result=requests.get(url+"&sort=accounts&order=desc")
       if len(filter)>0 and len(result.json())==0:

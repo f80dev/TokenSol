@@ -128,8 +128,12 @@ def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,
   _network=get_network_instance(network)
   if type(token)==dict and "identifier" in token:token=token["identifier"]
   tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
+  if tx_esdt["status"]!="success":
+    return {"error":tx_esdt["error"],"status":"error"}
+
   if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
   rc["transaction_esdt"]=tx_esdt
+  rc["status"]="success"
   return rc
 
 

@@ -1112,6 +1112,7 @@ def transfer_to():
     key_to=to_network.create_account(to,domain_appli=current_app.config["DOMAIN_APPLI"],
                               subject="Ouverture de votre compte pour votre NFT",
                               mail_new_wallet=request.json["mail_content"],
+                                     histo=DAO(config=current_app.config)
                               )
     to=key_to.address
 
@@ -3072,40 +3073,58 @@ def api_airdrops():
       #voir https://hackernoon.com/how-to-interact-with-the-elrond-blockchain-in-a-simple-static-website
       code_to_insert="""
       <script>        
-		function send_airdrop(addr){
-            fetch(__server__,{headers:{'Content-Type':'application/json'},method:'POST',
-                body:JSON.stringify({program:__program__, ts:Date.now(), address:addr})})
+		async function send_airdrop(addr){
+		  if(Math.random()>__random__){
+            let resp=await fetch(__server__,{headers:{'Content-Type':'application/json'},method:'POST',
+                body:JSON.stringify({program:__program__, ts:Date.now(), address:addr})});
+            
+            if(resp.status==200){
+              let r=await resp.json();
+              if(__showdeal__ && r.status!='error'){
+                      const img = document.createElement('img');
+                      img.src='https://airdrop.nfluent.io/assets/gift.webp';
+                      img.style='position:fixed;left:0;top:0;width:50px;height:50px;';
+                      document.body.appendChild(img);
+                      setTimeout(()=>{document.body.removeChild(img);},2000);
+                    }
+            }        
+          }
 		}
 
 		if(!localStorage.getItem("address")) {
             const iframe = document.createElement('iframe');
-            iframe.src = 'https://airdrop.nfluent.io/login?wallet_authent=true&toolbar=false';
-            iframe.style = 'position:fixed;top:20%;left:40%;z-index:1000;width:550px;height:500px;'
-            document.body.appendChild(iframe)
+            iframe.src = 'https://airdrop.nfluent.io/login';
+            iframe.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;width:550px;height:500px;'
+            document.body.appendChild(iframe);
 
             window.addEventListener('message', (event) => {
-                let address=event.data['address']
+                let address=event.data['address'];
                 if (address){
-                    localStorage.setItem('address',address)
-	                document.body.removeChild(iframe)
-	                send_airdrop(address)
+                    localStorage.setItem('address',address);
+	                document.body.removeChild(iframe);
+	                send_airdrop(address);
                 }
             })
         }else{
-            send_airdrop(localStorage.getItem("address"))
+          setTimeout(()=>{send_airdrop(localStorage.getItem("address"))},__delay__);
 		}
 
 	</script>
 
       """
     code_to_insert=code_to_insert.replace("__server__","\""+current_app.config["DOMAIN_SERVER"]+"/api/visit/\"").replace("__program__","\""+airdrop_id+"\"")
+    code_to_insert=code_to_insert.replace("__delay__",str(body["authent_delay"]*1000)).replace("__random__",str(1-int(body["random"])/100))
+    code_to_insert=code_to_insert.replace("__showdeal__","true" if body["show_deal"] else "false").replace(";\n",";").replace("\t","")
+
+    for i in range(20):
+      code_to_insert=code_to_insert.replace("  "," ")
+
     params={
       "bank.network":body["network"],
       "bank.token":body["token"],
       "bank.miner":body["dealer_wallet"],
       "bank.refund":body["amount"],
-      "bank.limit":body["limit_by_day"],
-      "bank.histo":"db-"+dao.domain_server+"-"+dao.dbname
+      "bank.limit":body["limit_by_day"]
     }
 
   return jsonify({"code":code_to_insert,"params":params})
@@ -3116,9 +3135,13 @@ def api_visit():
   body=request.json
   dao=DAO(config=current_app.config)
   program=dao.get_airdrop(body["program"])
-  rc=airdrop(body["address"],program["token"],
-             Key(encrypted=program["dealer_wallet"]),float(program["amount"]),histo=dao,
-             limit=float(program["limit_by_day"]),network=program["network"])
+  if not program is None:
+    rc=airdrop(body["address"],program["token"],
+               Key(encrypted=program["dealer_wallet"]),float(program["amount"]),histo=dao,
+               limit=float(program["limit_by_day"]),network=program["network"])
+  else:
+    log("Appel d'un programme d'airdrop inconnu")
+    rc={"error":"Program "+body["program"]+" inconnu ou obsolete","status":"error"}
 
   return jsonify(rc)
 
