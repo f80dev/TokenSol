@@ -623,7 +623,17 @@ class DAO(Storage,Network):
     rc=self.db["airdrops"].find_one(ObjectId(program))
     return rc
 
+  def add_affiliated_link(self,url):
+    rc=self.db["affiliated"].insert_one({"url":url})
+    return rc.inserted_id
 
+
+  def get_affiliated_link(self, url=""):
+    if len(url)==0:
+      rc=self.db["affiliated"].find()
+    else:
+      rc=self.db["affiliated"].find_one({"url":url})
+    return list(rc)
 
 
 

@@ -25,21 +25,18 @@ from PIL.Image import Image
 from bson import ObjectId
 from flask import request, jsonify, send_file, make_response, Blueprint, current_app, redirect
 from flask_jwt_extended import create_access_token
-from numpy import isnan
 from werkzeug.datastructures import FileStorage
 from yaml import dump, Dumper
 
 import config
-from flaskr.ArtEngine import Layer, Sticker, ArtEngine, Element
-from flaskr.Elrond import Elrond, ELROND_KEY_DIR
+from flaskr.ArtEngine import Layer, Sticker, ArtEngine
+from flaskr.Elrond import Elrond
 from flaskr.GitHubStorage import GithubStorage
 from flaskr.Keys import Key
 from flaskr.Mintpool import Mintpool
 from flaskr.NFT import NFT
 from flaskr.Network import Network
-from flaskr.Polygon import POLYGON_KEY_DIR
 from flaskr.PrestaTools import PrestaTools
-# from flaskr.Solana import SOLANA_KEY_DIR, Solana
 from flaskr.StoreFile import StoreFile
 from flaskr.TokenForge import upload_on_platform
 from flaskr.Tools import get_operation, decrypt, get_access_code_from_email, send, convert_to, returnError, setParams, \
@@ -1977,6 +1974,21 @@ def api_canvas():
   return jsonify({"zone":zone,"svg":document.toxml()})
 
 
+@bp.route('/affiliated_links/',methods=["GET","POST"])
+def api_affiliated_link():
+  dao=DAO(config=current_app.config)
+
+  if request.method=="POST":
+    url=request.json["url"]
+    id=dao.add_affiliated_link(url)
+    return jsonify({"message":"ok","id":id})
+
+  if request.method=="GET":
+    urls=dao.get_affiliated_link(request.args.get("url",""))
+    urls=[x["url"] for x in urls]
+    return jsonify(urls)
+
+
 
 
 
@@ -2009,15 +2021,17 @@ def keys(name:str=""):
 
     keys=_network.get_keys() if len(name)==0 else [_network.find_key(name)]
     items=[]
-    if with_balance or "/accounts" in request.url:
-      for k in keys:
-        item=k.__dict__
+    for k in keys:
+      item=k.__dict__
+
+      if with_balance or "/accounts" in request.url:
         item["balance"]=_network.get_balance(k.address,request.args.get("token_id",""))
         if item["balance"] is None:item["balance"]=0
-        items.append(item)
-    else:
-      items=[key.__dict__ for key in keys]
-      if operation: items=items+extract_keys_from_operation(operation)
+
+      item["encrypted"]=k.encrypt()
+      items.append(item)
+
+    #if operation: items=items+extract_keys_from_operation(operation)
 
     return jsonify(items)
 
@@ -2308,7 +2322,7 @@ def api_rescue_wallet(email:str):
 
     return jsonify({"message":"Mail envoyé"})
 
-  
+
 
 @bp.route('/encrypt_key/<network>/',methods=["POST"])
 #http://127.0.0.1:4242/api/token_by_delegate/?account=LqCeF9WJWjcoTJqWp1gH9t6eYVg8vnzUCGBpNUzFbNr
@@ -3072,12 +3086,12 @@ def api_airdrops():
     else:
       #voir https://hackernoon.com/how-to-interact-with-the-elrond-blockchain-in-a-simple-static-website
       code_to_insert="""
-      <script>        
+      <script>
 		async function send_airdrop(addr){
 		  if(Math.random()>__random__){
             let resp=await fetch(__server__,{headers:{'Content-Type':'application/json'},method:'POST',
                 body:JSON.stringify({program:__program__, ts:Date.now(), address:addr})});
-            
+
             if(resp.status==200){
               let r=await resp.json();
               if(__showdeal__ && r.status!='error'){
@@ -3087,7 +3101,7 @@ def api_airdrops():
                       document.body.appendChild(img);
                       setTimeout(()=>{document.body.removeChild(img);},2000);
                     }
-            }        
+            }
           }
 		}
 

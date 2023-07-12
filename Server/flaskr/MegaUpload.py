@@ -1,8 +1,7 @@
 import base64
-from io import FileIO
 
 from flaskr.Storage import Storage
-from mega import Mega
+#from mega import Mega
 
 from flaskr.Tools import now
 from flaskr.secret import MEGAUPLOAD_EMAIL, MEGAUPLOAD_PASSWORD
@@ -13,7 +12,7 @@ class MegaUpload (Storage) :
 	directory=""
 
 	def __init__(self,email=MEGAUPLOAD_EMAIL,password=MEGAUPLOAD_PASSWORD,directory="TokenForge"):
-		self.client = Mega().login(email, password)
+		#self.client = Mega().login(email, password)
 		self.directory=directory
 		if self.client.find(directory) is None:	self.client.create_folder(directory)
 

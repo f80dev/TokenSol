@@ -39,3 +39,7 @@ multiversx-sdk-core
 multiversx-sdk-wallet
 multiversx-sdk-network-providers
 pytest
+pyopenssl
+openpyxl
+mega.py
+bitcoinlib

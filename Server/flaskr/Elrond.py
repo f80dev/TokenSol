@@ -20,7 +20,6 @@ from flaskr.Storage import Storage
 
 from flaskr.dao import DAO
 import json
-import sys
 import time
 from os import listdir
 
@@ -1471,6 +1470,7 @@ class Elrond(Network):
         return k
 
     return Key(address=address_or_name)
+
 
   def get_owners_of_nft(self, nft_addr:str) -> [NfluentAccount]:
     """
