@@ -14,7 +14,7 @@ export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
 
   @Input() show_title:boolean=false;
   @Input() exclude_collections:string[]=[];
-  @Input() collection_network:string="elrond-devnet";
+  @Input() collection_network:string="";
 
 
   @Input() delay:number=0.5;

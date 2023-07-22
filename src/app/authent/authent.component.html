@@ -88,7 +88,7 @@
     </mat-expansion-panel>
     <mat-expansion-panel *ngIf="showAccesCode || showPrivateKey">
       <mat-expansion-panel-header>Utiliser votre clé secrète</mat-expansion-panel-header>
-      <div style="max-width: 500px;width:80%;display: inline-block;text-align: center;">
+      <div style="max-width: 500px;width:100%;display: inline-block;text-align: center;">
         <app-input *ngIf="showAccesCode"
                    [value]="access_code"
                    (valueChange)="access_code=$event"
@@ -104,15 +104,19 @@
         </app-input>
       </div>
     </mat-expansion-panel>
-    <mat-expansion-panel *ngIf="showEmail || showGoogle">
+
+    <mat-expansion-panel *ngIf="showKeystore">
+      <mat-expansion-panel-header>Utiliser le KeyStore</mat-expansion-panel-header>
+      <app-upload-file extensions=".json" [zone]="true" height="70px" (uploaded)="upload_keystore($event)"></app-upload-file>
+    </mat-expansion-panel>
+
+      <mat-expansion-panel *ngIf="showEmail || showGoogle">
       <mat-expansion-panel-header>Utiliser votre email</mat-expansion-panel-header>
       <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
 
         <!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
-        <asl-google-signin-button  *ngIf="showGoogle && address.length==0"
-                                   style="height: 50px;"
-                                   [type]="(device.isHandset$ | async) ? 'icon' : 'standard'" size="medium"
-                                   title="Authentification simplifiée pour les utisateurs de gmail">
+        <asl-google-signin-button *ngIf="showGoogle && address.length==0" style="height: 50px;"
+                                  title="Authentification simplifiée pour les utisateurs de gmail">
         </asl-google-signin-button>
 
         <app-input *ngIf="showEmail"

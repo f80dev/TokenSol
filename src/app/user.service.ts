@@ -54,6 +54,7 @@ export class UserService implements OnDestroy {
   nfts_to_mint: any[] = []
   advance_mode: boolean = false;
   toolbar_visible: boolean = true;
+  visibleTuto:boolean=false;
 
   params:any={appname:""}                             //Enregistrement des parametres au lancement de l'appli
   verified_address: Boolean=false;

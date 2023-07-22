@@ -611,7 +611,7 @@ class DAO(Storage,Network):
 
   def get_link(self, cid:str) -> str:
     rc=self.db["shortlinks"].find_one({"cid":cid})
-    del rc["_id"]
+    if not rc is None: del rc["_id"]
     return rc
 
   def add_airdrop(self, body):
@@ -623,9 +623,12 @@ class DAO(Storage,Network):
     rc=self.db["airdrops"].find_one(ObjectId(program))
     return rc
 
-  def add_affiliated_link(self,url):
-    rc=self.db["affiliated"].insert_one({"url":url})
-    return rc.inserted_id
+  def add_affiliated_link(self,url:str,airdrop:dict):
+    if self.get_affiliated_link(url) is None:
+      rc=self.db["affiliated"].insert_one({"url":url,"airdrop":airdrop})
+      return rc.inserted_id
+    else:
+      return None
 
 
   def get_affiliated_link(self, url=""):
@@ -633,6 +636,7 @@ class DAO(Storage,Network):
       rc=self.db["affiliated"].find()
     else:
       rc=self.db["affiliated"].find_one({"url":url})
+      if rc is None:return None
     return list(rc)
 
 

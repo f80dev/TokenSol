@@ -78,7 +78,11 @@
 
           <div *ngFor="let attr of nft.attributes" class="mat-body-1">
             <div style="opacity: 0.8;" *ngIf="attr.trait_type" [title]="attr.trait_type">{{attr.trait_type}}:</div>
-            <div style="text-align: left;" *ngIf="attr.value"  [title]="attr.value">{{attr.value}}</div>
+            <div style="text-align: left;" *ngIf="attr.value"  [title]="attr.value">
+              {{attr.value}}
+              <mat-icon *ngIf="attr.value.startsWith('http')" (click)="open_prop(attr.value)"
+                        style="margin-bottom:-10px;cursor:pointer;opacity: 0.6;font-size: medium;">visibility</mat-icon>
+            </div>
           </div>
 
 
@@ -248,7 +252,6 @@
           <input matInput type="text" [maxLength]="60" [(ngModel)]="attributes">
           <mat-hint>Reste {{40-attributes.length}} caractères</mat-hint>
         </mat-form-field>
-
       </div>
 
       <br>
@@ -294,25 +297,30 @@
 
     <br><br>
     <div class="mat-headline-4 color-primary">Se connecter</div>
-    <app-authent *ngIf="addr?.length==0 || !strong"
-                 style="max-width: 350px"
-                 [showWalletConnect]="true"
-                 [showEmail]="false"
-                 [showGoogle]="false"
-                 [showExtensionWallet]="true"
-                 [showWebWallet]="true"
-                 (authent)="on_authent($event)"
-                 (disconnect)="on_disconnect()"
-                 [showCancel]="false"
-                 [showPrivateKey]="true">
-    </app-authent>
+    <div style="max-width: 400px;display: inline-block;">
+      <app-authent *ngIf="addr?.length==0 || !strong"
+                   [showWalletConnect]="false"
+                   [showWebcam]="false"
+                   [showEmail]="false"
+                   [address]="addr"
+                   [showDirectConnect]="false"
+                   [showGoogle]="false"
+                   [showExtensionWallet]="false"
+                   [showWebWallet]="false"
+                   (authent)="on_authent($event)"
+                   (disconnect)="on_disconnect()"
+                   [showCancel]="false"
+                   [showNfluentWalletConnect]="false"
+                   [showAddress]="false"
+                   [showPrivateKey]="true">
+      </app-authent>
+    </div>
+
 
     <br>
     <button type="button" mat-raised-button (click)="logout()" *ngIf="addr.length>0">
       Se déconnecter
     </button>
-
-
 
 
     <div *ngIf="addr!='' && strong">

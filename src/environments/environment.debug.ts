@@ -49,6 +49,7 @@ export const environment = {
     token:"NFLUCOIN-4921ed",
     network:"elrond-devnet",
     limit:5,
+    wallet_limit:10,
     histo:"db-server-nfluent",
   },
 

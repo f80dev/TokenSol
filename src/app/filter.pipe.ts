@@ -7,7 +7,7 @@ import {NFT} from "../nft";
 })
 export class FilterPipe implements PipeTransform {
 
-  transform(items: NFT[], args: any[]): any {
+  transform(items: any[], args: any[]): any {
     if(!items)return null;
     if(args.length==1){
       if(args[0]=="" || args[0]=="*")return items;
@@ -16,7 +16,7 @@ export class FilterPipe implements PipeTransform {
     else{
       if(args[1]=="" || args[1]=="*")return items;
       // @ts-ignore
-      return items.filter(item => !item.hasOwnProperty(args[0]) || (item.search[args[0]].toLowerCase().indexOf(args[1].toLowerCase())!==-1));
+      return items.filter(item => !item.hasOwnProperty(args[0]) || (item[args[0]].toLowerCase().indexOf(args[1].toLowerCase())!==-1));
     }
   }
 

@@ -7,7 +7,9 @@
         <div style="margin: 15px;" class="mat-subheading-1">
             Coût de l'opération: {{price}} {{money!.unity}} + Frais de service
         </div>
-        <div *ngIf="balance>0" style="font-size: small">Vous avez {{balance/1e18 | number:"1.0-1"}} {{money!.unity}}</div>
+        <div *ngIf="balance>0" style="font-size: small">
+            Vous avez {{balance | number:"1.0-1"}} {{money!.unity}}
+        </div>
     </div>
 
     <div *ngIf="balance<price && merchant && merchant.wallet" style="margin-top: 20px;">

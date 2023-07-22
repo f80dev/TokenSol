@@ -1,6 +1,7 @@
 import base64
 import io
 from pathlib import Path
+from typing import Optional
 
 import requests
 from multiversx_sdk_core import Transaction, Address, TransactionPayload, TokenPayment
@@ -9,9 +10,10 @@ from multiversx_sdk_core.transaction_builders import DefaultTransactionBuildersC
 from multiversx_sdk_network_providers.accounts import AccountOnNetwork
 from multiversx_sdk_network_providers.network_config import NetworkConfig
 from multiversx_sdk_network_providers.resources import SimulateResponse
-from multiversx_sdk_wallet import UserPEM, UserSigner, UserSecretKey, Mnemonic
+from multiversx_sdk_wallet import UserPEM, UserSigner, UserSecretKey, Mnemonic,UserWallet
 from multiversx_sdk_wallet.core import derive_keys
 from multiversx_sdk_network_providers import ProxyNetworkProvider
+from multiversx_sdk_wallet.user_wallet import UserWalletKind
 
 from flaskr.Keys import Key
 from flaskr.NFluentAccount import NfluentAccount
@@ -593,8 +595,11 @@ class Elrond(Network):
       result= requests.get(url)
       balance=0
       if result.status_code==200:
-        if "balance" in result.json():balance=int(result.json()["balance"])
-      if balance>0: return balance
+        if "balance" in result.json():
+          balance=int(result.json()["balance"])
+          if balance>0:
+            nb_decimals=result.json()["decimals"]
+            return balance/(10**nb_decimals)
 
       url=self._proxy.url+"/collections/"+token_id+"/accounts/"
       result= requests.get(url)
@@ -602,8 +607,6 @@ class Elrond(Network):
         for item in result.json():
           if item["address"]==acc.address.bech32(): return int(item["balance"])
       return 0
-
-
 
 
 
@@ -847,7 +850,7 @@ class Elrond(Network):
             "blockchain_name":"MultiversX",
             "mini_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
             "nfluent_wallet":self.nfluent_wallet_url(pubkey,domain_appli),
-            "official_wallet":"https://xportal.com/",
+            "official_wallet":"https://"+("devnet-" if self.network_type=='devnet' else "")+"wallet.multiversx.com/recover",
             "url_explorer":url_explorer,
             "url_gallery":self.getGallery(pubkey),
           },domain_appli=domain_appli),email,subject=subject)
@@ -867,9 +870,9 @@ class Elrond(Network):
       address = str(mnemonic.derive_key(0).generate_public_key().to_address("erd"))
 
     else:
-      secret_key, pubkey = derive_keys(seed)
+      secret_key = derive_keys(seed)
       words=seed
-      address = Address(pubkey).bech32()
+      address=self.toAccount(secret_key).address
 
     log("Création du compte "+self.getExplorer(address,"address"))
 
@@ -1162,11 +1165,11 @@ class Elrond(Network):
     """
     if not _type.endswith("ESDT"):_type=_type+"ESDT"
     rc=[]
-    size=25
+    size=100
     offset=0
     while offset+size<=limit:
       if filter.startswith("erd") and len(filter)>15:
-        url=self._proxy.url+"/accounts/"+filter+"/tokens?includeMetaESDT=true"
+        url=self._proxy.url+"/accounts/"+filter+"/tokens?includeMetaESDT=true&size="+str(size)+"&from="+str(offset)
       else:
         url=self._proxy.url+"/tokens?from="+str(offset)+"&size="+str(size)+("&search="+filter if filter!='' else "")+"&type="+_type
       if with_detail: url=url+"&includeMetaESDT=true"
@@ -1178,7 +1181,9 @@ class Elrond(Network):
       if result.status_code==200:
         rc=rc+result.json()
         if len(result.json())<size: break
-      offset=offset+size
+        offset=offset+size
+      else:
+        break
 
 
     for i,t in enumerate(rc):
@@ -1186,6 +1191,7 @@ class Elrond(Network):
       rc[i]["image"]=rc[i]["assets"]["pngUrl"] if "assets" in rc[i] else "https://tokenforge.nfluent.io/assets/icons/egld-token-logo.webp"
       rc[i]["descripion"]=rc[i]["assets"]["description"] if "assets" in rc[i] else ""
       rc[i]["balance"]=round(int(rc[i]["balance"])/1e20)*100 if "balance" in rc[i] else ""
+      rc[i]["url"]=rc[i]["assets"]["website"] if "assets" in rc[i] and "website" in rc[i]["assets"] else ""
 
     return rc
 
@@ -1197,7 +1203,7 @@ class Elrond(Network):
       rc={"name":"egld","identifier":"egld","supply":21000000,"unity":"egld"}
     else:
       rc=self._proxy.get_definition_of_fungible_token(token_id).__dict__
-    return {"name":rc["name"],"id":rc["identifier"],"supply":rc["supply"],"unity":rc["name"]}
+    return {"name":rc["name"],"id":rc["identifier"],"supply":rc["supply"],"unity":rc["name"],"decimals":rc["decimals"]}
 
 
   def get_min_gas_for_transaction(self,n_transactions=1) -> float:
@@ -1354,6 +1360,10 @@ class Elrond(Network):
       else:
         if "address" in user:user=user["address"]
 
+    if type(user)==bytes:
+      address=UserSecretKey(user).generate_public_key().to_address("erd").bech32()
+      user=Key(secret_key=user.hex(),address=address,network="elrond")
+
     if type(user)==str:
       if user.startswith("erd"):
         user=self.find_key(user)
@@ -1455,6 +1465,22 @@ class Elrond(Network):
     return rc
 
 
+  def convert_keystore_to_key(self, keystore, password,address_index: Optional[int] = None):
+    keystore_content=str(base64.b64decode(keystore.split("base64,")[1]),"utf8")
+    key_file_object = json.loads(keystore_content)
+    kind = key_file_object.get("kind", UserWalletKind.SECRET_KEY.value)
+    if kind == UserWalletKind.SECRET_KEY.value:
+      if address_index is not None: raise Exception("address_index must not be provided when kind == 'secretKey'")
+      secret_key = UserWallet.decrypt_secret_key(key_file_object, password)
+    elif kind == UserWalletKind.MNEMONIC.value:
+      mnemonic = UserWallet.decrypt_mnemonic(key_file_object, password)
+      secret_key = mnemonic.derive_key(address_index or 0)
+
+    address=secret_key.generate_public_key().to_address("erd").bech32()
+    return Key(name="",address=address,network=self.network,secret_key=secret_key.hex())
+
+
+
   def find_key(self,address_or_name) -> Key:
     """
     Trouve la clé sur le serveur
@@ -1464,6 +1490,9 @@ class Elrond(Network):
     if type(address_or_name)==Key: return address_or_name
     if type(address_or_name)==AccountOnNetwork:
       address_or_name=address_or_name.address.bech32()
+
+    if len(address_or_name)>50 and not address_or_name.startswith("erd"):
+      return Key(encrypted=address_or_name)
 
     for k in self.get_keys():
       if k.address==address_or_name or k.name==address_or_name:
@@ -1481,4 +1510,6 @@ class Elrond(Network):
     result=api(self._proxy.url+"/nfts/"+nft_addr+"/accounts")
     rc=[NfluentAccount(address=x["address"]) for x in result]
     return rc
+
+
 

@@ -17,7 +17,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.pytest_cache/v" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.9" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.11" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PackageRequirementsSettings">
@@ -26,80 +26,7 @@
   <component name="TemplatesService">
     <option name="TEMPLATE_FOLDERS">
       <list>
-        <option value="$MODULE_DIR$/../src" />
-        <option value="$MODULE_DIR$/../src/app" />
-        <option value="$MODULE_DIR$/../src/app/buy" />
-        <option value="$MODULE_DIR$/../src/app/svg" />
-        <option value="$MODULE_DIR$/../src/app/faqs" />
-        <option value="$MODULE_DIR$/../src/app/help" />
-        <option value="$MODULE_DIR$/../src/app/keys" />
-        <option value="$MODULE_DIR$/../src/app/link" />
-        <option value="$MODULE_DIR$/../src/app/mint" />
-        <option value="$MODULE_DIR$/../src/app/nfts" />
-        <option value="$MODULE_DIR$/../src/app/about" />
-        <option value="$MODULE_DIR$/../src/app/admin" />
-        <option value="$MODULE_DIR$/../src/app/login" />
-        <option value="$MODULE_DIR$/../src/app/store" />
-        <option value="$MODULE_DIR$/../src/app/faucet" />
-        <option value="$MODULE_DIR$/../src/app/manage" />
-        <option value="$MODULE_DIR$/../src/app/prompt" />
-        <option value="$MODULE_DIR$/../src/app/contest" />
-        <option value="$MODULE_DIR$/../src/app/creator" />
-        <option value="$MODULE_DIR$/../src/app/dbtable" />
-        <option value="$MODULE_DIR$/../src/app/scanner" />
-        <option value="$MODULE_DIR$/../src/app/mywallet" />
-        <option value="$MODULE_DIR$/../src/app/validate" />
-        <option value="$MODULE_DIR$/../src/app/build-ope" />
-        <option value="$MODULE_DIR$/../src/app/dispenser" />
-        <option value="$MODULE_DIR$/../src/app/hourglass" />
-        <option value="$MODULE_DIR$/../src/app/selectkey" />
-        <option value="$MODULE_DIR$/../src/app/upload-file" />
-        <option value="$MODULE_DIR$/../src/app/dealermachine" />
-        <option value="$MODULE_DIR$/../docs" />
         <option value="$MODULE_DIR$" />
-        <option value="$MODULE_DIR$/../node_modules/md5/demo" />
-        <option value="$MODULE_DIR$/../node_modules/jsbn" />
-        <option value="$MODULE_DIR$/../node_modules/less/test/sourcemaps" />
-        <option value="$MODULE_DIR$/../node_modules/karma/static" />
-        <option value="$MODULE_DIR$/../node_modules/pngjs/coverage/lcov-report" />
-        <option value="$MODULE_DIR$/../node_modules/sshpk/node_modules/jsbn" />
-        <option value="$MODULE_DIR$/../node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/.cache/gh-pages/https!github.com!f80dev!TokenSol.git" />
-        <option value="$MODULE_DIR$/../node_modules/terser/tools" />
-        <option value="$MODULE_DIR$/../node_modules/ecc-jsbn/node_modules/jsbn" />
-        <option value="$MODULE_DIR$/../node_modules/lazy-ass" />
-        <option value="$MODULE_DIR$/../node_modules/@ledgerhq/devices/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/@ledgerhq/hw-transport-webhid/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/@ledgerhq/hw-transport-webusb/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/sprintf-js/demo" />
-        <option value="$MODULE_DIR$/../node_modules/serve-index/public" />
-        <option value="$MODULE_DIR$/../node_modules/bignumber.js/doc" />
-        <option value="$MODULE_DIR$/../node_modules/blake2b-wasm" />
-        <option value="$MODULE_DIR$/../node_modules/ua-parser-js/dist" />
-        <option value="$MODULE_DIR$/../node_modules/hamt-sharding/docs" />
-        <option value="$MODULE_DIR$/../node_modules/hamt-sharding/docs/classes" />
-        <option value="$MODULE_DIR$/../node_modules/hamt-sharding/docs/modules" />
-        <option value="$MODULE_DIR$/../node_modules/@elrondnetwork/erdjs/node_modules/bignumber.js/doc" />
-        <option value="$MODULE_DIR$/../node_modules/@elrondnetwork/erdjs-network-providers/node_modules/bignumber.js/doc" />
-        <option value="$MODULE_DIR$/../node_modules/timestamp-nano/docs/demo" />
-        <option value="$MODULE_DIR$/../node_modules/timestamp-nano/docs/typedoc" />
-        <option value="$MODULE_DIR$/../node_modules/timestamp-nano/docs/typedoc/classes" />
-        <option value="$MODULE_DIR$/../node_modules/timestamp-nano/test/zuul" />
-        <option value="$MODULE_DIR$/../node_modules/varint-decoder/docs" />
-        <option value="$MODULE_DIR$/../node_modules/@angular-devkit/core/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/@angular-devkit/architect/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/@angular-devkit/schematics/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/@angular-devkit/build-angular/src/webpack/plugins/karma" />
-        <option value="$MODULE_DIR$/../node_modules/@angular-devkit/build-angular/node_modules/rxjs/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/@angular-devkit/build-webpack/node_modules/tslib" />
-        <option value="$MODULE_DIR$/../node_modules/unique-filename/coverage" />
-        <option value="$MODULE_DIR$/../node_modules/unique-filename/coverage/__root__" />
-        <option value="$MODULE_DIR$/../node_modules/libp2p-bootstrap/docs" />
-        <option value="$MODULE_DIR$/../node_modules/libp2p-bootstrap/docs/classes" />
-        <option value="$MODULE_DIR$/../node_modules/reflect-metadata/docs" />
-        <option value="$MODULE_DIR$/../node_modules/it-length-prefixed/docs" />
-        <option value="$MODULE_DIR$/../node_modules/murmurhash3js-revisited/test" />
-        <option value="$MODULE_DIR$/../node_modules/murmurhash3js-revisited/examples" />
       </list>
     </option>
   </component>

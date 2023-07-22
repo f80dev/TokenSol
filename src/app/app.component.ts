@@ -155,7 +155,6 @@ export class AppComponent implements OnInit,AfterViewInit {
 
 
   async init_form() {
-    debugger
     let params:any = await getParams(this.routes, "params", true)
     apply_params(this,params,environment)
 

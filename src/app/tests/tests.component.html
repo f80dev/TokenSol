@@ -1,8 +1,22 @@
 <div class="mainform">
+<!--    <br>-->
+<!--    <app-input [value]="num" (valueChange)="num=$event" value_type="boolean" label="test"></app-input>-->
+<!--    <br><br>-->
+<!--    {{num}}-->
+
+
+    <h2>Test objet</h2>
+    <app-input [options]="objs" [value]="obj" (valueChange)="obj=$event"
+               value_type="list" label="test object"></app-input>
     <br>
-    <app-input [value]="num" (valueChange)="num=$event" value_type="boolean" label="test"></app-input>
-    <br><br>
-    {{num}}
+    {{obj.value}}
+
+
+
+
+
+    <br>
+    <button mat-raised-button (click)="force()">Force</button>
 
 
 

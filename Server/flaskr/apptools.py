@@ -116,7 +116,7 @@ def extract_keys_from_operation(ope):
   return rc
 
 
-def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,network:str,comment="airdrop") -> dict :
+def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,network:str,wallet_limit:float=0,comment="airdrop") -> dict :
   rc={"address":address}
   if histo:
     total=0
@@ -126,6 +126,12 @@ def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,
       return {"error":"Plafond de versement atteint pour la journée","status":"error"}
 
   _network=get_network_instance(network)
+
+  if wallet_limit>0:
+    balances=_network.get_balances(address)
+    if token in balances and balances[token]>=wallet_limit:
+      return {"error":"Limite du wallet atteinte","status":"error"}
+
   if type(token)==dict and "identifier" in token:token=token["identifier"]
   tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
   if tx_esdt["status"]!="success":

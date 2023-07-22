@@ -577,12 +577,13 @@ export function isEmail(addr="") {
 
 export interface Bank {
   miner:CryptoKey
-  refund: number  //Montant de rechargement
+  refund: number                  //Montant de rechargement
   title: string
   network: string
   token: string
-  limit:number //Limit de rechargement par jour
-  histo: string //Base de données de stockage de l'historique des transactions
+  limit:number                    //Limite de rechargement par jour
+  wallet_limit:number             //Maximum que peut contenir un wallet
+  histo: string                   //Base de données de stockage de l'historique des transactions
 }
 
 export function convert_to_list(text:string="",separator=",") : string[] {
@@ -601,7 +602,8 @@ export function extract_bank_from_param(params:any) : Bank | undefined {
       refund: params["bank.refund"],
       title: params["bank.title"],
       token: params["bank.token"],
-      limit: params["bank.limit"],
+      limit: params["bank.limit"] || 0,
+      wallet_limit: params["bank.wallet_limit"] || 0,
       histo:params["bank.histo"],
     }
   }

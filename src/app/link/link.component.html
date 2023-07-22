@@ -4,11 +4,15 @@
     {{content.substring(0,20)+".."}}
   </div>
 
-  <a *ngIf="content.startsWith('http') || content.startsWith('mailto')" target="_blank" [href]="content" [title]="content">
+  <a *ngIf="content.startsWith('http') || content.startsWith('mailto')" class="mat-body-2"
+     target="_blank" [href]="content" [title]="content">
     <ng-content></ng-content>
+    {{content.substring(0,60)+"..."}}
   </a>
 
-  <a *ngIf="content.startsWith('erd')" [href]="get_explorer(content)" [title]="content">
-    {{content | alias | slice:0:20}}
+  <a *ngIf="content.startsWith('erd')" [href]="get_explorer(content)" target="_blank" [title]="content">
+    <span *ngIf="icon==''">{{content | slice:0:20}}</span>
+    <mat-icon *ngIf="icon!=''">{{icon}}</mat-icon>
   </a>
+
 </div>

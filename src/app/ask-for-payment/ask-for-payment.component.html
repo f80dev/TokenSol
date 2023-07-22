@@ -24,7 +24,7 @@
     </div>
 
 
-    <div mat-dialog-content style="text-align: center;margin: 5px;" *ngIf="buy_method.length>0">
+    <div mat-dialog-content style="text-align: center;margin: 5px;" *ngIf="buy_method.length>0 && data?.merchant?.wallet">
         <app-authent
                 *ngIf="!data.provider && buy_method=='crypto'"
                 size="250px"
@@ -32,6 +32,7 @@
                 [showWalletConnect]="true"
                 [showWebWallet]="true"
                 [showExtensionWallet]="true"
+                [network]="data.merchant.wallet.network"
                 (authent)="init_provider($event)"
                 (disconnect)="cancel()"
                 (invalid)="cancel()"

@@ -74,7 +74,12 @@ import { AutovalidateComponent } from './autovalidate/autovalidate.component';
 import { ValidatorsComponent } from './validators/validators.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import {VisgraphComponent} from "./visgraph/visgraph.component";
-import {GoogleLoginProvider, SocialAuthServiceConfig, SocialLoginModule} from "@abacritt/angularx-social-login";
+import {
+    GoogleLoginProvider,
+    GoogleSigninButtonModule,
+    SocialAuthServiceConfig,
+    SocialLoginModule
+} from "@abacritt/angularx-social-login";
 import {SocketIoConfig, SocketIoModule} from "ngx-socket-io";
 import { SplashComponent } from './splash/splash.component';
 import { TableComponent } from './table/table.component';
@@ -105,6 +110,7 @@ import { TokenSelectorComponent } from './token-selector/token-selector.componen
 import { GenlinkComponent } from './genlink/genlink.component';
 import { FaqLinkComponent } from './faq-link/faq-link.component';
 import { TestsComponent } from './tests/tests.component';
+import { TutoComponent } from './tuto/tuto.component';
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -178,7 +184,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         TokenSelectorComponent,
         GenlinkComponent,
         FaqLinkComponent,
-        TestsComponent
+        TestsComponent,
+        TutoComponent
     ],
     imports: [
         BrowserModule,
@@ -224,7 +231,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         NgxDatatableModule,
         MatCardModule,
         MatSlideToggleModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        GoogleSigninButtonModule
     ],
   providers: [
     FilterPipe,AliasPipe,SafePipe,OrderPipe,

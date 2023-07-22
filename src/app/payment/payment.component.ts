@@ -75,7 +75,7 @@ export function extract_merchant_from_param(params:any) : Merchant | undefined {
 export class PaymentComponent implements AfterContentInit,OnDestroy {
   payment_request: any;
 
-  money: { name: string, supply: number, id: string, unity: string } | undefined;
+  money: { name: string, supply: number, id: string, unity: string,decimals:number } | undefined;
   @Input() price: number = 0
   @Input() fiat_price: number=0;
   @Input() billing_to: string="";
@@ -144,7 +144,7 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
   async show_user_balance(addr:string,token_id:string,network:string){
     try{
       this.balance=await this.get_balance(addr,token_id,network);
-      if(this.price>this.balance/1e18){
+      if(Number(this.price)>this.balance){
         this.networkService.qrcode(addr,"json").subscribe((r:any)=>{
           this.qrcode_buy_token=r.qrcode;
         })
@@ -209,7 +209,7 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
     }
   }
 
-  async payment(amount=0.001) : Promise<PaymentTransaction>{
+  async payment(amount=0.001) : Promise<any>{
     //
     return new Promise( async(resolve,reject) => {
       let unity="EUR"
@@ -223,7 +223,8 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
           amount:amount,
           description:'paiement pour signature'
         }
-        const proxyNetworkProvider = new ProxyNetworkProvider("https://devnet-gateway.multiversx.com");
+        let prefix=this.merchant && this.merchant.wallet && this.merchant.wallet.network.indexOf("devnet")>-1 ? "devnet-" : ""
+        const proxyNetworkProvider = new ProxyNetworkProvider("https://"+prefix+"gateway.multiversx.com");
         let t:Transaction;
         if(unity=="egld"){
           let opt={
@@ -232,18 +233,20 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
             gasLimit: 7000,
             sender: Address.fromBech32(sender_addr),
             receiver: Address.fromBech32(this.merchant?.wallet!.address!),
-            chainID: this.networkService.chain_id
+            chainID: prefix.length>0 ? "D" : "1"
           }
           t=new Transaction(opt);
         }else{
+
           wait_message(this,"Initialisation du paiement",true)
           const factory = new TransferTransactionsFactory(new GasEstimator());
+
           //voir https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-cookbook#token-transfers
           t=factory.createESDTTransfer({
-            tokenTransfer: TokenTransfer.fungibleFromAmount(this.money!.id,this.price,18),
+            tokenTransfer: TokenTransfer.fungibleFromAmount(this.money!.id,Number(this.price),this.money!.decimals),
             sender: Address.fromBech32(sender_addr),
             receiver: Address.fromBech32(this.merchant?.wallet!.address!),
-            chainID: this.networkService.chain_id
+            chainID: prefix.length>0 ? "D" : "1"
           })
           let sender_account=new Account(Address.fromBech32(sender_addr));
           let sender_on_network=await proxyNetworkProvider.getAccount(sender_account.address)

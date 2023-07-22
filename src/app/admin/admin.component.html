@@ -28,7 +28,7 @@
     </table>
 
     <mat-accordion>
-      <mat-expansion-panel  *ngFor="let tablename of ['nfts','collections','validators','users','histo','mintpool','account_settings','shortlinks','airdrops']">
+      <mat-expansion-panel  *ngFor="let tablename of ['nfts','collections','validators','users','histo','mintpool','account_settings','shortlinks','airdrops','affiliated']">
         <mat-expansion-panel-header class="color-accent">{{tablename}}</mat-expansion-panel-header>
         <app-dbtable excludes="attributes"
                      [title]="tablename"

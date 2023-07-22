@@ -160,6 +160,7 @@ export class DispenserComponent implements OnInit {
     }
     else{
       let c:Connexion={
+        keystore: false,
         address: false,
         direct_connect: false,
         email: true,

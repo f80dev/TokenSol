@@ -7,7 +7,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {Observable, Subject} from "rxjs";
 import {Location} from "@angular/common";
 import {NFT} from "../../nft";
-import {Collection, newCollection, Operation} from "../../operation";
+import {Collection,  Operation} from "../../operation";
 import {UserService} from "../user.service";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Socket} from "ngx-socket-io";
@@ -346,7 +346,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   refresh_balance(){
     if(this.addr!="")this.api.getBalance(this.addr,this.network).subscribe((res)=>{
-      this.balance=res[0].balance/1e18
+      this.balance=res[0].balance
     });
   }
 
@@ -448,5 +448,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
       if(!c.gallery)rc.push(c.id)
     }
     this.api.set_account_settings(this.addr,rc).subscribe(()=>{});
+  }
+
+  open_prop(url: string) {
+    open(url,"_blank")
   }
 }

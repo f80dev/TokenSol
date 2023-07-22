@@ -8,6 +8,7 @@ import {Component, Input, OnInit} from '@angular/core';
 export class LinkComponent implements OnInit {
 
   @Input() content="";
+  @Input() icon="";
   @Input() network="elrond-devnet";
 
   constructor() { }

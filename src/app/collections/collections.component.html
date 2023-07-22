@@ -48,7 +48,7 @@
                 </button>
 
                 <span *ngIf="network.isElrond() && miner && miner.balance">
-            avec {{miner!.address | alias}} ({{miner!.balance/1e18 | number}} Egld)
+            avec {{miner!.address | alias}} ({{miner!.balance | number}} Egld)
           </span>
 
 

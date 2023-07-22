@@ -26,6 +26,7 @@ export interface Connexion {
   email: boolean | false
   google: boolean | false
   webcam: boolean | false
+  keystore: boolean | false
   extension_wallet:boolean | false
   web_wallet:boolean | false
   direct_connect: boolean | false
