@@ -1,0 +1,254 @@
+accounts:
+- address: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  amount: 1000
+  balance: 1.0e+21
+  private_key: myprivatekey_file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  unity: ''
+- address: file5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  amount: 10
+  balance: 1.0e+19
+  private_key: myprivatekey_file5d9ec5ad02166612bb708c00eeb2da55433880a55b892dc2754392b4d3f15eb6
+  unity: ''
+nfts:
+- address: file_0xf3d20aa26e2
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: testCollection
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675521544.368266
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: testName
+  owner: ''
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d55cd40f0
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675610693.656028
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: ''
+  name: test_0xf3d55cd39fa
+  network: ''
+  other: {}
+  owner: ''
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d5a604a16
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675618368.155812
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: ''
+  name: test_0xf3d5a6048d6
+  network: ''
+  other: {}
+  owner: ''
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d5ee19f9e
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675625926.646239
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: ''
+  name: test_0xf3d5ee19e4a
+  network: ''
+  other: {}
+  owner: ''
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d6c8097be
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675648778.847818
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d6c8095e9
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d6c8f699e
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675648875.971036
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d6c8f672d
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d6c9dec11
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675648971.06099
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d6c9de9a0
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d6ca240c6
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675648999.44381
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d6ca23db8
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d7aa98085
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675672535.053302
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d7aa97f95
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d7aaf5b36
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675672573.419815
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d7aaf56d6
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d7b0fd39c
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675673232.15042
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d7afc1791
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+- address: file_0xf3d7b170278
+  attributes:
+  - birthday: 04/02/1971
+  collection:
+    id: MACOLLEC
+  creators: []
+  description: le NFR de mon anniversaire
+  dtCreate: 1675673252.72246
+  files: []
+  marketplace:
+    price: 0
+    quantity: 1
+  miner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  name: test_0xf3d7b16fddc
+  owner: file9bdf68e8fb14cc6623092ff91350b2f5e25e25b9a0fd0bb1a11cac87e627e19e
+  royalties: 0
+  symbol: ''
+  tags: ''
+  visual: https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg
+storage:
+  file_7b46b272b9be276a633f9ac606dbcadd3e86b4f3acdd0bb87b03dc1fecc30567:
+    content: test
+  file_7f70c5a62646fd55a41446007ee300c57519ce5bc1110cc8086c8f4f38498199: '"bonjour
+    comment allez vous"'
+  file_9724c1e20e6e3e4d7f57ed25f9d4efb006e508590d528c90da597f6a775c13e5:
+    key: value
+version: '1.0'

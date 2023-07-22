@@ -37,7 +37,6 @@ web3==6.0.0
 pandas
 multiversx-sdk-core
 multiversx-sdk-wallet
-multiversx-sdk-network-providers
 pytest
 pyopenssl
 openpyxl
