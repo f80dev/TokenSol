@@ -11,7 +11,7 @@ import {
   getParams,
   hashCode,
   normalize,
-  now, open_image_banks,
+  now,
   setParams,
   showError,
   showMessage
@@ -29,6 +29,7 @@ import {DeviceService} from "../device.service";
 import {wait_message} from "../hourglass/hourglass.component";
 import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
 import {extract_merchant_from_param, Merchant} from "../payment/payment.component";
+import {open_image_banks} from "../../nfluent";
 
 
 @Component({

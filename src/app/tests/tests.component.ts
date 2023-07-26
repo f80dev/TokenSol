@@ -1,4 +1,5 @@
 import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {NetworkService} from "../network.service";
 
 @Component({
   selector: 'app-tests',
@@ -7,20 +8,25 @@ import {AfterViewInit, Component, OnInit} from '@angular/core';
 })
 export class TestsComponent {
 
-  num: boolean =true;
+  num: any;
+  nums: any[]=[];
   objs: any[]=[{label:"label1",value:"value1"},{label:"label2",value:"value2"},{label:"label3",value:"value3"}]
   //objs=["value1","value2","value3"]
   obj:any=this.objs[0]
 
 
-  constructor() {
+  constructor(public api:NetworkService) {
 
   }
 
 
 
   ngOnInit(): void {
-    //setTimeout(()=>{this.sel_option=this.opts[0];});
+
+    setTimeout(async  ()=>{
+      let keys=await this.api.init_keys(false,"","","elrond-devnet")
+      this.nums=[{label:keys[0].name,value:keys[0]},{label:keys[1].name,value:keys[1]}]
+    },3000);
   }
 
 

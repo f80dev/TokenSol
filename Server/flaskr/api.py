@@ -353,10 +353,6 @@ def api_short_link(cid=""):
 
   if request.method=="GET":
     body=dao.get_link(cid)
-    if body is None: return returnError("Redirection inconnue")
-    if "airdrop" in body:
-      return jsonify(body)
-
     if (not "collection" in body or not body["collection"]) and body["price"]==0 :
       log("Aucun critère de filtrage, on redirige directement")
       if not body["redirect"].startswith("http"): body["redirect"]="https://"+body["redirect"]
@@ -817,11 +813,10 @@ def test():
 @bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
 def api_refund(address:str,amount:str="1",token="egld"):
   _network=get_network_instance(request.json["network"])
-  _miner=Key(encrypted=request.json["bank"])
+  _miner=Key(obj=request.json["bank"])
   histo=DAO(network=request.json["histo"]) if "histo" in request.json else None
   limit=int(request.json["limit"]) if "limit" in request.json and not histo is None else 0
   email=""
-  transactions_gift=int(request.json["transactions_gift"]) if "transactions_gift" in request.json else 0
 
   if is_email(address):
     email=address
@@ -830,18 +825,14 @@ def api_refund(address:str,amount:str="1",token="egld"):
                                  subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account",histo=histo)
     address=key.address
 
-  tx_esdt=airdrop(address=address,token=token,
-                  _miner=_miner,amount=amount,
-                  histo=histo,limit=limit,
-                  network=request.json["network"],
-                  wallet_limit=request.json["wallet_limit"])
+  tx_esdt=airdrop(address=address,token=token,_miner=_miner,amount=amount,histo=histo,limit=limit,network=request.json["network"])
   if tx_esdt["status"]=="error": return jsonify(tx_esdt)
 
   if tx_esdt["status"]=="success" and len(email)>0:
     send_mail(open_html_file("mail_refund",{"token":_token["name"],"amount":str(amount)}),email,subject="Don de "+_token["name"])
 
   #Si le client n'a aucun egld on lui en envoi afin de payer les frais de réseau
-  if _network.get_account(address).balance<_network.get_min_gas_for_transaction(transactions_gift):
+  if _network.get_account(address).balance<_network.get_min_gas_for_transaction(3):
     tx_egld=_network.transfer_money("egld",_miner,address,_network.get_min_gas_for_transaction(4),"Dons en Egld pour paiement des frais de gaz")
     tx_esdt["transaction_egld"]=tx_egld
 
@@ -1091,12 +1082,17 @@ def tokens(addr:str=""):
   if request.method=="GET":
     _network=get_network_instance(request.args.get("network"))
     if len(addr)>0:
-      return _network.get_token(addr)
+      if addr.startswith("erd"):
+        filter=addr
+      else:
+       return _network.get_token(addr)
     else:
-      return _network.get_tokens(filter=request.args.get("filter",""),
-                                 _type=request.args.get("type","Fungible"),
-                                 with_detail=(request.args.get("with_detail","false")=="true"),
-                                 limit=int(request.args.get("limit","200")))
+      filter=request.args.get("filter","")
+
+    return _network.get_tokens(filter=filter,
+                               _type=request.args.get("type","Fungible"),
+                               with_detail=(request.args.get("with_detail","false")=="true"),
+                               limit=int(request.args.get("type","200")))
 
 
 @bp.route('/transfer/',methods=["POST"])
@@ -1988,17 +1984,13 @@ def api_affiliated_link():
   dao=DAO(config=current_app.config)
 
   if request.method=="POST":
-    id=dao.add_affiliated_link(request.json["url"],request.json["airdrop"])
-    if id is None:
-      return jsonify({"message":"ce lien existe déjà"})
-    else:
-      return jsonify({"message":"ok","id":id})
+    url=request.json["url"]
+    id=dao.add_affiliated_link(url)
+    return jsonify({"message":"ok","id":id})
 
   if request.method=="GET":
-    urls=[]
-    for url in dao.get_affiliated_link(request.args.get("url","")):
-      del url["_id"]
-      urls.append(url)
+    urls=dao.get_affiliated_link(request.args.get("url",""))
+    urls=[x["url"] for x in urls]
     return jsonify(urls)
 
 
@@ -2273,13 +2265,11 @@ def access_code_checking(access_code:str,addr:str=""):
     return returnError("Incorrect access code")
 
 
-@bp.route('/check_private_key/',methods=["POST"])
+@bp.route('/check_private_key/<seed>/<addr>/<network>/',methods=["GET"])
 #http://127.0.0.1:4242/api/access_code_checking/
-def check_private_key():
-  body=request.json
-  addr=body["address"]
-  if addr and addr.startswith("erd"):
-    _account=Elrond(network=body["network"]).create_account(seed=body["seed"])
+def check_private_key(seed:str,addr:str,network:str):
+  if addr.startswith("erd"):
+    _account=Elrond(network=network).toAccount(seed)
     if _account.address.bech32()==addr:
       return jsonify({"message":"ok"})
 
@@ -2351,14 +2341,11 @@ def encrypt_key(network:str):
   name=request.json["alias"]
   address=request.json["address"] if "address" in request.json else ""
 
-  if len(request.json["keystore"])>0:
-    key=Elrond(network).convert_keystore_to_key(request.json["keystore"],request.json["password"])
+  if secret_key=="" and len(name)>0:
+    key=get_network_instance(network).find_key(name if len(name)>0 else address)
   else:
-    if secret_key=="" and len(name)>0:
-      key=get_network_instance(network).find_key(name if len(name)>0 else address)
-    else:
-      if len(address)==0: address=get_network_instance(network).toAddress(secret_key)
-      key=Key(name=name,secret_key=secret_key,network=network,address=address)
+    if len(address)==0: address=get_network_instance(network).toAddress(secret_key)
+    key=Key(name=name,secret_key=secret_key,network=network,address=address)
 
   return jsonify({"encrypt":key.encrypt(),"address":key.address})
 
@@ -3090,6 +3077,7 @@ def api_airdrops():
   body=request.json
   if request.method=="POST":
     dao=DAO(config=current_app.config)
+    body["network"]=body["network"]["value"]
     if type(body["token"])==dict: body["token"]=body["token"]["identifier"]
     airdrop_id=str(dao.add_airdrop(body))
 
@@ -3147,9 +3135,6 @@ def api_airdrops():
     code_to_insert=code_to_insert.replace("__delay__",str(body["authent_delay"]*1000)).replace("__random__",str(1-int(body["random"])/100))
     code_to_insert=code_to_insert.replace("__showdeal__","true" if body["show_deal"] else "false").replace(";\n",";").replace("\t","")
 
-    if "force_authent" in body and body["force_authent"]:
-      code_to_insert=code_to_insert.replace("!localStorage.getItem(\"address\")","true")
-
     for i in range(20):
       code_to_insert=code_to_insert.replace("  "," ")
 
@@ -3158,8 +3143,7 @@ def api_airdrops():
       "bank.token":body["token"],
       "bank.miner":body["dealer_wallet"],
       "bank.refund":body["amount"],
-      "bank.limit":body["limit_by_day"],
-      "bank.wallet_limit":body["limit_by_wallet"]
+      "bank.limit":body["limit_by_day"]
     }
 
   return jsonify({"code":code_to_insert,"params":params})

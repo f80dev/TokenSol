@@ -65,7 +65,7 @@ export class CandymachineComponent implements OnInit {
     }else{
       this.params=params;
       this.connexion={
-        keystore: false,
+        keystore: "",
         direct_connect: false, extension_wallet: false, web_wallet: false,
         address: false,
         email: true,

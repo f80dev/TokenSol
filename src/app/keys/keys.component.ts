@@ -3,7 +3,6 @@ import {Clipboard} from '@angular/cdk/clipboard';
 import {
   $$,
   CryptoKey,
-  get_nfluent_wallet_url,
   isEmail,
   newCryptoKey,
   setParams,
@@ -20,6 +19,7 @@ import {OperationService} from "../operation.service";
 import {DeviceService} from "../device.service";
 import {environment} from "../../environments/environment";
 import {wait_message} from "../hourglass/hourglass.component";
+import {get_nfluent_wallet_url} from "../../nfluent";
 
 @Component({
   selector: 'app-keys',
@@ -148,7 +148,6 @@ export class KeysComponent implements OnInit {
       this.network.encrypte_key(key.name!,this.sel_network.value,key.secret_key!,key.address).subscribe((r)=>{
         this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.sel_network.value,encrypted:r.encrypt}});
       })
-
     }
     if(tools=="inspire")open(this.network.getExplorer(key.address,"accounts"),"explorer");
     if(tools=="opensea")open(this.network.getExplorer(key.address),"explorer");

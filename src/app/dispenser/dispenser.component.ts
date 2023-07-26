@@ -4,7 +4,6 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {
   $$,
   apply_params,
-  canTransfer,
   CryptoKey,
   getParams,
   newCryptoKey,
@@ -25,6 +24,7 @@ import {_prompt} from "../prompt/prompt.component";
 import {genlink_to_obj} from "../genlink/genlink.component";
 import {StyleManagerService} from "../style-manager.service";
 import {NgNavigatorShareService} from "ng-navigator-share";
+import {canTransfer} from "../../nfluent";
 
 @Component({
   selector: 'app-dispenser',
@@ -160,12 +160,12 @@ export class DispenserComponent implements OnInit {
     }
     else{
       let c:Connexion={
-        keystore: false,
         address: false,
         direct_connect: false,
         email: true,
         extension_wallet: true,
         google: false,
+        keystore:"",
         nfluent_wallet_connect: true,
         on_device: false,
         wallet_connect: true,

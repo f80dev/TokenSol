@@ -1,8 +1,9 @@
 import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
-import {$$, open_image_banks, setParams} from "../../tools";
+import {$$, setParams} from "../../tools";
 import {DeviceService} from "../device.service";
 import {NgNavigatorShareService} from "ng-navigator-share";
 import {MatDialog} from "@angular/material/dialog";
+import {open_image_banks} from "../../nfluent";
 
 export function genlink_to_obj(links:any[]){
   let obj:any={}

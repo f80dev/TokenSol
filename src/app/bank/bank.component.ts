@@ -18,6 +18,7 @@ import {UserService} from "../user.service";
 
 import {MatDialog} from "@angular/material/dialog";
 import {PaymentTransaction} from "../payment/payment.component";
+import {Connexion} from "../../operation";
 
 @Component({
   selector: 'app-bank',
@@ -39,6 +40,19 @@ export class BankComponent implements OnInit {
   end_message: string = "";
   fiat_price=0;
   show_payment: boolean = false;
+  connexion: Connexion={
+    address: false,
+    direct_connect: false,
+    email: true,
+    extension_wallet: true,
+    google: false,
+    keystore: "",
+    nfluent_wallet_connect: false,
+    on_device: false,
+    wallet_connect: true,
+    web_wallet: false,
+    webcam: false
+  };
 
   public constructor(
     public network:NetworkService,
@@ -62,13 +76,22 @@ export class BankComponent implements OnInit {
     } else {
       this.bank=extract_bank_from_param(params) || environment.bank;
     }
+    if(params.hasOwnProperty("connexion"))this.connexion=params.connexion;
     if(this.bank){
       this.fiat_price=Number(params.fiat_price || "0")
       if(params.claim)this.bank!.title=params.claim;
       if(typeof(this.bank.token)=="object"){
         this.bank.token=this.bank.token["identifier"]
       }
-      this.network.get_token(this.bank.token,this.bank.network).subscribe((r)=>{
+      this.network.get_token(this.bank.token,this.bank.network).subscribe((r:any | any[])=>{
+        if(typeof(r[0])=="object") {
+          for(let token of r){
+            if(token.balance>0){
+              r=token
+              break
+            }
+          }
+        }
         this.token=r;
         apply_params(this,params,environment.bank)
         if(!params.style)this.style.setStyle("theme","nfluent-dark-theme.css")

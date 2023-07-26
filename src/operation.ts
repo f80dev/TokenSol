@@ -22,11 +22,11 @@ export interface Collection {
 export interface Connexion {
   on_device: boolean | false
   address: boolean | false
+  keystore: string
   wallet_connect: boolean | false
   email: boolean | false
   google: boolean | false
   webcam: boolean | false
-  keystore: boolean | false
   extension_wallet:boolean | false
   web_wallet:boolean | false
   direct_connect: boolean | false

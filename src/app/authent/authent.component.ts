@@ -475,7 +475,7 @@ export class AuthentComponent implements OnInit,OnChanges {
 
   async upload_keystore($event: any) {
     let password=await _prompt(this,"Mot de passe du keystore","","","text","ok","annuler",false)
-    this.api.encrypte_key("",this.network,"","",$event.file,password).subscribe({
+    this.api.encrypte_key("",this.network,"","").subscribe({
       next:(r:any)=>{this.strong=true;this.address=r.address;this.success();}
     })
   }

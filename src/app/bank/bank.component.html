@@ -10,16 +10,11 @@
 			pour
 			<span class="color-primary" *ngIf="addr.length>0">{{addr.substring(0,20)+"..."}}</span>
 		</h4>
-		<app-authent *ngIf="addr.length==0"
+		<app-authent *ngIf="!addr || addr.length==0"
 		             style="width: 400px;display: inline-block;"
 		             title="Veuillez vous identifier"
-		             [showNfluentWalletConnect]="true"
-		             [showWalletConnect]="true"
-		             [showWebWallet]="true"
-		             [showAddress]="true"
-					 [showEmail]="true"
-					 [showGoogle]="true"
-					 (cancel)="cancel()"
+                 [connexion]="connexion"
+					      (cancel)="cancel()"
 		             [showExtensionWallet]="true"
 		             (authent)="update_address($event)">
 		</app-authent>
