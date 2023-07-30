@@ -107,7 +107,11 @@
 
     <mat-expansion-panel *ngIf="showKeystore">
       <mat-expansion-panel-header>Utiliser le KeyStore</mat-expansion-panel-header>
-      <app-upload-file extensions=".json" [zone]="true" height="70px" (uploaded)="upload_keystore($event)"></app-upload-file>
+      <app-upload-file extensions=".json"
+                       [zone]="true"
+                       height="70px"
+                       (uploaded)="upload_keystore($event)">
+      </app-upload-file>
     </mat-expansion-panel>
 
       <mat-expansion-panel *ngIf="showEmail || showGoogle || showAddress">
@@ -115,7 +119,7 @@
       <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
 
         <app-scanner *ngIf="enabled_webcam && showAddress"
-                     [size]="size"
+                     size="200px"
                      title="Montrer le QRcode de votre wallet à cette caméra"
                      (flash)="on_retreive_address($event)"
                      (cancel)="cancel_webcam()">
@@ -137,7 +141,8 @@
                   label_button="Valider"
                   [help]="explain_message">
           </app-input>
-          <button mat-icon-button (click)="run_scanner()"><mat-icon>qr_code_scanner</mat-icon></button>
+          <button mat-icon-button (click)="run_scanner()"
+                  *ngIf="address==''"><mat-icon>qr_code_scanner</mat-icon></button>
         </div>
 
       </div>
