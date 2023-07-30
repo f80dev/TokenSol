@@ -143,7 +143,7 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
 
   async show_user_balance(addr:string,token_id:string,network:string){
     try{
-      this.balance=await this.get_balance(addr,token_id,network);
+      this.balance=await this.get_balance(addr,token_id,network)/(10**this.money!.decimals);
       if(Number(this.price)>this.balance){
         this.networkService.qrcode(addr,"json").subscribe((r:any)=>{
           this.qrcode_buy_token=r.qrcode;
@@ -230,12 +230,13 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
           let opt={
             data:new TransactionPayload("Paiement"),
             value:TokenTransfer.egldFromAmount(payment.amount),
-            gasLimit: 7000,
+            gasLimit: 200000,
             sender: Address.fromBech32(sender_addr),
-            receiver: Address.fromBech32(this.merchant?.wallet!.address!),
+            receiver: Address.fromBech32(this.merchant!.wallet!.address),
             chainID: prefix.length>0 ? "D" : "1"
           }
           t=new Transaction(opt);
+
         }else{
 
           wait_message(this,"Initialisation du paiement",true)
@@ -248,11 +249,11 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
             receiver: Address.fromBech32(this.merchant?.wallet!.address!),
             chainID: prefix.length>0 ? "D" : "1"
           })
-          let sender_account=new Account(Address.fromBech32(sender_addr));
-          let sender_on_network=await proxyNetworkProvider.getAccount(sender_account.address)
-          sender_account.update(sender_on_network)
-          t.setNonce(sender_account.getNonceThenIncrement());
         }
+        let sender_account=new Account(Address.fromBech32(sender_addr));
+        let sender_on_network=await proxyNetworkProvider.getAccount(sender_account.address)
+        sender_account.update(sender_on_network)
+        t.setNonce(sender_account.getNonceThenIncrement());
 
         try {
           wait_message(this,"En attente de validation sur votre wallet")

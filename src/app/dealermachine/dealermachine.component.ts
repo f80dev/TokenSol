@@ -3,23 +3,22 @@ import {ActivatedRoute, Router} from "@angular/router";
 import {NetworkService} from "../network.service";
 import {
   $$,
-  detect_network,
   getParams,
   hasWebcam,
   isEmail,
   showError,
-  showMessage,
-  CryptoKey,
-  newCryptoKey, find_miner_from_operation, apply_params
+  showMessage, find_miner_from_operation, apply_params
 } from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {AliasPipe} from "../alias.pipe";
 import {Location} from "@angular/common";
-import {UserService} from "../user.service";
-import {NFT} from "../../nft";
+import {getESDTPrice, getFiatPrice, getPrice, getUnity, NFT} from "../../nft";
 import {NFLUENT_WALLET} from "../../definitions";
 import {Operation, Connexion, get_in} from "../../operation";
 import {StyleManagerService} from "../style-manager.service";
+import {_ask_for_paiement} from "../ask-for-payment/ask-for-payment.component";
+import { Merchant } from '../payment/payment.component';
+import {MatDialog} from "@angular/material/dialog";
 
 @Component({
   selector: 'app-dealermachine',
@@ -29,16 +28,30 @@ import {StyleManagerService} from "../style-manager.service";
 export class DealermachineComponent implements OnInit {
   address: string="";
   wallet_link: string="";
-  nft:NFT | null=null;
+  nft:NFT | undefined
   final_message="";
   ope: Operation | null=null;
   webcam: boolean=true;
-  authentification: Connexion | undefined;
+  authentification: Connexion={
+    address: false,
+    direct_connect: false,
+    email: true,
+    extension_wallet: true,
+    google: false,
+    keystore: false,
+    nfluent_wallet_connect: false,
+    on_device: false,
+    wallet_connect: true,
+    web_wallet: false,
+    webcam: false
+  };
   title: string="Envoyez ce NFT";
   prompt: string="Indiquer l'adresse ou l'email du destinataire";
   help_url: string="";
   section:string="dispenser";
   params: any;
+  merchant: Merchant={contact: "", country: "", currency: "", id: "", name: "", wallet: undefined}
+  provider: any=null;
 
   constructor(
     public routes:ActivatedRoute,
@@ -46,19 +59,22 @@ export class DealermachineComponent implements OnInit {
     public network:NetworkService,
     public toast:MatSnackBar,
     public router:Router,
+    public dialog:MatDialog,
     public style:StyleManagerService,
     public alias:AliasPipe
   ) { }
 
 
-  ngOnInit(): void {
+  async ngOnInit() {
     hasWebcam(this.webcam);
 
-    getParams(this.routes).then((params:any)=>{
+    try{
+      let params:any=await getParams(this.routes)
       this.params=params;
       this.nft=params["token"] || params["nft"];
       let ope=params["ope"];
       apply_params(this,params)
+      this.address=params.address;
 
       if(!this.nft){
         $$("Le NFT n'est pas indiqué, on va le chercher les NFTs dans le fichier d'opération");
@@ -89,10 +105,18 @@ export class DealermachineComponent implements OnInit {
           }
         })
       }else{
+        if(params.merchant)this.merchant=params.merchant;
         this.authentification=params["authentification"]
+        if(this.nft){
+          this.title=params["title"] || "Achetez "+this.nft.name
+        }
       }
+    } catch (e){
+      $$("Probleme ",e)
+    }
 
-    })
+
+
   }
 
   //http://127.0.0.1:4200/dealermachine/?ope=calvi2022
@@ -144,7 +168,7 @@ export class DealermachineComponent implements OnInit {
     }
 
     let mint_addr=this.nft!.address;
-
+    debugger
     this.message=get_in(this.ope,this.section+".messages.confirm","Votre NFT est en cours de préparation");
     this.network.transfer_to(
         mint_addr!,
@@ -191,5 +215,25 @@ export class DealermachineComponent implements OnInit {
 
   open_help() {
     open(this.help_url,"Aide");
+  }
+
+  protected readonly getPrice = getPrice;
+  protected readonly getUnity = getUnity;
+
+  async buy(nft: NFT) {
+    try {
+      let resp:any=await _ask_for_paiement(
+          this,
+          nft.address || "",
+          getESDTPrice(nft).value,getFiatPrice(nft),
+          this.merchant,this.provider,
+          "","",""
+      )
+      this.address=resp.address
+      this.provider=resp.provider
+      this.valide({address:resp.address})
+    }catch (e){
+      $$("Probleme ",e)
+    }
   }
 }

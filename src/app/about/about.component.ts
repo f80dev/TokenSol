@@ -15,9 +15,9 @@ import {_prompt} from "../prompt/prompt.component";
 })
 export class AboutComponent implements OnInit {
 
-  website=environment.website;
-  company="NFluent"
-  version=environment.version;
+  website=environment.website
+  company=environment.company
+  version=environment.version
   cgu=environment.website+"/cgu.html"
   contact=""
   logo="./assets/logo.png"

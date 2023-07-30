@@ -25,6 +25,7 @@ import {genlink_to_obj} from "../genlink/genlink.component";
 import {StyleManagerService} from "../style-manager.service";
 import {NgNavigatorShareService} from "ng-navigator-share";
 import {canTransfer} from "../../nfluent";
+import {wait_message} from "../hourglass/hourglass.component";
 
 @Component({
   selector: 'app-dispenser',
@@ -68,14 +69,14 @@ export class DispenserComponent implements OnInit {
         nft.style={opacity:0.3,cursor:"not-allowed",pointerEvents:"none"};
         nft.message="Déjà distribué"
       }
-      nft.message=nft.owner+" - "+nft.address;
+      nft.message=nft.address;
       if(!nft.hasOwnProperty("price"))nft.price=0;
 
       $$("Evaluation de la possibilité d'ajouté le NFT");
 
       let canAdd=nft.address ? nft.address.startsWith("db_") || nft.address.startsWith("file_") : false;
-      if(!canAdd)canAdd=(nft.price==0 && nft.owner==nft.creators[0].address);
-      if(canAdd)canAdd=(collections.indexOf(nft.collection!.id)>-1)
+      if(!canAdd)canAdd=(nft.price==0);
+      if(canAdd)canAdd=(collections.length==0 || collections.indexOf(nft.collection!.id)>-1)
       if(canAdd)this.nfts.push(nft);
     }
   }
@@ -85,16 +86,23 @@ export class DispenserComponent implements OnInit {
   title=""
   claim="";
 
-  refresh(){
-    this.network.get_nfts_from_collection(this.user.params.collection,this.user.params.network).subscribe(result=>{
-      this.eval_nfts(result.nfts,[this.user.params.collection])
-      this.message="";
-    })
+  async refresh(){
+    if(this.user.params.collection){
+      this.network.get_nfts_from_collection(this.user.params.collection,this.user.params.network).subscribe(result=>{
+        this.eval_nfts(result.nfts,[this.user.params.collection])
+        wait_message(this)
+      })
+    }else{
+      let resp=await this.network.get_tokens_from("owner",this.user.params.miner_addr,100,false,null,0,this.user.params.network)
+      this.eval_nfts(resp.result,[]);
+      wait_message(this)
+    }
+
   }
 
   async ngOnInit() {
     let params:any=await getParams(this.routes)
-    apply_params(this,params);
+    apply_params(this,params,environment);
     this.user.params=params;
     let limit=Number(params["limit"] || "1000") ;
     this.message="Préparation de la page";
@@ -116,11 +124,10 @@ export class DispenserComponent implements OnInit {
         });
       })
     }else{
-      debugger
       this.network.network=params.network
       this.miner=newCryptoKey(params.miner_addr,"","",params.miner)
-      this.network_dest=params.network_dest
-      this.miner_dest=newCryptoKey("","","",params.miner_dest)
+      this.network_dest=params.network_dest ? params.network_dest : params.network
+      this.miner_dest=params.miner_dest ? newCryptoKey("","","",params.miner_dest) : this.miner
       this.collection_dest=newCollection("",this.miner_dest,params.collection_dest)
       this.dm_props=[
           {label: "Réseau",value:this.network_dest,name:"network_dest"},
@@ -165,7 +172,7 @@ export class DispenserComponent implements OnInit {
         email: true,
         extension_wallet: true,
         google: false,
-        keystore:"",
+        keystore:false,
         nfluent_wallet_connect: true,
         on_device: false,
         wallet_connect: true,

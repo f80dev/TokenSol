@@ -587,7 +587,7 @@ class Elrond(Network):
 
   def get_balance(self,addr,token_id="") -> int:
     acc=self.toAccount(addr)
-    if token_id=="":
+    if token_id=="" or token_id=="egld":
       return acc.balance
     else:
       #voir https://api.multiversx.com
@@ -1200,7 +1200,7 @@ class Elrond(Network):
 
   def get_token(self,token_id:str) -> dict:
     if token_id.lower()=="egld":
-      rc={"name":"egld","identifier":"egld","supply":21000000,"unity":"egld"}
+      rc={"name":"egld","identifier":"egld","supply":21000000,"unity":"eGLD","decimals":18}
     else:
       rc=self._proxy.get_definition_of_fungible_token(token_id).__dict__
     return {"name":rc["name"],"id":rc["identifier"],"supply":rc["supply"],"unity":rc["name"],"decimals":rc["decimals"]}

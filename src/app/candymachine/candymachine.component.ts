@@ -9,6 +9,7 @@ import {environment} from "../../environments/environment";
 import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {NFT} from "../../nft";
+import {wait_message} from "../hourglass/hourglass.component";
 
 @Component({
   selector: 'app-candymachine',
@@ -27,6 +28,7 @@ export class CandymachineComponent implements OnInit {
   nfts: NFT[]=[]
   params: any={}
   connexion: Connexion | undefined;
+  message="";
 
   constructor(
     public routes:ActivatedRoute,
@@ -40,6 +42,10 @@ export class CandymachineComponent implements OnInit {
 
   async ngOnInit() {
     let params:any=await getParams(this.routes)
+    this.network.network=params.network || "elrond-devnet"
+    if(!params.miner_dest)params.miner_dest=params.miner
+    if(!params.network_dest)params.network_dest=params.network
+
     if(params.ope){
       this.network.get_operations(params["ope"]).subscribe((operation:any)=>{
         this.airdrop=params.hasOwnProperty('airdrop') ? params["airdrop"] : false;
@@ -64,8 +70,8 @@ export class CandymachineComponent implements OnInit {
       })
     }else{
       this.params=params;
-      this.connexion={
-        keystore: "",
+      this.connexion=params.connexion || {
+        keystore: false,
         direct_connect: false, extension_wallet: false, web_wallet: false,
         address: false,
         email: true,
@@ -75,7 +81,18 @@ export class CandymachineComponent implements OnInit {
         wallet_connect: true,
         webcam: false
       }
-      this.network.get_nfts_from_collection(params.collection,params.network).subscribe((result)=>{this.nfts=result.nfts})
+      wait_message(this,"Chargement des NFTs")
+      if(params.collection){
+        this.network.get_nfts_from_collection(params.collection,params.network).subscribe((result)=>{
+          this.nfts=result.nfts;
+          wait_message(this)
+        })
+      }else{
+        let resp=await this.network.get_tokens_from("owner",params.owner,100,false,null,0,params.network)
+        this.nfts=resp.result
+        wait_message(this)
+      }
+
        //this.network.get_collections(params.collection,params.network,false).subscribe((cols)=>{this.collections=cols;})
     }
   }

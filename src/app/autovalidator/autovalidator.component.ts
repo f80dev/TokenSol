@@ -25,7 +25,6 @@ export class AutovalidatorComponent implements OnInit, OnDestroy, OnChanges {
     web_wallet: false,
     address: false,
     email: false,
-    keystore: "",
     google: false,
     nfluent_wallet_connect: false,
     on_device: false,

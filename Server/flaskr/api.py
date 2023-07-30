@@ -353,7 +353,8 @@ def api_short_link(cid=""):
 
   if request.method=="GET":
     body=dao.get_link(cid)
-    if (not "collection" in body or not body["collection"]) and body["price"]==0 :
+    if not "price" in body: body["price"]=0
+    if (not "collection" in body or not body["collection"]) and body["price"]==0 and not "airdrop" in body:
       log("Aucun critère de filtrage, on redirige directement")
       if not body["redirect"].startswith("http"): body["redirect"]="https://"+body["redirect"]
       return redirect(body["redirect"])
@@ -813,7 +814,10 @@ def test():
 @bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
 def api_refund(address:str,amount:str="1",token="egld"):
   _network=get_network_instance(request.json["network"])
-  _miner=Key(obj=request.json["bank"])
+  if type(request.json["bank"])==str:
+    _miner=Key(encrypted=request.json["bank"])
+  else:
+    _miner=Key(obj=request.json["bank"])
   histo=DAO(network=request.json["histo"]) if "histo" in request.json else None
   limit=int(request.json["limit"]) if "limit" in request.json and not histo is None else 0
   email=""
@@ -1119,15 +1123,15 @@ def transfer_to():
     to=key_to.address
 
   key_target_miner=request.json["target_miner"]
-  target_miner=Key(encrypted=key_target_miner["encrypt"])
+  target_miner=Key(encrypted=key_target_miner)
 
   key_from_miner=request.json["from_miner"]
   from_miner=to_network.find_key(key_from_miner) if type(key_from_miner)==str else Key(obj=key_from_miner)
 
   _ope=get_operation(request.args.get("operation",""))
   collection=to_network.get_collection(request.json["collection_id"])
-  if collection['owner']!=target_miner.address:
-    return returnError("La collection n'appartient pas au miner")
+  # if collection['owner']!=target_miner.address:
+  #   return returnError("La collection n'appartient pas au miner")
 
   rc=transfer(addr=nft_addr,
               from_network_miner=from_miner,
@@ -2225,6 +2229,7 @@ def get_json(cid:str):
 def nfts(id=""):
   """
   Récupération des NFTS appartement à un compte ou d'un nft en particulier
+  voir https://devnet-api.multiversx.com
   :param id: id/address du nft
   :return:
   """
@@ -3077,7 +3082,7 @@ def api_airdrops():
   body=request.json
   if request.method=="POST":
     dao=DAO(config=current_app.config)
-    body["network"]=body["network"]["value"]
+    body["network"]=body["network"]
     if type(body["token"])==dict: body["token"]=body["token"]["identifier"]
     airdrop_id=str(dao.add_airdrop(body))
 

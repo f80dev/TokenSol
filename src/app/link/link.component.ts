@@ -10,13 +10,15 @@ export class LinkComponent implements OnInit {
   @Input() content="";
   @Input() icon="";
   @Input() network="elrond-devnet";
-
+  @Input() suffix=""
+  @Input() title=""
   constructor() { }
 
   ngOnInit(): void {
+    if(this.title=="")this.title="Explorer "+this.content
   }
 
-  get_explorer(content: string) {
-    return "https://"+(this.network.indexOf('devnet')>-1 ? "devnet-" : "")+"explorer.elrond.com/address/"+content;
+  get_explorer(content: string,suffix="") {
+    return "https://"+(this.network.indexOf('devnet')>-1 ? "devnet-" : "")+"explorer.elrond.com/address/"+content+suffix;
   }
 }

@@ -179,7 +179,7 @@ export class KeysComponent implements OnInit {
             "Indiquer votre mail pour recevoir la clé privée de votre wallet",
             "text","Créer la clé","Annuler",false);
         if(isEmail(email)){
-          this.network.create_account(this.sel_network.value,email).subscribe((r:any)=>{
+          this.network.create_account(this.sel_network.value,email,"mail_new_account.html","",{},true).subscribe((r:any)=>{
             this.clipboard.copy(r.secret_key);
             showMessage(this,"Consulter votre mail pour retrouver votre compte, la clé privée est disponible dans le presse papier");
             this.open_faucet(newCryptoKey(r.addr));
@@ -211,18 +211,15 @@ export class KeysComponent implements OnInit {
     if(rep=="yes"){
       wait_message(this,"Récupération des NFT de "+key.address)
       let resp=await this.network.get_tokens_from("owner",key.address,100,false,null,0,this.sel_network.value);
-      let i=resp.result.length;
+      let i=0;
       for(let token of resp.result){
-        try{
-          if(token.supply>0){
-            await this.network.burn(token.address,key,this.sel_network.value,1)
-          }
-        }catch (e) {
-          wait_message(this,"Impossible de supprimer "+token.name)
-        }
-
-        i=i-1;
-        wait_message(this,"Reste "+i+" NFTs a brûler")
+        setTimeout(()=>{
+          wait_message(this,"Ordre de brulage de "+token.name)
+          try{
+            this.network.burn(token.address,key,this.sel_network.value,token.balances[key.address])
+          }catch (e) {}
+        },i*20000)
+        i=i+1
       }
       wait_message(this)
     }
@@ -235,4 +232,6 @@ export class KeysComponent implements OnInit {
       })
     }
   }
+
+
 }

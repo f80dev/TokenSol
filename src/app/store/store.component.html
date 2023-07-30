@@ -6,27 +6,26 @@
 
   <div *ngIf="message?.length==0">
     <app-reversebloc *ngFor="let nft of nfts" [image]="nft.visual"
-                     [fontsize]="operation?.store?.apparence?.fontsize || '12px'"
-                     [width]="operation?.store?.apparence?.size || '200px'"
-                     [height]="operation?.store?.apparence?.size || '200px'">
+                     [fontsize]="operation?.store?.apparence?.fontsize || '14px'"
+                     [width]="operation?.store?.apparence?.size || '350px'"
+                     [height]="operation?.store?.apparence?.size || '350px'">
 
       <div [ngStyle]="style_reverse_card">
-        <div *ngIf="nft.collection" [style.font-size]="fontsize+'px'">{{nft.collection.name}}</div>
-        <div style="margin-top: 10px"
-             [style.font-size]="2*fontsize+'px'">
+        <div class="mat-body-2" style="opacity:0.6" *ngIf="nft.collection">{{nft.collection!.name}}</div>
+        <div class="mat-body-1">
           {{nft.name}}
+          <span *ngIf="nft.balances[address]>1">({{nft.balances[address]}})</span>
         </div>
 
         <button type="button" mat-raised-button color="primary" style="display: inline-block;position: absolute;right: 20px;bottom: 20px;"
                 (click)="buy(nft)">
-          <span *ngIf="nft.price>0">Acheter {{nft.price}}€</span>
-          <span *ngIf="nft.price==0">Acquérir</span>
+          {{show_price(nft)}}
         </button>
       </div>
 
     </app-reversebloc>
 
-    <div *ngIf="nfts?.length==0">Aucun NFT à vendre</div>
+    <div *ngIf="nfts?.length==0 && message==''">Aucun NFT à vendre</div>
   </div>
   <app-signature faq="store"></app-signature>
 </div>

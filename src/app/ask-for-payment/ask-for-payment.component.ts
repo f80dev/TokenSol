@@ -1,9 +1,10 @@
 import {Component, Inject, OnInit} from '@angular/core';
 import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 import {Merchant} from "../payment/payment.component";
-import {Bank, showMessage} from "../../tools";
+import {$$, Bank, showMessage} from "../../tools";
 import {UserService} from "../user.service";
 import {NetworkService} from "../network.service";
+import {Connexion} from "../../operation";
 
 
 export function _ask_for_paiement(vm:any,
@@ -16,7 +17,7 @@ export function _ask_for_paiement(vm:any,
                                   subtitle="",
                                   intro_payment="Coût de l'opération",
                                   billing_address="",
-                                  bill_content:{description:string,subject:string,contact:string},
+                                  bill_content:{description:string,subject:string,contact:string}= {description: '', subject: '', contact: ''},
                                   buy_method="",
                                   bank:Bank | undefined=undefined)  {
     //token_id : reference du token utilisable pour le paiement
@@ -24,6 +25,7 @@ export function _ask_for_paiement(vm:any,
         if(to_paid==0 && to_paid_in_fiat==0){
             resolve({})
         }else{
+            if(!vm.dialog){$$("!La fenetre n'integre pas MatDialog") }
             vm.dialog.open(AskForPaymentComponent,{
                 width: '450px',height:"auto",
                 data:
@@ -61,6 +63,19 @@ export class AskForPaymentComponent implements OnInit {
 
     buy_method: "fiat" | "crypto" | "" = "";
     nb_payment=0;
+    connexion: Connexion = {
+        address: false,
+        direct_connect: true,
+        email: false,
+        extension_wallet: true,
+        google: false,
+        keystore: true,
+        nfluent_wallet_connect: false,
+        on_device: false,
+        wallet_connect: true,
+        web_wallet: true,
+        webcam: false
+    };
 
     constructor(public dialogRef: MatDialogRef<AskForPaymentComponent>,
                 public user:UserService,
@@ -75,6 +90,7 @@ export class AskForPaymentComponent implements OnInit {
 
         if(this.data.merchant!.wallet!.token)this.nb_payment=this.nb_payment+1;
         if(this.data.merchant!.id)this.nb_payment=this.nb_payment+1;
+        if(this.data.connexion)this.connexion=this.data.connexion
 
         if(this.data.merchant.currency=="")this.buy_method="crypto";
         if(!this.data.merchant.wallet)this.buy_method="fiat";

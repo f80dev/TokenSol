@@ -224,6 +224,35 @@ function drawRotated(canvas:any, image:any, degrees:any) {
 }
 
 
+export function showIosInstallModal(localStorageKey: string="ios_install"): boolean {
+  // detect if the device is on iOS
+  //voir https://medium.com/ngconf/installing-your-pwa-on-ios-d1c497968e62
+  const isIos = () => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    return /iphone|ipad|ipod/.test(userAgent);
+  };
+
+  // check if the device is in standalone mode
+  const isInStandaloneMode = () => {
+    return (
+        "standalone" in (window as any).navigator &&
+        (window as any).navigator.standalone
+    );
+  };
+
+  // show the modal only once
+  const localStorageKeyValue = localStorage.getItem(localStorageKey);
+  const iosInstallModalShown = localStorageKeyValue
+      ? JSON.parse(localStorageKeyValue)
+      : false;
+  const shouldShowModalResponse =
+      isIos() && !isInStandaloneMode() && !iosInstallModalShown;
+  if (shouldShowModalResponse) {
+    localStorage.setItem(localStorageKey, "true");
+  }
+  return shouldShowModalResponse;
+}
+
 
 /**
  *

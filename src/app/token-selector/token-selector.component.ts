@@ -19,10 +19,15 @@ export class TokenSelectorComponent implements OnChanges {
   @Input() with_detail=false
   @Output() valueChange: EventEmitter<any> = new EventEmitter();
   @Output() endSearch: EventEmitter<any> = new EventEmitter();
+  @Output() unselect: EventEmitter<any> = new EventEmitter();
 
   tokens:any[]=[]
   @Input() show_detail: boolean=true;
   message: string="";
+  handler:any
+  filter_by_name="";
+
+
 
   constructor(
       public api:NetworkService
@@ -32,7 +37,7 @@ export class TokenSelectorComponent implements OnChanges {
 
 
   ngOnChanges(changes: SimpleChanges): void {
-    if(changes["network"] || changes["filter"]){
+    if(changes["network"] || changes["filter"] || changes["owner"]){
       //wait_message(this,"Recherche des monnaies")
       setTimeout(()=>{this.refresh();},1000);
     }
@@ -45,9 +50,6 @@ export class TokenSelectorComponent implements OnChanges {
         image:BACKUP_IMG,
         name:this.sel_token
       }
-      // for(let t of this.tokens){
-      //   if(t.id==this.sel_token)this.sel_token=t;
-      // }
     }
   }
 
@@ -79,9 +81,10 @@ export class TokenSelectorComponent implements OnChanges {
     this.tokens=[]
     this.sel_token={id:""}
     this.refresh();
+    this.unselect.emit(true)
   }
 
-  handler:any
+
   update_filter() {
     clearTimeout(this.handler)
     this.handler=setTimeout(()=>{this.refresh()},1000)

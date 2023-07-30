@@ -125,13 +125,13 @@
 
   </div>
 
-  <div style="max-width: 600px;display:inline-block;text-align: center;" *ngIf="message.length==0">
+  <div *ngIf="message.length==0" style="width: 100%;text-align: center;">
     <app-genlink [properties]="dm_props"
-                 title="Module de distribution"
-                 [domain]="appli" [show_command_panel]="false"></app-genlink>
+                 title="Partager ce store"
+                 [domain]="appli" [show_command_panel]="false">
+      <button mat-raised-button (click)="share_url()">Partager</button>
+    </app-genlink>
 
-    <br>
-    <button mat-raised-button (click)="share_url()">Partager</button>
   </div>
 
 

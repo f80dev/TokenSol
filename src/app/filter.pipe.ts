@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import {NFT} from "../nft";
 
 
 @Pipe({

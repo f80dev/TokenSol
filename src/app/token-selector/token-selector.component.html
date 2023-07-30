@@ -1,12 +1,12 @@
 <div *ngIf="sel_token.id==''" class="expansion-content-left background-element" style="min-height: 40px;">
     <div class="expansion-content-left" style="display: inline-block;position:relative;">
         <app-hourglass style="display: inline-block" [message]="message"></app-hourglass>
-        <input [(ngModel)]="filter" title="Filtre par nom de la monnaie"
+        <input [(ngModel)]="filter_by_name" title="Filtre par nom de la monnaie ou adresse de wallet"
                placeholder="filtre"
-               style="background: none;opacity: 0.5;color:gray;width:40px;display: block;position:absolute;right:10px;top:5px;"
+               style="background: none;opacity: 0.5;color:gray;width:60px;display: block;position:absolute;right:10px;top:5px;"
                *ngIf="message=='' && tokens.length>10">
 
-        <app-input [options]="tokens" [label]="label" [multiselect]="false" [filter]="filter"
+        <app-input [options]="tokens" [label]="label" [multiselect]="false" [filter]="filter_by_name"
                    value_type="listimages" height="250px" [size_image]="size"
                    (valueChange)="update_sel($event)">
         </app-input>

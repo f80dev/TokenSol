@@ -1,4 +1,5 @@
 <div class="mainform" style="text-align: center" [ngStyle]="_style">
+  <app-hourglass [message]="message"></app-hourglass>
   <div *ngIf="!showEnd && nfts.length>0">
     <br>
     <h2 class="color-primary" *ngIf="!airdrop">{{title}}</h2>
@@ -28,14 +29,16 @@
       <br><br>
       <h3>{{operation.candymachine.messages.question}}</h3>
       <app-authent
+              [network]="network.network"
         [connexion]="operation.candymachine.connexion"
         (invalid)="invalid()"
         (authent)="authent($event)">
       </app-authent>
     </div>
 
-    <div *ngIf="!operation && !airdrop">
+    <div *ngIf="!operation && !airdrop" style="display: inline-block;max-width: 350px;">
       <app-authent
+              [network]="network.network"
               [connexion]="connexion"
               (invalid)="invalid()"
               (authent)="authent($event)">

@@ -83,7 +83,7 @@ export interface NFT {
   royalties:number
   owner:string | undefined
   miner:CryptoKey
-  price: number
+  price: any                //La stucture du prix est {token:price} ou token=identifier d'ESDT ou egld ou eur
   supply: number
   type: string
   files:any[]
@@ -95,6 +95,39 @@ export interface NFT {
     explorer: string  | undefined
     transaction: string | undefined
   } | undefined
+}
+
+export function getPrice(nft:NFT,unity=""): number | any {
+  if(!nft.price || Object.keys(nft.price).length==0)return 0;
+  if(unity=="")return Number(Object.values(nft.price)[0])
+  if(unity=="all" || !nft.price.hasOwnProperty(unity))return nft.price;
+  return Number(nft.price[unity])
+}
+
+export function getFiatPrice(nft:NFT): number  {
+  if(nft.price && nft.price.hasOwnProperty("eur"))return nft.price["eur"]
+  if(nft.price && nft.price.hasOwnProperty("usd"))return nft.price["usd"]
+  return 0
+}
+
+export function getESDTPrice(nft:NFT): {token:string,value:number} {
+  let rc={token:"",value:0}
+  if(!nft.price || Object.keys(nft.price).length==0)return rc
+  for(let k of Object.keys(nft.price)){
+    if(k!="usd" && k!="eur"){
+      rc= {token:k,value:Number(nft.price[k])}
+      break
+    }
+  }
+  return rc
+}
+
+
+
+
+export function getUnity(nft:NFT): number | any {
+  if(!nft.price || Object.keys(nft.price).length==0)return [];
+  return Object.keys(nft.price)
 }
 
 export interface SolanaToken {

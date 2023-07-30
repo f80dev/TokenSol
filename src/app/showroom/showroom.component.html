@@ -1,9 +1,9 @@
-<div *ngIf="type_animation=='crossfade'">
+<div *ngIf="type_animation=='crossfade'" [style.height]="size">
   <div style="display: inline-block;position: relative;padding:0;margin:0;" *ngIf="image_to_show"
        [style.width]="size" [style.height]="size"  [ngStyle]="transition" >
     <div [style.border]="border" style="width: 100%;height: 100%;margin:0;">
       <img [src]="image_to_show"
-           style="width: 100%;height: 100%;"
+           style="width: 99%;height: 99%;"
            class="mat-subheading-1"
            alt="Cette image n'est pas disponible">
     </div>

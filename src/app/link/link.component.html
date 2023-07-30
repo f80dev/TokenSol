@@ -10,7 +10,7 @@
     {{content.substring(0,60)+"..."}}
   </a>
 
-  <a *ngIf="content.startsWith('erd')" [href]="get_explorer(content)" target="_blank" [title]="content">
+  <a *ngIf="content.startsWith('erd')" [href]="get_explorer(content,suffix)" target="_blank" [title]="title">
     <span *ngIf="icon==''">{{content | slice:0:20}}</span>
     <mat-icon *ngIf="icon!=''">{{icon}}</mat-icon>
   </a>

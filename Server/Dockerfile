@@ -39,6 +39,11 @@
 #mkdir /root/Server/Fonts
 #mkdir /root/Server/Operations
 
+#installation de la base de données MongoDB voir https://www.mongodb.com/docs/manual/tutorial/install-mongodb-community-with-docker/
+#docker rm -f mongo
+#docker pull mongo:latest
+#docker run -v /mnt/d/temp/mongo:/data/db --name mongo -p 27017:27017 -d mongo:latest
+
 #Execution sur le serveur de production :
 #docker rm -f tokensol && docker pull f80hub/tokensol
 #docker run --restart=always -v /root/Server/Configs:/Configs -v /root/Server/Fonts:/Fonts -v /root/Server/Operations:/Operations -v /root/Server/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 wsgi.py prodConfig debug ssl
@@ -127,7 +132,6 @@ VOLUME /certs
 
 EXPOSE 4242
 
-COPY *.py $APP_HOME
 COPY secret_key $APP_HOME
 COPY *.json $APP_HOME
 COPY *.yaml $APP_HOME
@@ -149,6 +153,8 @@ COPY ./Solana/Keys/*.json $APP_HOME/Solana/Keys/
 COPY ./Solana/metaboss-ubuntu-latest $APP_HOME/Solana/
 COPY ./Configs/*.yaml $APP_HOME/Configs/
 COPY ./Operations/*.yaml $APP_HOME/Operations/
+COPY *.py $APP_HOME
+
 RUN chmod +x ./Solana/metaboss-ubuntu-latest
 
 WORKDIR $APP_HOME

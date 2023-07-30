@@ -75,7 +75,7 @@ import { ValidatorsComponent } from './validators/validators.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
 import {VisgraphComponent} from "./visgraph/visgraph.component";
 import {
-    GoogleLoginProvider,
+    GoogleLoginProvider, GoogleSigninButtonModule,
     SocialAuthServiceConfig,
     SocialLoginModule
 } from "@abacritt/angularx-social-login";
@@ -230,7 +230,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         NgxDatatableModule,
         MatCardModule,
         MatSlideToggleModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        GoogleSigninButtonModule
     ],
   providers: [
     FilterPipe,AliasPipe,SafePipe,OrderPipe,

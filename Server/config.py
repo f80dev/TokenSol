@@ -27,7 +27,7 @@ class Config:
   DB_NAME="nfluent"
   DB_SERVER = MONGO_SERVER_CONNECTION_STRING
   DB_SERVER_PUBLIC=DB_SERVER.replace(MONGO_INITDB_ROOT_PASSWORD,"*****")
-  VERSION="0.2"
+  VERSION="0.3"
   PLATFORMS=[
     {"label":"NFT storage","value":"nftstorage"},
     {"label":"IPFS","value":"ipfs"},

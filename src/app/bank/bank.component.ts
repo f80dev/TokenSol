@@ -46,7 +46,7 @@ export class BankComponent implements OnInit {
     email: true,
     extension_wallet: true,
     google: false,
-    keystore: "",
+    keystore: false,
     nfluent_wallet_connect: false,
     on_device: false,
     wallet_connect: true,

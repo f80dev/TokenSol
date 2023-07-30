@@ -1,16 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import {NetworkService} from "../network.service";
-import {Connexion, Operation} from "../../operation";
+import { Operation} from "../../operation";
 import {$$, setParams, showMessage} from "../../tools";
 import {MatSnackBar} from "@angular/material/snack-bar";
 import {Validator} from "../../nft";
 import {Router} from "@angular/router";
-import {_prompt} from "../prompt/prompt.component";
 import {MatDialog} from "@angular/material/dialog";
 import {OperationService} from "../operation.service";
 import {Socket} from "ngx-socket-io";
-import {map} from "rxjs/operators";
-
 
 @Component({
   selector: 'app-validators',
@@ -22,12 +19,12 @@ export class ValidatorsComponent implements OnInit {
   operations: Operation[]=[];
 
   constructor(
-    public network:NetworkService,
-    public operation:OperationService,
-    public toast:MatSnackBar,
-    public router:Router,
-    public dialog:MatDialog,
-    public socket:Socket
+      public network:NetworkService,
+      public operation:OperationService,
+      public toast:MatSnackBar,
+      public router:Router,
+      public dialog:MatDialog,
+      public socket:Socket
   ) { }
 
 
@@ -66,10 +63,10 @@ export class ValidatorsComponent implements OnInit {
 
 
   update_operation(validator:Validator) {
-      this.network.set_operation_for_validator(validator.id,validator.ask).subscribe(()=>{
-        showMessage(this,"Validateur à jour");
-        this.refresh();
-      })
+    this.network.set_operation_for_validator(validator.id,validator.ask).subscribe(()=>{
+      showMessage(this,"Validateur à jour");
+      this.refresh();
+    })
   }
 
   delete(validator: Validator) {
@@ -80,27 +77,27 @@ export class ValidatorsComponent implements OnInit {
   delete_all() {
     let i=0;
     this.network.wait("Validateurs en cours de suppression")
-    for(let val of this.validators)
-      this.network.remove_validator(val.id).subscribe(()=>{
-        i++;
-        if(i==this.validators.length){
-          this.network.wait();
-          this.refresh();
-          showMessage(this,"Validateurs supprimés");
-        }
+    for(let val of this.validators){
+      setTimeout(()=>{this.network.remove_validator(val.id).subscribe(()=>{})},500*i);
+      i++;
+    }
+    setTimeout(()=>{
+      this.refresh();
+      this.network.wait();
+      showMessage(this,"Validateurs supprimés");
+    },i*500)
 
-      })
   }
 
-    receive_nft(validator:any) {
-      this.network.get_nfts_from_collection(validator.ask,this.network.network).subscribe((result)=>{
-        let nft=result.nfts[0];
-        let param=setParams({
-          token:nft,
-          section:"store"
-        },"","")
-        this.router.navigate(["dm"],{queryParams:{p:param}});
-      })
+  receive_nft(validator:any) {
+    this.network.get_nfts_from_collection(validator.ask,this.network.network).subscribe((result)=>{
+      let nft=result.nfts[0];
+      let param=setParams({
+        token:nft,
+        section:"store"
+      },"","")
+      this.router.navigate(["dm"],{queryParams:{p:param}});
+    })
 
-    }
+  }
 }

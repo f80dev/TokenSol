@@ -1,7 +1,7 @@
-<div *ngIf="_if && text!.length>0" (click)="hideTuto(true)"
+<div *ngIf="_if" (click)="hideTuto()"
      [ngStyle]="{margin:0,zIndex: 100000,width:width}"
      id="zone_tuto">
-  <div *ngIf="_type=='tips'" style="max-width:800px;text-align:left;display:inline-block;margin-top:6px;margin-bottom:8px;">
+  <div *ngIf="_type=='tips' && text_to_show.length>0" style="max-width:800px;text-align:left;display:inline-block;margin-top:6px;margin-bottom:8px;">
     <table>
       <tr>
         <td>
@@ -10,7 +10,7 @@
                style="width:30px;height:30px;padding:3px;">
 
           <span *ngIf="icon!.length>0">
-            <mat-icon style="margin:10px;">{{icon}}</mat-icon>
+            <mat-icon [style.color]="color" style="margin:10px;">{{icon}}</mat-icon>
           </span>
 
           <span *ngIf="_button!.length>0">
@@ -23,7 +23,7 @@
         </td>
         <td>
           <span [ngStyle]="{'color':color}" class="mat-body-2">
-            {{text}}
+            {{text_to_show}}
           </span>
         </td>
         <td *ngIf="faq!.length>0" (click)="router.navigate(['faqs'],{queryParams:{open:faq}})">
@@ -48,9 +48,6 @@
 
       <div style="z-index:10000;display:block;position:absolute;top:0;left:0;width:100vw;height:100vh;text-align:center;">
 
-        <div style="width:80%;text-align:center;font-size: 2em;margin-top:5vh;margin-bottom:5vh;margin-left:10%;"
-             [innerHTML]="text">
-        </div>
 
         <img *ngIf="image!.length>0"
              [src]="image"

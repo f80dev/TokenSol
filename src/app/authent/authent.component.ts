@@ -479,4 +479,12 @@ export class AuthentComponent implements OnInit,OnChanges {
       next:(r:any)=>{this.strong=true;this.address=r.address;this.success();}
     })
   }
+
+    run_scanner() {
+      this.enabled_webcam=true;
+    }
+
+  on_retreive_address($event: any) {
+    this.address=$event.address;
+  }
 }

@@ -22,7 +22,7 @@ export interface Collection {
 export interface Connexion {
   on_device: boolean | false
   address: boolean | false
-  keystore: string
+  keystore: boolean | false
   wallet_connect: boolean | false
   email: boolean | false
   google: boolean | false

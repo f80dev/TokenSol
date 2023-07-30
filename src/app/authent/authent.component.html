@@ -110,24 +110,36 @@
       <app-upload-file extensions=".json" [zone]="true" height="70px" (uploaded)="upload_keystore($event)"></app-upload-file>
     </mat-expansion-panel>
 
-      <mat-expansion-panel *ngIf="showEmail || showGoogle">
-      <mat-expansion-panel-header>Utiliser votre email</mat-expansion-panel-header>
+      <mat-expansion-panel *ngIf="showEmail || showGoogle || showAddress">
+      <mat-expansion-panel-header>Utiliser votre email ou adresse de wallet</mat-expansion-panel-header>
       <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
+
+        <app-scanner *ngIf="enabled_webcam && showAddress"
+                     [size]="size"
+                     title="Montrer le QRcode de votre wallet à cette caméra"
+                     (flash)="on_retreive_address($event)"
+                     (cancel)="cancel_webcam()">
+        </app-scanner>
+
 
         <!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
         <asl-google-signin-button *ngIf="showGoogle && address.length==0" style="height: 50px;"
                                   title="Authentification simplifiée pour les utisateurs de gmail">
         </asl-google-signin-button>
 
-        <app-input *ngIf="showEmail"
-                   width="300px"
-                   [label]="intro_message"
-                   [placeholder]="prompt"
-                   [value]="address" (valueChange)="update_address($event)"
-                   (validate)="validate($event)"
-                   label_button="Valider"
-                   [help]="explain_message">
-        </app-input>
+        <div *ngIf="showEmail || showAddress">
+          <app-input
+                  width="300px"
+                  [label]="intro_message"
+                  [placeholder]="prompt"
+                  [value]="address" (valueChange)="update_address($event)"
+                  (validate)="validate($event)"
+                  label_button="Valider"
+                  [help]="explain_message">
+          </app-input>
+          <button mat-icon-button (click)="run_scanner()"><mat-icon>qr_code_scanner</mat-icon></button>
+        </div>
+
       </div>
     </mat-expansion-panel>
 

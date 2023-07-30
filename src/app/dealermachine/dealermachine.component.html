@@ -10,26 +10,20 @@
     <br>
 
 
-    <!--    gestion de la facture -->
-    <app-input *ngIf="ope?.payment?.billing && nft.price>0 && address.length>0 && address.indexOf('@')==-1"
-               [value]="billing_address" (valueChange)="billing_address=$event"
-               value_type="text"
-               label="Indiquez une adresse mail pour recevoir une facture"
-               help="Une facture vous seras adressée"></app-input>
-
-
-    <div *ngIf="address.length>20 || (address.length>5 && address.indexOf('@')>-1)">
-      <div *ngIf="nft.price>0">
+      <div *ngIf="getPrice(nft)>0">
         <br>
-        Acheter maintenant ce NFT pour <strong>{{nft.price}}€</strong><br>
+        Aquérir ce NFT pour <strong>{{getPrice(nft)}} {{getUnity(nft)}}</strong><br>
 
+        <button mat-raised-button (click)="buy(nft)">
+          Acheter
+        </button>
 
       </div>
 
-    </div>
 
-    <div   style="max-height: 300px;max-width: 350px;display: inline-block;">
+    <div style="max-height: 300px;max-width: 350px;display: inline-block;" *ngIf="getPrice(nft)==0">
       <app-authent
+              explain_message="Veuillez vous authentifier"
               [connexion]="authentification"
               (authent)="valide($event)"
               [prompt]="prompt"
