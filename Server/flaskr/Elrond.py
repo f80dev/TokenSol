@@ -759,7 +759,7 @@ class Elrond(Network):
           files=item["uris"],
           supply=int(item["supply"] if "supply" in item else 1),
           price=item["price"] if "price" in item else 0,
-          balances=self.get_balances(nft_addr=item["identifier"])
+          balances=self.get_balances(nft_addr=item["identifier"]) if "NonFungible" not in item["type"] else {item["owner"]:1}
         )
         nft.network=self.network
         nft.address=item["identifier"]
