@@ -2,13 +2,14 @@ import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Si
 import {NFT} from "../../nft";
 import {Collection} from "../../operation";
 import {NetworkService} from "../network.service";
+import {$$} from "../../tools";
 
 @Component({
   selector: 'app-showroom',
   templateUrl: './showroom.component.html',
   styleUrls: ['./showroom.component.css']
 })
-export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
+export class ShowroomComponent implements OnDestroy,OnChanges {
 
   @Input() nfts:NFT[]=[];
 
@@ -16,10 +17,9 @@ export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
   @Input() exclude_collections:string[]=[];
   @Input() collection_network:string="";
 
-
   @Input() delay:number=0.5;
   @Input() size:string="300px";
-  @Input() type_animation:string="crossfade";
+  @Input() type_animation:string="show";
   @Input() border="white solid 6px"
   @Output('update') onchange: EventEmitter<NFT>=new EventEmitter();
 
@@ -33,14 +33,15 @@ export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
   constructor(public network:NetworkService) { }
 
 
-  show_nft(nft:NFT){
+  show_nft(nft:NFT,delay=300){
     this.transition={transition: "opacity 0.3s ease-in-out",opacity:0}
     setTimeout(()=>{
+      $$("Affichage de "+nft.visual)
       this.image_to_show=nft.visual;
       this.transition={transition: "opacity 0.3s ease-out-in",opacity:1}
       this.title=nft.name;
       this.onchange.emit(nft)
-    },300);
+    },delay);
   }
 
   select_nft(){
@@ -55,14 +56,12 @@ export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
           break;
         }
       }
-      if(nft)this.show_nft(nft)
+      if(nft){
+        this.show_nft(nft,this.type_animation=="crossfade" ? 300 : 0)
+      }
     }
   }
 
-  ngOnInit(): void {
-    this.histo=[];
-    this.refresh();
-  }
 
   refresh(){
     if(this.nfts.length>0){
@@ -72,8 +71,11 @@ export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
           this.select_nft();
         }, this.delay * 1000);
       }
-    } else {
-      clearInterval(this.hInterval)
+    }
+
+    if(this.nfts.length==0 || this.delay==0){
+      if(this.hInterval>0)clearInterval(this.hInterval)
+      this.hInterval=0
     }
 
 
@@ -96,6 +98,7 @@ export class ShowroomComponent implements OnInit,OnDestroy,OnChanges {
     //     })
     //   }
     this.histo=[];
+    this.refresh();
   }
 
 }

@@ -69,7 +69,6 @@ export class AppComponent implements OnInit,AfterViewInit {
       }
     })
 
-
     this.user.profil_change.subscribe(()=>{this.update_menu();})
     this.user.addr_change.subscribe(()=>{this.update_menu();})
     this.network_service.network_change.subscribe(()=>{this.update_menu()})
@@ -160,9 +159,7 @@ export class AppComponent implements OnInit,AfterViewInit {
 
     this.user.params = params;
     if (params.hasOwnProperty("toolbar")) {
-      this.user.toolbar_visible = params["toolbar"]
-    } else {
-      this.user.toolbar_visible = true;  //Par défaut on ne montre pas la toolbar
+      this.user.toolbar_visible = (params["toolbar"]=="true")
     }
 
     this.network_service.server_nfluent = params["server"] || environment.server;

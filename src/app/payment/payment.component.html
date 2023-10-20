@@ -7,13 +7,17 @@
         <div style="margin: 15px;" class="mat-subheading-1">
             Coût de l'opération: {{price}} {{money!.unity}} + Frais de service
         </div>
-        <div *ngIf="balance>0" style="font-size: small">
-            Vous avez {{balance | number:"1.0-1"}} {{money!.unity}}
+        <div *ngIf="balance.balance>0" style="font-size: small">
+            Vous avez {{balance.balance | number:"1.0-1"}} {{money!.unity}}
+            <br>
+            <span *ngIf="money.id!='egld' && balance.egld==0">Vous n'avez pas assez d'eGld pour la transaction</span>
         </div>
     </div>
 
-    <div *ngIf="balance<price && merchant && merchant.wallet" style="margin-top: 20px;">
-        <div class="color-primary mat-subheading-1">Votre solde est insuffisant</div>
+
+
+    <div *ngIf="(balance.balance<price || balance.egld<0.001) && merchant && merchant.wallet" style="margin-top: 20px;">
+        <div class="color-primary mat-subheading-1">Votre solde est insuffisant et/ou vous ne pouvez pas régler les frais de transactions</div>
 
         <button mat-raised-button color="primary"
                 style="margin: 20px;" *ngIf="bank"
@@ -21,8 +25,10 @@
             Acquérir des {{money!.unity}}
         </button>
 
+
+
         <p *ngIf="!bank">
-            Vous devez récupérer des {{money!.unity}} pour accèder au contenu
+            Vous devez récupérer des {{money!.unity}} ou des eGld pour accèder au contenu
         </p>
 
     </div>
@@ -33,8 +39,15 @@
             (click)="start_payment(price)">
         Payer {{price}} {{money!.unity}}
     </button>
+
+
 </div>
 
+<button mat-raised-button
+        *ngIf="device.modele!='desktop' && show_url_to_xportal"
+        (click)="open_xportal()">
+    Basculer sur xPortal
+</button>
 
 <div *ngIf="message=='' && buy_method=='fiat' && merchant">
     <div style="margin: 15px;" class="mat-subheading-1">

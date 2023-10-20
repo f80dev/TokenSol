@@ -88,13 +88,13 @@ class Network():
     })
 
 
-  def get_balances(self, address,nft_addr=None):
+  def get_balances(self, addr,nft_addr=None):
     """
     retourne la balance des NFTS
     :param address:
     :return:
     """
-    acc=self.get_account(address)
+    acc=self.get_account(addr)
     return acc.nfts_balances[nft_addr] if nft_addr in acc.nfts_balances else 0
 
   def get_keys(self) -> [Key]:

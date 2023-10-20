@@ -10,7 +10,8 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:application": {
-          "strict": false
+          "strict": false,
+          "name": "nfluent"
         }
       },
       "root": "",

@@ -120,6 +120,7 @@ def upload_on_platform(data,platform="ipfs",id=None,upload_dir="",domain_server=
 
   if platform.startswith("github"):
     try:
+      if api_key is None or api_key=="":api_key=GITHUB_TOKEN
       github_storage=GithubStorage(platform=platform,token=api_key)
     except:
       log("La syntaxe doit être github-<account>-<repository>")

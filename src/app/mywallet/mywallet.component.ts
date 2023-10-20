@@ -7,7 +7,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {Observable, Subject} from "rxjs";
 import {Location} from "@angular/common";
 import {NFT} from "../../nft";
-import {Collection,  Operation} from "../../operation";
+import {Collection, Connexion, Operation} from "../../operation";
 import {UserService} from "../user.service";
 import {Clipboard} from "@angular/cdk/clipboard";
 import {Socket} from "ngx-socket-io";
@@ -74,11 +74,10 @@ export class MywalletComponent implements OnInit,OnDestroy {
     });
   }
 
-
-  ngOnInit(): void {
-    getParams(this.routes).then((params:any)=>{
+  async ngOnInit() {
+    try {
+      let params:any=await getParams(this.routes)
       $$("Récupération des paramètres: ",params);
-
 
       apply_params(this,params,environment)
       this.api.network=this.network;
@@ -96,9 +95,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
         if(message.action.startsWith("http"))open(message.action+"?address="+this.addr);
       });
       this.refresh();
-    },()=>{
+    } catch (e) {
       this.router.navigate(["pagenotfound"],{queryParams:{toolbar:false,message:"cette page ne correspond pas à un wallet connu"}});
-    });
+    }
   }
 
 
@@ -151,9 +150,9 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   refresh(index:number=0) {
     $$("Refresh de l'onglet "+index);
-    if(index!=2 && this.addr==""){
+    if(index!=3 && this.addr==""){
       showMessage(this,"Authentification requise");
-      this.indexTab=2;
+      this.indexTab=3;
       return;
     }
     if(index==0 && this.nfts.length==0 && this.addr!=""){
@@ -196,6 +195,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   version: any;
   nft_size: number=350;
   balance: number=0
+  tokens:any[]=[];
   claim="";
   appname="";
   visual="";
@@ -207,6 +207,21 @@ export class MywalletComponent implements OnInit,OnDestroy {
     {label:"Grafiti",value:{svg:"grafitis.svg",background:"https://gallery.nfluent.io/assets/redwall1.jpg"}}
   ]
   sel_model: {label:string,value:{svg:string,background:string}}=this.gallery_models[0];
+  authent: Connexion={
+    private_key: true,
+    address: false,
+    direct_connect: false,
+    email: false,
+    extension_wallet: true,
+    google: false,
+    keystore: true,
+    nfluent_wallet_connect: false,
+    on_device: false,
+    wallet_connect: true,
+    web_wallet: true,
+    webcam: false
+  };
+  slide=1
 
   handleImage(event: any) {
     let rc=event;
@@ -242,6 +257,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
   send(image:string) {
     if(this.sel_ope?.nftlive){
       let collection:Collection= {
+        cover: undefined,
         gallery: true,
         supply: 1,
         name: this.sel_ope?.nftlive!.nft_target.collection,
@@ -345,9 +361,20 @@ export class MywalletComponent implements OnInit,OnDestroy {
   }
 
   refresh_balance(){
-    if(this.addr!="")this.api.getBalance(this.addr,this.network).subscribe((res)=>{
-      this.balance=res[0].balance
-    });
+    if(this.addr!=""){
+      this.api.find_tokens(this.network,this.addr,false).subscribe((res)=>{
+        this.tokens=[]
+        for(let t of res){
+          if(t.balance!=''){
+            t["amount"]=t.balance
+            this.tokens.push(t)
+          }
+        }
+      })
+      this.api.getBalance(this.addr,this.network).subscribe((res)=>{
+        this.balance=res[0].balance
+      });
+    }
   }
 
   on_authent($event: any) {
@@ -360,6 +387,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
     }
     if($event.strong){
       this.addr=$event.address;
+      this._location.replaceState("wallet",setParams({address:this.addr,toolbar:false}))
       this.refresh_balance();
       showMessage(this,"Vous êtes maintenant pleinement connecté à votre wallet");
       setTimeout(()=>{this.indexTab=0;},1500);
@@ -452,5 +480,20 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
   open_prop(url: string) {
     open(url,"_blank")
+  }
+
+  open_explorer(t: any) {
+    open(this.api.getExplorer(t.id,this.network,"explorer"))
+  }
+
+  open_gate(sens: string, t: any) {
+    let service="create"
+    let params:any={token:t.id,required:"token",address:this.addr}
+    if(sens=="airdrop"){
+      service="plugin"
+      params["encrypt"]=this.secret
+    }
+    let url=service+"/?"+setParams(params)
+    open("https://gate.nfluent.io/"+url,"gate")
   }
 }

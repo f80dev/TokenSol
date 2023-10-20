@@ -85,7 +85,7 @@
   </div>
 
   <div mat-dialog-actions style="text-align: right;">
-    <button class="app-button" id="cmdAll" *ngIf="_type=='images'"  mat-raised-button (click)="select_all()">Tout</button>
+    <button class="app-button" id="cmdAll" *ngIf="_type=='images' && data?.max_select!=1"  mat-raised-button (click)="select_all()">Tout</button>
     <button class="app-button" id="cmdNo" *ngIf="data?.lbl_cancel"  mat-raised-button [mat-dialog-close]="null">{{data?.lbl_cancel}}</button>
     <button class="app-button" id="cmdYes" *ngIf="data?.lbl_ok"  mat-raised-button [mat-dialog-close]="data?.result">{{data?.lbl_ok}}</button>
     <button class="app-button" id="cmdSup" *ngIf="data?.lbl_sup"  mat-raised-button [mat-dialog-close]="'lbl_sup'">{{data?.lbl_sup}}</button>

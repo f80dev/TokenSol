@@ -7,17 +7,19 @@
 body,html {
   margin: 0;
   padding: 0;
-  background-color: #2a2a2a;
-  color: white;
+  background-color: #171717;
+  color: #d0d0d0;
   overflow: scroll;
   overflow-x: hidden;
 }
 ::-webkit-scrollbar {width: 0;}
 
+
+
 @include mat.all-component-themes($nfluent-dark-theme);
 
 .color-primary {
-  color: mat.get-color-from-palette($nfluent-indigo-palette, 400);
+  color: mat.get-color-from-palette($nfluent-indigo-palette, 300);
 }
 
 //Réapplication des nouvelles couleurs

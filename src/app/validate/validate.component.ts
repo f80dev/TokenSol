@@ -166,7 +166,7 @@ export class ValidateComponent implements OnInit {
       let body={
         operation:this.operation!.id,
         n_passes:this.last_action.action.n_pass,
-        nft_url:this.network.getExplorer(this.last_action.token.mint),
+        nft_url:this.network.getExplorer(this.last_action.token.mint,this.network.network),
         nft_title:this.last_action.token.metadataOnchain.data.name
       }
       this.network.send_transaction_confirmation(this.email,body).subscribe(()=>{

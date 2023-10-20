@@ -1,0 +1,64 @@
+<app-hourglass [message]="message"></app-hourglass>
+<div *ngIf="!sel_collection" class="expansion-content" style="min-height: 40px;">
+
+    <button mat-raised-button (click)="create_collection()" *ngIf="miner_or_validator">
+        Créer une collection
+    </button>
+
+    <div class="expansion-content-left" *ngIf="owner=='' && collections.length==0" style="align-content: center;">
+        <app-input label="Nom d'une collection / Wallet" [value]="query_collection"
+                   width="100%"
+                   [showClear]="true"
+                   (valueChange)="query_collection=$event"
+                   label_button="Chercher"
+                   (validate)="run_query($event)"
+                   help="saisissez votre url de rediretion"></app-input>
+
+        <button mat-raised-button (click)="open_gallery()" style="margin-top: -10px;">Gallerie</button>
+    </div>
+
+    <div *ngIf="collections.length>0" >
+        <p>
+            {{title}}
+            <button mat-raised-button (click)="owner='';collections=[]" style="margin: 10px;">Recherche</button>
+        </p>
+        <div class="expansion-content" style="width: 100%;margin-top:15px;" *ngIf="w_image!=''">
+            <div *ngFor="let c of collections"
+                 [style.display]="c.cover=='' ? 'none' : 'inline-box'"
+                 style="position: relative;cursor: pointer; margin:10px;display: inline-flex;"
+                 (click)="select_collection(c)" [style.width]="w_image" [style.height]="w_image">
+
+                <img [src]="c.cover" *ngIf="!c.cover?.endsWith('mp4')"
+                     [style.width]="w_image" [style.height]="w_image"
+                     [title]="'Identifiant: '+c.id"
+                     style="margin:10px;object-fit: cover;width:100%;box-shadow: 0 3px 3px grey;">
+
+                <video muted autoplay *ngIf="c.cover?.endsWith('mp4')"
+                       style="box-shadow: 0 3px 3px grey;"
+                       [style.width]="w_image" [style.height]="w_image">
+                    <source [src]="c.cover" type='video/mp4'/>
+                </video>
+                <div class="image-title"
+                     [style.color]="color" >
+                    <div style="font-size: 10%">Collection</div>
+                    <div style="font-size: 20%">{{c.name}}</div>
+                </div>
+            </div>
+        </div>
+        <app-input [options]="collections" *ngIf="w_image==''"
+                    [multiselect]="false" (select)="select_collection($event)"></app-input>
+
+    </div>
+
+</div>
+
+<!--une fois la collection sélectionnée-->
+<div *ngIf="sel_collection" style="position: relative;margin-top: 10px;" (click)="sel_collection=undefined">
+    <img *ngIf="nfts.length==0" [src]="sel_collection.cover || ''" [style.width]="w_image">
+    <app-showroom [nfts]="nfts" [delay]="delay_showroom" [type_animation]="animation"></app-showroom>
+    <div class="image-title"
+         [style.color]="color" >
+        <div style="font-size: small">Collection</div>
+        <span style="text-overflow: ellipsis" class="mat-body-2">{{sel_collection.name || ''}}</span>
+    </div>
+</div>

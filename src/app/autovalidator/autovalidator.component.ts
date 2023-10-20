@@ -19,6 +19,7 @@ export class AutovalidatorComponent implements OnInit, OnDestroy, OnChanges {
   @Input() network: string = "";
   @Input() validator_name: string = "";
   @Input() connexion: Connexion = {
+    private_key: false,
     keystore: false,
     direct_connect: false,
     extension_wallet: false,
@@ -38,12 +39,13 @@ export class AutovalidatorComponent implements OnInit, OnDestroy, OnChanges {
   @Output('fail') onfail: EventEmitter<string> = new EventEmitter();
 
   @Input() collections: string[] = [];
+  @Input() min_supply: number[] = [];
   _collections: Collection[] = [];
   validator: string = "";
 
   qrcode_enabled: boolean = true
   showNfluentWalletConnect: boolean = false;
-  autorized_users: string[] = [];
+  autorized_users:any={}
   show_authent: boolean = true;
 
 
@@ -61,8 +63,11 @@ export class AutovalidatorComponent implements OnInit, OnDestroy, OnChanges {
       this.api.get_collections(this.collections.join(","), this.network, true).subscribe((cols: Collection[]) => {
         $$("Récupération des collections", cols);
         this._collections = cols;
-        this.subscribe_as_validator();
       })
+    }
+
+    if(this.collections.length>0){
+      this.subscribe_as_validator();
     }
   }
 
@@ -99,7 +104,9 @@ export class AutovalidatorComponent implements OnInit, OnDestroy, OnChanges {
       $$("Le systeme d'authent demande le QRCode en mode wallet_connect")
 
       if(typeof this.collections=="string")this.collections=[this.collections]; //Transforme le NFT en collection
-      this.api.subscribe_as_validator(this.collections.join(","),this.network,this.validator_name).subscribe((result:any)=>{
+      let cols=this.collections.join(",")
+      $$("Demande d'enregistrement comme validateur pour les collections "+cols)
+      this.api.subscribe_as_validator(cols,this.network,this.validator_name).subscribe((result:any)=>{
         //On inscrit le systeme à la reception de message
         this.validator=result.id;
         $$("Le validator est enregistré sour "+this.validator)
@@ -145,15 +152,15 @@ export class AutovalidatorComponent implements OnInit, OnDestroy, OnChanges {
   }
 
 
-  check_nft(to_check: { strong: boolean; address: string; provider: any }) {
+  check_nft(to_check: { strong: boolean; address: string; provider: any },min_supply=1) {
     if (to_check.strong) {
-      if (this.autorized_users.indexOf(to_check.address) > -1) {
+      if (this.autorized_users[to_check.address] >= min_supply) {
         this.onvalidate.emit(to_check.address);
       } else {
         $$("On rafraichie la liste des utilisateurs autorisé")
         this.api.subscribe_as_validator(this.collections.join(","), this.network, this.validator_name).subscribe((result: any) => {
               this.autorized_users = result.addresses;
-              if (this.autorized_users.indexOf(to_check.address) > -1) {
+              if (this.autorized_users[to_check.address] >= min_supply) {
                 this.onvalidate.emit(to_check.address);
               } else {
                 this.onfail.emit(to_check.address);

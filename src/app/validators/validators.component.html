@@ -31,6 +31,7 @@
       <td>{{validator.nfts}}</td>
       <td>
         <img [src]="validator.qrcode_accesscode"
+             *ngIf="!deleting_all"
              style="height:100px;width: 100px;cursor: copy"
              [cdkCopyToClipboard]="validator.access_code">
 

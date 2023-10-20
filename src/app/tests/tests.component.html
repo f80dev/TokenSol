@@ -1,3 +1,13 @@
+
 <div class="mainform">
-    <app-tuto label="Ceci est un  nouveau commentaire" [delay]="5" [duration]="10"></app-tuto>
+    <app-authent *ngIf="!provider"
+                 network="elrond-devnet"
+                 (authent)="authent($event)"></app-authent>
+
+    <app-selkey network="elrond-devnet" (onChange)="setMiner($event)"
+                [with_balance]="false"></app-selkey>
+
+    <button mat-raised-button *ngIf="nft && nft.collection" (click)="mint()">
+        Miner
+    </button>
 </div>

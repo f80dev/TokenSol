@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {Clipboard} from '@angular/cdk/clipboard';
 import {
   $$,
-  CryptoKey,
+  CryptoKey, getNetworks, getWalletUrl,
   isEmail,
   newCryptoKey,
   setParams,
@@ -44,14 +44,13 @@ export class KeysComponent implements OnInit {
     public _location:Location,
     public routes:ActivatedRoute
   ) {
-
+    this.networks=getNetworks("elrond")
   }
 
   ngOnInit(): void {
       if(this.user.isConnected()){
-        let network=environment.networks_available.split(',')[0]
-        this.sel_network={label:network,value:network}
-        this.network.init_network(network)
+        this.sel_network=this.networks[0]
+        this.network.init_network(this.sel_network.value)
       } else {
         this.user.login("Se connecter pour gérer les clés de l'application");
       }
@@ -137,6 +136,7 @@ export class KeysComponent implements OnInit {
   //     {queryParams:{p:setParams({addr:key.address,toolbar:false,takePhoto:true,network:"db-server-nfluent"},"","")}}
   //   );
   // }
+  networks:any[]
 
 
   open_extra_wallet(key: CryptoKey) {
@@ -149,8 +149,7 @@ export class KeysComponent implements OnInit {
         this.router.navigate(["collections"],{queryParams:{owner:key.address,network:this.sel_network.value,encrypted:r.encrypt}});
       })
     }
-    if(tools=="inspire")open(this.network.getExplorer(key.address,"accounts"),"explorer");
-    if(tools=="opensea")open(this.network.getExplorer(key.address),"explorer");
+    open(this.network.getExplorer(this.network.network),"explorer");
   }
 
   open_elrond_wallet() {
@@ -162,7 +161,8 @@ export class KeysComponent implements OnInit {
   open_faucet(key: CryptoKey) {
     showMessage(this,"L'adresse du compte est dans le presse-papier")
     if(this.network.isElrond()){
-      open("https://devnet-wallet.multiversx.com/unlock/pem","faucet")
+
+      open(getWalletUrl(this.network.network)+"/unlock/pem","faucet")
       //TODO ici ajouter l'ouverture du rechargement
     }
     if(this.network.isPolygon()){
@@ -234,4 +234,25 @@ export class KeysComponent implements OnInit {
   }
 
 
+  ventilation(key: CryptoKey) {
+    if(key){
+      debugger
+      let accounts=this.network.keys.length
+      let amount=(key.balance || 0)/(accounts+2)
+      for(let k of this.network.keys){
+        if(k.address!=key.address){
+          setTimeout(()=>{
+            this.network.transfer_to("egld", k.address,key,key,this.network.network,this.network.network,"","","",amount).subscribe({
+              next:()=>{}
+            })
+          },(accounts-1)*30000)
+          accounts=accounts-1;
+          $$("Programmation du transfert de "+amount+" vers "+k.address)
+        }
+
+      }
+    }
+
+
+  }
 }

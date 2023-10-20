@@ -381,6 +381,9 @@ def api_get_collections(addresses:str):
     filter_type=request.args.get("filter_type","")
     cols=cols+bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations,limit=limit)
 
+  for c in cols:
+    if not "cover" in c:c["cover"]="https://tokenforge.nfluent.io/assets/collection_cover.jpeg"
+
   return jsonify(cols)
 
 
@@ -401,6 +404,7 @@ def get_hashcode():
       rc.append(get_hash(document))
 
   return jsonify(rc)
+
 
 
 @bp.route('/get_sequence/',methods=["POST"])
@@ -660,7 +664,10 @@ def send_photo_for_nftlive(conf_id:str=""):
 
   image=request.json["photo"] if "photo" in request.json else None
   if type(image)==dict:
-    image=Sticker(image=image["file"],ext=image["type"],name=image["filename"])
+    if "filename" in image:
+      image=Sticker(image=image["file"],ext=image["type"],name=image["filename"])
+    else:
+      image=Sticker(image=image["file"])
 
   dim=request.json["dimensions"] if "dimensions" in request.json else str(config["width"])+"x"+str(config["height"])
   if not "x" in dim: dim=dim+"x"+dim
@@ -747,6 +754,7 @@ def appli_configs():
 @bp.route('/infos/')
 @bp.route('/info/')
 @bp.route('/info_server/')
+@bp.route('/infos_server/')
 #test http://127.0.0.1:4242/api/infos/
 #test http://75.119.159.46:4242/api/infos/
 #test https://server.f80lab.com:4242/api/infos/
@@ -811,25 +819,42 @@ def test():
 
 
 
-@bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
-def api_refund(address:str,amount:str="1",token="egld"):
+
+@bp.route('/refund/<address>/',methods=["POST"])
+def api_refund(address:str):
+  token=request.json["token"]
+  amount=int(request.json["amount"])
   _network=get_network_instance(request.json["network"])
+  collection=request.json["collection"] if "collection" in request.json else ""
   if type(request.json["bank"])==str:
     _miner=Key(encrypted=request.json["bank"])
   else:
     _miner=Key(obj=request.json["bank"])
   histo=DAO(network=request.json["histo"]) if "histo" in request.json else None
   limit=int(request.json["limit"]) if "limit" in request.json and not histo is None else 0
+  delay_between_airdrop=int(request.json["delay_between_airdrop"]) if "delay_between_airdrop" in request.json else 60
   email=""
 
   if is_email(address):
     email=address
-    _token=_network.get_token(token)
+    if type(token)==str:
+      _token=_network.get_token(token)
+    else:
+      _token=token
     key=_network.create_account(address,domain_appli=current_app.config["DOMAIN_APPLI"],
                                  subject="Crédit de "+str(amount)+" "+_token["name"],mail_new_wallet="mail_new_account",histo=histo)
     address=key.address
 
-  tx_esdt=airdrop(address=address,token=token,_miner=_miner,amount=amount,histo=histo,limit=limit,network=request.json["network"])
+  tx_esdt=airdrop(address=address,
+                  token=token,
+                  collection=collection,
+                  _miner=_miner,
+                  amount=amount,
+                  histo=histo,
+                  limit=limit,
+                  network=request.json["network"],
+                  delay_between_airdrop=delay_between_airdrop
+                  )
   if tx_esdt["status"]=="error": return jsonify(tx_esdt)
 
   if tx_esdt["status"]=="success" and len(email)>0:
@@ -1093,16 +1118,21 @@ def tokens(addr:str=""):
     else:
       filter=request.args.get("filter","")
 
-    return _network.get_tokens(filter=filter,
+    rc= _network.get_tokens(filter=filter,
                                _type=request.args.get("type","Fungible"),
                                with_detail=(request.args.get("with_detail","false")=="true"),
-                               limit=int(request.args.get("type","200")))
+                               limit=int(request.args.get("limit","200")))
+
+    if len(rc)>1 and "balance" in rc[1] and rc[1]["balance"]!='':
+      rc=sorted(rc,key=lambda d:d["balance"],reverse=True)
+
+    return rc
 
 
 @bp.route('/transfer/',methods=["POST"])
 def transfer_to():
   """
-  Effectue des transfer de NFT entre blockchain
+  Effectue des transfers de NFT entre blockchain
 
   :return:
   """
@@ -1129,9 +1159,7 @@ def transfer_to():
   from_miner=to_network.find_key(key_from_miner) if type(key_from_miner)==str else Key(obj=key_from_miner)
 
   _ope=get_operation(request.args.get("operation",""))
-  collection=to_network.get_collection(request.json["collection_id"])
-  # if collection['owner']!=target_miner.address:
-  #   return returnError("La collection n'appartient pas au miner")
+  collection=to_network.get_collection(request.json["collection_id"]) if "collection_id" in request.json and len(request.json["collection_id"])>0 else None
 
   rc=transfer(addr=nft_addr,
               from_network_miner=from_miner,
@@ -1638,7 +1666,8 @@ def get_token_for_contest(ope:str,url_appli:str="https://tokenforge.nfluent.io")
 def nfts_from_collection(collection_id):
   network=request.args.get("network","elrond-devnet")
   with_attr=(request.args.get("with_attr","false")=="true")
-  nfts=get_network_instance(network).get_nfts_from_collections([collection_id],with_attr=with_attr,format="json")
+  limit=int(request.args.get("limit","2000"))
+  nfts=get_network_instance(network).get_nfts_from_collections([collection_id],with_attr=with_attr,format="json",limit=limit)
   return jsonify({"nfts":nfts})
 
 
@@ -2018,7 +2047,7 @@ def keys(name:str=""):
   :param name:
   :return:
   """
-  dao=DAO(config=current_app.config)
+
 
   network=request.args.get("network","").strip()
   if network=="undefined" or len(network)==0: return returnError("Le réseau doit être précisé")
@@ -2026,7 +2055,7 @@ def keys(name:str=""):
 
   if request.method=="GET":
     with_balance=request.args.get("with_balance","false")=="true" or "accounts" in request.path
-    operation=get_operation(request.args.get("operation"))
+    #operation=get_operation(request.args.get("operation"))
 
     keys=_network.get_keys() if len(name)==0 else [_network.find_key(name)]
     items=[]
@@ -2035,9 +2064,11 @@ def keys(name:str=""):
 
       if with_balance or "/accounts" in request.url:
         item["balance"]=_network.get_balance(k.address,request.args.get("token_id",""))
+        item["egld_balance"]=_network.get_balance(k.address)
         if item["balance"] is None:item["balance"]=0
 
       item["encrypted"]=k.encrypt()
+      item["encrypt"]=k.encrypt()
       items.append(item)
 
     #if operation: items=items+extract_keys_from_operation(operation)
@@ -2059,7 +2090,7 @@ def keys(name:str=""):
       email=obj["email"]
 
     subject=obj["subject"] if "subject" in obj else "NFLUENT"
-
+    dao=DAO(config=current_app.config)
     key:Key=create_account(email,
                              histo=dao if not request.json["force"] else None,
                              network=_network.network,subject=subject,
@@ -2271,13 +2302,16 @@ def access_code_checking(access_code:str,addr:str=""):
 
 
 @bp.route('/check_private_key/<seed>/<addr>/<network>/',methods=["GET"])
+@bp.route('/check_private_key/<seed>/<network>/',methods=["GET"])
 #http://127.0.0.1:4242/api/access_code_checking/
-def check_private_key(seed:str,addr:str,network:str):
-  if addr.startswith("erd"):
+def check_private_key(seed:str,addr:str="",network:str=""):
+  if addr.startswith("erd") or len(seed)>0:
     _account=Elrond(network=network).toAccount(seed)
-    if _account.address.bech32()==addr:
-      return jsonify({"message":"ok"})
+    if len(addr)>0 and _account.address.bech32()==addr:
+      return jsonify({"message":"ok","address":addr})
 
+    if _account:
+      return jsonify({"message":"ok","address":_account.address.bech32(),"strong":_account.secret_key!='',"private_key":_account.secret_key})
 
   return returnError("Incorrect access code")
 
@@ -2345,12 +2379,18 @@ def encrypt_key(network:str):
   secret_key=request.json["secret_key"]
   name=request.json["alias"]
   address=request.json["address"] if "address" in request.json else ""
-
-  if secret_key=="" and len(name)>0:
-    key=get_network_instance(network).find_key(name if len(name)>0 else address)
+  keystore=request.json["keystore"]
+  if keystore:
+    try:
+      key=get_network_instance("elrond").convert_keystore_to_key(keystore=keystore,password=request.json["password"])
+    except:
+      return returnError("Mot de passe incorrect")
   else:
-    if len(address)==0: address=get_network_instance(network).toAddress(secret_key)
-    key=Key(name=name,secret_key=secret_key,network=network,address=address)
+    if secret_key=="" and len(name)>0:
+      key=get_network_instance(network).find_key(name if len(name)>0 else address)
+    else:
+      if len(address)==0: address=get_network_instance(network).toAddress(secret_key)
+      key=Key(name=name,secret_key=secret_key,network=network,address=address)
 
   return jsonify({"encrypt":key.encrypt(),"address":key.address})
 
@@ -2426,17 +2466,18 @@ def upload():
     body=request.json
   else:
     content=str(request.data,"utf8")
-    if _type is None:
+    if _type is None or _type=="":
       for ext in ["GIF","WEBP","PNG","JPEG"]:
         if ext in content[:30]:_type="image/"+ext.lower()
 
 
     if not "base64" in content and not "<svg" in content and not _type is None:
-      data=request.data
       if type(content)==str and content.startswith("http"):
-        data=requests.get(content).content
-
-      content=_type+";base64,"+str(base64.b64encode(data),"utf8")
+        if request.args.get("force","false")=="true":
+          data=requests.get(content).content
+          content=_type+";base64,"+str(base64.b64encode(data),"utf8")
+        else:
+          return jsonify({"url":content,"cid":hex(hash(content)).replace("0x","")})
 
     if not _type is None:
       body={
@@ -2753,27 +2794,61 @@ def set_role_for_collection():
 
 
 
+@bp.route('/costs/',methods=["GET"])
+def api_costs():
+  """
+  test: http://127.0.0.1:4242/api/costs/?network=elrond
+  :return: le prix des transactions
+  """
+  _network=get_network_instance(request.args.get("network","elrond"))
+  return _network.get_costs()
+
+
+@bp.route('/execute/',methods=["POST"])
+def api_execute():
+  _miner=Key(encrypted=request.json["miner"]) if "miner" in request.json else Key(address=request.json["transaction"]["sender"])
+  dao=DAO(config=current_app.config)
+  _network=get_network_instance(request.json["network"])
+
+  old_amount=_network.get_balance(_miner)
+  rc=_network.send_transaction(request.json["transaction"],_miner)
+
+  #collection["id"],
+  if ("result" in rc) and ("transaction" in rc["result"]) and (_network.network!="file") and not dao is None:
+    rc["cost"]=_network.get_balance(_miner.address)-old_amount if len(_miner.address)>0 else 0
+    dao.add_histo(
+      ope=request.args.get("ope",""),
+      command="mint",
+      addr=_miner.address,
+      collection_id="",
+      transaction_id=rc["result"]["transaction"],
+      network=_network.network,
+      comment="Minage"
+    )
+
+
+  return jsonify(rc)
+
+
+
+
 
 
 @bp.route('/mint/',methods=["POST"])
 def api_mint():
   """
-  Minage des NFT sur les différents réseaux possibles : elrond, solana, base de donnée, fichier json
+  Créer la trnsaction de minage des NFT sur les différents réseaux possibles : elrond, solana, base de donnée, fichier json
   :return:
   """
   offchaindata_platform=request.args.get("offchaindata_platform","nftstorage")
   _nft=NFT(object=request.json["nft"])
-  _miner=Key(obj=request.json["miner"])
-  owner=request.args.get("owner",_miner.address)
   # _ope=get_operation(request.args.get("operation",""))
-  config=current_app.config
-  dao=DAO(config=config)
 
-  network:Network=get_network_instance(request.args.get("network","elrond-devnet"))
+  network:Network=get_network_instance(_nft.network)
   #network.add_keys(_ope,dao.get_user_from_access_code(request.args.get("access_code")))
 
-  if is_email(owner):
-    return returnError("Il est nécessaire de créer un compte préalablement pour "+owner)
+  if is_email(_nft.owner):
+    return returnError("Il est nécessaire de créer un compte préalablement pour "+_nft.owner)
     # mail_new_wallet="" if _ope is None else _ope["new_account"]["mail"]
     # mail_existing_wallet="" if _ope is None else _ope["transfer"]["mail"]
     # create_account(owner,network,config["DOMAIN_APPLI"],config["DB_MAIN"],mail_new_wallet,mail_existing_wallet,_nft.name)
@@ -2782,18 +2857,14 @@ def api_mint():
     return jsonify({"error":"Vous devez uploader les images avant le minage"})
 
   try:
-    rc=mint(_nft,_miner,owner,
-            network=network,
-            offchaindata_platform=offchaindata_platform,
-            domain_server=current_app.config["DOMAIN_SERVER"],
-            dao=dao,simulation=(request.args.get("simulation","false")=="true"),
-            encrypt_nft=(request.args.get("encrypt_nft")=="true"))
+    rc=mint(_nft,network=network,offchaindata_platform=offchaindata_platform)
+    #domain_server=current_app.config["DOMAIN_SERVER"]
+    #encrypt_nft=(request.args.get("encrypt_nft")=="true"
   except Exception as inst:
     return returnError(inst)
 
-
-
-  return jsonify(rc)
+  result=network.jsonify_transaction(rc)
+  return jsonify(result)
 
 
 
@@ -2962,16 +3033,17 @@ def validators(validator=""):
     return jsonify({"message":"deleted"})
 
   if request.method=="POST":
-    validator_name="val_"+now("hex") if len(request.json["validator_name"])==0 else request.json["validator_name"]
-    log("Un validateur demande son inscription. Attribution du nom="+validator_name)
-    access_code=encrypt(validator_name)
     ask_for:str=request.json["ask_for"]
+    validator_name="val_"+now("hex") if len(request.json["validator_name"])==0 else request.json["validator_name"]
+    log("Un validateur demande son inscription pour controle de "+ask_for+" Attribution du nom="+validator_name)
+    access_code=encrypt(validator_name)
     if not dao.add_validator(validator_name,ask_for):
       return returnError("Impossible d'inscrire le validateur")
     else:
       send(current_app,"refresh")
 
     nfts=[]
+    owners=[]
     if ask_for.startswith("operation:"):
       operation=open_operation(ask_for.split("operation:")[1])
       elrond=Elrond(operation["network"])
@@ -2982,15 +3054,10 @@ def validators(validator=""):
           nfts.append(nft)
       owners=[x.owner for x in nfts]
     else:
-      if ask_for=="":
-        owners=[]
-      else:
+      if len(ask_for)>0:
         log("On retourne la liste des propriétaire des NFTs de la collection: "+ask_for)
         _network=get_network_instance(request.json["network"])
-        owners=[]
-        for nft in _network.get_nfts_from_collections(ask_for.split(",")):
-          for owner in nft.balances.keys():
-            if nft.balances[owner]>0 and not owner in owners: owners.append(owner)
+        owners=_network.get_balances(addr=None,nft_addr=ask_for)
 
     return jsonify({
       "access_code":access_code,
@@ -3082,8 +3149,17 @@ def api_airdrops():
   body=request.json
   if request.method=="POST":
     dao=DAO(config=current_app.config)
-    body["network"]=body["network"]
-    if type(body["token"])==dict: body["token"]=body["token"]["identifier"]
+
+    if get_network_instance(body["network"]).get_balance(body["address"])==0:
+      return jsonify({"message":"Solde d'egld insuffisant pour les frais de gas nécéssaires aux transfers des récompenses"})
+
+    if "token" in body and "id" in body["token"]:
+      log("L'airdrop porte sur le token "+body["token"]["id"])
+      if get_network_instance(body["network"]).get_balance(body["address"],token_id=body["token"]["id"])==0:
+        return jsonify({"message":"Vous devez transférer des "+body["token"]["name"]+"("+body["token"]["id"]+") au wallet de distribution pour créer le lien"})
+
+      if type(body["token"])==dict: body["token"]=body["token"]["identifier"]
+
     airdrop_id=str(dao.add_airdrop(body))
 
     if "polygon" in body["network"]:
@@ -3145,7 +3221,7 @@ def api_airdrops():
 
     params={
       "bank.network":body["network"],
-      "bank.token":body["token"],
+      "bank.token":body["token"] if "token" in body else body["collection"],
       "bank.miner":body["dealer_wallet"],
       "bank.refund":body["amount"],
       "bank.limit":body["limit_by_day"]

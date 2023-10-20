@@ -7,7 +7,7 @@ import {SafePipe} from "../safe.pipe";
 import {environment} from "../../environments/environment";
 import {
   $$,
-  download_file,
+  download_file, get_images_from_banks,
   getParams,
   hashCode,
   normalize,
@@ -1131,28 +1131,12 @@ export class CreatorComponent implements OnInit,OnDestroy {
     }
   }
 
-  search_images(layer: Layer) {
+  async search_images(layer: Layer) {
     let pos=this.sel_config?.layers.indexOf(layer) || 0;
     let sample=(pos==0 ? "background" : "emoji");
-    _prompt(this,"Recherche d'images",sample,
-        "Votre requête en quelques mots en ANGLAIS de préférence (ajouter 'sticker' pour des images transparentes)",
-        "text",
-        "Rechercher",
-        "Annuler",false).then((query:string)=>{
-      if(pos>0 && query.indexOf("sticker")==-1){query=query+" sticker"};
-      this.network.search_images(query,(layer.position>0)).subscribe((r:any)=>{
-        _prompt(this,"Choisissez une ou plusieurs images","","","images","Sélectionner","Annuler",false,r.images).then((images:string)=>{
-          let idx=0
-          for(let link of images){
-            layer.elements.push({image:link,name:"bank_"+now("rand")+"_"+idx,ext:"image/jpg"});
-            idx=idx+1
-          }
-          this.save_config();
-          this.eval_max_nft()
-        })
-      })
-    })
-
+    layer.elements=await get_images_from_banks(this,this.network,sample,pos>0)
+    this.save_config();
+    this.eval_max_nft()
   }
 
   edit_name(layer: Layer) {
@@ -1168,6 +1152,8 @@ export class CreatorComponent implements OnInit,OnDestroy {
   w_data_field: string="350px"
   sel_font: any;
   message_preview: string = "";
+  appname: any=environment.appname
+  slide: number=1;
 
 
   publish(platform="nfluent",to_clipboard=true) {

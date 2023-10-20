@@ -110,6 +110,7 @@ import { GenlinkComponent } from './genlink/genlink.component';
 import { FaqLinkComponent } from './faq-link/faq-link.component';
 import { TestsComponent } from './tests/tests.component';
 import { TutoComponent } from './tuto/tuto.component';
+import {CollectionSelectorComponent} from "./collection-selector/collection-selector.component";
 
 const config: SocketIoConfig = { url: environment.server, options: {} };
 
@@ -184,7 +185,8 @@ const config: SocketIoConfig = { url: environment.server, options: {} };
         GenlinkComponent,
         FaqLinkComponent,
         TestsComponent,
-        TutoComponent
+        TutoComponent,
+        CollectionSelectorComponent
     ],
     imports: [
         BrowserModule,

@@ -42,14 +42,14 @@
 #installation de la base de données MongoDB voir https://www.mongodb.com/docs/manual/tutorial/install-mongodb-community-with-docker/
 #docker rm -f mongo
 #docker pull mongo:latest
-#docker run -v /mnt/d/temp/mongo:/data/db --name mongo -p 27017:27017 -d mongo:latest
+#docker run -v /mnt/d/temp/mongo:/data/db --name mongo -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=hh4271 -p 27017:27017 -d mongo:latest
 
 #Execution sur le serveur de production :
 #docker rm -f tokensol && docker pull f80hub/tokensol
 #docker run --restart=always -v /root/Server/Configs:/Configs -v /root/Server/Fonts:/Fonts -v /root/Server/Operations:/Operations -v /root/Server/temp:/temp -v /root/certs:/certs -p 4242:4242 --name tokensol -d f80hub/tokensol:latest python3 wsgi.py prodConfig debug ssl
 
 #Version pour PC
-FROM python:3.9.0-buster
+FROM python:3.11
 
 
 # set environment variables
@@ -77,7 +77,6 @@ RUN pip3 -v install pypng
 RUN pip3 -v install dnspython
 RUN pip3 -v install pymongo
 RUN pip3 -v install google-cloud-storage
-RUN pip3 -v install PyGithub
 RUN pip3 -v install fonttools
 RUN pip3 -v install numpy
 RUN pip3 -v install svglib
@@ -108,6 +107,9 @@ RUN pip3 -v install pyopenssl
 RUN pip3 -v install openpyxl
 RUN pip3 -v install mega.py
 RUN pip3 -v install bitcoinlib
+RUN pip3 -v install rlPyCairo
+RUN pip3 -v install PyGithub
+
 
 WORKDIR /
 RUN mkdir Solana

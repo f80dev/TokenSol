@@ -2,13 +2,12 @@ import base64
 import hashlib
 import json
 from json import dumps
-from urllib import request
 
 import requests
 from github import Github
 
 from flaskr.Storage import Storage
-from flaskr.Tools import log, get_filename_from_content, now, get_hash
+from flaskr.Tools import log, get_filename_from_content, get_hash
 from flaskr.secret import GITHUB_TOKEN
 
 

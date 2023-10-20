@@ -1,29 +1,30 @@
 <!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
+<app-hourglass [message]="message"></app-hourglass>
 <div *ngIf="network && network.length>0" class="expansion-content" style="min-width: 300px;align-items: center;">
-    <button type="button" mat-icon-button
-            title="Voir le wallet"
-            *ngIf="sel_key"
-            (click)="open_wallet()">
-        <mat-icon>visibility</mat-icon>
-    </button>
     <app-input value_type="list" color="white" width="170px"
-               *ngIf="network_service.keys.length>0 && isFree()"
+               *ngIf="keys.length>0 && isFree()"
                [label]="label"
                [value]="sel_key"
-               [options]="network_service.keys"
+               [options]="keys"
                (valueChange)="onChangeKey($event)">
     </app-input>
 
-<!--    <mat-form-field  style="max-width:150px;width:100%;" appearance="fill">-->
-<!--        <mat-label>Clés</mat-label>-->
-<!--        <mat-select [(value)]="sel_key" class="mat-body-2" (valueChange)="onChangeKey()">-->
-<!--            <mat-option *ngFor="let key of network_service.keys" [value]="key" class="mat-body-2">-->
-<!--                {{key.name}}-->
-<!--            </mat-option>-->
-<!--        </mat-select>-->
-<!--    </mat-form-field>-->
+    <button type="button" mat-icon-button
+            title="Voir le wallet nfluent"
+            *ngIf="sel_key && can_see_nfluent_wallet"
+            (click)="open_wallet()">
+        <mat-icon>account_balance_wallet</mat-icon>
+    </button>
+
+    <button type="button" mat-icon-button
+            title="Voir le wallet dans l'explorateur"
+            *ngIf="sel_key && can_see_explorer"
+            (click)="open_explorer()">
+        <mat-icon>query_stats</mat-icon>
+    </button>
 
     <button type="button" mat-raised-button style="margin-top: -10px;"
+            *ngIf="can_use_own_key"
             title="Utiliser votre propre clé privée"
             (click)="paste_key()">
         Utiliser<br>votre clé

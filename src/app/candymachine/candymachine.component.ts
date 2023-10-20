@@ -27,7 +27,21 @@ export class CandymachineComponent implements OnInit {
   title="";
   nfts: NFT[]=[]
   params: any={}
-  connexion: Connexion | undefined;
+  connexion: Connexion={
+    address: false,
+    direct_connect: false,
+    email: false,
+    extension_wallet: true,
+    google: false,
+    keystore: false,
+    nfluent_wallet_connect: false,
+    on_device: false,
+    private_key: false,
+    wallet_connect: true,
+    web_wallet: false,
+    webcam: false
+
+  };
   message="";
 
   constructor(

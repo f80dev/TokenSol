@@ -34,6 +34,7 @@ export class CollectionsComponent implements OnInit {
   ]
 
   new_collection:Collection = {
+    cover: undefined,
     description: "description",
     id: "",
     gallery:true,
@@ -129,7 +130,7 @@ export class CollectionsComponent implements OnInit {
 
   open_collection(col: Collection) {
     if(this.network.isBlockchain()){
-      open(this.network.getExplorer(col.id),"Explorer");
+      open(this.network.getExplorer(col.id,this.network.network),"Explorer");
     } else {
       this.network.get_nfts_from_collection(col.id,this.network.network).subscribe((result)=>{
         this.preview_nfts=result.nfts;

@@ -1,18 +1,18 @@
 import {
-    AfterViewInit,
   Component,
   EventEmitter,
   Input,
-  OnChanges,
+  OnChanges, OnInit,
   Output,
   SimpleChanges
 } from '@angular/core';
 import {NetworkService} from "../network.service";
 import {UserService} from "../user.service";
 import {MatDialog} from "@angular/material/dialog";
-import {CryptoKey, encrypt, newCryptoKey, setParams} from "../../tools";
+import {CryptoKey,  newCryptoKey, setParams} from "../../tools";
 import {_prompt} from "../prompt/prompt.component";
 import {Router} from "@angular/router";
+import {wait_message} from "../hourglass/hourglass.component";
 
 @Component({
   selector: 'app-selkey',
@@ -22,9 +22,17 @@ import {Router} from "@angular/router";
 export class SelkeyComponent implements OnChanges {
 
   @Input("network") network:string="";
+  @Input("filter") filter:string="";
   @Input() label:string="Clés disponibles";
   @Input("key") sel_key:CryptoKey | undefined;
+  @Input() default_index=0;
+  @Input() with_balance=true;
+  @Input("can_use_own_key") can_use_own_key=false;
+  @Input("can_see_nfluent_wallet") can_see_nfluent_wallet=true;
+  @Input("can_see_explorer") can_see_explorer=true;
   @Output("onChange") onAddrChange:EventEmitter<CryptoKey>=new EventEmitter();
+  keys: CryptoKey[]=[];
+  message=""
 
 
   constructor(public network_service:NetworkService,
@@ -33,16 +41,26 @@ export class SelkeyComponent implements OnChanges {
               public user:UserService) {
   }
 
+
   ngOnChanges(changes: SimpleChanges): void {
-    debugger
-    // if(changes["sel_key"] && changes["sel_key"].previousValue!=changes["sel_key"].currentValue){
-    //       setTimeout(()=> {
-    //         let k = this.network_service.find_key_by_address(changes["sel_key"].currentValue.address)
-    //         if (k) {
-    //           this.sel_key = this.network_service.keys[this.network_service.keys.indexOf(k)];
-    //         }
-    //       },1000);
-    // }
+    if(changes){
+      this.keys=[]
+      wait_message(this,"Chargement ...")
+      this.network_service.init_keys(this.with_balance,"","",this.network).then((keys:CryptoKey[])=>{
+        wait_message(this)
+        for(let k of keys){
+          if(k && k.name){
+            if(this.filter=="" || this.filter.split(",").indexOf(k.name)>-1){
+              this.keys.push(k)
+            }
+          }
+        }
+        if(this.keys.length>0 && this.default_index>-1 && this.default_index<this.keys.length){
+          this.sel_key=this.keys[this.default_index]
+          this.onAddrChange.emit(this.sel_key);
+        }
+      })
+    }
   }
 
 
@@ -54,9 +72,7 @@ export class SelkeyComponent implements OnChanges {
 
 
   onChangeKey(new_key:any) {
-    debugger
     if(new_key){
-      localStorage.setItem("key",new_key.address);
       this.onAddrChange.emit(new_key);
     }
   }
@@ -73,12 +89,11 @@ export class SelkeyComponent implements OnChanges {
   }
 
   open_wallet() {
-    this.router.navigate(["mywallet"], {
-          queryParams: {p:setParams({
-              addr: this.sel_key?.address,
-              network: this.network_service.network
-            }, "", "")}
-        }
-    );
+    let url="https://wallet.nfluent.io/?"+setParams({addr: this.sel_key?.address,network: this.network_service.network}, "")
+    open(url,"wallet")
+  }
+
+  open_explorer() {
+    if(this.sel_key) this.network_service.open_explorer(this.sel_key.address,"address")
   }
 }

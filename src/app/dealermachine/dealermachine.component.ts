@@ -33,6 +33,7 @@ export class DealermachineComponent implements OnInit {
   ope: Operation | null=null;
   webcam: boolean=true;
   authentification: Connexion={
+    private_key: false,
     address: false,
     direct_connect: false,
     email: true,

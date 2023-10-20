@@ -17,6 +17,7 @@ import {Socket} from "ngx-socket-io";
 export class ValidatorsComponent implements OnInit {
   validators: Validator[]=[];
   operations: Operation[]=[];
+  deleting_all: boolean=false;
 
   constructor(
       public network:NetworkService,
@@ -34,7 +35,7 @@ export class ValidatorsComponent implements OnInit {
       this.refresh();
     })
     this.socket.on("refresh",()=>{
-      this.refresh();
+      if(!this.deleting_all)this.refresh();
     })
     // this.socket.fromEvent("refresh").pipe(map((data:any)=>{
     //   $$("Réception du message de refresh");
@@ -76,6 +77,7 @@ export class ValidatorsComponent implements OnInit {
 
   delete_all() {
     let i=0;
+    this.deleting_all=true;
     this.network.wait("Validateurs en cours de suppression")
     for(let val of this.validators){
       setTimeout(()=>{this.network.remove_validator(val.id).subscribe(()=>{})},500*i);
@@ -83,6 +85,7 @@ export class ValidatorsComponent implements OnInit {
     }
     setTimeout(()=>{
       this.refresh();
+      this.deleting_all=false;
       this.network.wait();
       showMessage(this,"Validateurs supprimés");
     },i*500)

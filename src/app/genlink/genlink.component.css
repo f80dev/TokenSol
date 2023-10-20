@@ -1,4 +1,5 @@
-.mat-raised-button {
+button {
     height: 45px !important;
+    width: 120px;
     font-size: small;
 }

@@ -6,7 +6,6 @@ import {UserService} from "../user.service";
 import {NetworkService} from "../network.service";
 import {Connexion} from "../../operation";
 
-
 export function _ask_for_paiement(vm:any,
                                   token_id:string,
                                   to_paid:number,
@@ -64,18 +63,20 @@ export class AskForPaymentComponent implements OnInit {
     buy_method: "fiat" | "crypto" | "" = "";
     nb_payment=0;
     connexion: Connexion = {
+        private_key: false,
         address: false,
         direct_connect: true,
         email: false,
         extension_wallet: true,
         google: false,
-        keystore: true,
+        keystore: false,
         nfluent_wallet_connect: false,
         on_device: false,
         wallet_connect: true,
         web_wallet: true,
         webcam: false
     };
+
 
     constructor(public dialogRef: MatDialogRef<AskForPaymentComponent>,
                 public user:UserService,
@@ -136,6 +137,7 @@ export class AskForPaymentComponent implements OnInit {
     init_provider($event:any) {
         this.data.provider=$event.provider;
         this.data.addr=$event.address
+        this.data.url_direct_xportal_connect=$event.url_direct_xportal_connect
         if(this.data.merchant.wallet){
             this.user.init($event.address,this.data.merchant.wallet.network,false,true,this.user.profil.email)
         }

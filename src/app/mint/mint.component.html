@@ -1,3 +1,5 @@
+
+
 <app-hourglass [message]="message" [modal]="true" fontsize="xx-large"></app-hourglass>
 
 <div class="mainform">
@@ -125,19 +127,26 @@
               [value]="sel_network"
               (valueChange)="updateChain($event)"></app-input>
 
-      <app-selkey *ngIf="network.network"
+      <app-selkey
                   style="width: 350px;"
-                  [key]="sel_key"
+                  filter="bob,carol,dan,franck,herve,nfluent,dudule,thomas,alice"
                   label="Sélectionnez un mineur"
                   (onChange)="update_miner($event)"
                   [network]="network.network"></app-selkey>
 
       <div *ngIf="sel_key && (network.isElrond() || network.isDatabase())" style="width: 300px;">
-        <app-input label="Collection utilisée"
-                   width="225px" value_field="id"
-                   (valueChange)="changeCollection($event)" value_type="list"
-                   [options]="collections">
-        </app-input>
+
+        <app-collection-selector [network]="network.network"
+                                 w_image=""
+                                 (selected)="changeCollection($event)"
+                                 [owner]="sel_key.address">
+        </app-collection-selector>
+
+<!--        <app-input label="Collection utilisée"-->
+<!--                   width="225px" value_field="id"-->
+<!--                   (valueChange)="changeCollection($event)" value_type="list"-->
+<!--                   [options]="collections">-->
+<!--        </app-input>-->
 
         <button mat-icon-button
                 title="Créer une nouvelle collection"

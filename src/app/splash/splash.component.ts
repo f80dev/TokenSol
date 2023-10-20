@@ -29,19 +29,25 @@ export class SplashComponent implements OnInit,AfterViewInit {
   constructor() { }
 
   ngOnInit(): void {
-    if(this.duration>0){
-      setTimeout(()=>{
-        this.show=2;
-        this.onterminate.emit(true);
 
-        },this.duration)
-      leaveTrans
-    }
   }
 
   ngAfterViewInit(): void {
     let delay=(this.image.length>0) ? 300 : 4000;
-    setTimeout(()=>{this.show=1;},300);
+    setTimeout(()=>{
+      this.show=1;
+      if(!this.duration)this.duration=2000;
+      if(this.duration>0){
+        setTimeout(()=>{
+          this.show=2;
+          this.onterminate.emit(true);
+
+        },this.duration)
+      } else {
+        this.show=2;
+      }
+
+      },300);
   }
 
 }

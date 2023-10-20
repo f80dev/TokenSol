@@ -15,13 +15,17 @@ class Key(object):
 
   def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None, encrypted="",explorer=""):
     if not obj is None and "encrypt" in obj: encrypted=obj["encrypt"]
-    if not encrypted is None and len(encrypted)>0:
-      if ":" in encrypted:encrypted=encrypted.split(":")[1]
-      decrypted=decrypt(encrypted.strip())
-      if decrypted.startswith("{"):
-        obj=json.loads(decrypted)   #Encrypt contient toute la clé
+    if not encrypted is None:
+      if type(encrypted)==dict:
+        obj=encrypted
       else:
-        obj["secret_key"]=decrypted
+        if len(encrypted)>0:
+          if ":" in encrypted:encrypted=encrypted.split(":")[1]
+          decrypted=decrypt(encrypted.strip())
+          if decrypted.startswith("{"):
+            obj=json.loads(decrypted)   #Encrypt contient toute la clé
+          else:
+            obj["secret_key"]=decrypted
 
     if not obj is None:
       if "name" in obj: name=obj["name"]

@@ -11,7 +11,6 @@ from flaskr.Mintpool import Mintpool
 from flaskr.Tools import log, send, register_fonts
 from flaskr.apptools import activity_report_sender
 
-
 def receive(app):
   send(app,"refresh")
   log("Réception de disconnect")

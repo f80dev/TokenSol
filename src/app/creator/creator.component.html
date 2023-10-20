@@ -1,6 +1,26 @@
+<!--tutoriel-->
+<app-tuto title="{{appname}} vous permet de fabriquer très simplement de grandes collections de NFTs tous uniques sans aucune programmation"
+          background="https://images.unsplash.com/photo-1528918652533-dfdb3f368093?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80"
+          [duration]="40" *ngIf="slide==1" (close)="slide=slide+1"></app-tuto>
+
+<app-tuto title="La composition repose sur un système de calques qui compose le NFT final après superposition.<br>{{appname}} se charge de balayer l'ensemble des combinaisons"
+          [duration]="40" background="https://images.unsplash.com/photo-1617527019968-052733f9cfe8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2128&q=80"
+          *ngIf="slide==2" (close)="slide=slide+1"></app-tuto>
+
+<app-tuto title="{{appname}} accepte de nombreux format y compris des images animés"
+          background="https://images.unsplash.com/photo-1518676590629-3dcbd9c5a5c9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1728&q=80"
+          [duration]="40"
+          *ngIf="slide==3" (close)="slide=slide+1"></app-tuto>
+
+<app-tuto title="Une fois générée, votre collection peut être conservée dans un fichier zip avant minage"
+          background="https://images.unsplash.com/photo-1544396821-4dd40b938ad3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2073&q=80"
+          [duration]="40"
+          *ngIf="slide==4" (close)="slide=slide+1"></app-tuto>
+
+
 <app-hourglass [message]="message" [modal]="true" fontsize="xx-large"></app-hourglass>
 
-<div class="mainform" style="margin:0px;">
+<div class="mainform" style="margin:0px;" *ngIf="slide>4">
   <div class="titleform">{{title_form}}</div>
   <div class="subtitleform">{{claim}}</div>
 

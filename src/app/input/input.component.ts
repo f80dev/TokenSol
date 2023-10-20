@@ -20,6 +20,7 @@ export class InputComponent implements OnChanges,OnInit {
   @Input() maxwidth:string="100%";
   @Input() color_value="darkgray";
   @Input() size_image="40px";
+  @Input() icon_action="";
   @Input() filter="";
 
 
@@ -33,8 +34,9 @@ export class InputComponent implements OnChanges,OnInit {
   valueCtrl=new FormControl()
 
   @Output() valueChange=new EventEmitter<any>();
-
+  @Output() preview=new EventEmitter<any>();
   @Output() validate=new EventEmitter();
+  @Output() action=new EventEmitter();
   @Output() cancel=new EventEmitter();
 
   @Input() value_type:"text" | "number" | "memo" | "list" | "listimages" | "boolean" | "images" | "slide" | "slider" = "text";
@@ -44,7 +46,7 @@ export class InputComponent implements OnChanges,OnInit {
   showHelp: boolean=false;
   @Input() cols: number=0;
   @Input() rows: number=0;
-
+  @Input() force_preview: boolean=false;
   @Input() max: number=1e18;
   @Input() min: number=0;
   @Input() step: number=1;
@@ -69,7 +71,7 @@ export class InputComponent implements OnChanges,OnInit {
     this.valueChange.emit(this.value);
   }
 
-  on_key($event: KeyboardEvent) {
+  on_key($event: any) {
     if($event.key=='Enter')
       this.on_validate();
     else
@@ -162,7 +164,14 @@ export class InputComponent implements OnChanges,OnInit {
   }
 
   explore(value: any) {
-    open(value,"Explorer")
+    if(this.force_preview)this.preview.emit(value)
+    if(value.startsWith("http")){
+      open(value,"Explorer")
+    }
+  }
+
+  call_action(value: any) {
+    this.action.emit(value);
   }
 }
 

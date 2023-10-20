@@ -5,7 +5,6 @@ from flaskr.NFT import NFT
 from flaskr.Tools import now, log, get_operation, random_from, is_email, send, send_mail
 from flaskr.apptools import get_nfts_from_src, get_network_instance, transfer
 
-
 class Mintpool:
 	config=None
 	

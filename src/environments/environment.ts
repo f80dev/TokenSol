@@ -18,7 +18,6 @@ export const environment = {
   website:"https://nfluent.io",
   logo:"./assets/icons/tokenforge-512.png",
   faqs:"./assets/faqs.yaml",
-  company:"nfluent",
 
   stockage: "server-nfluent,nftstorage,infura,github-nfluentdev-storage-main",
   stockage_document: "server-nfluent,github-nfluentdev-storage-main,infura,server",
@@ -51,6 +50,7 @@ export const environment = {
     title:"Bienvenu a la banque des NFluCoin",
     refund:5,
     token:"NFLUCOIN-4921ed",
+    collection:"",
     network:"elrond-devnet",
     limit:5,
     wallet_limit:10,

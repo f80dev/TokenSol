@@ -7,7 +7,7 @@ import {
   $$,
   isEmail,
   Bank,
-  extract_bank_from_param, apply_params
+  extract_bank_from_param, apply_params, getParams
 } from "../../tools";
 import {environment} from "../../environments/environment";
 import {wait_message} from "../hourglass/hourglass.component";
@@ -41,6 +41,7 @@ export class BankComponent implements OnInit {
   fiat_price=0;
   show_payment: boolean = false;
   connexion: Connexion={
+    private_key: false,
     address: false,
     direct_connect: false,
     email: true,
@@ -53,6 +54,9 @@ export class BankComponent implements OnInit {
     web_wallet: false,
     webcam: false
   };
+  claim=environment.claim
+  appname=environment.appname
+  intro: any;
 
   public constructor(
     public network:NetworkService,
@@ -71,36 +75,6 @@ export class BankComponent implements OnInit {
 
 
   refresh(params:any){
-    if(params.merchant){
-      this.bank=params.bank || environment.bank || {}
-    } else {
-      this.bank=extract_bank_from_param(params) || environment.bank;
-    }
-    if(params.hasOwnProperty("connexion"))this.connexion=params.connexion;
-    if(this.bank){
-      this.fiat_price=Number(params.fiat_price || "0")
-      if(params.claim)this.bank!.title=params.claim;
-      if(typeof(this.bank.token)=="object"){
-        this.bank.token=this.bank.token["identifier"]
-      }
-      this.network.get_token(this.bank.token,this.bank.network).subscribe((r:any | any[])=>{
-        if(typeof(r[0])=="object") {
-          for(let token of r){
-            if(token.balance>0){
-              r=token
-              break
-            }
-          }
-        }
-        this.token=r;
-        apply_params(this,params,environment.bank)
-        if(!params.style)this.style.setStyle("theme","nfluent-dark-theme.css")
-        this.addr=params.addr || params.address || localStorage.getItem("faucet_addr") || "";
-        this.refresh_balance();
-        this.network.init_network(this.bank!.network);
-      })
-
-    }
 
   }
 
@@ -115,7 +89,6 @@ export class BankComponent implements OnInit {
         wait_message(this)
         if(result.error==""){
           this.end_message="Vous avez récupérer de nouveaux "+this.token.name
-          this.refresh_balance().then(()=>{this.show_can_close=true;})
         } else {
           this.end_message=result.error;
           wait_message(this)
@@ -133,8 +106,33 @@ export class BankComponent implements OnInit {
     this.device.isHandset$.subscribe((isHandset)=>{
       if(isHandset){this.border="0px";this.size="90%";}})
 
-    // let params:any=await getParams(this.routes);
-    // this.refresh(params);
+
+    let params:any=await getParams(this.routes);
+    apply_params(this,params,environment.bank)
+
+    this.addr=params.addr || params.address || localStorage.getItem("faucet_addr") || "";
+
+    if(params.merchant){
+      this.bank=params.bank || environment.bank || {}
+    } else {
+      this.bank=extract_bank_from_param(params) || environment.bank;
+    }
+    if(params.hasOwnProperty("connexion"))this.connexion=params.connexion;
+    if(this.bank) {
+      this.fiat_price = Number(params.fiat_price || "0")
+      if (params.claim) this.bank!.title = params.claim;
+      if (typeof (this.bank.token) == "object") {
+        this.bank.token = this.bank.token["identifier"]
+      }
+      this.network.get_token(this.bank.token,this.bank.network).subscribe({
+        next:(r:any)=>{
+          this.token=r;
+        }
+      })
+    }
+
+    this.network.init_network(this.bank!.network);
+    this.refresh_balance()
   }
 
 
@@ -144,14 +142,18 @@ export class BankComponent implements OnInit {
 
 
   refresh_balance(){
-    return new Promise((resolve,reject) => {
-      if(this.addr && this.addr.length>0){
-        this.network.getBalance(this.addr,this.bank!.network,this.bank!.token).subscribe((result:any)=>{
-          this.balance=Math.round(result[0].balance/1e16)/100;
-          resolve(true);
-        },(err)=>{reject(err);})
-      }
-    })
+    if(this.bank){
+      this.network.getBalance(this.addr,this.bank.network,this.bank.token ).subscribe((r:any)=>{
+        for(let acc of r){
+          if(acc.address==this.addr)this.balance=acc.balance;
+          if(this.bank){
+            if(acc.address==this.bank.miner.address){
+              if(acc.balance<this.bank.refund)this.bank.refund=acc.balance;
+            }
+          }
+        }
+      })
+    }
   }
 
   update_address($event: { strong: boolean; address: string; provider: any }) {

@@ -62,7 +62,7 @@ class DAO(Storage,Network):
             self.domain=domain if not "-" in domain else domain.split("-")[1]
 
     #log("Initialisation de la base de données "+self.domain+"/"+self.dbname)
-    if not self.connect(self.domain,self.dbname):
+    if not self.connect(self.domain.replace("rootpassword",MONGO_INITDB_ROOT_PASSWORD),self.dbname):
       log("connexion impossible a "+self.domain)
 
 
@@ -157,10 +157,10 @@ class DAO(Storage,Network):
 
 
 
-  def get_nfts_from_collections(self,collections:[str],with_attr=False,format="class"):
+  def get_nfts_from_collections(self,collections:[str],with_attr=False,format="class",limit=2000):
     rc=[]
     for col in collections:
-      for nft in list(self.db["nfts"].find({"collection":col})):
+      for nft in list(self.db["nfts"].find({"collection":col}))[:limit]:
         del nft["_id"]
         _nft=NFT(object=nft)
         if format=="json":_nft=_nft.__dict__

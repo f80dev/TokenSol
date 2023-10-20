@@ -1,15 +1,27 @@
+<app-splash
+		[appname]="appname"
+		[duration]="intro"
+		[image]="visual"
+		[description]="claim"></app-splash>
+
+
 <div class="background-form" [style.background-image]="'url('+background+')'">
-	<div class="popup-form background-component mat-elevation-z18" [style.left]="border" [style.top]="border" [style.width]="size" [style.height]="size">
+	<div class="popup-form background-component mat-elevation-z18" style="max-width:800px;width:100%;min-height: 90vh;margin:1%;padding: 2%;" >
 		<h1 style="margin-top: 20px;" *ngIf="bank">{{bank.title || ""}}</h1>
+
 		<app-hourglass [message]="message"></app-hourglass>
+
 		<app-jauge [activate]="message.length>0" [duration]="40" [step]="0.1" [max]="100"></app-jauge>
+
 		<div *ngIf="!show_can_close && message.length==0 && bank">
-			<h4 *ngIf="addr!='' && token">
+			<div *ngIf="addr!='' && token" class="mat-headline-6">
 				Des {{token.name}}
 				<span *ngIf="network.isDevnet()">(devnet)</span>
-				pour
-				<span class="color-primary" *ngIf="addr.length>0">{{addr.substring(0,20)+"..."}}</span>
-			</h4>
+				pour<br>
+				<span class="color-primary" *ngIf="addr.length>0">
+					<app-link [content]="addr" [network]="network.network"></app-link>
+				</span>
+			</div>
 			<app-authent *ngIf="!addr || addr.length==0"
 						 style="width: 400px;display: inline-block;"
 						 title="Veuillez vous identifier"

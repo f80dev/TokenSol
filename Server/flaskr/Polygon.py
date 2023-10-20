@@ -639,12 +639,12 @@ class Polygon (Network):
     return rc
 
 
-  def get_balances(self, address,nft_addr=None) -> dict:
+  def get_balances(self, addr,nft_addr=None) -> dict:
     rc=dict()
     if nft_addr:
       if not self.abi: self.abi=self.init_contract_interface()["abi"]
       contract=self.w3.eth.contract(address=self.w3.to_checksum_address(nft_addr.split("-")[0]),abi=self.abi)
-      result=contract.functions.balanceOf(address).call()
+      result=contract.functions.balanceOf(addr).call()
       rc={nft_addr:result} #a voir s'il faut pas ajouter .split("-")[0] a l'adresse du NFT
 
     return rc

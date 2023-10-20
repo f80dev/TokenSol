@@ -1,26 +1,26 @@
-<div style="width: 100%;text-align: center;position: relative;">
+<div style="width: 100%;text-align: center;position: relative;" *ngIf="network">
 
   <div class="mat-subheading-1">{{title}}</div>
 
   <!--  Permet l'authentification force par code d'accés ou directement seed phrase-->
   <mat-accordion *ngIf="!directShowQRCode">
-    <mat-expansion-panel *ngIf="network.indexOf('elrond')>-1 && (showDirectConnect || showWalletConnect || showExtensionWallet || showWebWallet)" [expanded]="true">
+    <mat-expansion-panel *ngIf="network.indexOf('elrond')>-1 && (showWalletConnect || showExtensionWallet || showWebWallet)" [expanded]="true">
       <mat-expansion-panel-header class="color-primary">Utiliser Wallet Connect</mat-expansion-panel-header>
       <mat-card style="text-align: center;width: fit-content;display: inline-block;" class="multiverx-background" *ngIf="qrcode.length==0">
         <mat-card-title class="multiversx-text">S'authentifier sur MultiversX via</mat-card-title>
-        <button type="button" mat-raised-button class="multiversx-button"
+        <button   mat-raised-button class="multiversx-button"
                 *ngIf="showWalletConnect && qrcode.length==0"
                 (click)="open_wallet_connect()">
           L'application xPortal
         </button><br>
 
-        <!--        <button type="button" mat-raised-button class="multiversx-button"-->
-        <!--                *ngIf="showWebWallet"-->
-        <!--                (click)="open_web_wallet()">-->
-        <!--          Le wallet du Web-->
-        <!--        </button><br>-->
+        <button   mat-raised-button class="multiversx-button"
+                *ngIf="showWebWallet"
+                (click)="open_web_wallet()">
+          Le wallet du Web
+        </button><br>
 
-        <button type="button" mat-raised-button class="multiversx-button"
+        <button   mat-raised-button class="multiversx-button"
                 *ngIf="showExtensionWallet"
                 (click)="open_extension_wallet()">
           L'extension Chrome
@@ -31,18 +31,19 @@
 
       <br>
 
-      <div *ngIf="showWalletConnect && qrcode.length>0" style="max-width: 450px;margin-left: -10px;width:100%;text-align: center;display: inline-block;">
+      <div *ngIf="showWalletConnect" style="max-width: 450px;margin-left: -10px;width:100%;text-align: center;display: inline-block;">
         {{intro_message}}
         <img [src]="qrcode"
+             *ngIf="qrcode.length>0"
              (click)="qrcode=''"
              title="Flasher ce qrcode depuis votre wallet"
-             style="width:90%;max-width: 300px;margin-top:10px;" [style.width]="size">
+             style="width:90%;max-width: 250px;margin-top:5px;" [style.width]="size">
         <br>
 
         <button mat-raised-button
-                *ngIf="device.modele!='desktop' && showDirectConnect && showWalletConnect"
+                *ngIf="device.modele!='desktop' && showDirectConnect && showWalletConnect && url_xportal_direct_connect!=''"
                 (click)="open_xportal()">
-          Ouvrir sur cet appareil
+          Basculer sur xPortal
         </button>
 
       </div>
@@ -50,7 +51,7 @@
     </mat-expansion-panel>
     <mat-expansion-panel *ngIf="showNfluentWalletConnect">
       <mat-expansion-panel-header class="color-primary">Utiliser le wallet NFluent</mat-expansion-panel-header>
-      <button type="button" color="primary"
+      <button   color="primary"
               mat-raised-button
               (click)="active_webcam()" >
         Utiliser mon QRCode
@@ -60,14 +61,15 @@
       <app-scanner *ngIf="enabled_webcam"
                    [size]="size"
                    title="Montrer le QRcode de votre wallet à cette caméra"
-                   (flash)="on_flash($event)"
+                   (flash)="onflash($event)"
+                   filter=""
                    (cancel)="cancel_webcam()"
                    (click)="update_dynamic_token()">
       </app-scanner>
 
       <!--  voir les commentaire sur le dynamic token dans le fichier d'opération de référence-->
       <div *ngIf="showDynamicToken">
-        <button type="button" color="primary"
+        <button   color="primary"
                 mat-raised-button
                 mat-button
                 (click)="update_dynamic_token()" >
@@ -108,42 +110,49 @@
     <mat-expansion-panel *ngIf="showKeystore">
       <mat-expansion-panel-header>Utiliser le KeyStore</mat-expansion-panel-header>
       <app-upload-file extensions=".json"
+                       title="Charger le fichier json"
                        [zone]="true"
-                       height="70px"
+                       width="100%"
+                       height="60px"
                        (uploaded)="upload_keystore($event)">
+        Faites glisser le fichier json ici
       </app-upload-file>
     </mat-expansion-panel>
 
-      <mat-expansion-panel *ngIf="showEmail || showGoogle || showAddress">
+    <mat-expansion-panel *ngIf="showEmail || showGoogle || showAddress || showWebcam">
       <mat-expansion-panel-header>Utiliser votre email ou adresse de wallet</mat-expansion-panel-header>
-      <div style="display: flex;flex-wrap:wrap;width:100%;justify-content: center;align-items: center;">
 
-        <app-scanner *ngIf="enabled_webcam && showAddress"
-                     size="200px"
-                     title="Montrer le QRcode de votre wallet à cette caméra"
-                     (flash)="on_retreive_address($event)"
-                     (cancel)="cancel_webcam()">
-        </app-scanner>
+      <app-scanner *ngIf="enabled_webcam && showWebcam"
+                   size="200px"
+                   title="Montrer le QRcode de votre wallet à cette caméra"
+                   (flash)="on_retreive_address($event)"
+                   (cancel)="cancel_webcam()">
+      </app-scanner>
 
+      <div class="expansion-content" *ngIf="!enabled_webcam">
 
         <!--    voir https://www.npmjs.com/package/@abacritt/angularx-social-login-->
-        <asl-google-signin-button *ngIf="showGoogle && address.length==0" style="height: 50px;"
+
+        <asl-google-signin-button *ngIf="showGoogle" style="height: 50px;"
                                   title="Authentification simplifiée pour les utisateurs de gmail">
         </asl-google-signin-button>
 
-        <div *ngIf="showEmail || showAddress">
-          <app-input
-                  width="300px"
-                  [label]="intro_message"
-                  [placeholder]="prompt"
-                  [value]="address" (valueChange)="update_address($event)"
-                  (validate)="validate($event)"
-                  label_button="Valider"
-                  [help]="explain_message">
-          </app-input>
-          <button mat-icon-button (click)="run_scanner()"
-                  *ngIf="address==''"><mat-icon>qr_code_scanner</mat-icon></button>
-        </div>
+        <app-input
+                *ngIf="showEmail || showAddress"
+                maxwidth="600px" style="width: 80%"
+                [label]="intro_message"
+                [placeholder]="prompt"
+                [value]="address" (valueChange)="update_address($event)"
+                (validate)="validate($event)"
+                label_button="Valider"
+                [help]="explain_message">
+        </app-input>
+
+
+        <button mat-icon-button (click)="run_scanner()" *ngIf="showWebcam" style="margin-top: -10px;">
+          <mat-icon>qr_code_scanner</mat-icon>
+        </button>
+
 
       </div>
     </mat-expansion-panel>
@@ -156,7 +165,7 @@
 
   <mat-expansion-panel *ngIf="network.indexOf('polygon')>-1 && showExtensionWallet" class="polygon-background">
     <mat-expansion-panel-header class="color-primary">Authentification Polygon</mat-expansion-panel-header>
-    <button type="button" mat-raised-button class="polygon-button"
+    <button   mat-raised-button class="polygon-button"
             (click)="open_polygon_extension_wallet()">
       Extension Chrome
     </button>
@@ -177,19 +186,19 @@
     {{intro_message}}<br>
     <img [src]="qrcode"
          title="Flasher ce qrcode depuis votre wallet"
-         style="width:90%;max-width: 300px;margin-top:10px;" [style.width]="size">
+         style="width:90%;max-width: 600px;margin-top:10px;" [style.width]="size">
   </div>
 
   <!--  <div style="margin-top:15px;text-align: center;width: 100%;" *ngIf="address.length<20" >-->
   <!--    <div *ngIf="showNetwork">-->
   <!--      Se connecter avec votre wallet sur<br>-->
-  <!--      <button type="button" mat-raised-button -->
+  <!--      <button   mat-raised-button -->
   <!--              *ngIf="api.isSolana(network) && (api.installed_wallet().indexOf('phantom')>-1 || api.installed_wallet().indexOf('solflare')>-1)"-->
   <!--              (click)="open_wallet()">-->
   <!--        Solana-->
   <!--      </button>-->
 
-  <!--      <button type="button" mat-raised-button -->
+  <!--      <button   mat-raised-button -->
   <!--              *ngIf="api.installed_wallet().indexOf('maiar')>-1"-->
   <!--              (click)="open_wallet()">-->
   <!--        Elrond-->
@@ -199,7 +208,7 @@
 
 
   <div id="cmdPanel" *ngIf="!directShowQRCode" style="margin-left:10%;margin-top:20px;width: 80%;text-align: center;" >
-    <button type="button" mat-raised-button
+    <button   mat-raised-button
             title="Ne pas se connecter" *ngIf="showCancel"
             (click)="cancel()">
       Annuler

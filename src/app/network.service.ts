@@ -6,7 +6,7 @@ import {HostListener, Injectable, OnInit} from '@angular/core';
 // } from "@solana/web3.js";
 // import * as SPLToken from "@solana/spl-token";
 import {HttpClient, HttpErrorResponse} from "@angular/common/http";
-import {$$, Bank, CryptoKey, encrypt, words} from "../tools";
+import {$$, Bank, CryptoKey, encrypt, newCryptoKey, words} from "../tools";
 import {environment} from "../environments/environment";
 
 import {catchError, retry, Subject, throwError, timeout} from "rxjs";
@@ -14,6 +14,7 @@ import {Collection, Operation} from "../operation";
 import {NFT, SolanaToken, SplTokenInfo, Validator} from "../nft";
 import {Configuration, Layer} from "../create";
 import {Router} from "@angular/router";
+import {Transaction} from "@multiversx/sdk-core/out";
 
 
 
@@ -177,8 +178,8 @@ export class NetworkService implements OnInit {
         });
     }
 
-    encrypte_key(name:string,network:string,privateKey="",address="") {
-        let body={secret_key:privateKey,alias:name,address:address}
+    encrypte_key(name:string,network:string,privateKey="",address="",password="",keystore="") {
+        let body={secret_key:privateKey,alias:name,address:address,password:password,keystore:keystore}
         return this._post("encrypt_key/"+network+"/","",body)
     }
 
@@ -520,7 +521,7 @@ export class NetworkService implements OnInit {
             if(!this.network)return false;
             return this.network.indexOf("elrond")>-1;
         } else {
-            return addr.startsWith("erd");
+            return addr.toLowerCase().startsWith("erd");
         }
     }
 
@@ -752,8 +753,8 @@ export class NetworkService implements OnInit {
         return this.httpClient.get<{nfts:NFT[],source:any}>(this.server_nfluent+"/api/nfts_from_operation/"+ope);
     }
 
-    get_nfts_from_collection(collection_id:string,network:string){
-        return this.httpClient.get<{nfts:NFT[]}>(this.server_nfluent+"/api/nfts_from_collection/"+collection_id+"/?network="+network);
+    get_nfts_from_collection(collection_id:string,network:string,limit=2000,withAttributs=true){
+        return this.httpClient.get<{nfts:NFT[]}>(this.server_nfluent+"/api/nfts_from_collection/"+collection_id+"/?network="+network+"&limit="+limit+"&with_attr="+withAttributs);
     }
 
     transfer_to(mint_addr: string,
@@ -764,7 +765,8 @@ export class NetworkService implements OnInit {
                 to_network:string,
                 collection_id:string,
                 mail_content="mail_new_account",
-                operation_id="") {
+                operation_id="",
+                amount=1) {
         let body={
             token_id:mint_addr,
             dest:to_addr,
@@ -774,7 +776,8 @@ export class NetworkService implements OnInit {
             target_miner: to_miner,
             collection_id: collection_id,
             mail_content:mail_content,
-            operation:operation_id
+            operation:operation_id,
+            quantity:amount
         }
         return this.httpClient.post(
             this.server_nfluent+"/api/transfer/", body
@@ -859,13 +862,35 @@ export class NetworkService implements OnInit {
     }
 
 
-    mint(token:NFT, miner:CryptoKey, owner:string,operation:string,sign=false,
+    execute(transaction:any,network:string,miner_or_provider:any=undefined){
+        //On peut fournir soit le miner de la transaction avec sa clé, soit la transaction pour signature
+        return new Promise(async (resolve, reject) => {
+            let body:any={transaction:transaction,network:network}
+            if(!miner_or_provider.hasOwnProperty("account")){
+                if(miner_or_provider)body.miner=miner_or_provider
+            }else{
+                let t:any=Transaction.fromPlainObject(transaction)
+                //let t: Transaction = Transaction.fromPlainObject(tmp)
+                $$("La transaction avant la signature ",t.getSignature())
+                t=await miner_or_provider.signTransaction(t)
+                $$("La transaction aprés la signature ",t.getSignature())
+                body.transaction=t.toSendable()
+            }
+            $$("Envoi du corps pour execution ",body)
+            return this._post("execute/","", body).subscribe({
+            next:(r:any)=>{resolve(r)}
+            })
+        })
+
+    }
+
+    mint(token:NFT,  owner:string="",operation:string="",sign=false,
          platform:string="nftstorage", network="",
          storage_file="",encrypt_nft=false) : Promise<any> {
         return new Promise((resolve, reject) => {
-            let param="storage_file="+storage_file+"&keyfile="+miner.encrypt+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network+"&operation="+operation
+            let param="storage_file="+storage_file+"&owner="+owner+"&sign="+sign+"&platform="+platform+"&network="+network+"&operation="+operation
             param=param+"&encrypt_nft="+encrypt_nft;
-            this.httpClient.post(this.server_nfluent+"/api/mint/?"+param,{nft:token,miner:miner}).subscribe((r)=>{
+            this.httpClient.post(this.server_nfluent+"/api/mint/?"+param,{nft:token}).subscribe((r:any)=>{
                 resolve(r);
             },(err)=>{
                 this.wait();
@@ -885,13 +910,13 @@ export class NetworkService implements OnInit {
 
     refund(bank:Bank,dest:string,comment="") {
         //@bp.route('/refund/<address>/<amount>/<token>/',methods=["POST"])
-        let body={bank:bank.miner,data:comment,network:bank.network,limit:bank.limit,histo:bank.histo}
-        return this._post("refund/"+dest+"/"+bank.refund+"/"+bank.token+"/","",body,200000);
+        let body={token:bank.token,collection:bank.collection,amount:bank.refund,bank:bank.miner,data:comment,network:bank.network,limit:bank.limit,histo:bank.histo}
+        return this._post("refund/"+dest+"/","",body,200000);
     }
 
-    get_collections(owners_or_collections: string,network="",detail=false,limit=300) {
+    get_collections(owners_or_collections: string,network="",detail=false,limit=300,operations='canCreate') {
         if(network.length==0)network=this.network;
-        let url=this.server_nfluent+"/api/collections/"+owners_or_collections+"/?network="+network+"&limit="+limit+"&detail="+detail+"&operations=canCreate";
+        let url=this.server_nfluent+"/api/collections/"+owners_or_collections+"/?network="+network+"&limit="+limit+"&detail="+detail+"&operations="+operations;
         return this.httpClient.get<Collection[]>(url);
     }
 
@@ -952,21 +977,22 @@ export class NetworkService implements OnInit {
         return this.httpClient.delete(this.server_nfluent+"/api/minerpool/"+id+"/");
     }
 
-    getExplorer(addr:string | undefined,_type="address",tools="xspotlight") : string {
-        if(this.isElrond(addr)){
-            if(tools=="xspotlight")return "https://"+(this.isMain() ? "" : "devnet.")+"xspotlight.com/"+addr;
-            if(tools=="explorer")return "https://"+(this.isMain() ? "" : "devnet-")+"explorer.multiversx.com/"+_type+"/"+addr;
+    getExplorer(addr="",network="elrond-devnet",tools="xspotlight") : string {
+        let url=""
+        let isMain:boolean=(network.indexOf("devnet")==-1)
+        if(network.indexOf("elrond")>-1){
+            if(tools=="xspotlight")url="https://"+(isMain ? "" : "devnet.")+"xspotlight.com/"+addr;
+            if(tools=="explorer")url="https://"+(isMain ? "" : "devnet-")+"explorer.multiversx.com/accounts/"+addr;
         }
 
-        if(this.isPolygon()){
-            if(this.isMain()){
-                return "https://polygonscan.com/"+_type+"/"+addr;
+        if(network.indexOf("polygon")>-1){
+            if(isMain){
+                url="https://polygonscan.com/accounts/"+addr;
             }else{
-                return "https://polygon.testnets-nftically.com/marketplace?search="+addr+"&chain[]=80001"
-                //return "https://mumbai.polygonscan.com/"+_type+"/"+addr;
+                url="https://polygon.testnets-nftically.com/marketplace?search="+addr+"&chain[]=80001"
             }
         }
-        return ""
+        return url
     }
 
     open_explorer(addr: string,_type : "address" | "transactions" ="address") {
@@ -980,7 +1006,9 @@ export class NetworkService implements OnInit {
     }
 
     check_private_key(seed: string, address: string,network:string) {
-        return this.httpClient.get(this.server_nfluent+"/api/check_private_key/"+seed+"/"+address+"/"+network);
+        let url=this.server_nfluent+"/api/check_private_key/"+seed+"/"+address+"/"+network
+        url=url.replace("//"+network,"/"+network)
+        return this.httpClient.get(url);
     }
 
     getBalance(addr:string,network:string,token_id="") {

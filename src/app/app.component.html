@@ -1,9 +1,3 @@
-<app-splash
-            [appname]="appname"
-            [duration]="2500"
-            [image]="visual"
-            [description]="claim"></app-splash>
-
 <mat-toolbar class="mat-body-2" color="primary" *ngIf="user.toolbar_visible">
   <mat-icon (click)="drawer!.toggle()" *ngIf="device.isHandset$ | async">menu</mat-icon>
 

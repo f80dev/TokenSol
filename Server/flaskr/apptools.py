@@ -1,10 +1,9 @@
 import base64
 import json
+import random
 from datetime import timedelta
 from os import listdir
-from time import sleep
 
-from flaskr import GitHubStorage
 from flaskr.GitHubStorage import GithubStorage
 from flaskr.Keys import Key
 from flaskr.MegaUpload import MegaUpload
@@ -14,7 +13,7 @@ from flaskr.StoreFile import StoreFile
 
 import requests
 import yaml
-from flask import request
+
 
 from flaskr.Elrond import Elrond
 from flaskr.NFT import NFT
@@ -116,7 +115,7 @@ def extract_keys_from_operation(ope):
   return rc
 
 
-def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,network:str,wallet_limit:float=0,comment="airdrop") -> dict :
+def airdrop(address:str,token:dict,collection:str,_miner:Key,amount:float,histo:DAO,limit:float,network:str,wallet_limit:float=0,comment="airdrop",delay_between_airdrop=30) -> dict :
   rc={"address":address}
   if histo:
     total=0
@@ -127,15 +126,38 @@ def airdrop(address:str,token:str,_miner:Key,amount:float,histo:DAO,limit:float,
 
   _network=get_network_instance(network)
 
+  #Vérifier qu'il n'y a pas eu une transaction dans l'heure précédente
+  transactions=_network.get_transactions(address,limit=20,size=10,profondeur=0,profondeur_max=-1)
+  for t in transactions:
+    if t["method"]=="ESDTTransfer" and t["to"]==address and t['token']==token["id"]:
+      #Pas d'airdrop avec moins de 30 minutes d'interval
+      delay=now()-t["ts"]
+      if delay<delay_between_airdrop*60: return {"error":"airdrop trop récent","status":"error"}
+
   if wallet_limit>0:
     balances=_network.get_balances(address)
     if token in balances and balances[token]>=wallet_limit:
       return {"error":"Limite du wallet atteinte","status":"error"}
 
-  if type(token)==dict and "identifier" in token:token=token["identifier"]
-  tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
-  if tx_esdt["status"]!="success":
-    return {"error":tx_esdt["error"],"status":"error"}
+  if token:
+    if type(token)==dict and "identifier" in token:token=token["identifier"]
+    tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
+    if tx_esdt["status"]!="success":
+      return {"error":tx_esdt["error"],"status":"error"}
+  else:
+    _nfts=[]
+    for nft in _network.get_nfts_from_collections([collection],with_attr=False,limit=100):
+      if _miner.address in nft.balances.keys(): _nfts.append(nft)
+
+    if len(_nfts)<amount:
+      log("Pas assez de NFTs disponible dans la collection")
+      rc["status"]="error"
+      return rc
+
+    for i in range(amount):
+      _nft=_nfts[random.randint(0,len(_nfts)-1)]
+      tx_esdt=_network.transfer(_nft.address,_miner,address,1)
+      _nfts.remove(_nft)
 
   if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
   rc["transaction_esdt"]=tx_esdt
@@ -153,7 +175,7 @@ def get_network_instance(network:str):
   if network.startswith("db-"): _network= DAO(network=network)
   if network.startswith("file"): _network=StoreFile(network=network,domain_server="")
 
-  log("Création d'une instance de "+network)
+  #log("Création d'une instance de "+network)
 
   return _network
 
@@ -166,6 +188,7 @@ def get_network_from_address(addr:str):
   :param addr:
   :return:
   """
+  if addr.lower()=="egld": return "elrond"
   if addr.startswith("erd"):return "elrond"
   if addr.startswith("db_"):return "db"
   if addr.startswith("file_"):return "file"
@@ -254,12 +277,12 @@ def transfer(addr:str,
   log("Tranfert de "+addr+" du réseau "+from_network+" vers le réseau "+target_network+" pour le compte de "+target_network_owner)
   nft:NFT=get_network_instance(from_network).get_nft(addr,attr=True)
 
-
   if from_network!=target_network:
     _storage=get_storage_instance(metadata_storage_platform)
 
     rc=_target_network.mint(target_network_miner,nft.name,nft.description,collection,nft.attributes,_storage,nft.files,
                     quantity,nft.royalties,nft.visual,nft.tags,nft.creators)
+
     if rc["error"]=="":
       nft.address=rc["result"]["mint"]
       get_network_instance(from_network).burn(addr,from_network_miner,quantity=quantity)
@@ -272,11 +295,9 @@ def transfer(addr:str,
 
 
 
-def mint(nft:NFT,miner:Key,owner,network:Network,
+def mint(nft:NFT,network:Network,
          offchaindata_platform:str="IPFS",
-         domain_server=None,
-         operation=None,simulation=False,
-         dao=None,encrypt_nft=False,price=0):
+         domain_server=None,price=0) -> dict:
   """
   minage du NFT
   :param nft:
@@ -292,99 +313,71 @@ def mint(nft:NFT,miner:Key,owner,network:Network,
   if not nft.address is None and len(nft.address)>0: return returnError("!Ce NFT est déjà miner")
 
   #if len(miner.address)==0: return returnError("!L'address du mineur est indispensable")
-  if len(miner.secret_key)==0:
-    for k in network.get_keys():
-      if k.address==miner.address: miner=k
-  if len(miner.secret_key)==0: return returnError("!La clé privée du mineur est indispensable")
-  if len(miner.address)>0 and not get_network_from_address(miner.address) in network.network_name: return returnError("!L'address du mineur ne correspond pas au réseau cible")
+  # if len(miner.secret_key)==0:
+  #   for k in network.get_keys():
+  #     if k.address==miner.address: miner=k
+  # if len(miner.secret_key)==0: return returnError("!La clé privée du mineur est indispensable")
+  # if len(miner.address)>0 and not get_network_from_address(miner.address) in network.network_name: return returnError("!L'address du mineur ne correspond pas au réseau cible")
 
-  try:
-    collection=nft.collection
-  except:
-    collection={}
+
   #if collection_id=="": returnError("!La collection est indispensable")
 
-  nft.miner=miner.address
   #if not _ope is None: dao.add_histo(_ope["id"],"new_account",account,"","",_ope["network"],"Création d'un compte pour "+owner,owner)
 
-  old_amount=network.get_account(miner.address).amount if len(miner.address)>0 else 0
-  rc=network.mint(miner,
-                     title=nft.name,
-                     description=nft.description,
-                     tags=nft.tags,
-                     collection=collection,
-                     properties=nft.attributes,
-                     files=nft.files,
-                     storage=storage,
-                     quantity=nft.supply,
-                     royalties=nft.royalties,  #On ne prend les royalties que pour le premier créator
-                     visual=nft.visual,
-                     creators=nft.creators,
-                     domain_server=domain_server,
-                  simulation=simulation,
-                    price=price,
-                    symbol=nft.symbol)
-
-  if rc is None or len(rc["error"])>0:
-    return returnError("!"+rc["error"])
-
-  nft.address=rc["result"]["mint"] if "result" in rc else ""
-  if "elrond" in network.network:
-    collection_id,nonce = network.extract_from_tokenid(nft.address)
-    if nonce is None:
-      rc={"error":"Mint error: "+rc["error"],"hash":rc["hash"]}
-
-  if miner.address!=owner:
-    tx_transfer=network.transfer(nft.address,miner,owner,nft.supply)
-    if not tx_transfer or len(tx_transfer["error"])>0:
-      rc["error"]=tx_transfer["error"]
-      return rc
-    nft.owner=owner
-
-  # if "solana" in network.network.lower():
-  #   #voir https://metaboss.rs/mint.html
-  #   #(request.args.get("sign","True")=="True" or request.args.get("sign","all")=="all")
-  #   if request.args.get("sign_all","False")=="True" and "result" in rc and "mint" in rc["result"]:
-  #     signers=[x["address"] for x in nft.creators]
-  #     #signers.remove(solana.find_address_from_json(keyfile))
-  #     network.sign(rc["result"]["mint"],signers)
+  t=network.mint(nft,storage=storage,price=price)
+  return t
 
 
-  # Transfert des NFTs vers la base de données
-  rc["cost"]=network.get_account(miner.address).amount-old_amount if len(miner.address)>0 else 0
-  rc["link"]=network.getExplorer(nft.address,"nfts")
-
-  if type(network)==StoreFile:
-    if encrypt_nft:
-      rc["out"]=encrypt(rc["out"],format="txt")
-
-
-  # if "jsonfiles" in network.lower():
-  #   filename=_data["name"]+"_"+_data["symbol"]+"_"+_data["collection"]+".json"
-  #   with open(TEMP_DIR+filename,"w") as f:
-  #     json.dump(_data,f,indent=4)
-  #   rc={
-  #     "error":"",
-  #     "uri":_data["uri"],
-  #     "result":{"transaction":"","mint":filename},
-  #     "balance":0,
-  #     "link_mint":"",
-  #     "link_transaction":"",
-  #     "out":"",
-  #     "command":"file"
-  #   }
-
-  if ("result" in rc) and ("transaction" in rc["result"]) and (network.network!="file") and not dao is None:
-    dao.add_histo(
-      ope=request.args.get("ope",""),
-      command="mint",
-      addr=miner.address,
-      collection_id=collection["id"],
-      transaction_id=rc["result"]["transaction"],
-      network=network.network,
-      comment="Minage")
-
-  return rc
+# def execute(t:dict,network:Network):
+#   """
+#     Execute une transaction
+#   """
+#
+#   rc=dict()
+#
+#   # if "solana" in network.network.lower():
+#   #   #voir https://metaboss.rs/mint.html
+#   #   #(request.args.get("sign","True")=="True" or request.args.get("sign","all")=="all")
+#   #   if request.args.get("sign_all","False")=="True" and "result" in rc and "mint" in rc["result"]:
+#   #     signers=[x["address"] for x in nft.creators]
+#   #     #signers.remove(solana.find_address_from_json(keyfile))
+#   #     network.sign(rc["result"]["mint"],signers)
+#
+#
+#
+#   # if miner.address!=owner:
+#   #   tx_transfer=network.transfer(nft.address,miner,owner,nft.supply)
+#   #   if not tx_transfer or len(tx_transfer["error"])>0:
+#   #     rc["error"]=tx_transfer["error"]
+#   #     return rc
+#   #   nft.owner=owner
+#
+#
+#   # Transfert des NFTs vers la base de données
+#   rc["cost"]=network.get_account(miner.address).amount-old_amount if len(miner.address)>0 else 0
+#   rc["link"]=network.getExplorer(nft.address,"nfts")
+#
+#   if type(network)==StoreFile:
+#     if encrypt_nft:
+#       rc["out"]=encrypt(rc["out"],format="txt")
+#
+#
+#   # if "jsonfiles" in network.lower():
+#   #   filename=_data["name"]+"_"+_data["symbol"]+"_"+_data["collection"]+".json"
+#   #   with open(TEMP_DIR+filename,"w") as f:
+#   #     json.dump(_data,f,indent=4)
+#   #   rc={
+#   #     "error":"",
+#   #     "uri":_data["uri"],
+#   #     "result":{"transaction":"","mint":filename},
+#   #     "balance":0,
+#   #     "link_mint":"",
+#   #     "link_transaction":"",
+#   #     "out":"",
+#   #     "command":"file"
+#   #   }
+#
+#   return rc
 
 
 

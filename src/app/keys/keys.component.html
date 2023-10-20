@@ -62,7 +62,7 @@
 
     <app-input
             label="Blockchain"
-            [options]="network.networks_available" width="200px"
+            [options]="networks" width="200px"
             value_type="list" color="white"
             [value]="sel_network"
             (valueChange)="updateNetwork($event)"></app-input>
@@ -108,7 +108,7 @@
         <button title="Voir le wallet NFLUENT" mat-icon-button (click)="open_wallet(key)"><mat-icon>money</mat-icon></button>
         <button title="Detruire les NFTs" mat-icon-button (click)="burn_all_nft(key)"><mat-icon>local_fire_department</mat-icon></button>
         <button title="Lancer un airdrop" mat-icon-button (click)="open_airdrop(key)"><mat-icon>savings</mat-icon></button>
-
+        <button title="Ventiller sur les autres" mat-icon-button (click)="ventilation(key)"><mat-icon>share</mat-icon></button>
         <button title="voir dans l'explorer" mat-icon-button (click)="open_explorer(key)">
           <mat-icon>person_search</mat-icon>
         </button>
@@ -134,7 +134,7 @@
         </button>
       </td>
       <td style="text-align: right;">
-        <span *ngIf="key.balance">{{key.balance/1e18 | number}} {{key.unity}}</span>
+        <span *ngIf="key.balance">{{key.balance | number}} {{key.unity}}</span>
       </td>
     </tr>
   </table>

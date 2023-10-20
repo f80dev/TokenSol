@@ -1,4 +1,4 @@
-<div class="app-prompt modal-popup background-component" style="padding: 5px;">
+<div class="app-prompt modal-popup background-component" style="padding: 5px;;width: 90vw;max-width: 500px;">
     <div mat-dialog-title style="!important;width:100%;text-align: center;">{{data.title}}</div>
     <div style="font-size: small;width:100%;text-align: center;color: darkgray"
          *ngIf="data.subtitle.length>0" [innerHTML]="data.subtitle"></div>
@@ -46,6 +46,7 @@
                      [wallet_provider]="data.provider"
                      [price]="data.to_paid"
                      [title]="data.intro_payment"
+                     [url_direct_to_xportal]="data.url_direct_xportal_connect"
                      [fiat_price]="data.to_paid_in_fiat"
                      (cancel)="cancel()"
                      (paid)="onpaid($event)">

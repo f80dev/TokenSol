@@ -4,6 +4,17 @@
         [image]="visual"
         [description]="claim"></app-splash>
 
+<app-tuto title="{{appname}} est un wallet dédié aux NFTs.<br>Il permet de les visualiser dés l'ouverture sans processus d'authentification"
+          background="https://images.unsplash.com/photo-1512358958014-b651a7ee1773?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+          [duration]="40" *ngIf="slide==1" (close)="slide=slide+1"></app-tuto>
+
+<app-tuto title="{{appname}} dispose de fonctionnalités dédiées à la billeterie et aux partages des NFTs"
+          background="https://images.unsplash.com/photo-1518206075495-4e901709d372?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+          [duration]="40"
+          *ngIf="slide==2" (close)="slide=slide+1"></app-tuto>
+
+
+
 <div style="position: fixed;right:0px;top:0px;display: block;height:20px;color: lightgray;" *ngIf="api.network.indexOf('devnet')>-1">DevNet</div>
 <mat-tab-group [selectedIndex]="indexTab" animationDuration="1500ms"
                (selectedIndexChange)="refresh($event)"
@@ -38,10 +49,10 @@
         </mat-slider>
 
         <span style="margin: 10px">
-          {{balance | number:"1.0-1"}} <span *ngIf="network.indexOf('elrond')>-1">EGold</span>
+          {{balance/1e18 | number:"1.0-1"}} <span *ngIf="network.indexOf('elrond')>-1">EGold</span>
         </span>
 
-        <app-input [options]="options"
+        <app-input [options]="options" value_type="list"
                    label="Collections" value_field="value"
                    *ngIf="nfts.length>3 || sel_collection!='*'"
                    [value]="sel_collection" (valueChange)="force_refresh($event)">
@@ -59,47 +70,47 @@
 
       <app-reversebloc *ngFor="let nft of nfts"
                        [image]="nft.visual"
-                       margin="15px"
+                       [margin]="(nft_size/100)+'px'"
                        [style]="{backgroundColor:'0xFEFEFE',border: '1px solid lightgray'}"
                        [width]="nft_size+'px'" [height]="nft_size+'px'"
                        [data]="nft"
                        (mouseenter)="analyse_metadata(nft)"
                        (onreverse)="on_reverse($event)">
 
-        <div style="width: 90%;padding-left:2%;overflow: hidden;">
-          <div class="mat-body-2" style="opacity:0.6" *ngIf="nft.collection">{{nft.collection!.name}}</div>
-          <div style="margin-top: 10px;" [style.font-size]="(nft_size || 100)/15+'px'">
+        <div style="width: 96%;padding-left:2%;overflow: hidden;" class="mat-body-2" >
+          <div style="opacity:0.6" *ngIf="nft.collection">{{nft.collection!.name}}</div>
+          <div style="margin-top: 2%;" [style.font-size]="(nft_size || 100)/15+'px'">
             {{nft.name}}
             <span *ngIf="nft.balances[addr]>1">({{nft.balances[addr]}})</span>
           </div>
-          <br>
-          <div class="mat-body-2" [style.font-size]="(nft_size || 100)/20+'px'">{{nft.description}}</div><br>
+          <div [style.font-size]="(nft_size || 100)/20+'px'">{{nft.description}}</div><br>
 
 
-          <div *ngFor="let attr of nft.attributes" class="mat-body-1">
-            <div style="opacity: 0.8;" *ngIf="attr.trait_type" [title]="attr.trait_type">{{attr.trait_type}}:</div>
-            <div style="text-align: left;" *ngIf="attr.value"  [title]="attr.value">
-              {{attr.value}}
-              <mat-icon *ngIf="attr.value.startsWith('http')" (click)="open_prop(attr.value)"
-                        style="margin-bottom:-10px;cursor:pointer;opacity: 0.6;font-size: medium;">visibility</mat-icon>
-            </div>
+          <div *ngFor="let attr of nft.attributes" [style.font-size]="(nft_size || 100)/20+'px'"
+               class="expansion-content-left" style="width:100%;overflow: hidden;white-space: nowrap;text-overflow: ellipsis;">
+
+              <div style="opacity: 0.7;" *ngIf="attr.trait_type" [title]="attr.trait_type">{{attr.trait_type}}:</div>
+              <div style="text-align: left;" *ngIf="attr.value"  [title]="attr.value">
+                <app-link [content]="attr.value" [title]="attr.value" icon="visibility"></app-link>
+              </div>
+
           </div>
 
 
-          <div style="position: absolute;display: block;width:100%;left:5%;bottom: 2%;">
-            <table>
+
+            <table style="position: absolute;display: block;width:100%;left:5%;bottom: 2%;" [style.font-size]="(nft_size/20)+'px'">
               <tr>
-                <td>Liens:</td>
+                <td *ngIf="nft_size>200">Attachés:</td>
                 <td>
-                  <a *ngFor="let file of nft.files" [href]="file" style="display: inline" target="_blank" [title]="file">
-                    <mat-icon>link</mat-icon>
+                  <a *ngFor="let file of nft.files" [href]="file" target="_blank" [title]="file">
+                    <mat-icon [style.font-size]="(nft_size/15)+'px'" style="display: inline;">link</mat-icon>
                   </a>
                 </td>
               </tr>
             </table>
 
 
-          </div>
+
 
         </div>
       </app-reversebloc>
@@ -107,6 +118,7 @@
 
 
   </mat-tab>
+
 
 
   <mat-tab label="Accés">
@@ -151,6 +163,23 @@
     <app-signature faq="nfluent_wallet" color="black"></app-signature>
   </mat-tab>
 
+  <mat-tab label="Monnaies" class="expansion-content">
+    <mat-card *ngFor="let t of tokens" style="max-width: 200px;margin-bottom: 10px;" style="display: inline-flex;">
+      <mat-card-header>
+        <mat-card-title-group>
+          <mat-card-title class="mat-headline-6">{{t.name}}</mat-card-title>
+          <mat-card-subtitle>{{t.amount}}</mat-card-subtitle>
+          <img mat-card-sm-image [src]="t.image" style="width: 30px;height:30px;">
+        </mat-card-title-group>
+      </mat-card-header>
+      <mat-card-content>
+        <br>
+        <button mat-raised-button (click)="open_explorer(t)">Explorer</button>
+        <button mat-raised-button (click)="open_gate('airdrop',t)" *ngIf="secret!=''">Airdrop</button>
+        <button mat-raised-button (click)="open_gate('receive',t)">Recevoir</button>
+      </mat-card-content>
+    </mat-card>
+  </mat-tab>
 
   <mat-tab label="NFTlive" *ngIf="opes && opes.length>0 && addr && addr.length>0">
     <a [routerLink]="'faqs'" [queryParams]="{faq:'nftlive'}">En savoir plus</a> sur NFTLive
@@ -299,20 +328,12 @@
     <div class="mat-headline-4 color-primary">Se connecter</div>
     <div style="max-width: 400px;display: inline-block;">
       <app-authent *ngIf="addr?.length==0 || !strong"
-                   [showWalletConnect]="false"
-                   [showWebcam]="false"
-                   [showEmail]="false"
+                   [connexion]="authent"
+                   [network]="network"
                    [address]="addr"
-                   [showDirectConnect]="false"
-                   [showGoogle]="false"
-                   [showExtensionWallet]="false"
-                   [showWebWallet]="false"
                    (authent)="on_authent($event)"
                    (disconnect)="on_disconnect()"
-                   [showCancel]="false"
-                   [showNfluentWalletConnect]="false"
-                   [showAddress]="false"
-                   [showPrivateKey]="true">
+                   [showCancel]="false">
       </app-authent>
     </div>
 

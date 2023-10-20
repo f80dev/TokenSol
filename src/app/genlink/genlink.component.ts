@@ -1,9 +1,10 @@
 import {Component, EventEmitter, Input, OnChanges, Output, SimpleChanges} from '@angular/core';
-import {$$, setParams} from "../../tools";
+import {$$, get_images_from_banks, setParams} from "../../tools";
 import {DeviceService} from "../device.service";
 import {NgNavigatorShareService} from "ng-navigator-share";
 import {MatDialog} from "@angular/material/dialog";
 import {open_image_banks} from "../../nfluent";
+import {NetworkService} from "../network.service";
 
 export function genlink_to_obj(links:any[]){
   let obj:any={}
@@ -22,14 +23,16 @@ export class GenlinkComponent implements OnChanges {
 
   @Input() properties: any[]=[];
   @Input() domain: string="";
-  @Input() title: string="";
+  @Input() title: string="Paramètres";
   url: string="";
   @Input() show_command_panel: boolean = true;
   @Output('update') onupdate: EventEmitter<any>=new EventEmitter();
+  @Input() expanded=true;
 
   constructor(
       public device:DeviceService,
       public dialog:MatDialog,
+      public api:NetworkService,
       public ngShare:NgNavigatorShareService
   ) {
 
@@ -48,7 +51,6 @@ export class GenlinkComponent implements OnChanges {
   load_local(){
     this.properties=JSON.parse(localStorage.getItem("config_"+this.domain) || "{}");
   }
-
 
   create_url() {
     let obj:any={}
@@ -100,7 +102,9 @@ export class GenlinkComponent implements OnChanges {
     })
   }
 
-  search_image() {
-    open_image_banks(this)
+
+  async call_picture(prop:any) {
+    let images=await get_images_from_banks(this,this.api,"",false,1)
+    if(images.length>0)prop.value=images[0].image
   }
 }

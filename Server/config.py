@@ -1,7 +1,8 @@
 #voir https://hackersandslackers.com/configure-flask-applications/
 import sys
 from os import environ, path
-from flaskr.secret import MONGO_WEB3_CONNECTION_STRING, MONGO_SERVER_CONNECTION_STRING, MONGO_INITDB_ROOT_PASSWORD
+from flaskr.secret import MONGO_WEB3_CONNECTION_STRING, MONGO_SERVER_CONNECTION_STRING, MONGO_INITDB_ROOT_PASSWORD, \
+  MONGO_CLOUD_CONNECTION_STRING
 from flaskr.settings import STATIC_RESSOURCES_DIR
 
 basedir = path.abspath(path.dirname(__file__))
@@ -25,7 +26,7 @@ class Config:
   DEFAULT_PERMISSIONS=["mint","create","build","keys"]
   ACTIVITY_REPORT="paul.dudule@gmail.com"
   DB_NAME="nfluent"
-  DB_SERVER = MONGO_SERVER_CONNECTION_STRING
+  DB_SERVER = MONGO_CLOUD_CONNECTION_STRING
   DB_SERVER_PUBLIC=DB_SERVER.replace(MONGO_INITDB_ROOT_PASSWORD,"*****")
   VERSION="0.3"
   PLATFORMS=[

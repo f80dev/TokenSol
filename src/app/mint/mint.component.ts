@@ -112,14 +112,14 @@ export class MintComponent implements OnInit {
     this.networks=this.network.networks_available.map((x:any)=>{return {label:x,value:x}});
     this.sel_network=this.networks[0]
     let keys=await this.network.init_network(this.sel_network.value);
-    if(!keys){
-      showError(this,"Impossible de récupérer les clés");
-      keys=[]
-    }
-    if(keys.length>0){
-      $$("Liste des clés "+keys)
-      this.update_miner(local_config.key ? this.network.find_key_by_address(local_config.key.address) : keys[0])
-    }
+    // if(!keys){
+    //   showError(this,"Impossible de récupérer les clés");
+    //   keys=[]
+    // }
+    // if(keys.length>0){
+    //   $$("Liste des clés "+keys)
+    //   this.update_miner(local_config.key ? this.network.find_key_by_address(local_config.key.address) : keys[0])
+    // }
 
     this.sel_platform=this.network.config["PLATFORMS"][0];              //NFTStorage
     this.sel_platform_document=this.network.config["PLATFORMS"][3];     //Server
@@ -353,6 +353,7 @@ export class MintComponent implements OnInit {
       if(!this.isValide(_t)){
         _t.price=this.price
         if(!_t.collection && this.sel_key)_t.collection={
+          cover: undefined,
           description: this.collection_name,
           supply:1,
           link: "",
@@ -889,7 +890,7 @@ export class MintComponent implements OnInit {
   }
 
   async update_miner($event: any) {
-    this.sel_key=$event;
+    this.sel_key=$event
     this.network.get_collections($event.address,this.sel_network.value,false).subscribe((cols)=>{
       this.collections=cols;
       if(cols.length>0)this.changeCollection(this.collections[0].id);
@@ -899,7 +900,7 @@ export class MintComponent implements OnInit {
 
   changeCollection($event: any) {
     $$("Modification de la collection sélectionnée");
-    this.sel_collection=undefined;
+    this.sel_collection=$event;
     for(let c of this.collections) {
       if (c.id == $event){
         this.sel_collection=c

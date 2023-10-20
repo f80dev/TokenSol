@@ -1,73 +1,79 @@
-<div *ngIf="_if" (click)="hideTuto()"
-     [ngStyle]="{margin:0,zIndex: 100000,width:width}"
-     id="zone_tuto">
-  <div *ngIf="_type=='tips' && text_to_show.length>0" style="max-width:800px;text-align:left;display:inline-block;margin-top:6px;margin-bottom:8px;">
-    <table>
-      <tr>
-        <td>
-          <img *ngIf="image!.length>0"
-               [src]="image"
-               style="width:30px;height:30px;padding:3px;">
+<div *ngIf="_type=='tips' && label!=''"
+     style="max-width:800px;min-width:50px;width:100%;text-align:left;display:inline-block;margin-top:6px;margin-bottom:8px;"
+     (click)="hideTuto()">
+  <table>
+    <tr>
+      <td>
+        <img *ngIf="image!.length>0"
+             [src]="image"
+             style="width:30px;height:30px;padding:3px;">
 
-          <span *ngIf="icon!.length>0">
+        <span *ngIf="icon!.length>0">
             <mat-icon [style.color]="color" style="margin:10px;">{{icon}}</mat-icon>
           </span>
 
-          <span *ngIf="_button!.length>0">
-            <button class="icon-button"
-                    mat-icon-button
-                    (click)="onclick.emit()">
-              <mat-icon style="margin:10px;">{{_button}}</mat-icon>
-            </button>
+        <div *ngIf="_button!.length>0">
+          <button class="icon-button"
+                  mat-icon-button
+                  (click)="hideTuto()">
+            <mat-icon style="margin:10px;">{{_button}}</mat-icon>
+          </button>
+        </div>
+      </td>
+      <td>
+          <span [style.color]="color" class="mat-body-2" >
+            {{label}}
           </span>
-        </td>
-        <td>
-          <span [ngStyle]="{'color':color}" class="mat-body-2">
-            {{text_to_show}}
-          </span>
-        </td>
-        <td *ngIf="faq!.length>0" (click)="router.navigate(['faqs'],{queryParams:{open:faq}})">
-          <mat-icon>help</mat-icon>
-        </td>
-      </tr>
-    </table>
-  </div>
+      </td>
+      <td *ngIf="faq!.length>0" (click)="router.navigate(['faqs'],{queryParams:{open:faq}})">
+        <mat-icon>help</mat-icon>
+      </td>
+    </tr>
+  </table>
+</div>
 
-  <div *ngIf="_type=='title'" [ngStyle]="{
-    display: 'block',
-    opacity: 1,
-    color:color,
-    'background-color':bkColor,
-    position: _position,
-    top:'0px',left:'0px',
-    width:'100vw',height:'100vh',
-    'z-index':1000}">
+<!--Présentation en mode plein écran-->
+<div *ngIf="_type=='title'" [ngStyle]="contentStyle">
+  <div [ngStyle]="background_style" ></div>
+  <div  *ngIf="_type=='title'" style="width:100%;height: 100%;text-align: center;position:fixed;display:block;left:0;top:0;z-index: 9000000;backdrop-filter: none;">
 
-      <img [src]="background" *ngIf="background!.length>0 && (background!.startsWith('http') || background!.startsWith('./'))"
-           style="width: 100vw;height:100vh;object-fit:cover;">
+    <div style="margin: 10%;width:80%;margin-bottom:1%;display: inline-block;" [style.text-align]="text_align"
+         [innerHTML]="title"
+         [style.color]="color" class="mat-headline-5"></div>
+    <br>
 
-      <div style="z-index:10000;display:block;position:absolute;top:0;left:0;width:100vw;height:100vh;text-align:center;">
+    <!--        Image situé au centre-->
+    <img *ngIf="image!=''" [src]="image"
+         style="margin:5%;max-height:200px;display:inline-block;">
+    <br>
 
+    <!--        Si pad d'image on créé un espace-->
+    <div *ngIf="image!.length==0" style="margin-top:5%;"></div>
 
-        <img *ngIf="image!.length>0"
-             [src]="image"
-             style="max-width:100px;max-height:100px;width:40vmin;height:40vmin;margin-bottom:2vh;display: inline-block;">
+    <div [ngStyle]='{display:"inline-block",width:"90%","margin-left":"5%","margin-top":"5%","text-align":text_align,"font-size": "medium","margin-bottom": "5vh"}'
+         [innerHTML]="subtitle"></div>
 
-        <div *ngIf="image!.length==0" style="height:5vh"></div>
+    <br>
+    <div *ngIf="showButton"  style="position: absolute;left:0;bottom: 10%;width:100%;text-align: center;">
+      <button mat-raised-button
+              *ngIf="labelButton!=''"
+              style="display: inline-block;"
+              (click)="hideTuto()"
+              id="btnStart">
+        {{labelButton}}
+      </button>
 
-        <div [ngStyle]='{width:"90%","margin-left":"5%","margin-top":"20vh","text-align":text_align,"font-size": "medium","margin-bottom": "5vh"}'
-             [innerHTML]="subtitle"></div>
-
-        <button class="app-button"
-                (click)="onclick.emit()"
-                mat-raised-button
-                id="btnStart">
-          {{labelButton}}
-        </button>
-
-      </div>
-
+      <button mat-icon-button
+              style="width:fit-content;height:fit-content;"
+              *ngIf="labelButton==''"
+              (click)="hideTuto()"
+              id="btnStart2">
+        <mat-icon [style.color]="color" style="width:fit-content;height:fit-content;opacity: 0.8;font-size: 70px !important;">arrow_circle_right</mat-icon>
+      </button>
+    </div>
   </div>
 
 </div>
+
+
 

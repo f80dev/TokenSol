@@ -82,7 +82,7 @@ export interface NFT {
   address:string | undefined
   royalties:number
   owner:string | undefined
-  miner:CryptoKey
+  miner:CryptoKey | string
   price: any                //La stucture du prix est {token:price} ou token=identifier d'ESDT ou egld ou eur
   supply: number
   type: string

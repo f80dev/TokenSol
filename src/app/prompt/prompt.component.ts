@@ -3,7 +3,7 @@ import {MAT_DIALOG_DATA, MatDialogRef} from "@angular/material/dialog";
 
 export function _prompt(vm:any,title:string,_default:string="",description="",_type="text",lbl_ok="ok",
                         lbl_cancel="Annuler",onlyConfirm=true,options:any=null,
-                        force_yes=false):Promise<string> {
+                        force_yes=false,max_select=-1):Promise<string> {
   //permet d'afficher une boite de dialog
   return new Promise((resolve, reject) => {
     if(_type=="yesorno" || _type=="oui/non" || _type=="boolean" || _type=="bool")onlyConfirm=true;
@@ -21,7 +21,8 @@ export function _prompt(vm:any,title:string,_default:string="",description="",_t
               result:_default,
               onlyConfirm:onlyConfirm,
               lbl_ok:lbl_ok,
-              lbl_cancel:lbl_cancel
+              lbl_cancel:lbl_cancel,
+              max_select:max_select
             }
       }).afterClosed().subscribe((resp:any) => {
         if(resp) {
@@ -52,7 +53,8 @@ export interface DialogData {
   lbl_cancel:string,
   lbl_sup:string,
   options:any[],
-  subtitle:string
+  subtitle:string,
+  max_select:number
 }
 
 
@@ -65,13 +67,13 @@ export interface DialogData {
 export class PromptComponent  {
 
   showEmoji=false;
-  _type:"text" | "number" | "memo" | "list" | "listimages" | "boolean" | "images" | "slide" | "slider"="text";
-  _min: number=0;
-  _max: number=0;
+  _type:"text" | "number" | "memo" | "list" | "listimages" | "boolean" | "images" | "slide" | "slider"="text"
+  _min: number=0
+  _max: number=0
 
   constructor(
-    public dialogRef_prompt: MatDialogRef<PromptComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: DialogData)
+      public dialogRef_prompt: MatDialogRef<PromptComponent>,
+      @Inject(MAT_DIALOG_DATA) public data: DialogData)
   {
     if(this._type=="boolean")data.onlyConfirm=true;
     if(this._type=="images")data.result=[];
@@ -115,11 +117,17 @@ export class PromptComponent  {
     if(index>-1){
       this.data.result.splice(index,1);
     } else {
+      if(this.data.max_select>0 && this.data.result.length>=this.data.max_select){this.data.result=[]}
       this.data.result.push(img);
     }
   }
 
-    select_all() {
+  select_all() {
+    if(this.data.max_select==-1 || this.data.options.length<this.data.max_select){
       this.dialogRef_prompt.close(this.data.options)
+    }else{
+      let rc=this.data.options.slice(0,this.data.max_select)
+      this.dialogRef_prompt.close(rc)
     }
+  }
 }

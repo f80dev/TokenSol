@@ -35,7 +35,7 @@ export class UserService implements OnDestroy {
   provider: any | undefined;
   collections: Collection[] = [];
 
-  merchant: Merchant=environment.merchant;
+  merchant: Merchant | undefined
 
   profil: UserProfil = {
     routes: ["/help", "/about", "/"],
@@ -67,7 +67,7 @@ export class UserService implements OnDestroy {
       public router: Router,
       public network: NetworkService
   ) {
-
+    this.merchant=environment.merchant
   }
 
   isConnected(_with : "wallet" | "email" | "" ="") : boolean {

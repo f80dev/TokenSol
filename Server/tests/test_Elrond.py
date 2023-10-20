@@ -40,7 +40,7 @@ def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1,s
 
   test_in_collections(col,miner)
 
-  rc=_network.mint(miner=_miner,
+  t=_network.mint(miner=_miner,
                    title="TestNFT",
                    description=nft.description,
                    collection={"id":col},
@@ -48,12 +48,11 @@ def test_mint_for_collection(miner=MAIN_ACCOUNT,col=MAIN_COLLECTION,quantity=1,s
                    storage=get_storage_instance("nftstorage"),
                    files=[],
                    quantity=quantity,
-                   visual=nft.visual,
-                   simulation=simulation)
+                   visual=nft.visual)
+
+  rc=_network.send_transaction(t,_miner,simulation=simulation)
   assert not rc is None
   assert len(rc["error"])==0,rc["error"]
-  assert len(rc["result"]["transaction"])>0
-  return rc["result"]["mint"]
 
 
 def test_mint_simulation():

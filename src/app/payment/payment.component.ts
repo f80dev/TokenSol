@@ -14,7 +14,7 @@ import {
 } from "@multiversx/sdk-core/out";
 import {WalletConnectV2Provider} from "@multiversx/sdk-wallet-connect-provider/out";
 import {NetworkService} from "../network.service";
-import {$$, Bank, CryptoKey, now, setParams, showMessage} from "../../tools";
+import {$$, Bank, eval_direct_url_xportal, now, setParams, showMessage} from "../../tools";
 import { Account } from "@multiversx/sdk-core";
 import { ProxyNetworkProvider } from "@multiversx/sdk-network-providers";
 import {_prompt} from "../prompt/prompt.component";
@@ -22,6 +22,7 @@ import {MatSnackBar} from "@angular/material/snack-bar";
 import {MatDialog} from "@angular/material/dialog";
 import {ReadyToPayChangeResponse} from "@google-pay/button-angular";
 import {wait_message} from "../hourglass/hourglass.component";
+import {DeviceService} from "../device.service";
 
 export interface PaymentTransaction {
   transaction:string ,
@@ -88,11 +89,15 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
   @Input() wallet_provider: WalletConnectV2Provider | any
 
   qrcode: string="";
-  balance: number=-1;
+  balance:{balance:number,egld:number}={balance:-1,egld:0}
   qrcode_buy_token: string = "";
   handle: NodeJS.Timeout | undefined
 
+  @Input() url_direct_to_xportal: string=""
+  show_url_to_xportal=false
+
   constructor(
+      public device:DeviceService,
       public networkService: NetworkService,
       public toast:MatSnackBar,
       public dialog:MatDialog
@@ -143,8 +148,12 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
 
   async show_user_balance(addr:string,token_id:string,network:string){
     try{
-      this.balance=await this.get_balance(addr,token_id,network)/(10**this.money!.decimals);
-      if(Number(this.price)>this.balance){
+      wait_message(this,"Calcul de votre encours")
+      debugger
+      this.balance=await this.get_balance(addr,token_id,network) ///(10**this.money!.decimals);
+      wait_message(this)
+      if(Number(this.price)>this.balance.balance || this.balance.egld<0.001){
+        if(this.balance.egld<0.001)showMessage(this,"Vous devez avoir quelques fractions d'egld pour les frais de services")
         this.networkService.qrcode(addr,"json").subscribe((r:any)=>{
           this.qrcode_buy_token=r.qrcode;
         })
@@ -202,7 +211,10 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
 
   async start_payment(amount:number){
     try{
+      this.show_url_to_xportal=true
+      this.url_direct_to_xportal=eval_direct_url_xportal("")
       let result=await this.payment(amount);
+      this.show_url_to_xportal=false
       this.onpaid.emit(result);
     } catch(e) {
       showMessage(this,"Paiement annulé");
@@ -251,11 +263,13 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
           })
         }
         let sender_account=new Account(Address.fromBech32(sender_addr));
-        let sender_on_network=await proxyNetworkProvider.getAccount(sender_account.address)
-        sender_account.update(sender_on_network)
-        t.setNonce(sender_account.getNonceThenIncrement());
 
         try {
+          let sender_on_network=await proxyNetworkProvider.getAccount(sender_account.address)
+          sender_account.update(sender_on_network)
+          t.setNonce(sender_account.getNonceThenIncrement());
+
+          this.show_url_to_xportal=true
           wait_message(this,"En attente de validation sur votre wallet")
           let sign_transaction=await this.wallet_provider.signTransaction(t);
           wait_message(this,"Envoi de la transaction")
@@ -281,12 +295,12 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
   }
 
 
-  async get_balance(addr:string,token_id:string,network:string) : Promise<number> {
+  async get_balance(addr:string,token_id:string,network:string) : Promise<any> {
     return new Promise((resolve,reject) => {
       if(addr.length>0 && network.length>0 && token_id.length>0){
         this.networkService.getBalance(addr,network,token_id).subscribe((r:any)=>{
           for(let owner of r){
-            if(owner.address==addr)resolve(owner.balance);
+            if(owner.address==addr)resolve({balance:owner.balance,egld:owner.egld_balance});
           }
           resolve(0);
         },(err:any)=>{reject();})
@@ -345,5 +359,9 @@ export class PaymentComponent implements AfterContentInit,OnDestroy {
     }
     open(url,"bank")
     this.handle=setInterval(()=>{this.refresh_solde()},20000);
+  }
+
+  open_xportal() {
+    open(this.url_direct_to_xportal,"xportal")
   }
 }

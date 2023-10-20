@@ -33,10 +33,10 @@ html {
 $nfluent-typography: mat.define-typography-config(
         $headline-1: mat.define-typography-level(4.2rem, 4.2rem, 600, mediasans-bold),
         $headline-2: mat.define-typography-level(3.8rem, 3.8rem, 500, mediasans-bold),        //H2
-        $headline-3: mat.define-typography-level(2.5rem, 2.5rem, 500, mediasans-regular),     //H3
-        $headline-4: mat.define-typography-level(2rem, 2rem, 500,mediasans-regular),
-        $headline-5:  mat.define-typography-level(1.3rem, 1.3rem, 300, $font-family: mediasans-regular),
-        $headline-6:  mat.define-typography-level(1.1rem, 1.1rem, 300, $font-family: GilroyRegular),
+        $headline-3: mat.define-typography-level(2.5rem, 2.5rem, 500, mediasans-regular,$letter-spacing: 0.03em),     //H3
+        $headline-4: mat.define-typography-level(2rem, 2rem, 500,mediasans-regular,$letter-spacing: 0.03em),
+        $headline-5:  mat.define-typography-level(1.3rem, 1.3rem, 300, $font-family: mediasans-regular,$letter-spacing: 0.03em),
+        $headline-6:  mat.define-typography-level(1.1rem, 1.1rem, 300, $font-family: GilroyRegular,$letter-spacing: 0.03em),
         $subtitle-1: mat.define-typography-level(18px, 18px, 500, GilroyRegular),
         $subtitle-2: mat.define-typography-level(16px, 16px, 400, GilroyRegular),
         $body-2: mat.define-typography-level(14px, 14px, 500, $font-family: GilroyRegular,$letter-spacing: -0.03em),
@@ -71,6 +71,31 @@ $nfluent-indigo-palette :(
                 900: white
         )
 );
+
+$gray-palette :(
+  50: #FFFFFF,
+  100: #F0F0F0,
+  200: #AAF6A1,
+  300: #81F177,
+  400: #56EC52,
+  500: #00E726,
+  600: #00D51D,
+  700: #00C00F,
+  800: #00AB00,
+  900: #008800,
+     contrast: (
+  50: rgba(black,0.87),
+  100: rgba(black,0.87),
+  200: rgba(black,0.87),
+  300: rgba(black,0.87),
+  400: rgba(black,0.87),
+  500: rgba(black,0.87),
+  600: rgba(black,0.87),
+  700: white,
+  800: white,
+  900: white
+));
+
 
 $nfluent-green-palette :(
         50: #EBFDE8,
@@ -156,6 +181,16 @@ body,html {
   filter: url('#teal-lightgreen');
 }
 
+p {
+  @extend .mat-body-2;
+  opacity: 0.9;
+  font-weight: lighter;
+}
+
+.mat-label {
+  font-size: x-large !important;
+}
+
 .sidemenu {
   background-color: mat.get-color-from-palette($nfluent-primary-color, 400);
   color: mat.get-color-from-palette($nfluent-primary-color, A400);
@@ -167,11 +202,11 @@ body,html {
 
 .blackform {
   color: white;
-  background-color: mat.get-color-from-palette($nfluent-indigo-palette,900);
+  background-color: mat.get-color-from-palette(mat.$gray-palette,900);
 }
 
 .titleform {
-  @extend .mat-headline-5, .color-primary;
+  @extend .mat-headline-6;
   margin: 8px;
   margin-bottom: 15px;
 }
@@ -195,6 +230,7 @@ mat-expansion-panel-header {
   @extend .mat-body-2, .color-primary;
   font-weight: bold !important;
 }
+
 
 
 mat-card-title {
