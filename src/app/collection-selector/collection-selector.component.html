@@ -1,37 +1,39 @@
 <app-hourglass [message]="message"></app-hourglass>
-<div *ngIf="!sel_collection" class="expansion-content" style="min-height: 40px;">
+<br>
+<div *ngIf="!sel_collection">
 
-    <button mat-raised-button (click)="create_collection()" *ngIf="miner_or_validator">
-        Créer une collection
-    </button>
+    <p>
+        {{title}}
+    </p>
 
-    <div class="expansion-content-left" *ngIf="owner=='' && collections.length==0" style="align-content: center;">
-        <app-input label="Nom d'une collection / Wallet" [value]="query_collection"
-                   width="100%"
-                   [showClear]="true"
-                   (valueChange)="query_collection=$event"
-                   label_button="Chercher"
-                   (validate)="run_query($event)"
-                   help="saisissez votre url de rediretion"></app-input>
+   <div class='expansion-content' *ngIf="message=='' && !sel_collection">
+       <button mat-raised-button (click)="create_collection()"
+               *ngIf="miner_or_validator" class="mat-body-1">
+           Créer une collection
+       </button>
 
-        <button mat-raised-button (click)="open_gallery()" style="margin-top: -10px;">Gallerie</button>
-    </div>
+       <button mat-raised-button (click)="open_search()"
+               *ngIf="showSearchWithoutOwner"
+               style="margin: 10px;">Recherche</button>
 
-    <div *ngIf="collections.length>0" >
+   </div>
+
+
+    <div *ngIf="collections.length>0"  class="expansion-content" style="min-height: 40px;">
         <p>
-            {{title}}
-            <button mat-raised-button (click)="owner='';collections=[]" style="margin: 10px;">Recherche</button>
+            {{collections.length}} collections <span *ngIf="query_collection.length>0">contenant {{query_collection}}</span>
         </p>
-        <div class="expansion-content" style="width: 100%;margin-top:15px;" *ngIf="w_image!=''">
+
+        <div class="expansion-content" style="width: 100%;margin-top:15px;max-height:600px;overflow: scroll;" *ngIf="w_image!=''">
             <div *ngFor="let c of collections"
-                 [style.display]="c.cover=='' ? 'none' : 'inline-box'"
-                 style="position: relative;cursor: pointer; margin:10px;display: inline-flex;"
+                 [style.display]="c.cover=='' ? 'none' : 'inline-box'" class="mat-elevation-z4"
+                 style="position: relative;cursor: pointer; display: inline-flex;overflow: hidden;margin: 3px;"
                  (click)="select_collection(c)" [style.width]="w_image" [style.height]="w_image">
 
                 <img [src]="c.cover" *ngIf="!c.cover?.endsWith('mp4')"
                      [style.width]="w_image" [style.height]="w_image"
                      [title]="'Identifiant: '+c.id"
-                     style="margin:10px;object-fit: cover;width:100%;box-shadow: 0 3px 3px grey;">
+                     style="object-fit: cover;width:100%;box-shadow: 0 3px 3px grey;">
 
                 <video muted autoplay *ngIf="c.cover?.endsWith('mp4')"
                        style="box-shadow: 0 3px 3px grey;"
@@ -41,7 +43,7 @@
                 <div class="image-title"
                      [style.color]="color" >
                     <div style="font-size: 10%">Collection</div>
-                    <div style="font-size: 20%">{{c.name}}</div>
+                    <div style="text-overflow: ellipsis;margin-top: -3px;" class="mat-body-1">{{c.name}}</div>
                 </div>
             </div>
         </div>
@@ -53,12 +55,20 @@
 </div>
 
 <!--une fois la collection sélectionnée-->
-<div *ngIf="sel_collection" style="position: relative;margin-top: 10px;" (click)="sel_collection=undefined">
-    <img *ngIf="nfts.length==0" [src]="sel_collection.cover || ''" [style.width]="w_image">
-    <app-showroom [nfts]="nfts" [delay]="delay_showroom" [type_animation]="animation"></app-showroom>
+<div *ngIf="sel_collection" style="position: relative;margin-top: 10px;display: inline-block;overflow: hidden;" [title]="sel_collection.id"
+     (click)="sel_collection=undefined" class="mat-elevation-z4"
+     [style.width]="w_image_selected" [style.height]="w_image_selected" >
+    <img *ngIf="nfts.length==0" [src]="sel_collection.cover || ''"
+         style="width: 100%;height:100%;">
+    <app-showroom [nfts]="nfts" [delay]="delay_showroom"
+                  [size]="w_image_selected"
+                  *ngIf="nfts.length>0"
+                  [type_animation]="animation"></app-showroom>
     <div class="image-title"
-         [style.color]="color" >
-        <div style="font-size: small">Collection</div>
-        <span style="text-overflow: ellipsis" class="mat-body-2">{{sel_collection.name || ''}}</span>
+         style="text-align: left;margin-left: 7px;margin-top:-5px;text-overflow: '-'; " [style.color]="color" >
+        <div style="font-size: x-small;opacity: 0.8;">Collection</div>
+        <div class="mat-body-1" style="margin-top:0;width:100%;text-wrap: normal;">{{sel_collection.name || ''}}</div>
     </div>
+    <mat-icon style="position:absolute;top:5px;right:5px;display: block;opacity: 0.8;cursor: pointer;"
+              title="Cliquer sur la collection  pour en sélectionner une autre">cancel</mat-icon>
 </div>

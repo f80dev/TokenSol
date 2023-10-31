@@ -208,7 +208,8 @@ export class DispenserComponent implements OnInit {
 
     if(this.dest && this.miner && this.miner_dest && this.collection_dest){
       this.message="Minage et envoi en cours sur le wallet "+this.dest;
-      this.network.transfer_to(nft.address, this.dest,this.miner,this.miner_dest,this.network.network,this.network_dest,this.collection_dest.id).subscribe((r:any)=>{
+      this.network.transfer_to(nft.address, this.dest,this.miner.address,this.miner_dest.address,this.network.network,this.network_dest,this.collection_dest.id).subscribe(async (t:any)=>{
+        let r=await this.network.execute(t,this.network.network,this.miner)
         this.message="";
         showMessage(this,"Envoyé");
         this.refresh();

@@ -254,7 +254,7 @@ export class MywalletComponent implements OnInit,OnDestroy {
 
 
 
-  send(image:string) {
+  async send(image:string) {
     if(this.sel_ope?.nftlive){
       let collection:Collection= {
         cover: undefined,
@@ -303,11 +303,13 @@ export class MywalletComponent implements OnInit,OnDestroy {
         if(!this.owner)this.owner=this.addr;
 
         this.message="Minage en cours";
-        this.api.mint(token,token.miner,this.owner,this.sel_ope.id,false,"nftstorage",this.network).then((r:any)=>{
-          this.message="";
-          showMessage(this,"Votre NFT est miné et envoyé. Vous pouvez en miner un autre");
-          this.token_to_send=null;
-        })
+        let t=await this.api.mint(token,this.owner,this.sel_ope.id,false,"nftstorage",this.network)
+        await this.api.execute(t,this.network,token.miner,)
+
+        this.message="";
+        showMessage(this,"Votre NFT est miné et envoyé. Vous pouvez en miner un autre");
+        this.token_to_send=null;
+
       }
     }
   }

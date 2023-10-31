@@ -129,40 +129,41 @@ def airdrop(address:str,token:dict,collection:str,_miner:Key,amount:float,histo:
   #Vérifier qu'il n'y a pas eu une transaction dans l'heure précédente
   transactions=_network.get_transactions(address,limit=20,size=10,profondeur=0,profondeur_max=-1)
   for t in transactions:
-    if t["method"]=="ESDTTransfer" and t["to"]==address and t['token']==token["id"]:
-      #Pas d'airdrop avec moins de 30 minutes d'interval
-      delay=now()-t["ts"]
-      if delay<delay_between_airdrop*60: return {"error":"airdrop trop récent","status":"error"}
+    if token and "id" in token:
+      if t["method"]=="ESDTTransfer" and t["to"]==address and t['token']==token["id"]:
+        #Pas d'airdrop avec moins de 30 minutes d'interval
+        delay=now()-t["ts"]
+        if delay<delay_between_airdrop*60: return {"error":"airdrop trop récent","status":"error"}
 
   if wallet_limit>0:
     balances=_network.get_balances(address)
     if token in balances and balances[token]>=wallet_limit:
       return {"error":"Limite du wallet atteinte","status":"error"}
 
-  if token:
+  if token and "id" in token:
     if type(token)==dict and "identifier" in token:token=token["identifier"]
     tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
     if tx_esdt["status"]!="success":
       return {"error":tx_esdt["error"],"status":"error"}
   else:
-    _nfts=[]
-    for nft in _network.get_nfts_from_collections([collection],with_attr=False,limit=100):
-      if _miner.address in nft.balances.keys(): _nfts.append(nft)
+    step=30
+    for offset in range(0,300,step):
+      _nfts=[]
+      for _nft in _network.get_nfts_from_collections([collection],with_attr=False,limit=step,offset=offset):
+        if _miner.address in _nft.balances.keys():
+          if _nft.balances[_miner.address]>=amount:
+              t=_network.transfer(_nft.address,_miner.address,address,amount)
+              rc=_network.send_transaction(t,_miner)
+              if histo:
+                histo.add_histo(command="refund",addr=address,transaction_id=rc["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
+              return rc
 
-    if len(_nfts)<amount:
-      log("Pas assez de NFTs disponible dans la collection")
-      rc["status"]="error"
-      return rc
 
-    for i in range(amount):
-      _nft=_nfts[random.randint(0,len(_nfts)-1)]
-      tx_esdt=_network.transfer(_nft.address,_miner,address,1)
-      _nfts.remove(_nft)
-
-  if histo: histo.add_histo(command="refund",addr=address,transaction_id=tx_esdt["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
-  rc["transaction_esdt"]=tx_esdt
-  rc["status"]="success"
+  log("Plus assez de NFTs disponible dans la collection")
+  rc["status"]="error"
   return rc
+
+
 
 
 def get_network_instance(network:str):

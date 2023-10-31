@@ -13,19 +13,16 @@ class Key(object):
   balance=0
   explorer=""
 
-  def __init__(self,secret_key="",name="",address="",network="",seed="",obj=None, encrypted="",explorer=""):
-    if not obj is None and "encrypt" in obj: encrypted=obj["encrypt"]
-    if not encrypted is None:
-      if type(encrypted)==dict:
-        obj=encrypted
+  def __init__(self,secret_key="",name="",address="",network="",seed="", encrypted="",explorer="",obj=None):
+    assert type(encrypted)==str,"encrypted doit être une chaine de caractères"
+    if not encrypted=="":
+      obj=dict()
+      if ":" in encrypted:encrypted=encrypted.split(":")[1]
+      decrypted=decrypt(encrypted.strip())
+      if decrypted.startswith("{"):
+        obj=json.loads(decrypted)   #Encrypt contient toute la clé
       else:
-        if len(encrypted)>0:
-          if ":" in encrypted:encrypted=encrypted.split(":")[1]
-          decrypted=decrypt(encrypted.strip())
-          if decrypted.startswith("{"):
-            obj=json.loads(decrypted)   #Encrypt contient toute la clé
-          else:
-            obj["secret_key"]=decrypted
+        obj["secret_key"]=decrypted
 
     if not obj is None:
       if "name" in obj: name=obj["name"]
@@ -50,6 +47,8 @@ class Key(object):
     self.network=network
     self.address=address
 
+  def fromDict(self,obj:dict):
+    return self.__init__(obj=obj)
 
   def encrypt(self,only_private_key=False):
     if not only_private_key:

@@ -158,20 +158,12 @@ export class AuthentComponent implements OnInit,OnChanges {
 
 
 
+
   ngOnInit(): void {
 
     setTimeout(()=>{        //TODO : cet item doit passer dans l'update
       this.api.server_nfluent=this.nfluent_server;
 
-      if(this.network.indexOf("elrond")>-1){
-        const callbacks:any ={
-          onClientLogin: async ()=> {
-            this.address=await this.provider.getAddress();
-          },
-          onClientLogout: ()=> {},
-        }
-        this.provider = new WalletConnectV2Provider(callbacks, this.get_chain_id(), this.relayUrl, this.walletConnect_ProjectId);
-      }
 
       if(this.network.indexOf("polygon")>-1){
       }
@@ -282,7 +274,7 @@ export class AuthentComponent implements OnInit,OnChanges {
   validate(address="") {
     if(address.length>0){
       this.address=address;
-      this._location.replaceState("/?"+setParams({toolbar:false,address:this.address,network:this.network}))
+      //this._location.replaceState("/?"+setParams({toolbar:false,address:this.address,network:this.network}))
       if(this.use_cookie)localStorage.setItem("authent_address",address);
     }
 
@@ -444,6 +436,13 @@ export class AuthentComponent implements OnInit,OnChanges {
 
   async open_wallet_connect() {
     //https://docs.multiversx.com/sdk-and-tools/sdk-js/sdk-js-signing-providers/#the-wallet-connect-provider
+
+    const callbacks:any ={
+      onClientLogin: async ()=> {this.address=await this.provider.getAddress();},
+      onClientLogout: ()=> {},
+    }
+    this.provider = new WalletConnectV2Provider(callbacks, this.get_chain_id(), this.relayUrl, this.walletConnect_ProjectId);
+
     try{
       await this.provider.init()
       const { uri, approval } = await this.provider.connect();

@@ -26,35 +26,8 @@ import {WalletProvider} from "@multiversx/sdk-web-wallet-provider/out";
 })
 export class TestsComponent implements OnInit {
 
-  num: any;
-  nft:NFT={
-    address: undefined,
-    attributes: [],
-    balances: undefined,
-    collection: undefined,
-    creators: [],
-    description: "description",
-    files: [],
-    links: undefined,
-    message: undefined,
-    miner: newCryptoKey(),
-    name: "montoken",
-    network: "elrond-devnet",
-    owner: undefined,
-    price: undefined,
-    royalties: 0,
-    solana: undefined,
-    style: undefined,
-    supply: 1,
-    symbol: "montoken",
-    tags: "",
-    type: "",
-    visual: ""
-  }
-  provider: WalletProvider | undefined;
-  miner: CryptoKey | undefined
-
-
+  owner: string=""
+  wallet_provider: any;
 
   constructor(public api:NetworkService,
               public style:StyleManagerService,
@@ -73,39 +46,11 @@ export class TestsComponent implements OnInit {
   }
 
 
-  authent($event: {
-    strong: boolean;
-    address: string;
-    provider: any;
-    encrypted: string;
-    url_direct_xportal_connect: string
-  }) {
-    this.nft.miner=newCryptoKey($event.address)
-    this.provider=$event.provider;
-    this.find_collection($event.address);
-
+  authent($event: any) {
+    this.wallet_provider=$event.provider
+   this.owner=$event.address
   }
 
-  find_collection(addr:string){
-    this.api.get_collections(addr,"elrond-devnet").subscribe({
-          next:(r:any)=>{
-            if(r.length>0){
-              this.nft.collection=newCollection(r[0]["name"],this.nft.miner,r[0]["id"],r[0]["type"]);
-            }
-          }
-        }
-    )
-  }
 
-  async mint() {
-    let tmp=await this.api.mint(this.nft)
-    await this.api.execute(tmp, "elrond-devnet",this.provider || this.miner)
-  }
-
-  setMiner($event:any) {
-    this.miner=$event
-    this.nft.miner=$event.address
-    this.find_collection($event.address)
-  }
 }
 

@@ -1,13 +1,10 @@
 
 <div class="mainform">
-    <app-authent *ngIf="!provider"
-                 network="elrond-devnet"
-                 (authent)="authent($event)"></app-authent>
 
-    <app-selkey network="elrond-devnet" (onChange)="setMiner($event)"
-                [with_balance]="false"></app-selkey>
 
-    <button mat-raised-button *ngIf="nft && nft.collection" (click)="mint()">
-        Miner
-    </button>
+    <app-collection-selector network="elrond-devnet"
+                             owner="erd19apx29wldmlwz2gjqy0xt2jlznd2c39thygk09wh9c5vjj222fxsqjd9hn"
+                             roles="canUpgrade"
+                             w_image_selected="200px" w_image="100px" >
+    </app-collection-selector>
 </div>

@@ -143,6 +143,8 @@ th {
   background-size: cover;
 }
 
+
+
 .popup-form {
   position:relative;
   max-width: 700px;
@@ -150,6 +152,7 @@ th {
   width:100%;
   margin:1%;
   display: inline-block;
+  overflow: scroll;
   text-align: center;
   color: white;
   padding: 2%;
@@ -166,6 +169,7 @@ th {
     position:relative;
     min-height: 100vh;
     width:97%;
+    overflow: scroll;
     margin:0;
     display: inline-block;
     text-align: center;

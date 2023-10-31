@@ -7,8 +7,8 @@ from flaskr import create_app, log, DAO
 from flaskr.NFT import NFT
 
 MAIN_POLYGON_ACCOUNT="0xa617546acC33A600f128051455e6aD2a628f4a79" #faucet https://mumbaifaucet.com/ et
-MAIN_ACCOUNT = "erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  #nfluent voir http://127.0.0.1:4200/collections?owner=erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt&network=elrond-devnet
-MAIN_NETWORK = "elrond-devnet"
+MAIN_ACCOUNT = "eve" #"erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt"  #nfluent voir http://127.0.0.1:4200/collections?owner=erd1ty3ga9qvmjhwkvh78vwzlm4yvtea9kdu4x4l2ylrnapkzlmn766qdrzdwt&network=elrond-devnet
+MAIN_NETWORK = "elrond-localnet"
 NFLUCOIN="NFLUCOIN-4921ed"
 MAIN_MINER="bob"
 
@@ -17,8 +17,8 @@ PLATFORMS=["db-server-nfluent_test","nftstorage","file","infura"] #ipfs
 MAIN_STORAGE_PLATFORM=PLATFORMS[0]
 
 MAIN_EMAIL = "paul.dudule@gmail.com"
-MAIN_COLLECTION = "NFLUENTA-af9ddf"
-DB_NETWORK = "db-server-nfluent_test"
+MAIN_COLLECTION = "MACOL0XF-cd3a57"
+DB_NETWORK = "elrond-cloud-nfluent"
 MAIN_ACCOUNTS={
   "elrond":MAIN_ACCOUNT,
   "polygon":MAIN_POLYGON_ACCOUNT,
@@ -32,7 +32,9 @@ RESSOURCE_TEST_DIR="./tests/ressources/"
 
 
 
-def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,quantity=1,
+
+
+def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,quantity=1,miner=MAIN_MINER,
                visual="https://hips.hearstapps.com/hmg-prod/images/birthday-cake-decorated-with-colorful-sprinkles-and-royalty-free-image-1653509348.jpg",
                description="ceci est la description du NFT",files=["https://nfluent.io"]) -> NFT:
   return NFT(name,
@@ -43,7 +45,8 @@ def create_nft(name: str= "testName", collection:str=MAIN_COLLECTION,quantity=1,
              description=description,
              visual=visual,
              supply=quantity,
-             price=0
+             price=0,
+             miner=miner
              )
 
 

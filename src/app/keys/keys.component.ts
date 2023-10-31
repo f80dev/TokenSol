@@ -242,8 +242,10 @@ export class KeysComponent implements OnInit {
       for(let k of this.network.keys){
         if(k.address!=key.address){
           setTimeout(()=>{
-            this.network.transfer_to("egld", k.address,key,key,this.network.network,this.network.network,"","","",amount).subscribe({
-              next:()=>{}
+            this.network.transfer_to("egld", k.address,key.address,key.address,this.network.network,this.network.network,"","","",amount).subscribe({
+              next:(t:any)=>{
+                this.network.execute(t,this.network.network,key)
+              }
             })
           },(accounts-1)*30000)
           accounts=accounts-1;

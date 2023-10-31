@@ -463,8 +463,8 @@ export class MintComponent implements OnInit {
   }
 
 
-  miner(token: NFT) : Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+   miner(token: NFT) : Promise<any> {
+    return new Promise<any>(async (resolve, reject) => {
       if(!this.sel_key){
         reject("no signature");
       }
@@ -503,10 +503,12 @@ export class MintComponent implements OnInit {
           //
           let target_network=this.network.network;
 
+
           this.message="Minage du NFT '"+token.name+"'"
-          this.network.mint(token,this.sel_key,token.owner || "",id_operation,this.sign, this.sel_platform.value,
-              target_network,this.mintfile,
-              this.encrypt_nft).then((result:any)=>{
+          try {
+            let t=await this.network.mint(token,token.owner || "",id_operation,this.sign, this.sel_platform.value, target_network,this.mintfile, this.encrypt_nft)
+            let result:any=await this.network.execute(t,target_network,this.sel_key)
+
             this.message="";
             if(!result.error || result.error==""){
               token.address=result.result.mint;
@@ -528,11 +530,11 @@ export class MintComponent implements OnInit {
               token.message=result.error;
               reject(result.error);
             }
-          }).catch((err)=>{
+          } catch(err:any) {
             this.message="";
             token.message=err.error;
             showError(err);
-          })
+          }
         }
       } else {
         showMessage(this,"Minage impossible: "+this.isValide(token));

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import base64
 import json
 import yaml
@@ -18,7 +20,7 @@ class NFT:
   visual:str=""
   creators:list
   address:str=None
-  miner:str=""
+  miner:str | Key = ""
   royalties:int
   owner:str=""
   marketplace:dict={}
@@ -133,10 +135,18 @@ class NFT:
   def __str__(self):
     rc=self.address if not self.address is None else "NoAddresse"
     if self.symbol: rc=rc+" ("+self.symbol+")"
+    rc=rc+" - "+self.explorer()
     return rc
 
   def toJson(self):
     return json.dumps(self, default=lambda o: o.__dict__,sort_keys=True, indent=4)
+
+  def explorer(self):
+    domain="multiversx.com" if "elrond" in self.network else ""
+    url="https://explorer."+domain+"/token/"+self.address
+    if "devnet" in self.network: url=url.replace("explorer","devnet-explorer")
+    if "testnet" in self.network: url=url.replace("explorer","testnet-explorer")
+    return url
 
   def get_price(self):
     return self.marketplace["price"] if "price" in self.marketplace else 0

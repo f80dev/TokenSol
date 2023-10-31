@@ -479,6 +479,14 @@ def hex_to_str(number):
     rc=rc+chr(int(number[i:i+2],16))
   return rc
 
+def smart(number:str):
+  for i in range(0,len(number),2):
+    if int(number[i:i+2],16)<ord('A'): return int(number,16)
+
+  rc=hex_to_str(number)
+
+  return rc
+
 
 #
 # def int_to_hex(number,digits=2,zerox=False):

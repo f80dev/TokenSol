@@ -149,8 +149,8 @@ export class CollectionsComponent implements OnInit {
         showMessage(this,"Format du nom incorrect");
         return;
       }
-      this.network.create_collection(this.new_collection,true).subscribe(async (r:any)=>{
-        let rep:any=await _ask_for_paiement(this,this.user.merchant.wallet?.token!,
+      this.network.create_collection(this.new_collection,this.network.network,true).subscribe(async (r:any)=>{
+        let rep:any=await _ask_for_paiement(this,this.user.merchant!.wallet?.token!,
             environment.collection_cost.price_in_crypto,
             environment.collection_cost.price_in_fiat,
             this.user.merchant!,
@@ -178,7 +178,7 @@ export class CollectionsComponent implements OnInit {
           //
 
           wait_message(this,"Fabrication de la collection sur la blockchain");
-          this.network.create_collection(this.new_collection).subscribe((r:any)=>{
+          this.network.create_collection(this.new_collection,this.network.network).subscribe((r:any)=>{
             this.refresh(this.miner!.address,this.network.network)
             wait_message(this)
             showMessage(this,"Votre collection est créé pour "+r.cost+" egld");

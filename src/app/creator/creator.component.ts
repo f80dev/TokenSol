@@ -392,7 +392,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
       let rep:any="ok";
       if(true || sequences.length>environment.visual_cost.quota && this.sel_config?.width!+this.sel_config?.height!>300){
         let nb_tokens_to_generate=sequences.length;
-        rep=await _ask_for_paiement(this,this.user.merchant.wallet!.token,
+        rep=await _ask_for_paiement(this,this.user.merchant!.wallet!.token,
             nb_tokens_to_generate*(environment.visual_cost.price_in_fiat),
             nb_tokens_to_generate*(environment.visual_cost.price_in_crypto),
             this.user.merchant!,

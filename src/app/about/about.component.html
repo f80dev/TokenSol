@@ -1,11 +1,10 @@
 <div class="mainform" style="text-align: center;">
   
   <div class="mat-headline-2 color-primary" style="margin: 30px;" *ngIf="user && user.params">{{user.params.appname}}</div>
-  <div style="margin-top: -20px">version {{version}}</div>
+  <div>version {{version}}</div>
   <br>
-
-  <img [src]="logo" style="margin: 50px;max-width:300px;max-height:300px;">
-  <br><br>
+  <img *ngIf="logo!=''" [src]="logo" style="margin: 50px;max-width:300px;max-height:300px;">
+  <br>
   <button mat-icon-button (click)="_location.back()">
     <mat-icon>arrow_back</mat-icon>
   </button>

@@ -22,7 +22,8 @@ from flaskr.settings import ENCODING_LENGTH_FOR_EMAIL
 DB_SERVERS=dict(
   {
     "local":"mongodb://127.0.0.1:27017",
-    "server":"mongodb://"+MONGO_INITDB_ROOT_USERNAME+":"+MONGO_INITDB_ROOT_PASSWORD+"@109.205.183.200:27017",
+    "home":"mongodb://"+MONGO_INITDB_ROOT_USERNAME+":"+MONGO_INITDB_ROOT_PASSWORD+"@192.168.1.62:27017",
+    "server":"mongodb://"+MONGO_INITDB_ROOT_USERNAME+":"+MONGO_INITDB_ROOT_PASSWORD+"@38.242.210.208:27017",
     "cloud":MONGO_CLUSTER_CONNECTION_STRING,
     "web3":MONGO_WEB3_CONNECTION_STRING
   }
@@ -52,11 +53,11 @@ class DAO(Storage,Network):
           cid=str(base64.b64decode(cid[3:]),"utf8")
           network=cid.split("/")[0]
 
-        if len(network)>0 and len(network.split("-"))>2:
+        if len(network)>0:
+          assert len(network.split("-"))>2, "Syntaxe incorrect"
           self.domain=network.split("-")[1]
           self.dbname=network.split("-")[2]
         else:
-
           if domain and dbname:
             self.dbname=dbname if not "-" in domain else domain.split("-")[2]
             self.domain=domain if not "-" in domain else domain.split("-")[1]
@@ -602,7 +603,7 @@ class DAO(Storage,Network):
   def create_link(self, body:dict) -> str:
       while True:
         cid=hex(random.randint(0,9999999)).replace("0x","")
-        if not self.db["shortlinks"].find_one({"cid":cid}):
+        if "shortlinks" not in self.db.list_collection_names() or not self.db["shortlinks"].find_one({"cid":cid}):
           body["cid"]=cid
           rc=self.db["shortlinks"].insert_one(body)
           if rc.inserted_id:

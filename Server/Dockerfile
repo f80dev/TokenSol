@@ -42,7 +42,7 @@
 #installation de la base de données MongoDB voir https://www.mongodb.com/docs/manual/tutorial/install-mongodb-community-with-docker/
 #docker rm -f mongo
 #docker pull mongo:latest
-#docker run -v /mnt/d/temp/mongo:/data/db --name mongo -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=hh4271 -p 27017:27017 -d mongo:latest
+#docker run --restart=always -v /mnt/d/temp/mongo:/data/db --name mongo -e MONGO_INITDB_ROOT_USERNAME=root -e MONGO_INITDB_ROOT_PASSWORD=hh4271 -p 27017:27017 -d mongo:latest
 
 #Execution sur le serveur de production :
 #docker rm -f tokensol && docker pull f80hub/tokensol

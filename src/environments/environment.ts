@@ -18,6 +18,9 @@ export const environment = {
   website:"https://nfluent.io",
   logo:"./assets/icons/tokenforge-512.png",
   faqs:"./assets/faqs.yaml",
+  dictionnary: {},
+  company: "Nfluent",
+  style:"nfluent.css",
 
   stockage: "server-nfluent,nftstorage,infura,github-nfluentdev-storage-main",
   stockage_document: "server-nfluent,github-nfluentdev-storage-main,infura,server",
@@ -74,8 +77,7 @@ export const environment = {
 
   },
 
-  dictionnary: {},
-  company: "Nfluent"
+
 };
 
 /*

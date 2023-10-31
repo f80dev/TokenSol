@@ -11,7 +11,7 @@ export interface Collection {
   cover:string | undefined
   visual: string | undefined
   description: string | undefined
-  owner : CryptoKey
+  owner : CryptoKey | string
   price: number | undefined
   type: string | undefined
   roles: any[] | undefined

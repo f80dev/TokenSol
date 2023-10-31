@@ -70,9 +70,9 @@ export class UserService implements OnDestroy {
     this.merchant=environment.merchant
   }
 
-  isConnected(_with : "wallet" | "email" | "" ="") : boolean {
-    if(_with!="wallet" && this.profil && this.profil.email.length>0 && this.verified_address)return true;
-    if(_with!="email" && this.wallet_provider!=undefined && this.addr.length>0)return true;
+  isConnected(_with : "wallet" | "email" | "" ="wallet") : boolean {
+    if(_with=="wallet" && (this.wallet_provider || this.verified_address))return true;
+    if(_with=="email" && (this.profil && this.profil.email.length>0 && this.verified_address))return true;
     return false;
   }
 

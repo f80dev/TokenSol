@@ -26,7 +26,7 @@ class Config:
   DEFAULT_PERMISSIONS=["mint","create","build","keys"]
   ACTIVITY_REPORT="paul.dudule@gmail.com"
   DB_NAME="nfluent"
-  DB_SERVER = MONGO_CLOUD_CONNECTION_STRING
+  DB_SERVER = MONGO_SERVER_CONNECTION_STRING
   DB_SERVER_PUBLIC=DB_SERVER.replace(MONGO_INITDB_ROOT_PASSWORD,"*****")
   VERSION="0.3"
   PLATFORMS=[
@@ -70,6 +70,7 @@ class devConfig(Config):
   DEBUG = True
   TESTING = False
   DB_NAME="nfluent_dev"
+  DB_SERVER = MONGO_SERVER_CONNECTION_STRING
   DOMAIN_APPLI="https://tokenfactory.nfluent.io"
   DOMAIN_SERVER="http://192.168.1.62:4242"          #address du serveur ou s'execute flask
 

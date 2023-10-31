@@ -109,7 +109,6 @@ export class AdminComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
     this.user.login("Se connecter pour accèder aux commandes d'administration");
     wait_message(this,"Chargement des informations",true);
     this.network.info_server().subscribe((infos:any)=>{

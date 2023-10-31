@@ -1,12 +1,6 @@
 import {HostListener, Injectable, OnInit} from '@angular/core';
-// import {
-//     clusterApiUrl,
-//     Connection,
-//     PublicKey,
-// } from "@solana/web3.js";
-// import * as SPLToken from "@solana/spl-token";
 import {HttpClient, HttpErrorResponse} from "@angular/common/http";
-import {$$, Bank, CryptoKey, encrypt, newCryptoKey, words} from "../tools";
+import {$$, Bank, CryptoKey, encrypt,  words} from "../tools";
 import {environment} from "../environments/environment";
 
 import {catchError, retry, Subject, throwError, timeout} from "rxjs";
@@ -15,7 +9,6 @@ import {NFT, SolanaToken, SplTokenInfo, Validator} from "../nft";
 import {Configuration, Layer} from "../create";
 import {Router} from "@angular/router";
 import {Transaction} from "@multiversx/sdk-core/out";
-
 
 
 @Injectable({
@@ -759,8 +752,8 @@ export class NetworkService implements OnInit {
 
     transfer_to(mint_addr: string,
                 to_addr: string,
-                from_miner:CryptoKey,
-                to_miner:CryptoKey,
+                from_miner:string | CryptoKey,
+                to_miner:string,
                 from_network:string,
                 to_network:string,
                 collection_id:string,
@@ -866,7 +859,7 @@ export class NetworkService implements OnInit {
         //On peut fournir soit le miner de la transaction avec sa clé, soit la transaction pour signature
         return new Promise(async (resolve, reject) => {
             let body:any={transaction:transaction,network:network}
-            if(!miner_or_provider.hasOwnProperty("account")){
+            if(typeof(miner_or_provider)=="string"){
                 if(miner_or_provider)body.miner=miner_or_provider
             }else{
                 let t:any=Transaction.fromPlainObject(transaction)
@@ -877,13 +870,13 @@ export class NetworkService implements OnInit {
                 body.transaction=t.toSendable()
             }
             $$("Envoi du corps pour execution ",body)
-            return this._post("execute/","", body).subscribe({
-            next:(r:any)=>{resolve(r)}
+            return this._post("execute/","", body,120000).subscribe({
+                next:(r:any)=>{resolve(r)},
+                error:(err:any)=> {reject(err)}
             })
         })
 
     }
-
     mint(token:NFT,  owner:string="",operation:string="",sign=false,
          platform:string="nftstorage", network="",
          storage_file="",encrypt_nft=false) : Promise<any> {
@@ -914,14 +907,16 @@ export class NetworkService implements OnInit {
         return this._post("refund/"+dest+"/","",body,200000);
     }
 
-    get_collections(owners_or_collections: string,network="",detail=false,limit=300,operations='canCreate') {
+    get_collections(owners_or_collections: string,network="",detail=false,limit=300,operations='canCreate',min_supply=0,min_balance=0) {
         if(network.length==0)network=this.network;
-        let url=this.server_nfluent+"/api/collections/"+owners_or_collections+"/?network="+network+"&limit="+limit+"&detail="+detail+"&operations="+operations;
+        let url="/api/collections/"+owners_or_collections+"/?network="+network+"&limit="+limit+"&detail="+detail+"&operations="+operations+"&min_supply"+min_supply+"&min_balance="+min_balance;
+        url=this.server_nfluent+url.replace("//","/")
         return this.httpClient.get<Collection[]>(url);
     }
 
-    create_collection(new_collection: Collection,simulation=false) {
-        return this.httpClient.post(this.server_nfluent+"/api/create_collection/?network="+this.network+"&simulation="+simulation,new_collection);
+    create_collection(new_collection: Collection,network="",simulation=false) {
+        if(network=="")network=this.network
+        return this.httpClient.post(this.server_nfluent+"/api/create_collection/?network="+network+"&simulation="+simulation,new_collection);
     }
 
     get_minerpool() {
@@ -1023,10 +1018,11 @@ export class NetworkService implements OnInit {
         return this.httpClient.post(this.server_nfluent+"/api/upload_attributes_file/"+config_name+"/",file);
     }
 
-    set_role(collection_id: string, owner: string, network: string) {
+    set_role(collection_id: string, owner: string, network: string,roles="ESDTRoleNFTCreate") {
         return this.httpClient.post(this.server_nfluent+"/api/set_role_for_collection/",{
             network:network,
             collection_id:collection_id,
+            roles:roles,
             owner:owner
         });
     }

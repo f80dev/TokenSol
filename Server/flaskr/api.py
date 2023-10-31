@@ -363,8 +363,9 @@ def api_short_link(cid=""):
 
 
 @bp.route('/collections/<addresses>/')
+@bp.route('/collections/')
 #test http://127.0.0.1:4242/api/collection/herve
-def api_get_collections(addresses:str):
+def api_get_collections(addresses:str=""):
   """
   retourne l'ensemble des collections appartenant à un utilisateur
   :return:
@@ -373,13 +374,18 @@ def api_get_collections(addresses:str):
   bl=get_network_instance(request.args.get("network","elrond-devnet"))
   if ":" in addresses: addresses=Key(encrypted=addresses).address
   detail=(request.args.get("detail","true")=="true")
-  operations=request.args.get("operations","canCreate")
+  operations=request.args.get("operations","canTransfer")
   limit=int(request.args.get("limit","200"))
+  min_balance=int(request.args.get("min_balance","0"))
+  min_supply=int(request.args.get("min_supply","0"))
 
   cols=[]
   for addr in addresses.split(","):
     filter_type=request.args.get("filter_type","")
-    cols=cols+bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations,limit=limit)
+    for col in bl.get_collections(addr, detail=detail, type_collection=filter_type,special_role=operations,limit=limit,withSupply=(min_balance>0)):
+      if min_balance==0 or not "balances" in col or col["balances"][addr]>=min_balance:
+        if min_supply==0 or not "supply" in col or col["suppry"]>min_supply:
+          cols.append(col)
 
   for c in cols:
     if not "cover" in c:c["cover"]="https://tokenforge.nfluent.io/assets/collection_cover.jpeg"
@@ -1667,7 +1673,7 @@ def nfts_from_collection(collection_id):
   network=request.args.get("network","elrond-devnet")
   with_attr=(request.args.get("with_attr","false")=="true")
   limit=int(request.args.get("limit","2000"))
-  nfts=get_network_instance(network).get_nfts_from_collections([collection_id],with_attr=with_attr,format="json",limit=limit)
+  nfts=get_network_instance(network).get_nfts_from_collections([collection_id],with_attr=with_attr,format="json",limit=limit,withOwner=with_attr)
   return jsonify({"nfts":nfts})
 
 
@@ -2560,27 +2566,13 @@ def api_create_collection():
   :return:
   """
   _data=request.json
-  network=request.args.get("network","elrond-devnet")
-  simulation=(request.args.get("simulation","false")=="true")
+  _net=get_network_instance(request.args.get("network","elrond-devnet")) #DAO(config=current_app.config).get_user_from_access_code(request.args.get("access_code"))
+  if _net is None: return returnError("Réseau incorrect")
 
-  _net=get_network_instance(network) #DAO(config=current_app.config).get_user_from_access_code(request.args.get("access_code"))
+  _t_create =_net.add_collection(_data["owner"],collection_name=_data["name"],type_collection=_data["type"],options=_data["options"])
+  return jsonify(_t_create.to_dictionary(True))
 
-  miner=Key(obj=_data["owner"])
 
-  solde=_net.balance(miner.address)
-  collection=_net.add_collection(miner,collection_name=_data["name"],type_collection=_data["type"],options=_data["options"],simulation=simulation)
-  if collection is None:
-    return returnError("Probleme de création de la collection "+_data["name"]+". Vérifier notamment son nom qui doit être unique")
-
-  if simulation: return jsonify({"simulation":"ok"})
-
-  new_collection=_net.get_collection(collection["id"])
-  new_solde=_net.balance(miner.address)
-
-  return jsonify({
-    "collection":new_collection,
-    "cost":solde-new_solde
-  })
 
 
 
@@ -2784,13 +2776,13 @@ def api_create_collection():
 
 
 @bp.route('/set_role_for_collection/',methods=["POST"])
-def set_role_for_collection():
+def api_set_role_for_collection():
   collection_id=request.json['collection_id']
   owner=request.json['owner']
-  network=request.json["network"]
-  if "elrond" in network:
-    t=Elrond(network).add_account_to_collection({"id":collection_id}, owner)
-    return jsonify({"transaction":t})
+  roles=request.json["roles"]
+  _net=get_network_instance(request.json["network"])
+  _t=_net.add_account_to_collection(account_to_add=owner,collection_id=collection_id, owner=owner,roles_to_add=roles)
+  return jsonify(_t.to_dictionary())
 
 
 
