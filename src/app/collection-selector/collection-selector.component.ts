@@ -71,6 +71,8 @@ export class CollectionSelectorComponent implements OnChanges,OnDestroy {
       wait_message(this,"Recherche des collections "+(this.query_collection!='' ? 'contenant '+this.query_collection : ''))
       this.api.get_collections(owner, this.network, true, this.limit, this.roles,this.min_supply,this.min_balance).subscribe((cols: any) => {
         wait_message(this)
+
+        this.sel_collection=undefined
         this.collections = []
         for (let col of cols) {
           if (this.w_image != '' && this.collections.length<50){
@@ -78,7 +80,12 @@ export class CollectionSelectorComponent implements OnChanges,OnDestroy {
           }
           if(this.collections.length<3000) this.collections.push(col)
         }
-        if (this.collections.length == 0) showMessage(this, "Aucune collection pour cet utilisateur")
+
+
+        if (this.collections.length == 0) {
+          showMessage(this, "Aucune collection pour cet utilisateur")
+        }
+
         if (this.collections.length == 1 && !this.miner_or_validator) {
           $$("Une seule sélection donc on sélectionne "+this.collections[0].name)
           this.select_collection(this.collections[0])
@@ -182,10 +189,10 @@ export class CollectionSelectorComponent implements OnChanges,OnDestroy {
             next:async (t:any)=>{
               let result=await this.api.execute(t,this.network,this.miner_or_validator)
               setTimeout(()=>{
-                this.oncreate.emit(result)
                 this.refresh_collections(this.owner)
                 wait_message(this)
-              },1000)
+                this.oncreate.emit(result)
+              },3000)
             }
           })
         } catch (e) {

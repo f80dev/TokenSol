@@ -1,34 +1,45 @@
 <!-- https://css-tricks.com/snippets/css/a-guide-to-flexbox/ -->
 <app-hourglass [message]="message"></app-hourglass>
 <div *ngIf="network && network.length>0" class="expansion-content" style="min-width: 300px;align-items: center;">
-    <app-input value_type="list" color="white" width="170px"
-               *ngIf="keys.length>0 && isFree()"
-               [label]="label"
-               [value]="sel_key"
-               [options]="keys"
-               (valueChange)="onChangeKey($event)">
-    </app-input>
 
-    <button type="button" mat-icon-button
-            title="Voir le wallet nfluent"
-            *ngIf="sel_key && can_see_nfluent_wallet"
-            (click)="open_wallet()">
-        <mat-icon>account_balance_wallet</mat-icon>
-    </button>
+    <app-authent *ngIf="show_authent"
+                 [network]="network"
+                 (authent)="on_authent($event)"
+                 [connexion]="connexion"></app-authent>
 
-    <button type="button" mat-icon-button
-            title="Voir le wallet dans l'explorateur"
-            *ngIf="sel_key && can_see_explorer"
-            (click)="open_explorer()">
-        <mat-icon>query_stats</mat-icon>
-    </button>
+    <div *ngIf="!show_authent && !provider">
+        <app-input value_type="list" color="white" width="170px"
+                   *ngIf="keys.length>0 && isFree() && !show_authent"
+                   [label]="label"
+                   [value]="sel_key"
+                   [options]="keys"
+                   (valueChange)="onChangeKey($event)">
+        </app-input>
 
-    <button type="button" mat-raised-button style="margin-top: -10px;"
-            *ngIf="can_use_own_key"
-            title="Utiliser votre propre clé privée"
-            (click)="paste_key()">
-        Utiliser<br>votre clé
-    </button>
+
+        <button type="button" mat-icon-button
+                title="Voir le wallet nfluent"
+                *ngIf="sel_key && can_see_nfluent_wallet"
+                (click)="open_wallet()">
+            <mat-icon>account_balance_wallet</mat-icon>
+        </button>
+
+        <button type="button" mat-icon-button
+                title="Voir le wallet dans l'explorateur"
+                *ngIf="sel_key && can_see_explorer"
+                (click)="open_explorer()">
+            <mat-icon>query_stats</mat-icon>
+        </button>
+
+        <button type="button" mat-raised-button style="margin-top: -10px;"
+                *ngIf="can_use_own_key"
+                title="Utiliser votre propre clé privée"
+                (click)="show_authent=true">
+            Se connecter
+        </button>
+    </div>
+
+
 
 </div>
 

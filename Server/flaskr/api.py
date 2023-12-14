@@ -829,7 +829,7 @@ def test():
 @bp.route('/refund/<address>/',methods=["POST"])
 def api_refund(address:str):
   token=request.json["token"]
-  amount=int(request.json["amount"])
+  amount=float(request.json["amount"])
   _network=get_network_instance(request.json["network"])
   collection=request.json["collection"] if "collection" in request.json else ""
   if type(request.json["bank"])==str:

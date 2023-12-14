@@ -128,6 +128,7 @@
               (valueChange)="updateChain($event)"></app-input>
 
       <app-selkey
+              [can_use_own_key]="true"
                   style="width: 350px;"
                   filter="bob,carol,dan,franck,herve,nfluent,dudule,thomas,alice"
                   label="Sélectionnez un mineur"
@@ -137,8 +138,10 @@
       <div *ngIf="sel_key && (network.isElrond() || network.isDatabase())" style="width: 300px;">
 
         <app-collection-selector [network]="network.network"
-                                 w_image=""
+                                 w_image="100px" w_image_selected="150px"
                                  (selected)="changeCollection($event)"
+                                 title=""
+                                 [create_collection]="provider"
                                  [owner]="sel_key.address">
         </app-collection-selector>
 
@@ -148,27 +151,27 @@
 <!--                   [options]="collections">-->
 <!--        </app-input>-->
 
-        <button mat-icon-button
-                title="Créer une nouvelle collection"
-                (click)="new_collection()">
-          <mat-icon>add_circle</mat-icon>
-        </button>
+<!--        <button mat-icon-button-->
+<!--                title="Créer une nouvelle collection"-->
+<!--                (click)="new_collection()">-->
+<!--          <mat-icon>add_circle</mat-icon>-->
+<!--        </button>-->
 
-        <button mat-icon-button
-                (click)="save_as_miner_target()"
-                title="Enregistrer commme destination de minage">
-          <mat-icon>save</mat-icon>
-        </button>
-        
-        
+<!--        <button mat-icon-button-->
+<!--                (click)="save_as_miner_target()"-->
+<!--                title="Enregistrer commme destination de minage">-->
+<!--          <mat-icon>save</mat-icon>-->
+<!--        </button>-->
+<!--        -->
+<!--        -->
 
-        <button mat-icon-button
-                title="Copier l'identifiant de la collection sélectionnée"
-                *ngIf="sel_collection"
-                [cdkCopyToClipboard]="sel_collection.id"
-                (click)="informe_copy_collection()">
-          <mat-icon>content_copy</mat-icon>
-        </button>
+<!--        <button mat-icon-button-->
+<!--                title="Copier l'identifiant de la collection sélectionnée"-->
+<!--                *ngIf="sel_collection"-->
+<!--                [cdkCopyToClipboard]="sel_collection.id"-->
+<!--                (click)="informe_copy_collection()">-->
+<!--          <mat-icon>content_copy</mat-icon>-->
+<!--        </button>-->
 
 
 

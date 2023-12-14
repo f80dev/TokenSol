@@ -317,7 +317,11 @@ export class CreatorComponent implements OnInit,OnDestroy {
   async ask_confirmation_for_big_collection(format="zip"){
     let conf="no";
     if(this.sel_config!.limit>20){
-      conf=await _prompt(this,"Etes-vous sûr de lancer une génération en temps réel ?","","La génération de cette collection risque de prendre beaucoup de temps.");
+      conf=await _prompt(this,
+          "Etes-vous sûr de lancer une génération en temps réel ?",
+          "",
+          "La génération de cette collection risque de prendre beaucoup de temps."
+      );
     }
     if(this.sel_config!.limit<=20 || conf=="yes"){
       this.generate_collection(format);
@@ -429,7 +433,6 @@ export class CreatorComponent implements OnInit,OnDestroy {
               this.message_preview="Avancement "+Math.round(Number(100*i/sequences.length))+"%";
               if(this.previews.length==sequences.length){
                 this.message_preview="";
-                if(format.indexOf("mint")>-1)this.router.navigate(["mint"])
                 if(format.indexOf("zip")>-1){
                   let lst_file=this.previews.map((x: any) => {return x.file})
                   this.network.create_zip(lst_file,this.user.profil.email).subscribe((result:any)=>{
@@ -451,6 +454,7 @@ export class CreatorComponent implements OnInit,OnDestroy {
                   } else {
                     this.user.nfts_to_mint.push({file:image,filename:image,type:"image/webp"})
                   }
+                if(this.user.nfts_to_mint.length==sequences.length)this.router.navigate(["mint"])
               }
 
 

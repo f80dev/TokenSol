@@ -6,10 +6,16 @@
         {{title}}
     </p>
 
-   <div class='expansion-content' *ngIf="message=='' && !sel_collection">
+   <div class='expansion-content' style="align-content: center;" *ngIf="message=='' && !sel_collection">
        <button mat-raised-button (click)="create_collection()"
                *ngIf="miner_or_validator" class="mat-body-1">
            Créer une collection
+       </button>
+
+       <button mat-icon-button (click)="refresh_collections(owner)"
+               style="margin-top: -15px;"
+               *ngIf="miner_or_validator" >
+           <mat-icon>refresh</mat-icon>
        </button>
 
        <button mat-raised-button (click)="open_search()"
@@ -20,7 +26,7 @@
 
 
     <div *ngIf="collections.length>0"  class="expansion-content" style="min-height: 40px;">
-        <p>
+        <p *ngIf="collections.length>5">
             {{collections.length}} collections <span *ngIf="query_collection.length>0">contenant {{query_collection}}</span>
         </p>
 

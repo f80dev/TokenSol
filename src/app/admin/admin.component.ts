@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {UserService} from "../user.service";
-import {$$, analyse_params, getParams, setParams, showError, showMessage} from "../../tools";
+import {$$, analyse_params, getParams, jsonToList, setParams, showError, showMessage} from "../../tools";
 import {NetworkService} from "../network.service";
 import {environment} from "../../environments/environment";
 import {Clipboard} from "@angular/cdk/clipboard";
@@ -141,6 +141,13 @@ export class AdminComponent implements OnInit {
     this.refresh()
   }
 
+  jsonToString(obj:any,sep="\n"){
+    let s=""
+    for(let k of Object.keys(obj)){
+      s=s+k+": "+obj[k]+sep
+    }
+    return s
+  }
 
   refresh(saveValue=true) {
     //if(this.config_appli.appli_addr.endsWith("/"))this.config_appli.appli_addr=this.config_appli.appli_addr.substring(0,this.config_appli.appli_addr.length-1);
@@ -412,7 +419,7 @@ export class AdminComponent implements OnInit {
 
             let obj={...r}
             obj["comment"]=null
-            r.read_params=JSON.stringify(obj)
+            r.read_params=JSON.stringify(obj).replace(new RegExp(",", 'g'),",\n")
             if(r.url.indexOf("?")>-1){
               r.url=r.url+"&"+setParams(obj)
             }else{
@@ -480,4 +487,5 @@ export class AdminComponent implements OnInit {
   }
 
 
+  protected readonly jsonToList = jsonToList;
 }

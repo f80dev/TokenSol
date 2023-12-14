@@ -17,7 +17,7 @@ PLATFORMS=["db-server-nfluent_test","nftstorage","file","infura"] #ipfs
 MAIN_STORAGE_PLATFORM=PLATFORMS[0]
 
 MAIN_EMAIL = "paul.dudule@gmail.com"
-MAIN_COLLECTION = "MACOL0XF-cd3a57"
+MAIN_COLLECTION = "MACOL0XF-f05584"
 DB_NETWORK = "elrond-cloud-nfluent"
 MAIN_ACCOUNTS={
   "elrond":MAIN_ACCOUNT,

@@ -313,7 +313,8 @@ export class MintComponent implements OnInit {
     if(price_in_fiat==undefined)price_in_fiat=environment.mint_cost.price_to_mint_one_token_in_fiat;
     price_in_fiat=Math.round(100*nb_tokens_to_mint*price_in_fiat)/100;
 
-    let rep:any=await _ask_for_paiement(this,"NFLUCOIN-4921ed",
+    let rep:any=await _ask_for_paiement(this,
+        this.user.merchant!.wallet!.token,
         price,
         price_in_fiat,
         this.user.merchant!,
@@ -506,8 +507,16 @@ export class MintComponent implements OnInit {
 
           this.message="Minage du NFT '"+token.name+"'"
           try {
-            let t=await this.network.mint(token,token.owner || "",id_operation,this.sign, this.sel_platform.value, target_network,this.mintfile, this.encrypt_nft)
-            let result:any=await this.network.execute(t,target_network,this.sel_key)
+            let t=await this.network.mint(
+                token,
+                token.owner || "",
+                id_operation,
+                this.sign,
+                this.sel_platform.value,
+                target_network,
+                this.mintfile,
+                this.encrypt_nft)
+            let result:any=await this.network.execute(t,target_network,this.sel_key || this.provider)
 
             this.message="";
             if(!result.error || result.error==""){
@@ -892,7 +901,13 @@ export class MintComponent implements OnInit {
   }
 
   async update_miner($event: any) {
-    this.sel_key=$event
+    if($event.hasOwnProperty("provider")){
+      this.provider=$event.provider
+      this.sel_key=undefined
+    }else{
+      this.sel_key=$event
+      this.provider=undefined
+    }
     this.network.get_collections($event.address,this.sel_network.value,false).subscribe((cols)=>{
       this.collections=cols;
       if(cols.length>0)this.changeCollection(this.collections[0].id);
@@ -922,11 +937,12 @@ export class MintComponent implements OnInit {
     return filename.substring(pos+1);
   }
 
-  async new_collection() {
-    if(this.sel_key) {
-      this.router.navigate(["collections"],{queryParams:{owner:this.sel_key.address,network:this.network.network}})
-    }
-  }
+  // async new_collection() {
+  //   if(this.sel_key) {
+  //     this.router.navigate(["collections"],{queryParams:{owner:this.sel_key.address,network:this.network.network}})
+  //   }
+  // }
+  provider: any;
 
   async export_to_csv(sep=";") {
     let filename=await _prompt(this,"Nom du fichier","mesNFTs","","text","Enregistrer","Annuler",false);

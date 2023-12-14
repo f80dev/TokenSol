@@ -916,7 +916,7 @@ export class NetworkService implements OnInit {
 
     create_collection(new_collection: Collection,network="",simulation=false) {
         if(network=="")network=this.network
-        return this.httpClient.post(this.server_nfluent+"/api/create_collection/?network="+network+"&simulation="+simulation,new_collection);
+        return this._post("create_collection/","network="+network+"&simulation="+simulation,new_collection,60000);
     }
 
     get_minerpool() {
@@ -1015,16 +1015,16 @@ export class NetworkService implements OnInit {
 
     upload_attributes(config_name:string,file:string) {
         //Associer un fichier d'attributs au visuel des calques
-        return this.httpClient.post(this.server_nfluent+"/api/upload_attributes_file/"+config_name+"/",file);
+        return this._post("upload_attributes_file/"+config_name+"/","",file);
     }
 
     set_role(collection_id: string, owner: string, network: string,roles="ESDTRoleNFTCreate") {
-        return this.httpClient.post(this.server_nfluent+"/api/set_role_for_collection/",{
+        return this._post("set_role_for_collection/","",{
             network:network,
             collection_id:collection_id,
             roles:roles,
             owner:owner
-        });
+        })
     }
 
 

@@ -47,8 +47,9 @@ export class LoginComponent implements OnInit {
     if(this.user.isConnected()){
       this._location.back()
     }else{
-      let params=await getParams(this.routes)
+      let params:any=await getParams(this.routes)
       apply_params(this,params)
+      this.title=params.message || "Veuillez vous connecter"
     }
   }
 

@@ -17,7 +17,13 @@
 
 
     <div *ngIf="(balance.balance<price || balance.egld<0.001) && merchant && merchant.wallet" style="margin-top: 20px;">
-        <div class="color-primary mat-subheading-1">Votre solde est insuffisant et/ou vous ne pouvez pas régler les frais de transactions</div>
+
+        <p *ngIf="!bank">
+            Votre solde est insufisant. Vous devez récupérer des
+            <span *ngIf="balance.balance<price">{{money!.unity}}</span>
+            <span *ngIf="balance.egld<0.001">des eGold</span>
+            pour accèder au contenu
+        </p>
 
         <button mat-raised-button color="primary"
                 style="margin: 20px;" *ngIf="bank"
@@ -25,11 +31,6 @@
             Acquérir des {{money!.unity}}
         </button>
 
-
-
-        <p *ngIf="!bank">
-            Vous devez récupérer des {{money!.unity}} ou des eGld pour accèder au contenu
-        </p>
 
     </div>
 

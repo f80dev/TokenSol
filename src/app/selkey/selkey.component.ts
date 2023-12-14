@@ -13,6 +13,7 @@ import {CryptoKey,  newCryptoKey, setParams} from "../../tools";
 import {_prompt} from "../prompt/prompt.component";
 import {Router} from "@angular/router";
 import {wait_message} from "../hourglass/hourglass.component";
+import {Connexion} from "../../operation";
 
 @Component({
   selector: 'app-selkey',
@@ -24,15 +25,31 @@ export class SelkeyComponent implements OnChanges {
   @Input("network") network:string="";
   @Input("filter") filter:string="";
   @Input() label:string="Clés disponibles";
-  @Input("key") sel_key:CryptoKey | undefined;
+  @Input("key") sel_key:CryptoKey | any;
   @Input() default_index=0;
   @Input() with_balance=true;
   @Input("can_use_own_key") can_use_own_key=false;
   @Input("can_see_nfluent_wallet") can_see_nfluent_wallet=true;
   @Input("can_see_explorer") can_see_explorer=true;
-  @Output("onChange") onAddrChange:EventEmitter<CryptoKey>=new EventEmitter();
+  @Output("onChange") onAddrChange:EventEmitter<any>=new EventEmitter();
   keys: CryptoKey[]=[];
   message=""
+  show_authent: boolean=false;
+  connexion: Connexion={
+    address: false,
+    direct_connect: false,
+    email: false,
+    extension_wallet: true,
+    google: false,
+    keystore: false,
+    nfluent_wallet_connect: false,
+    on_device: false,
+    private_key: false,
+    wallet_connect: true,
+    web_wallet: false,
+    webcam: false
+  }
+  provider: any;
 
 
   constructor(public network_service:NetworkService,
@@ -95,5 +112,17 @@ export class SelkeyComponent implements OnChanges {
 
   open_explorer() {
     if(this.sel_key) this.network_service.open_explorer(this.sel_key.address,"address")
+  }
+
+  on_authent($event: {
+    strong: boolean;
+    address: string;
+    provider: any;
+    encrypted: string;
+    url_direct_xportal_connect: string
+  }) {
+    this.show_authent=false
+    this.provider=$event.provider
+    this.onAddrChange.emit($event);
   }
 }

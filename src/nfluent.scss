@@ -16,9 +16,9 @@ html {
 ::-webkit-scrollbar {width: 0;}
 
 @media(max-width: 1500px) { html {font-size: 1.3vw;} }
-@media(max-width: 1000px) { html {font-size: 1.8vw;} }
-@media(max-width: 800px) { html {font-size: 2.2vw;} }
-@media(max-width: 500px) { html {font-size: 4vw;} }
+@media(max-width: 1000px) { html {font-size: 1.7vw;} }
+@media(max-width: 800px) { html {font-size: 2vw;} }
+@media(max-width: 500px) { html {font-size: 3vw;} }
 
 //voir https://material.angular.io/guide/typography#typography-config
 /* Argument de mat.define-typography-level
@@ -71,30 +71,6 @@ $nfluent-indigo-palette :(
                 900: white
         )
 );
-
-$gray-palette :(
-  50: #FFFFFF,
-  100: #F0F0F0,
-  200: #AAF6A1,
-  300: #81F177,
-  400: #56EC52,
-  500: #00E726,
-  600: #00D51D,
-  700: #00C00F,
-  800: #00AB00,
-  900: #008800,
-     contrast: (
-  50: rgba(black,0.87),
-  100: rgba(black,0.87),
-  200: rgba(black,0.87),
-  300: rgba(black,0.87),
-  400: rgba(black,0.87),
-  500: rgba(black,0.87),
-  600: rgba(black,0.87),
-  700: white,
-  800: white,
-  900: white
-));
 
 
 $nfluent-green-palette :(

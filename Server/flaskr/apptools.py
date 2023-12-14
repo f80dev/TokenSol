@@ -142,9 +142,10 @@ def airdrop(address:str,token:dict,collection:str,_miner:Key,amount:float,histo:
 
   if token and "id" in token:
     if type(token)==dict and "identifier" in token:token=token["identifier"]
-    tx_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
-    if tx_esdt["status"]!="success":
-      return {"error":tx_esdt["error"],"status":"error"}
+    t_esdt=_network.transfer_money(token,_miner,address,float(amount),data=comment)
+    rc=_network.send_transaction(t_esdt,_miner)
+    if rc["status"]!="success":
+      return {"error":rc["error"],"status":"error"}
   else:
     step=30
     for offset in range(0,300,step):
@@ -158,9 +159,9 @@ def airdrop(address:str,token:dict,collection:str,_miner:Key,amount:float,histo:
                 histo.add_histo(command="refund",addr=address,transaction_id=rc["hash"],network=_network.network,comment="Rechargement",params=[int(amount)])
               return rc
 
+    log("Plus assez de NFTs disponible dans la collection")
+    rc["status"]="error"
 
-  log("Plus assez de NFTs disponible dans la collection")
-  rc["status"]="error"
   return rc
 
 
